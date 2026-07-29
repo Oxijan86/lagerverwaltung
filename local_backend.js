@@ -76,7 +76,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','32');
+  setSetting('database_version','33');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -133,7 +133,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'32.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'33.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -282,11 +282,33 @@ window.LVStorage={
 async function cloudState(){
  if(!handle)return {connected:false};
  try{
-  if(!await permission(handle,'read'))return {connected:true,accessible:false,file:handle.name||'lager.db'};
-  const file=await handle.getFile();
-  return {connected:true,accessible:true,file:file.name,modified:Number(file.lastModified||0),size:Number(file.size||0)};
+  if(!await permission(handle,'read')){
+   return {
+    connected:true,
+    accessible:false,
+    file:'lager.db',
+    folder:handle.name||'',
+    error:'Leseberechtigung fehlt.'
+   };
+  }
+  const fileHandle=await handle.getFileHandle('lager.db');
+  const file=await fileHandle.getFile();
+  return {
+   connected:true,
+   accessible:true,
+   file:file.name,
+   folder:handle.name||'',
+   modified:Number(file.lastModified||0),
+   size:Number(file.size||0)
+  };
  }catch(e){
-  return {connected:true,accessible:false,file:handle?.name||'lager.db',error:e.message};
+  return {
+   connected:true,
+   accessible:false,
+   file:'lager.db',
+   folder:handle?.name||'',
+   error:e.message
+  };
  }
 }
 async function localCounts(){
@@ -323,7 +345,16 @@ async function syncStatus(){const m=await ig(METAKEY)||{};if(window.syncFile)syn
 async function permission(h,m){if((await h.queryPermission({mode:m}))==='granted')return true;return (await h.requestPermission({mode:m}))==='granted'}
 window.LVSync={
  async chooseFolder(){try{if(!('showDirectoryPicker'in window))throw Error('Ordnerauswahl wird in diesem Browser nicht unterstützt.');handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await syncStatus();msg(syncMsg,'Ordner verbunden: '+handle.name,true)}catch(e){if(e.name!=='AbortError')msg(syncMsg,e.message,false)}},
- async load(){try{await loadFromFolder();location.reload()}catch(e){msg(syncMsg,e.message,false)}},
+ async load(reloadAfter=true){
+  try{
+   await loadFromFolder();
+   if(reloadAfter)location.reload();
+   return {ok:true};
+  }catch(e){
+   if(window.syncMsg)msg(syncMsg,e.message,false);
+   throw e;
+  }
+ },
  async save(){try{isSyncing=true;await saveToFolder(true);msg(syncMsg,'Datenbank und Backup gespeichert.',true)}catch(e){msg(syncMsg,e.message,false)}finally{isSyncing=false}},
  async sync(silent=false){try{if(!handle){if(!silent)throw Error('Kein Synchronisationsordner verbunden.');return}isSyncing=true;const m=await ig(METAKEY)||{};let changed=false;try{const f=await (await handle.getFileHandle('lager.db')).getFile();changed=!!m.fileModified&&f.lastModified!==m.fileModified}catch{}if(changed&&m.dirty)throw Error('Konflikt: Cloud-Datei und lokaler Stand wurden verändert. Bitte bewusst Laden oder Speichern.');if(changed&&!m.dirty){await loadFromFolder();if(!silent)location.reload()}else{await saveToFolder(true);if(!silent)msg(syncMsg,'Synchronisierung erfolgreich.',true)}}catch(e){if(!silent&&window.syncMsg)msg(syncMsg,e.message,false);else console.warn(e)}finally{isSyncing=false}},
  async disconnect(){handle=null;await idel(HANDLEKEY);await syncStatus();msg(syncMsg,'Verknüpfung gelöst.',true)},
@@ -366,7 +397,16 @@ window.LVStartupState={
  async loadCloud(){
   await ready;
   if(!handle)throw Error('Kein Synchronisationsordner verbunden.');
-  await LVSync.load();
+  const state=await cloudState();
+  if(!state.accessible){
+   throw Error('Die Datei lager.db konnte im verbundenen Synchronisationsordner nicht gelesen werden. '+(state.error||''));
+  }
+  await LVSync.load(false);
+  return {
+   ok:true,
+   file:state.file,
+   modified:state.modified
+  };
  },
  async createNew(){
   await ready;
@@ -375,7 +415,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','32');
+  setSetting('database_version','33');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
