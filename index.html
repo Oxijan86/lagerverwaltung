@@ -38,7 +38,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div id="startupCheckOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,30,40,.9);z-index:1400;padding:20px;overflow:auto">
   <div class="card setup-card" style="max-width:760px">
     <h2>🔎 Datenbankstand beim Start prüfen</h2>
-    <p>Bevor du weiterarbeitest, bestätige bitte, welcher Datenstand verwendet werden soll. Diese Prüfung erscheint bei jedem neuen Start und nach längerer Hintergrundpause erneut.</p>
+    <p>Bevor du weiterarbeitest, bestätige bitte, welcher Datenstand verwendet werden soll. Diese Prüfung erscheint bei jedem neuen Start und automatisch, sobald auf einem anderen Gerät ein neuer Cloud-Stand erkannt wird.</p>
 
     <div class="formgrid">
       <div class="card">
@@ -207,7 +207,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">36.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">37.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this)">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -1220,9 +1220,10 @@ async function refreshDatabaseStatus(){
 
 const LV_STARTUP_SESSION_KEY='lv_startup_confirmed';
 const LV_CONTROLLED_RELOAD_KEY='lv_controlled_reload';
-const LV_BACKGROUND_RECHECK_MS=60*1000;
 let lvHiddenAt=0;
 let lvStartupCheckRunning=false;
+let lvLastForegroundCheck=0;
+const LV_FOREGROUND_CHECK_THROTTLE_MS=3000;
 
 function lvMarkControlledReload(){
  sessionStorage.setItem(LV_CONTROLLED_RELOAD_KEY,'1');
@@ -1241,13 +1242,22 @@ function lvPrepareStartupCheck(){
   sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
  }
 }
-async function lvForceStartupCheck(reason='resume'){
+async function lvForceStartupCheck(reason='resume',forceDialog=false){
  if(lvStartupCheckRunning||window.startupCheckOverlay?.style.display==='block')return;
+ const now=Date.now();
+ if(!forceDialog&&now-lvLastForegroundCheck<LV_FOREGROUND_CHECK_THROTTLE_MS)return;
+ lvLastForegroundCheck=now;
  lvStartupCheckRunning=true;
  try{
-  sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
-  lvPrepareStartupCheck();
- await LVStartup.check();
+  const state=await LVStartupState.get();
+  const cloudChanged=state.cloudConnected&&state.cloudAccessible&&state.comparison!=='identical';
+  const cloudUnreadable=state.cloudConnected&&!state.cloudAccessible;
+  if(forceDialog||cloudChanged||cloudUnreadable){
+   sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
+   await LVStartup.check();
+  }
+ }catch(e){
+  console.warn('Cloudprüfung beim Gerätewechsel fehlgeschlagen:',e);
  }finally{
   lvStartupCheckRunning=false;
  }
@@ -1257,17 +1267,25 @@ document.addEventListener('visibilitychange',async()=>{
   lvHiddenAt=Date.now();
  }else{
   const wasClosed=Number(localStorage.getItem('lv_last_closed_at')||0)>0;
-  if(wasClosed||(lvHiddenAt&&Date.now()-lvHiddenAt>=LV_BACKGROUND_RECHECK_MS)){
-   lvHiddenAt=0;
-   await lvForceStartupCheck(wasClosed?'closed-resume':'resume');
-  }
+  lvHiddenAt=0;
+  await lvForceStartupCheck(wasClosed?'closed-resume':'visible',wasClosed);
  }
 });
 window.addEventListener('pageshow',async event=>{
- if(event.persisted){
-  await lvForceStartupCheck('bfcache');
- }
+ await lvForceStartupCheck(event.persisted?'bfcache':'pageshow',event.persisted);
 });
+window.addEventListener('focus',async()=>{
+ await lvForceStartupCheck('focus');
+});
+
+
+setInterval(async()=>{
+ if(document.visibilityState==='visible' &&
+    window.startupCheckOverlay?.style.display!=='block' &&
+    window.closedOverlay?.style.display!=='block'){
+  await lvForceStartupCheck('periodic');
+ }
+},15000);
 
 window.LVStartup={
  data:null,

@@ -1,30 +1,20 @@
-# Lagerverwaltung Lovrencic V36 – Wiederöffnen mit Cloudprüfung
+# Lagerverwaltung Lovrencic V37 – direkter Gerätewechsel
 
-## Behobener Fehler
+Browserdaten sind gerätebezogen. Das Schließen auf dem PC kann auf dem Smartphone keinen lokalen Marker setzen.
 
-Nach `Synchronisieren und schließen` wurde zwar ein Schließzeitpunkt gespeichert, beim erneuten Öffnen aber nicht ausgewertet. Der bisherige Button führte nur `location.reload()` aus. Auf Smartphones konnte dadurch die frühere Browser-/PWA-Sitzung mit bereits bestätigtem Startzustand wieder erscheinen. Die App landete direkt im Dashboard und lud den neuen Cloud-Stand erst nach `Jetzt synchronisieren`.
+V37 prüft deshalb die Cloud-Revision selbstständig:
 
-## Neues Verhalten
+- sofort beim Wechsel in den Vordergrund,
+- beim Fokus auf das Browserfenster,
+- beim Wiederherstellen einer mobilen Browserseite,
+- zusätzlich alle 15 Sekunden bei sichtbarer App.
 
-Der Button heißt jetzt:
+Nur wenn Cloud und lokaler Stand nicht identisch sind, erscheint der Startdialog. Eine Wartezeit von 60 Sekunden entfällt.
 
-`Cloud-Stand prüfen und auf diesem Gerät öffnen`
+Empfohlener Ablauf:
 
-Beim Anklicken:
-
-1. wird die frühere Startbestätigung vollständig gelöscht,
-2. wird ein dauerhafter Marker für eine erzwungene Startprüfung gesetzt,
-3. wird die App mit einem Cache-Buster neu geöffnet,
-4. wird der lokale Stand mit der Cloud-Revision verglichen,
-5. erscheint zwingend der Startdialog,
-6. kann anschließend der aktuelle Cloud-Stand geladen werden.
-
-Auch beim Zurückkehren aus dem Hintergrund wird ein vorhandener Schließmarker ausgewertet.
-
-## Richtiger Gerätewechsel
-
-1. Gerät A: `Synchronisieren und schließen`
-2. Gerät B: App öffnen bzw. `Cloud-Stand prüfen und auf diesem Gerät öffnen`
-3. Startdialog abwarten
-4. `Aktuellen Cloud-Stand laden`
-5. Erst danach buchen
+1. Gerät A: Synchronisieren und schließen
+2. Gerät B öffnen oder in den Vordergrund holen
+3. Startdialog erscheint bei erkannter neuer Cloud-Revision
+4. Aktuellen Cloud-Stand laden
+5. Danach weiterarbeiten
