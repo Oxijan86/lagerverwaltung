@@ -113,7 +113,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
     <h2>✅ Lagerverwaltung sauber geschlossen</h2>
     <p>Die Sitzung auf diesem Gerät ist beendet. Du kannst jetzt auf einem anderen Gerät arbeiten.</p>
     <p id="closedModeText" class="small"></p>
-    <button class="primary" onclick="location.reload()">Auf diesem Gerät wieder öffnen</button>
+    <button class="primary" onclick="LVLogout.reopen()">Cloud-Stand prüfen und auf diesem Gerät öffnen</button>
   </div>
 </div>
 
@@ -207,7 +207,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">35.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">36.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this)">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -1229,8 +1229,17 @@ function lvMarkControlledReload(){
 }
 function lvPrepareStartupCheck(){
  const controlled=sessionStorage.getItem(LV_CONTROLLED_RELOAD_KEY)==='1';
+ const forced=localStorage.getItem('lv_force_startup_check')==='1';
+ const closedAt=Number(localStorage.getItem('lv_last_closed_at')||0);
+ const confirmedAt=Number(sessionStorage.getItem('lv_startup_confirmed_at')||0);
+
  sessionStorage.removeItem(LV_CONTROLLED_RELOAD_KEY);
- if(!controlled)sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
+ localStorage.removeItem('lv_force_startup_check');
+
+ // Nach bewusstem Schließen oder Gerätewechsel muss immer neu geprüft werden.
+ if(forced||closedAt>confirmedAt||!controlled){
+  sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
+ }
 }
 async function lvForceStartupCheck(reason='resume'){
  if(lvStartupCheckRunning||window.startupCheckOverlay?.style.display==='block')return;
@@ -1246,9 +1255,12 @@ async function lvForceStartupCheck(reason='resume'){
 document.addEventListener('visibilitychange',async()=>{
  if(document.visibilityState==='hidden'){
   lvHiddenAt=Date.now();
- }else if(lvHiddenAt&&Date.now()-lvHiddenAt>=LV_BACKGROUND_RECHECK_MS){
-  lvHiddenAt=0;
-  await lvForceStartupCheck('resume');
+ }else{
+  const wasClosed=Number(localStorage.getItem('lv_last_closed_at')||0)>0;
+  if(wasClosed||(lvHiddenAt&&Date.now()-lvHiddenAt>=LV_BACKGROUND_RECHECK_MS)){
+   lvHiddenAt=0;
+   await lvForceStartupCheck(wasClosed?'closed-resume':'resume');
+  }
  }
 });
 window.addEventListener('pageshow',async event=>{
@@ -1330,6 +1342,8 @@ window.LVStartup={
   try{
    const result=await LVStartupState.loadCloud();
    await LVStartupState.confirm('cloud');
+   sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
+   localStorage.removeItem('lv_last_closed_at');
    startupCheckMsg.textContent='Cloud-Stand wurde erfolgreich geladen. Die Lagerverwaltung wird geöffnet …';
    startupCheckMsg.className='message ok';
    lvMarkControlledReload(); setTimeout(()=>location.reload(),500);
@@ -1345,8 +1359,13 @@ window.LVStartup={
     if(!ok)return;
    }
    await LVStartupState.confirm('local');
+   sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
+   localStorage.removeItem('lv_last_closed_at');
    startupCheckOverlay.style.display='none';
    document.body.style.overflow='';
+   const cleanUrl=new URL(location.href);
+   cleanUrl.searchParams.delete('startcheck');
+   history.replaceState(null,'',cleanUrl.pathname+cleanUrl.search+cleanUrl.hash);
   }catch(e){msg(startupCheckMsg,e.message,false)}
  },
  selectOther(){
@@ -1357,6 +1376,8 @@ window.LVStartup={
   try{
    const r=await LVStorage.openExistingFile(input);
    await LVStartupState.confirm('other');
+   sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
+   localStorage.removeItem('lv_last_closed_at');
    startupCheckMsg.textContent=`${r.articles} Artikel und ${r.movements} Buchungen wurden geladen.`;
    lvMarkControlledReload(); setTimeout(()=>location.reload(),300);
   }catch(e){msg(startupCheckMsg,e.message,false)}
@@ -1367,6 +1388,8 @@ window.LVStartup={
   try{
    await LVStartupState.createNew();
    await LVStartupState.confirm('new');
+   sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
+   localStorage.removeItem('lv_last_closed_at');
    lvMarkControlledReload();
    location.reload();
   }catch(e){msg(startupCheckMsg,e.message,false)}
@@ -1426,6 +1449,18 @@ window.LVLogout={
     :'Der aktuelle Stand wurde nur lokal gesichert. Vor dem Arbeiten auf einem anderen Gerät dort zuerst den aktuellen Cloud-Stand laden.';
   closedOverlay.style.display='block';
   document.body.style.overflow='hidden';
+ },
+ reopen(){
+  // Der Marker überlebt auch einen PWA-/Browser-Neustart.
+  localStorage.setItem('lv_force_startup_check','1');
+  sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
+  sessionStorage.removeItem('lv_startup_confirmed_at');
+  sessionStorage.removeItem(LV_CONTROLLED_RELOAD_KEY);
+
+  // Cache-Buster verhindert, dass der mobile Browser nur den alten Seitenzustand reaktiviert.
+  const url=new URL(location.href);
+  url.searchParams.set('startcheck',String(Date.now()));
+  location.replace(url.toString());
  }
 };
 

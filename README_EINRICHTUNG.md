@@ -1,29 +1,30 @@
-# Lagerverwaltung Lovrencic V35 – Startprüfung beim Gerätewechsel
+# Lagerverwaltung Lovrencic V36 – Wiederöffnen mit Cloudprüfung
 
 ## Behobener Fehler
 
-Auf Smartphones bleibt eine installierte PWA häufig im Hintergrund geöffnet. Die bisherige Startbestätigung blieb dadurch in der laufenden Browsersitzung gespeichert. Beim Wechsel vom PC zurück zum Smartphone erschien deshalb direkt das Dashboard.
+Nach `Synchronisieren und schließen` wurde zwar ein Schließzeitpunkt gespeichert, beim erneuten Öffnen aber nicht ausgewertet. Der bisherige Button führte nur `location.reload()` aus. Auf Smartphones konnte dadurch die frühere Browser-/PWA-Sitzung mit bereits bestätigtem Startzustand wieder erscheinen. Die App landete direkt im Dashboard und lud den neuen Cloud-Stand erst nach `Jetzt synchronisieren`.
 
 ## Neues Verhalten
 
-Die Startprüfung wird erneut ausgelöst:
+Der Button heißt jetzt:
 
-- bei jedem echten Neuladen oder neuen Öffnen der App,
-- wenn die App aus dem Browser-Zwischenspeicher wiederhergestellt wird,
-- wenn die App mindestens 60 Sekunden im Hintergrund war und wieder geöffnet wird,
-- nach einem sauberen Abmelden bzw. Schließen.
+`Cloud-Stand prüfen und auf diesem Gerät öffnen`
 
-Nach einer bewusst bestätigten Auswahl und dem technisch notwendigen kontrollierten Neuladen erscheint der Dialog nicht sofort ein zweites Mal.
+Beim Anklicken:
 
-## Gerätewechsel
+1. wird die frühere Startbestätigung vollständig gelöscht,
+2. wird ein dauerhafter Marker für eine erzwungene Startprüfung gesetzt,
+3. wird die App mit einem Cache-Buster neu geöffnet,
+4. wird der lokale Stand mit der Cloud-Revision verglichen,
+5. erscheint zwingend der Startdialog,
+6. kann anschließend der aktuelle Cloud-Stand geladen werden.
 
-Empfohlener Ablauf:
+Auch beim Zurückkehren aus dem Hintergrund wird ein vorhandener Schließmarker ausgewertet.
 
-1. Auf Gerät A `Synchronisieren und schließen`.
-2. Auf Gerät B die Lagerverwaltung öffnen.
-3. Der Startabgleich erscheint automatisch.
-4. Cloud-Revision und lokaler Stand vergleichen.
-5. `Aktuellen Cloud-Stand laden` auswählen.
-6. Erst danach buchen.
+## Richtiger Gerätewechsel
 
-Ist die App auf Gerät B bereits im Hintergrund geöffnet, erscheint der Startabgleich nach dem Zurückkehren erneut, sobald sie mindestens 60 Sekunden im Hintergrund war.
+1. Gerät A: `Synchronisieren und schließen`
+2. Gerät B: App öffnen bzw. `Cloud-Stand prüfen und auf diesem Gerät öffnen`
+3. Startdialog abwarten
+4. `Aktuellen Cloud-Stand laden`
+5. Erst danach buchen
