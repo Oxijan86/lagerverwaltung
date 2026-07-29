@@ -1,36 +1,20 @@
-# Lagerverwaltung Lovrencic V21
+# Lagerverwaltung Lovrencic V22
 
-Diese PWA übernimmt den Funktionsumfang der Windows-Version 17 und ergänzt die Dateisynchronisierung ohne Microsoft-Anmeldung.
+## Neu in Version 22
+- Einrichtungsfrage: neue Datenbank oder vorhandene Datenbank verwenden
+- Auswahl eines Synchronisationsordners mit `lager.db` und Unterordner `Backup`
+- automatische lokale Speicherung nach jeder Änderung
+- automatische Synchronisierung nach Änderungen
+- Konfliktschutz, wenn lokaler und gemeinsamer Stand verändert wurden
+- automatische Backups vor Synchronisierung und vor Wiederherstellung
+- manuelles Backup mit optionalem Kommentar
+- Backup-Liste mit Wiederherstellen, Herunterladen und Löschen
+- Sicherheitsbackup vor jeder Wiederherstellung
+- Aufbewahrung der letzten 30 Backups
+- manuelle SQLite-Import-/Exportlösung für Browser ohne Ordnerzugriff
 
-## GitHub aktualisieren
-1. Inhalt dieses Ordners in das bestehende Repository `lagerverwaltung` hochladen.
-2. Vorhandene Dateien ersetzen.
-3. Commit durchführen.
-4. Einige Minuten warten und die GitHub-Pages-Seite mit Strg+F5 neu laden.
+## Aktualisierung auf GitHub
+Den gesamten Inhalt dieses Ordners in das Repository hochladen und vorhandene Dateien ersetzen. Danach die Seite mit Strg+F5 neu laden bzw. die installierte PWA neu starten.
 
-## Erster Start
-Beim ersten Start erscheint der Einrichtungsassistent:
-- Stammdaten-Passwort
-- Datumsformat
-- Technikername
-
-## Synchronisierung
-Unter `Dateisynchronisierung` kann eine gemeinsame `lager.db` ausgewählt werden. Falls der Browser dies nicht unterstützt, SQLite exportieren und über den System-Dateidialog in OneDrive speichern.
-
-## Enthaltener Funktionsumfang
-- Dashboard, Lagerwert, Unterbestand, letzte und häufigste Entnahmen
-- vollständige Artikelanlage und Artikelbearbeitung
-- manuelle Einbuchung
-- Lieferschein-Vorschau und Einbuchung
-- CSV/XLSX-Import mit Artikelanlage
-- manuelle Entnahme
-- Servicebericht-Parser und Entnahme
-- Materialanforderung mit Vorschau, Zusammenfassung und Originalvorlage
-- CSV-Center
-- Inventurimport, Vorschau und Korrekturbuchung
-- Historienfilter und CSV-Export
-- Stammdaten: Lagerorte, Maschinen, Techniker und Fahrzeuge
-- Passwortschutz, Passwortwechsel und Reset
-- Audit-Protokoll
-- Hilfe
-- PWA-Installation und Offline-Programmhülle
+## Wichtiger Arbeitsablauf
+Auf einem zweiten Gerät zuerst synchronisieren bzw. den Stand laden. Nicht gleichzeitig auf zwei Geräten buchen. Bei einem Konflikt wird keine Datenbank automatisch überschrieben.
