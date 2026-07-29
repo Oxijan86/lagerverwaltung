@@ -31,7 +31,19 @@ function normalizeQuantityForUnit(value,unit){
 }
 function stockExpr(){return "a.initial_stock+COALESCE(SUM(CASE WHEN m.movement_type='IN' THEN m.quantity WHEN m.movement_type='OUT' THEN -m.quantity ELSE 0 END),0)"}
 function audit(user,action,entity,id='',details=''){run('INSERT INTO audit_log(event_time,user_name,action,entity,entity_id,details) VALUES(?,?,?,?,?,?)',[stamp().replace('T',' ').slice(0,19),user||'Techniker',action,entity,String(id||''),details||''])}
-async function persist(dirty=true){await ip(DBKEY,db.export().buffer);const m=await ig(METAKEY)||{};if(dirty)m.dirty=true;m.localModified=Date.now();await ip(METAKEY,m);await syncStatus();if(dirty)scheduleAutoSync()}
+async function persist(dirty=true){
+ await ip(DBKEY,db.export().buffer);
+ const m=await ig(METAKEY)||{};
+ if(dirty)m.dirty=true;
+ m.localModified=Date.now();
+ await ip(METAKEY,m);
+ await syncStatus();
+ if(dirty){
+  scheduleAutoSync();
+  scheduleAutomaticBackup();
+ }
+ if(window.refreshDatabaseStatus)window.refreshDatabaseStatus();
+}
 function scheduleAutoSync(){clearTimeout(autoTimer);autoTimer=setTimeout(()=>{if(handle&&!isSyncing)LVSync.sync(true)},1200)}
 function initSchema(){
 db.run(`PRAGMA foreign_keys=ON;
@@ -64,7 +76,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','29');
+  setSetting('database_version','30');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -121,7 +133,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'29.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'30.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -148,13 +160,13 @@ async function route(url,opt={}){
  if(p==='/api/admin/reset'){if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');db.close();db=new SQL.Database();initSchema();await persist();return response({ok:true})}
  if(p==='/api/movements'){bookItems(d.items||[d],d.movement_type||'IN',d);audit(d.technician,'BUCHUNG',d.movement_type||'IN','',`${(d.items||[d]).length} Position(en)`);await persist();return response({ok:true,count:(d.items||[d]).length},201)}
  if(p==='/api/delivery-note/preview'||p==='/api/import/preview'||p==='/api/service-report/preview'){return response(matchItems(parseLines(d.text)))}
- if(p==='/api/delivery-note/commit'){bookItems(d.items,'IN',{...d,source:'Lieferschein'});audit(d.technician,'BUCHUNG','Lieferschein','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
+ if(p==='/api/delivery-note/commit'){await createBackup('Sicherheitsbackup','Vor Lieferschein-Einbuchung');bookItems(d.items,'IN',{...d,source:'Lieferschein'});audit(d.technician,'BUCHUNG','Lieferschein','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
  if(p==='/api/service-report/commit'){bookItems(d.items,'OUT',{...d,source:'Servicebericht'});audit(d.technician,'BUCHUNG','Servicebericht','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
- if(p==='/api/import/commit'){bookItems(d.items,'IN',{...d,source:'SAP-CSV-Import'});audit(d.technician,'BUCHUNG','CSV-Import','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
+ if(p==='/api/import/commit'){await createBackup('Sicherheitsbackup','Vor Import');bookItems(d.items,'IN',{...d,source:'SAP-CSV-Import'});audit(d.technician,'BUCHUNG','CSV-Import','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
  if(p==='/api/import/file-preview'){const rr=await xlsxRows(d.filename,d.content_base64);return response(matchItems(rowsToItems(rr)))}
  if(p==='/api/inventory/file-preview'){const rr=await xlsxRows(d.filename,d.content_base64);const parsed=rowsToItems(rr).map(x=>({article_no:x.article_no,counted_stock:x.quantity}));return response(parsed.map(x=>{const a=articles().find(z=>z.article_no===x.article_no);return a?{article_id:a.id,article_no:a.article_no,description:a.description,system_stock:a.stock,counted_stock:x.counted_stock,difference:x.counted_stock-a.stock}:null}).filter(Boolean))}
  if(p==='/api/inventory/preview'){const parsed=parseLines(d.text).map(x=>({article_no:x.article_no,counted_stock:x.quantity}));return response(parsed.map(x=>{const a=articles().find(z=>z.article_no===x.article_no);return a?{article_id:a.id,article_no:a.article_no,description:a.description,system_stock:a.stock,counted_stock:x.counted_stock,difference:x.counted_stock-a.stock}:null}).filter(Boolean))}
- if(p==='/api/inventory/commit'){if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');let changed=0,unchanged=0;for(const x of d.items){const a=articles().find(z=>z.id===Number(x.article_id));const diff=Number(x.counted_stock)-a.stock;if(Math.abs(diff)<1e-8){unchanged++;continue}bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{...d,source:'Inventur',note:'Inventurkorrektur'});changed++}audit(d.technician,'INVENTUR','Bestand','',`${changed} Korrekturen`);await persist();return response({ok:true,changed,unchanged})}
+ if(p==='/api/inventory/commit'){await createBackup('Sicherheitsbackup','Vor Inventur');if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');let changed=0,unchanged=0;for(const x of d.items){const a=articles().find(z=>z.id===Number(x.article_id));const diff=Number(x.counted_stock)-a.stock;if(Math.abs(diff)<1e-8){unchanged++;continue}bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{...d,source:'Inventur',note:'Inventurkorrektur'});changed++}audit(d.technician,'INVENTUR','Bestand','',`${changed} Korrekturen`);await persist();return response({ok:true,changed,unchanged})}
  if(p==='/api/material-request/preview'){const x=await materialXlsx(d);return response({count:x.count,items:x.items})}
  if(p==='/api/export/material-request'){const x=await materialXlsx(d);const tech=(d.technician||'Techniker').replace(/[^\wÄÖÜäöüß-]+/g,'_');return response(x.blob,200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':`attachment; filename="Bestellung_${fmtDate(today())}_${tech}.xlsx"`})}
  if(p==='/api/masterdata'){
@@ -213,6 +225,31 @@ async function getBackupIndex(){return await ig(BACKUPKEY)||[]}
 async function setBackupIndex(x){await ip(BACKUPKEY,x)}
 async function backupDir(create=true){if(!handle)return null;try{return await handle.getDirectoryHandle('Backup',{create})}catch{return null}}
 async function createBackup(kind='Automatisch',comment=''){const bytes=db.export(),created=Date.now(),name=`Backup_${backupStamp()}${comment?'_'+safeName(comment):''}.db`;let storage='local';const bd=await backupDir(true);if(bd&&await permission(handle,'readwrite')){const fh=await bd.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(bytes);await w.close();storage='folder'}else{await ip('backup:'+name,bytes.buffer)}let list=await getBackupIndex();list.unshift({name,created,kind,comment,size:bytes.byteLength,storage});while(list.length>30){const old=list.pop();if(old.storage==='local')await idel('backup:'+old.name);else try{const d=await backupDir(false);await d.removeEntry(old.name)}catch{}}await setBackupIndex(list);return list[0]}
+
+let automaticBackupTimer=null;
+function scheduleAutomaticBackup(){
+ clearTimeout(automaticBackupTimer);
+ automaticBackupTimer=setTimeout(async()=>{
+  try{
+   const item=await createBackup('Automatisch','Nach Änderungen');
+   const m=await ig(METAKEY)||{};
+   m.lastAutomaticBackup=item.created;
+   await ip(METAKEY,m);
+   if(window.refreshDatabaseStatus)window.refreshDatabaseStatus();
+  }catch(e){console.warn('Automatisches Backup fehlgeschlagen:',e)}
+ },15000);
+}
+async function ensureDailyBackup(){
+ try{
+  const m=await ig(METAKEY)||{};
+  if(!m.lastAutomaticBackup||Date.now()-Number(m.lastAutomaticBackup)>86400000){
+   const item=await createBackup('Automatisch','Tägliche Sicherung');
+   m.lastAutomaticBackup=item.created;
+   await ip(METAKEY,m);
+  }
+ }catch(e){console.warn('Tägliches Backup fehlgeschlagen:',e)}
+}
+
 async function readBackup(x){if(x.storage==='folder'){const d=await backupDir(false),f=await (await d.getFileHandle(x.name)).getFile();return new Uint8Array(await f.arrayBuffer())}return new Uint8Array(await ig('backup:'+x.name))}
 async function restoreBackup(name){let list=await getBackupIndex(),x=list.find(z=>z.name===name);if(!x)throw Error('Backup nicht gefunden.');await createBackup('Sicherheitsbackup','Vor Wiederherstellung');const bytes=await readBackup(x),test=new SQL.Database(bytes);if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Backup ist beschädigt.');db.close();db=test;initSchema();adoptExistingDatabase();await persist(true);return x}
 async function deleteBackup(name){let list=await getBackupIndex(),x=list.find(z=>z.name===name);if(!x)return;if(x.storage==='folder')try{const d=await backupDir(false);await d.removeEntry(name)}catch{}else await idel('backup:'+name);await setBackupIndex(list.filter(z=>z.name!==name))}
@@ -240,6 +277,21 @@ window.LVStorage={
   return {ok:true,articles:articleCount,movements:movementCount,file:f.name};
  }
 };
+
+window.LVDatabaseStatus={
+ async get(){
+  await ready;
+  const m=await ig(METAKEY)||{};
+  return {
+   lastModified:Number(m.localModified||0),
+   lastAutomaticBackup:Number(m.lastAutomaticBackup||0),
+   cloudConnected:!!handle,
+   dirty:!!m.dirty,
+   lastSync:Number(m.lastSync||0)
+  };
+ }
+};
+
 window.LVBackup={
  async manual(){try{const x=await createBackup('Manuell',backupComment.value.trim());backupComment.value='';msg(backupMsg,'Backup erstellt: '+x.name,true);await this.refresh()}catch(e){msg(backupMsg,e.message,false)}},
  async refresh(){await ready;const list=await getBackupIndex();if(!window.backupRows)return;backupRows.innerHTML=list.map(x=>`<tr><td>${new Date(x.created).toLocaleString('de-DE')}</td><td>${x.kind}</td><td>${x.comment||'–'}</td><td>${(x.size/1024).toLocaleString('de-DE',{maximumFractionDigits:1})} KB</td><td><button class="secondary" onclick="LVBackup.restore('${x.name.replaceAll("'","\\'")}')">Wiederherstellen</button> <button class="secondary" onclick="LVBackup.download('${x.name.replaceAll("'","\\'")}')">Herunterladen</button> <button class="danger" onclick="LVBackup.remove('${x.name.replaceAll("'","\\'")}')">Löschen</button></td></tr>`).join('')||'<tr><td colspan="5">Noch keine Backups</td></tr>'},
@@ -247,7 +299,7 @@ window.LVBackup={
  async remove(name){if(!confirm('Backup wirklich löschen?'))return;await deleteBackup(name);await this.refresh()},
  async download(name){const x=(await getBackupIndex()).find(z=>z.name===name),bytes=await readBackup(x),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download=x.name;a.click()}
 };
-const ready=initialize();
+const ready=initialize().then(async()=>{setTimeout(ensureDailyBackup,2500)});
 window.fetch=route;
 async function syncStatus(){const m=await ig(METAKEY)||{};if(window.syncFile)syncFile.textContent=handle?.name||'Keiner';if(window.syncDirty)syncDirty.textContent=m.dirty?'Ja':'Nein';if(window.syncLast)syncLast.textContent=m.lastSync?new Date(m.lastSync).toLocaleString('de-DE'):'Noch nie';if(window.syncAuto)syncAuto.textContent=handle?'Aktiv':'Wartet auf Ordner'}
 async function permission(h,m){if((await h.queryPermission({mode:m}))==='granted')return true;return (await h.requestPermission({mode:m}))==='granted'}

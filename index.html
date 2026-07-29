@@ -155,8 +155,8 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><h1>📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">29.0</span></h1></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
-<button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this)">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">30.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this)">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
 <div class="card"><h3>Letzte Buchungen</h3><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th></tr></thead><tbody id="dashRecent"></tbody></table></div></div>
@@ -366,6 +366,17 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </section>
 
 <section id="backup" class="view"><h2>Backups</h2>
+<div class="card">
+<h3>🛡 Automatische Sicherung</h3>
+<p>Automatische lokale Backups sind immer aktiv. Sobald ein Synchronisationsordner verbunden ist, werden zusätzliche Sicherungen im Cloud-Unterordner <code>Backup</code> erstellt.</p>
+<div class="formgrid">
+<div><span class="small">Lokale Backups</span><br><b>Aktiv</b></div>
+<div><span class="small">Cloud-Backups</span><br><b id="autoBackupCloudStatus">Nicht verbunden</b></div>
+<div><span class="small">Aufbewahrung</span><br><b>30 Sicherungen</b></div>
+<div><span class="small">Letztes automatisches Backup</span><br><b id="autoBackupLastStatus">Noch keines</b></div>
+</div>
+<div id="autoBackupHint" class="message"></div>
+</div>
 <div class="card"><h3>Manuelles Backup</h3>
 <div class="formgrid"><label>Kommentar (optional)<input id="backupComment" placeholder="z. B. Vor großer Lagerkorrektur"></label></div>
 <div class="toolbar"><button class="primary" onclick="LVBackup.manual()">Backup jetzt erstellen</button><button class="secondary" onclick="LVBackup.refresh()">Liste aktualisieren</button></div>
@@ -1123,6 +1134,26 @@ async function resetWarehouse(){
 async function auditLoad(){let d=await api('/api/audit');auditrows.innerHTML=d.map(x=>`<tr><td>${esc(x.event_time)}</td><td>${esc(x.user_name)}</td><td>${esc(x.action)}</td><td>${esc(x.entity)}</td><td>${esc(x.entity_id)}</td><td>${esc(x.details)}</td></tr>`).join('')}
 
 
+
+async function refreshDatabaseStatus(){
+ try{
+  const s=await LVDatabaseStatus.get();
+  if(window.headerDatabaseUpdated){
+   headerDatabaseUpdated.textContent='Datenbank zuletzt aktualisiert: '+(s.lastModified?new Date(s.lastModified).toLocaleString('de-DE'):'Noch keine Änderung');
+  }
+  if(window.autoBackupCloudStatus)autoBackupCloudStatus.textContent=s.cloudConnected?'Aktiv':'Nicht verbunden';
+  if(window.autoBackupLastStatus)autoBackupLastStatus.textContent=s.lastAutomaticBackup?new Date(s.lastAutomaticBackup).toLocaleString('de-DE'):'Noch keines';
+  if(window.autoBackupHint){
+   autoBackupHint.textContent=s.cloudConnected
+    ?'Lokale und zusätzliche Cloud-Backups sind aktiv.'
+    :'Lokale automatische Backups sind aktiv. Für geräteübergreifende Sicherungen kann unter Dateisynchronisierung ein Ordner verbunden werden.';
+   autoBackupHint.className='message '+(s.cloudConnected?'ok':'');
+  }
+ }catch(e){
+  console.warn('Status konnte nicht geladen werden',e);
+ }
+}
+
 window.LVLogout={
  async open(){
   try{
@@ -1210,6 +1241,7 @@ async function restoreAdminSession(){
  await loadAppInfo();
  await dash();
  await loadArticles();
+ await refreshDatabaseStatus();
  addRow('i');addRow('o');
 })();
 </script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('service-worker.js');</script></body></html>

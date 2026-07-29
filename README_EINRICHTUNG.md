@@ -1,44 +1,37 @@
-# Lagerverwaltung Lovrencic V29
+# Lagerverwaltung Lovrencic V30
 
-## Vereinfachte Datenbankauswahl
+## Automatische Backups
 
-Beim ersten Start einer bestehenden Lagerverwaltung wird nur noch die Datei `lager.db` ausgewählt. Ein Synchronisationsordner ist dafür nicht erforderlich.
+Automatische lokale Backups sind immer aktiv, auch ohne verbundenen Cloud-Ordner.
 
-Die Ordnerverknüpfung befindet sich ausschließlich unter `Dateisynchronisierung` und bleibt optional.
+Ein Backup wird erstellt:
 
-## Manuelle Synchronisierung
+- etwa 15 Sekunden nach einer gespeicherten Änderung,
+- mindestens einmal täglich,
+- vor Inventuren,
+- vor Importen,
+- vor Lieferschein-Einbuchungen,
+- beim Abmelden bzw. Schließen.
 
-Die manuelle Steuerung bleibt vollständig erhalten:
+Sobald ein Synchronisationsordner verbunden wurde, speichert die App Backups zusätzlich im Cloud-Unterordner `Backup`.
 
-- Synchronisationsordner auswählen
-- Jetzt synchronisieren
-- Stand aus Datei laden
-- Lokalen Stand speichern
-- Verknüpfung lösen
-- SQLite-Datei importieren oder exportieren
+## Anzeige in der Kopfzeile
 
-## Abmelden und sauber schließen
+Oben wird angezeigt:
 
-Oben rechts befindet sich `Abmelden / schließen`.
+`Datenbank zuletzt aktualisiert: Datum und Uhrzeit`
 
-Es gibt drei Möglichkeiten:
+Der Zeitstempel wird nach jeder gespeicherten Änderung aktualisiert.
 
-1. **Synchronisieren und schließen**
-   - Backup erstellen
-   - `lager.db` in den verbundenen Synchronisationsordner schreiben
-   - Sitzung schließen
+## Backup-Status
 
-2. **Nur lokal schließen**
-   - lokalen Stand speichern
-   - lokales Backup erstellen
-   - Cloud-Datei nicht verändern
-   - Sitzung schließen
+Im Menü `Backups` wird angezeigt:
 
-3. **Abbrechen**
-   - normal weiterarbeiten
+- lokale Backups aktiv,
+- Cloud-Backups aktiv oder nicht verbunden,
+- Aufbewahrung der letzten 30 Sicherungen,
+- Zeitpunkt des letzten automatischen Backups.
 
-Nach dem Schließen zeigt die App einen geschlossenen Zustand. Erst nach bewusstem erneuten Öffnen wird auf diesem Gerät weitergearbeitet.
+## Hinweis
 
-## GitHub-Update
-
-Alle Dateien aus dem entpackten V29-Ordner in das Stammverzeichnis des GitHub-Repositories hochladen und vorhandene Dateien ersetzen. Danach die Seite mit `Strg + F5` neu laden.
+Lokale Browser-Backups können verloren gehen, wenn die Website-Daten manuell gelöscht werden. Für geräteübergreifende Sicherheit wird deshalb weiterhin ein freiwillig verbundener Cloud-Ordner empfohlen.
