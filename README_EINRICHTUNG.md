@@ -1,21 +1,44 @@
-# Lagerverwaltung Lovrencic V28 Cloud
+# Lagerverwaltung Lovrencic V29
 
-## Änderungen
+## Vereinfachte Datenbankauswahl
 
-- Techniker können ohne Passwortabfrage angelegt werden.
-- Der Fehler `table technicians has no column named description` wurde behoben.
-- Das Datumsformat kann ohne Passwort geändert werden.
-- Das Passwortfeld beim Datumsformat wurde entfernt.
-- Die Einheit kann in der Stammdaten-Lagerliste geändert werden.
-- Zusätzliche Einheiten: Liter, ml, kg, g, m, cm, mm, Satz, Rolle, Packung und Karton.
-- Bei Stück, Satz, Rolle, Packung und Karton werden Ist-, Soll- und Mindestbestand ohne Dezimalstellen angezeigt und gespeichert.
-- Bei Liter, ml, kg, g, m, cm und mm bleiben Dezimalwerte möglich.
+Beim ersten Start einer bestehenden Lagerverwaltung wird nur noch die Datei `lager.db` ausgewählt. Ein Synchronisationsordner ist dafür nicht erforderlich.
+
+Die Ordnerverknüpfung befindet sich ausschließlich unter `Dateisynchronisierung` und bleibt optional.
+
+## Manuelle Synchronisierung
+
+Die manuelle Steuerung bleibt vollständig erhalten:
+
+- Synchronisationsordner auswählen
+- Jetzt synchronisieren
+- Stand aus Datei laden
+- Lokalen Stand speichern
+- Verknüpfung lösen
+- SQLite-Datei importieren oder exportieren
+
+## Abmelden und sauber schließen
+
+Oben rechts befindet sich `Abmelden / schließen`.
+
+Es gibt drei Möglichkeiten:
+
+1. **Synchronisieren und schließen**
+   - Backup erstellen
+   - `lager.db` in den verbundenen Synchronisationsordner schreiben
+   - Sitzung schließen
+
+2. **Nur lokal schließen**
+   - lokalen Stand speichern
+   - lokales Backup erstellen
+   - Cloud-Datei nicht verändern
+   - Sitzung schließen
+
+3. **Abbrechen**
+   - normal weiterarbeiten
+
+Nach dem Schließen zeigt die App einen geschlossenen Zustand. Erst nach bewusstem erneuten Öffnen wird auf diesem Gerät weitergearbeitet.
 
 ## GitHub-Update
 
-1. ZIP entpacken.
-2. Alle Dateien im Repository ersetzen.
-3. Commit durchführen.
-4. Einige Minuten warten.
-5. Seite mit Strg+F5 neu laden.
-6. Falls weiterhin V27 erscheint, PWA/Website-Daten löschen und neu öffnen.
+Alle Dateien aus dem entpackten V29-Ordner in das Stammverzeichnis des GitHub-Repositories hochladen und vorhandene Dateien ersetzen. Danach die Seite mit `Strg + F5` neu laden.

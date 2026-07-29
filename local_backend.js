@@ -64,7 +64,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','28');
+  setSetting('database_version','29');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -121,7 +121,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'28.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'29.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -221,7 +221,24 @@ async function loadFromFolder(){if(!handle)throw Error('Kein Synchronisationsord
 window.LVStorage={
  async prepareNewDatabase(){if('showDirectoryPicker'in window){handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await saveToFolder(false)}},
  async openExistingFolder(){if(!('showDirectoryPicker'in window))throw Error('Ordnerauswahl wird von diesem Browser nicht unterstützt. Nutze die Dateiauswahl.');handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await loadFromFolder()},
- async openExistingFile(input){const f=input.files?.[0];if(!f)throw Error('Keine Datei ausgewählt.');const test=new SQL.Database(new Uint8Array(await f.arrayBuffer()));if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Ungültige Datenbankdatei.');db.close();db=test;initSchema();adoptExistingDatabase();await persist(true)}
+ async openExistingFile(input){
+  const f=input.files?.[0];
+  if(!f)throw Error('Keine Datei ausgewählt.');
+  const bytes=new Uint8Array(await f.arrayBuffer());
+  if(bytes.length<100)throw Error('Die ausgewählte Datei ist leer oder zu klein.');
+  let test;
+  try{test=new SQL.Database(bytes)}catch{throw Error('Die ausgewählte Datei ist keine lesbare SQLite-Datenbank.')}
+  const check=test.exec('PRAGMA quick_check');
+  if(check[0]?.values[0][0]!=='ok')throw Error('Die Datenbankprüfung ist fehlgeschlagen.');
+  if(!test.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='articles'").length)
+    throw Error('In dieser Datei wurde keine Lagerdatenbank mit einer Artikeltabelle gefunden.');
+  db.close();db=test;initSchema();adoptExistingDatabase();
+  if(existingDatabaseHasContent())setSetting('setup_complete','1');
+  const articleCount=Number(scalar('SELECT COUNT(*) FROM articles')||0);
+  const movementCount=tableExists('movements')?Number(scalar('SELECT COUNT(*) FROM movements')||0):0;
+  await persist(true);
+  return {ok:true,articles:articleCount,movements:movementCount,file:f.name};
+ }
 };
 window.LVBackup={
  async manual(){try{const x=await createBackup('Manuell',backupComment.value.trim());backupComment.value='';msg(backupMsg,'Backup erstellt: '+x.name,true);await this.refresh()}catch(e){msg(backupMsg,e.message,false)}},
@@ -244,5 +261,31 @@ window.LVSync={
  async importDb(input){try{await LVStorage.openExistingFile(input);location.reload()}catch(e){alert(e.message)}},
  flush(){if(handle){clearTimeout(autoTimer);this.sync(true)}}
 };
+
+window.LVSession={
+ async status(){
+  await ready;
+  const m=await ig(METAKEY)||{};
+  return {dirty:!!m.dirty,connected:!!handle,lastSync:m.lastSync||0};
+ },
+ async close(mode){
+  await ready;
+  clearTimeout(autoTimer);
+  if(mode==='sync'){
+   if(!handle)throw Error('Es ist kein Synchronisationsordner verbunden. Nutze „Nur lokal schließen“ oder richte zuerst unter Dateisynchronisierung einen Ordner ein.');
+   await saveToFolder(true);
+   await createBackup('Abschluss','Nach Synchronisierung beim Abmelden');
+  }else{
+   await createBackup('Abschluss','Lokales Abmelden ohne Synchronisierung');
+   await persist(false);
+  }
+  const m=await ig(METAKEY)||{};
+  m.sessionClosed=Date.now();
+  await ip(METAKEY,m);
+  try{db.close()}catch{}
+  return {ok:true,mode};
+ }
+};
+
 window.LVBackend={ready,db:()=>db,persist};ready.then(syncStatus);
 })();
