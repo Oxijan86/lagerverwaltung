@@ -1,36 +1,14 @@
-# Lagerverwaltung Lovrencic V32 – Cloudstart-Fix
+# Lagerverwaltung Lovrencic V32 – korrigierte Ausgabe
 
-## Behobener Fehler
+Diese Ausgabe korrigiert einen Erstellungsfehler der vorherigen V32-ZIP.
 
-Der Synchronisationsordner wurde im Startabgleich fälschlich wie eine einzelne Datei behandelt. Dadurch erschien:
+Geprüft wurde:
 
-- Cloud-Stand: unbekannt
-- Datei: Name des Ordners
-- Klick auf „Aktuellen Cloud-Stand laden“ ohne erkennbare Reaktion
+- `index.html` zeigt Version 32.0
+- `local_backend.js` meldet Version 32.0
+- Datenbankversion ist 32
+- der Startabgleich liest `lager.db` aus dem verbundenen Synchronisationsordner
+- die Cloud-Anzeige verwendet die Bezeichnung `Synchronisationsdatei`
+- der Service-Worker verwendet einen neuen Cache `lv32-cloudstart-fix-2`
 
-V32 liest jetzt korrekt die Datei `lager.db` innerhalb des verbundenen Synchronisationsordners.
-
-## Startabgleich
-
-Beim Start werden korrekt verglichen:
-
-- letzter tatsächlicher lokaler Änderungszeitpunkt,
-- Änderungszeitpunkt der Cloud-Datei `lager.db`,
-- lokaler Artikelbestand,
-- lokale Buchungsanzahl.
-
-Das bloße Öffnen der App verändert den lokalen Zeitstempel nicht mehr.
-
-## Cloud-Stand laden
-
-Beim Klick auf `Aktuellen Cloud-Stand laden`:
-
-1. wird die Ordnerberechtigung geprüft,
-2. wird `lager.db` im verbundenen Ordner gesucht,
-3. wird die SQLite-Datei geprüft,
-4. wird vor dem Laden ein Sicherheitsbackup erstellt,
-5. wird der Cloud-Stand lokal übernommen,
-6. wird die Startauswahl bestätigt,
-7. startet die App mit dem geladenen Stand neu.
-
-Fehlt `lager.db` oder wurde die Berechtigung entzogen, erscheint eine verständliche Fehlermeldung.
+Nach dem Upload auf GitHub alle vorhandenen Dateien ersetzen und anschließend die Seite mit Strg + F5 neu laden.
