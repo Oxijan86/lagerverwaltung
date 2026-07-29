@@ -1,45 +1,29 @@
-# Lagerverwaltung Lovrencic V34 – Revisionsschutz und Backup-Wiederherstellung
+# Lagerverwaltung Lovrencic V35 – Startprüfung beim Gerätewechsel
 
-## Interne Revisionen
+## Behobener Fehler
 
-Jede fachliche Änderung erzeugt in der SQLite-Datenbank:
+Auf Smartphones bleibt eine installierte PWA häufig im Hintergrund geöffnet. Die bisherige Startbestätigung blieb dadurch in der laufenden Browsersitzung gespeichert. Beim Wechsel vom PC zurück zum Smartphone erschien deshalb direkt das Dashboard.
 
-- eine fortlaufende Revisionsnummer,
-- eine eindeutige Revisions-ID,
-- die vorherige Revisions-ID,
-- einen internen Änderungszeitpunkt,
-- eine dauerhafte Datenbank-ID.
+## Neues Verhalten
 
-Der Startvergleich verwendet diese Werte und nicht nur das Dateidatum.
+Die Startprüfung wird erneut ausgelöst:
 
-## Sicherer Cloud-Schreibschutz
+- bei jedem echten Neuladen oder neuen Öffnen der App,
+- wenn die App aus dem Browser-Zwischenspeicher wiederhergestellt wird,
+- wenn die App mindestens 60 Sekunden im Hintergrund war und wieder geöffnet wird,
+- nach einem sauberen Abmelden bzw. Schließen.
 
-Vor jedem Schreiben wird die Cloud-Datenbank nochmals gelesen.
+Nach einer bewusst bestätigten Auswahl und dem technisch notwendigen kontrollierten Neuladen erscheint der Dialog nicht sofort ein zweites Mal.
 
-Das Speichern wird blockiert, wenn:
+## Gerätewechsel
 
-- die Cloud-Revision seit dem Laden verändert wurde,
-- der lokale Stand aus einer unbekannten Quelle stammt,
-- ein Backup lokal wiederhergestellt wurde,
-- ein neuer Synchronisationsordner noch nicht abgeglichen wurde.
+Empfohlener Ablauf:
 
-Eine erzwungene Überschreibung ist nur über die ausdrücklich benannte Schaltfläche möglich. Die vorherige Cloud-Datei wird dabei zuerst als Sicherheitsbackup gespeichert.
+1. Auf Gerät A `Synchronisieren und schließen`.
+2. Auf Gerät B die Lagerverwaltung öffnen.
+3. Der Startabgleich erscheint automatisch.
+4. Cloud-Revision und lokaler Stand vergleichen.
+5. `Aktuellen Cloud-Stand laden` auswählen.
+6. Erst danach buchen.
 
-## Backup-Wiederherstellung
-
-Ein Backup wird zunächst ausschließlich lokal wiederhergestellt.
-
-Danach gibt es zwei Möglichkeiten:
-
-1. den wiederhergestellten Stand ausdrücklich als neuen Cloud-Stand veröffentlichen,
-2. die Wiederherstellung verwerfen und die aktuelle Cloud-Datei erneut laden.
-
-Die Cloud-Datei wird niemals automatisch durch ein wiederhergestelltes, möglicherweise älteres Backup überschrieben.
-
-## Geräteübergreifende Backup-Liste
-
-Backups im Cloud-Unterordner `Backup` werden direkt aus dem Ordner gelesen. Dadurch sind sie auch auf einem anderen Gerät sichtbar, selbst wenn dessen lokaler Browser-Index die Sicherungen nicht kennt.
-
-## Ohne Speichern schließen
-
-Beim Bestätigen des Startstands wird eine unveränderliche Sitzungskopie erstellt. `Ohne Speichern schließen` stellt genau diesen Stand wieder her und verwirft alle Änderungen der aktuellen Sitzung.
+Ist die App auf Gerät B bereits im Hintergrund geöffnet, erscheint der Startabgleich nach dem Zurückkehren erneut, sobald sie mindestens 60 Sekunden im Hintergrund war.

@@ -38,7 +38,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div id="startupCheckOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,30,40,.9);z-index:1400;padding:20px;overflow:auto">
   <div class="card setup-card" style="max-width:760px">
     <h2>🔎 Datenbankstand beim Start prüfen</h2>
-    <p>Bevor du weiterarbeitest, bestätige bitte, welcher Datenstand verwendet werden soll.</p>
+    <p>Bevor du weiterarbeitest, bestätige bitte, welcher Datenstand verwendet werden soll. Diese Prüfung erscheint bei jedem neuen Start und nach längerer Hintergrundpause erneut.</p>
 
     <div class="formgrid">
       <div class="card">
@@ -207,7 +207,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">34.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">35.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this)">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -1217,6 +1217,46 @@ async function refreshDatabaseStatus(){
 }
 
 
+
+const LV_STARTUP_SESSION_KEY='lv_startup_confirmed';
+const LV_CONTROLLED_RELOAD_KEY='lv_controlled_reload';
+const LV_BACKGROUND_RECHECK_MS=60*1000;
+let lvHiddenAt=0;
+let lvStartupCheckRunning=false;
+
+function lvMarkControlledReload(){
+ sessionStorage.setItem(LV_CONTROLLED_RELOAD_KEY,'1');
+}
+function lvPrepareStartupCheck(){
+ const controlled=sessionStorage.getItem(LV_CONTROLLED_RELOAD_KEY)==='1';
+ sessionStorage.removeItem(LV_CONTROLLED_RELOAD_KEY);
+ if(!controlled)sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
+}
+async function lvForceStartupCheck(reason='resume'){
+ if(lvStartupCheckRunning||window.startupCheckOverlay?.style.display==='block')return;
+ lvStartupCheckRunning=true;
+ try{
+  sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
+  lvPrepareStartupCheck();
+ await LVStartup.check();
+ }finally{
+  lvStartupCheckRunning=false;
+ }
+}
+document.addEventListener('visibilitychange',async()=>{
+ if(document.visibilityState==='hidden'){
+  lvHiddenAt=Date.now();
+ }else if(lvHiddenAt&&Date.now()-lvHiddenAt>=LV_BACKGROUND_RECHECK_MS){
+  lvHiddenAt=0;
+  await lvForceStartupCheck('resume');
+ }
+});
+window.addEventListener('pageshow',async event=>{
+ if(event.persisted){
+  await lvForceStartupCheck('bfcache');
+ }
+});
+
 window.LVStartup={
  data:null,
  async check(){
@@ -1292,7 +1332,7 @@ window.LVStartup={
    await LVStartupState.confirm('cloud');
    startupCheckMsg.textContent='Cloud-Stand wurde erfolgreich geladen. Die Lagerverwaltung wird geöffnet …';
    startupCheckMsg.className='message ok';
-   setTimeout(()=>location.reload(),500);
+   lvMarkControlledReload(); setTimeout(()=>location.reload(),500);
   }catch(e){
    startupUseCloudBtn.disabled=false;
    msg(startupCheckMsg,e.message||'Cloud-Stand konnte nicht geladen werden.',false);
@@ -1318,7 +1358,7 @@ window.LVStartup={
    const r=await LVStorage.openExistingFile(input);
    await LVStartupState.confirm('other');
    startupCheckMsg.textContent=`${r.articles} Artikel und ${r.movements} Buchungen wurden geladen.`;
-   setTimeout(()=>location.reload(),300);
+   lvMarkControlledReload(); setTimeout(()=>location.reload(),300);
   }catch(e){msg(startupCheckMsg,e.message,false)}
  },
  async createNew(){
@@ -1327,6 +1367,7 @@ window.LVStartup={
   try{
    await LVStartupState.createNew();
    await LVStartupState.confirm('new');
+   lvMarkControlledReload();
    location.reload();
   }catch(e){msg(startupCheckMsg,e.message,false)}
  }
@@ -1375,6 +1416,7 @@ window.LVLogout={
  },
  finish(result){
   sessionStorage.clear();
+  localStorage.setItem('lv_last_closed_at',String(Date.now()));
   window.LVAdminSession?.lock();
   logoutOverlay.style.display='none';
   closedModeText.textContent=result.mode==='sync'
