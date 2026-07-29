@@ -243,7 +243,10 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div class="card"><h3>Inventur</h3><p>Inventurliste exportieren, gezählte Bestände eintragen und als CSV, TXT oder XLSX wieder einlesen.</p><div class="toolbar"><button class="primary" onclick="location.href='/api/export/inventory.csv'">Inventurliste exportieren</button><input id="invfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadInventoryFile(this)"></div><textarea id="invtext" placeholder="Artikelnummer;Gezählter Bestand"></textarea><div class="toolbar"><button class="secondary" onclick="inventoryPreview()">Inventur prüfen</button><button id="invcommit" class="danger" disabled onclick="inventoryCommit()">Bestandskorrekturen buchen</button></div><div id="invmsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>System</th><th>Gezählt</th><th>Differenz</th></tr></thead><tbody id="invrows"></tbody></table></div><div id="inverrors"></div></div></section>
 
 <section id="hist" class="view"><h2>Historie</h2><div class="card"><div class="formgrid"><label>Art<select id="historyFilter"><option value="ALL">Alle Buchungen</option><option value="IN">Nur Einbuchungen</option><option value="OUT">Nur Entnahmen</option></select></label><label>Von<input id="historyFrom" type="date"></label><label>Bis<input id="historyTo" type="date"></label><label>Techniker<input id="historyTechnician"></label><label>Artikelnummer oder Bezeichnung<input id="historyArticle"></label></div><div class="toolbar"><button class="primary" onclick="hist()">Filter anwenden</button><button class="secondary" onclick="clearHistoryFilters()">Filter löschen</button><button class="secondary" onclick="exportHistory()">CSV exportieren</button></div><div id="historyMsg" class="message"></div></div><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Kunde</th><th>Techniker</th><th>Fahrzeug</th><th>Maschine</th><th>Lieferschein</th><th>Quelle</th><th>Bemerkung</th></tr></thead><tbody id="hrows"></tbody></table></div></section>
-<section id="master" class="view"><h2>Stammdaten</h2><div id="lockbox" class="adminlocked"><h3>🔒 Stammdaten gesperrt</h3><div id="setupRequiredHint" class="message error" style="display:none">Nach dem Zurücksetzen muss zuerst ein neues Passwort festgelegt werden.</div><p>Zur Bearbeitung von Lagerorten, Maschinen, Technikern und der vollständigen Lagerliste ist das Passwort erforderlich.</p><div class="toolbar"><input id="adminpw" type="password" placeholder="Passwort"><button class="primary" onclick="unlockAdmin()">Stammdaten freischalten</button></div><div id="unlockmsg" class="message"></div></div><div id="adminarea" style="display:none"><div class="split"><div class="card"><h3>Lagerort anlegen</h3><input id="locname" placeholder="z. B. Regal A1"><input id="locdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('location')">Speichern</button></div><div class="card"><h3>Maschine anlegen</h3><input id="machname" placeholder="z. B. Rondostar 3000"><input id="machdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('machine')">Speichern</button></div><div class="card"><h3>Techniker anlegen</h3><input id="techname" placeholder="Name"><button class="primary" onclick="addMaster('technician')">Speichern</button></div></div><div id="mastermsg" class="message"></div><div class="card">
+<section id="master" class="view"><h2>Stammdaten</h2><div id="lockbox" class="adminlocked"><h3>🔒 Stammdaten gesperrt</h3>
+<div id="normalUnlockArea"><p>Zur Bearbeitung von Lagerorten, Maschinen, Technikern und der vollständigen Lagerliste ist das Passwort erforderlich.</p><div class="toolbar"><input id="adminpw" type="password" placeholder="Passwort"><button class="primary" onclick="unlockAdmin()">Stammdaten freischalten</button></div></div>
+<div id="firstPasswordArea" style="display:none"><div class="message error">Für diese Datenbank wurde noch kein Administratorpasswort eingerichtet. Bitte lege jetzt ein Passwort fest.</div><div class="formgrid"><label>Neues Passwort<input id="firstPwNew" type="password" minlength="6"></label><label>Passwort wiederholen<input id="firstPwRepeat" type="password" minlength="6"></label></div><button class="primary" onclick="createFirstAdminPassword()">Passwort speichern und Stammdaten öffnen</button></div>
+<div id="unlockmsg" class="message"></div></div><div id="adminarea" style="display:none"><div class="split"><div class="card"><h3>Lagerort anlegen</h3><input id="locname" placeholder="z. B. Regal A1"><input id="locdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('location')">Speichern</button></div><div class="card"><h3>Maschine anlegen</h3><input id="machname" placeholder="z. B. Rondostar 3000"><input id="machdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('machine')">Speichern</button></div><div class="card"><h3>Techniker anlegen</h3><input id="techname" placeholder="Name"><button class="primary" onclick="addMaster('technician')">Speichern</button></div></div><div id="mastermsg" class="message"></div><div class="card">
 <h3>📅 Datumsformat</h3>
 <p>Das Datumsformat gilt sofort für vorhandene und neue Daten in Ansichten und Exporten. Die Datenbank speichert Datumswerte intern weiterhin sicher im ISO-Format.</p>
 <div class="formgrid">
@@ -273,7 +276,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 
 <div id="passwordSetupArea" style="display:none">
-<p><b>Nach dem vollständigen Zurücksetzen muss ein neues Passwort festgelegt werden.</b></p>
+<p><b>Für diese Datenbank ist noch kein Administratorpasswort vorhanden.</b></p>
 <div class="formgrid">
 <label>Neues Passwort<input id="pwSetupNew" type="password"></label>
 <label>Neues Passwort wiederholen<input id="pwSetupRepeat" type="password"></label>
@@ -298,12 +301,15 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <div class="card"><h3>Gesamte Lagerliste bearbeiten</h3>
 <p class="small">Der Istbestand wird aus allen Ein- und Ausbuchungen berechnet. Eine manuelle Änderung erzeugt automatisch eine Bestandskorrektur in der Historie.</p>
+<div class="toolbar"><input id="masterArticleSearch" type="search" placeholder="Artikelnummer, Bezeichnung, Lagerort oder Maschine suchen …" oninput="filterMasterArticles()" style="min-width:360px;flex:1"><button class="secondary" onclick="clearMasterSearch()">Suche löschen</button><span id="masterSearchCount" class="small"></span></div>
 <div class="toolbar">
 <button class="secondary" onclick="copyStockToLevels('target')">Sollbestand aus Istbestand übernehmen</button>
 <button class="secondary" onclick="copyStockToLevels('minimum')">Mindestbestand aus Istbestand übernehmen</button>
-<button class="primary" onclick="copyStockToLevels('both')">Soll und Mindestbestand aus Istbestand übernehmen</button>
+<button class="secondary" onclick="copyStockToLevels('both')">Soll und Mindestbestand aus Istbestand übernehmen</button>
+<button id="saveAllArticlesButton" class="primary" onclick="saveAllArticles()">Alle Änderungen speichern</button>
 </div>
-<div class="tablewrap"><table class="edit-table"><thead><tr><th>Art.-Nr.</th><th>Bezeichnung</th><th>Istbestand</th><th>Soll</th><th>Mindest.</th><th>Einheit</th><th>Lagerort</th><th>Maschine</th><th>Aktiv</th><th></th></tr></thead><tbody id="editrows"></tbody></table></div></div></div></section>
+<div id="saveAllArticlesMsg" class="message"></div>
+<div class="tablewrap"><table class="edit-table"><thead><tr><th>Art.-Nr.</th><th>Bezeichnung</th><th>Istbestand</th><th>Soll</th><th>Mindest.</th><th>Einheit</th><th>Lagerort</th><th>Maschine</th><th>Aktiv</th></tr></thead><tbody id="editrows"></tbody></table></div></div></div></section>
 
 <section id="sync" class="view"><h2>Dateisynchronisierung</h2>
 <div class="card">
@@ -604,23 +610,36 @@ async function loadEditTable(){
  let locs='<option></option>'+md.locations.map(x=>`<option>${esc(x.name)}</option>`).join('');
  let machs='<option></option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');
 
- editrows.innerHTML=arts.map(a=>`<tr data-id="${a.id}">
-  <td><input value="${esc(a.article_no)}"></td>
-  <td><input value="${esc(a.description)}"></td>
-  <td><input type="number" step="0.01" min="0" value="${a.stock}"></td>
-  <td><input type="number" step="0.01" min="0" value="${a.target_stock}"></td>
-  <td><input type="number" step="0.01" min="0" value="${a.minimum_stock}"></td>
-  <td><input value="${esc(a.unit)}"></td>
-  <td><select>${locs}</select></td>
-  <td><select>${machs}</select></td>
-  <td><input type="checkbox" ${a.active?'checked':''}></td>
-  <td><button class="primary" onclick="saveArticle(this)">Speichern</button></td>
+ editrows.innerHTML=arts.map(a=>`<tr data-id="${a.id}" data-search="${esc((a.article_no+' '+a.description+' '+(a.location||'')+' '+(a.machine||'')).toLowerCase())}">
+  <td><input value="${esc(a.article_no)}" oninput="markMasterRowChanged(this)"></td>
+  <td><input value="${esc(a.description)}" oninput="markMasterRowChanged(this)"></td>
+  <td><input type="number" step="0.01" min="0" value="${a.stock}" oninput="markMasterRowChanged(this)"></td>
+  <td><input type="number" step="0.01" min="0" value="${a.target_stock}" oninput="markMasterRowChanged(this)"></td>
+  <td><input type="number" step="0.01" min="0" value="${a.minimum_stock}" oninput="markMasterRowChanged(this)"></td>
+  <td><input value="${esc(a.unit)}" oninput="markMasterRowChanged(this)"></td>
+  <td><select onchange="markMasterRowChanged(this)">${locs}</select></td>
+  <td><select onchange="markMasterRowChanged(this)">${machs}</select></td>
+  <td><input type="checkbox" ${a.active?'checked':''} onchange="markMasterRowChanged(this)"></td>
  </tr>`).join('');
 
  [...editrows.children].forEach((row,index)=>{
   row.children[6].firstChild.value=arts[index].location||'';
   row.children[7].firstChild.value=arts[index].machine||'';
  });
+ filterMasterArticles();
+}
+
+function markMasterRowChanged(input){input.closest('tr').dataset.changed='1';saveAllArticlesButton.textContent='Änderungen speichern';}
+function filterMasterArticles(){let q=(masterArticleSearch?.value||'').trim().toLowerCase(),shown=0;[...editrows.children].forEach(r=>{let live=[...r.querySelectorAll('input,select')].map(x=>x.type==='checkbox'?'':x.value).join(' ').toLowerCase();let ok=!q||(r.dataset.search+' '+live).includes(q);r.style.display=ok?'':'none';if(ok)shown++});if(window.masterSearchCount)masterSearchCount.textContent=`${shown} von ${editrows.children.length} Artikeln`;};
+function clearMasterSearch(){masterArticleSearch.value='';filterMasterArticles();masterArticleSearch.focus();}
+async function saveAllArticles(){
+ let rows=[...editrows.children].filter(r=>r.dataset.changed==='1');
+ if(!rows.length)return msg(saveAllArticlesMsg,'Es wurden keine Änderungen vorgenommen.',true);
+ let items=rows.map(row=>{let c=row.children;return {id:+row.dataset.id,article_no:c[0].firstChild.value,description:c[1].firstChild.value,current_stock:+c[2].firstChild.value,target_stock:+c[3].firstChild.value,minimum_stock:+c[4].firstChild.value,unit:c[5].firstChild.value,location:c[6].firstChild.value,machine:c[7].firstChild.value,active:c[8].firstChild.checked}});
+ saveAllArticlesButton.disabled=true;saveAllArticlesButton.textContent='Speichert …';
+ try{let d=await api('/api/articles/batch-update',{method:'POST',body:JSON.stringify({password:sessionStorage.adminPassword||'',items})});rows.forEach(r=>delete r.dataset.changed);msg(saveAllArticlesMsg,`${d.updated} Artikel gespeichert. ${d.corrected||0} Bestandskorrektur(en) gebucht.`,true);saveAllArticlesButton.textContent='Alle Änderungen speichern';arts=[];await loadArticles();await dash();await loadAppInfo();await loadEditTable();}
+ catch(e){msg(saveAllArticlesMsg,e.message,false);saveAllArticlesButton.textContent='Änderungen speichern';}
+ finally{saveAllArticlesButton.disabled=false}
 }
 
 async function saveArticle(button){
@@ -861,7 +880,8 @@ async function refreshPasswordStatus(){
   let passwordSetupRequired=!!d.setup_required;
   passwordSetupArea.style.display=passwordSetupRequired?'block':'none';
   passwordChangeArea.style.display=passwordSetupRequired?'none':'block';
-  setupRequiredHint.style.display=passwordSetupRequired?'block':'none';
+  if(window.firstPasswordArea)firstPasswordArea.style.display=passwordSetupRequired?'block':'none';
+  if(window.normalUnlockArea)normalUnlockArea.style.display=passwordSetupRequired?'none':'block';
 
   if(passwordSetupRequired){
    sessionStorage.removeItem('admin');
@@ -875,12 +895,25 @@ async function refreshPasswordStatus(){
 }
 
 
+async function createFirstAdminPassword(){
+ try{
+  if(firstPwNew.value.length<6)throw Error('Das Passwort muss mindestens 6 Zeichen haben.');
+  if(firstPwNew.value!==firstPwRepeat.value)throw Error('Die Passwörter stimmen nicht überein.');
+  await api('/api/admin/setup-password',{method:'POST',body:JSON.stringify({password:firstPwNew.value,repeat_password:firstPwRepeat.value})});
+  sessionStorage.admin='1';sessionStorage.adminPassword=firstPwNew.value;
+  firstPwNew.value='';firstPwRepeat.value='';
+  lockbox.style.display='none';adminarea.style.display='block';
+  msg(unlockmsg,'Das Passwort wurde gespeichert. Die Stammdaten sind freigeschaltet.',true);
+  await refreshPasswordStatus();await master();await loadEditTable();
+ }catch(e){msg(unlockmsg,e.message,false)}
+}
+
 async function completeInitialSetup(){
  try{
   let result=await api('/api/admin/setup-password',{
    method:'POST',
    body:JSON.stringify({
-    new_password:initialPwNew.value,
+    password:initialPwNew.value,
     repeat_password:initialPwRepeat.value
    })
   });
@@ -909,7 +942,7 @@ async function changeAdminPassword(){
   await api('/api/admin/change-password',{
    method:'POST',
    body:JSON.stringify({
-    current_password:pwCurrent.value,
+    old_password:pwCurrent.value,
     new_password:pwNew.value,
     repeat_password:pwRepeat.value
    })
@@ -927,7 +960,7 @@ async function setupAdminPassword(){
   await api('/api/admin/setup-password',{
    method:'POST',
    body:JSON.stringify({
-    new_password:pwSetupNew.value,
+    password:pwSetupNew.value,
     repeat_password:pwSetupRepeat.value
    })
   });

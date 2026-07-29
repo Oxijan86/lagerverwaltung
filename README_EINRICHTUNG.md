@@ -1,16 +1,14 @@
-# Lagerverwaltung Lovrencic V24
+# Lagerverwaltung Lovrencic V25
 
-## Behobener Fehler
+## Änderungen
 
-Bei einer vorhandenen Datenbank mit Artikeln konnte der Datenbank-Einrichtungsassistent erneut erscheinen, wenn die alte Datenbank noch kein Stammdaten-Passwort enthielt.
+- Ein fehlendes Administratorpasswort kann direkt auf der gesperrten Stammdatenseite angelegt werden.
+- Die falschen Passwort-Feldnamen zwischen Oberfläche und lokalem Backend wurden korrigiert.
+- In der gesamten Lagerliste gibt es eine Suche nach Artikelnummer, Bezeichnung, Lagerort und Maschine.
+- Pro Artikelzeile gibt es keinen eigenen Speicherbutton mehr.
+- Geänderte Zeilen werden gesammelt über **Alle Änderungen speichern** gespeichert.
+- Bestandsänderungen erzeugen weiterhin ordnungsgemäße Korrekturbuchungen in Historie und Audit.
 
-Version 24 trennt jetzt zwei Zustände:
+## Aktualisierung auf GitHub
 
-- **Datenbankeinrichtung:** erscheint nur bei einer wirklich neuen oder leeren Datenbank.
-- **Passworteinrichtung:** erscheint nur innerhalb des Bereichs Stammdaten, wenn für eine ältere Datenbank noch kein Passwort festgelegt wurde.
-
-Eine vorhandene Datenbank mit 697 Artikeln öffnet daher direkt das Dashboard.
-
-## Aktualisierung
-
-Alle Dateien in GitHub ersetzen, Commit durchführen und die Seite mit Strg+F5 neu laden. Bei einer installierten PWA gegebenenfalls die App entfernen und neu installieren, damit der neue Service-Worker sicher geladen wird.
+Alle Dateien hochladen und ersetzen. Anschließend mit `Strg + F5` neu laden. Bei einer installierten PWA gegebenenfalls die PWA schließen, entfernen und erneut installieren, falls weiterhin Version 24 erscheint.
