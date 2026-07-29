@@ -34,6 +34,50 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 }
 </style></head><body>
 
+
+<div id="startupCheckOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,30,40,.9);z-index:1400;padding:20px;overflow:auto">
+  <div class="card setup-card" style="max-width:760px">
+    <h2>🔎 Datenbankstand beim Start prüfen</h2>
+    <p>Bevor du weiterarbeitest, bestätige bitte, welcher Datenstand verwendet werden soll.</p>
+
+    <div class="formgrid">
+      <div class="card">
+        <h3>Lokaler Stand</h3>
+        <div><span class="small">Zuletzt aktualisiert</span><br><b id="startupLocalModified">–</b></div>
+        <div style="margin-top:8px"><span class="small">Artikel</span><br><b id="startupLocalArticles">–</b></div>
+        <div style="margin-top:8px"><span class="small">Buchungen</span><br><b id="startupLocalMovements">–</b></div>
+      </div>
+
+      <div class="card">
+        <h3>Cloud-Stand</h3>
+        <div><span class="small">Zuletzt aktualisiert</span><br><b id="startupCloudModified">Nicht verbunden</b></div>
+        <div style="margin-top:8px"><span class="small">Datei</span><br><b id="startupCloudFile">–</b></div>
+        <div style="margin-top:8px"><span class="small">Status</span><br><b id="startupComparison">–</b></div>
+      </div>
+    </div>
+
+    <div id="startupCheckWarning" class="message"></div>
+
+    <div class="card">
+      <h3>Wie möchtest du starten?</h3>
+      <div class="toolbar">
+        <button class="primary" id="startupUseCloudBtn" onclick="LVStartup.useCloud()">Aktuellen Cloud-Stand laden</button>
+        <button class="secondary" onclick="LVStartup.useLocal()">Lokalen Stand verwenden</button>
+        <button class="secondary" onclick="LVStartup.selectOther()">Andere lager.db auswählen</button>
+        <button class="secondary" onclick="LVStartup.createNew()">Neue Datenbank erstellen</button>
+      </div>
+      <input id="startupOtherFileInput" type="file" accept=".db,.sqlite,.sqlite3,application/octet-stream" style="display:none" onchange="LVStartup.importOther(this)">
+    </div>
+
+    <div class="card low">
+      <h3>Schutz vor Überschreiben</h3>
+      <p>Wenn der lokale Stand älter als die Cloud-Datei ist, kann er nicht automatisch in die Cloud geschrieben werden. Erst nach bewusster Bestätigung darf weitergearbeitet werden.</p>
+    </div>
+
+    <div id="startupCheckMsg" class="message"></div>
+  </div>
+</div>
+
 <div id="logoutOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,30,40,.88);z-index:1200;padding:20px;overflow:auto">
   <div class="card setup-card" style="max-width:650px">
     <h2>⏻ Lagerverwaltung schließen</h2>
@@ -48,6 +92,12 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
       <h3>💾 Nur lokal schließen</h3>
       <p>Speichert den aktuellen Stand und erstellt ein lokales Backup. Die gemeinsame Cloud-Datei wird nicht geändert.</p>
       <button class="secondary" onclick="LVLogout.closeLocal()">Nur lokal schließen</button>
+    </div>
+
+    <div class="card">
+      <h3>🚫 Ohne Speichern schließen</h3>
+      <p>Verwirft alle Änderungen seit dem letzten gespeicherten Datenbankstand. Es wird weder lokal noch in die Cloud gespeichert und kein neues Backup erstellt.</p>
+      <button class="secondary" onclick="LVLogout.closeWithoutSaving()">Ohne Speichern schließen</button>
     </div>
     <div class="toolbar" style="margin-top:16px">
       <button class="secondary" onclick="LVLogout.cancel()">Abbrechen</button>
@@ -155,7 +205,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">30.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">31.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this)">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -1154,6 +1204,102 @@ async function refreshDatabaseStatus(){
  }
 }
 
+
+window.LVStartup={
+ data:null,
+ async check(){
+  try{
+   this.data=await LVStartupState.get();
+   if(!this.data.needsConfirmation)return true;
+
+   startupLocalModified.textContent=this.data.localModified
+    ?new Date(this.data.localModified).toLocaleString('de-DE')
+    :'Noch keine Änderung';
+   startupLocalArticles.textContent=this.data.localArticles;
+   startupLocalMovements.textContent=this.data.localMovements;
+
+   if(this.data.cloudConnected){
+    startupCloudModified.textContent=this.data.cloudModified
+      ?new Date(this.data.cloudModified).toLocaleString('de-DE')
+      :'Unbekannt';
+    startupCloudFile.textContent=this.data.cloudFile||'lager.db';
+    startupUseCloudBtn.disabled=!this.data.cloudAccessible;
+   }else{
+    startupCloudModified.textContent='Nicht verbunden';
+    startupCloudFile.textContent='–';
+    startupUseCloudBtn.disabled=true;
+   }
+
+   let text='Lokaler Stand kann verwendet werden.';
+   let warning='';
+   if(this.data.cloudConnected){
+    if(this.data.cloudNewer){
+      text='Cloud-Stand ist neuer';
+      warning='⚠ Die Cloud-Datei ist neuer als der lokale Stand. Empfohlen: Cloud-Stand laden.';
+    }else if(this.data.localNewer){
+      text='Lokaler Stand ist neuer';
+      warning='Der lokale Stand ist neuer als die Cloud-Datei. Prüfe vor dem späteren Synchronisieren, ob wirklich keine Änderungen auf einem anderen Gerät fehlen.';
+    }else{
+      text='Beide Stände sind gleich alt';
+      warning='Bitte bestätige trotzdem den gewünschten Datenstand.';
+    }
+   }else{
+    text='Kein Cloud-Ordner verbunden';
+    warning='Du kannst lokal weiterarbeiten, eine andere Datenbank wählen oder eine neue Datenbank erstellen.';
+   }
+   startupComparison.textContent=text;
+   startupCheckWarning.textContent=warning;
+   startupCheckWarning.className='message '+(this.data.cloudNewer?'error':'');
+   startupCheckOverlay.style.display='block';
+   document.body.style.overflow='hidden';
+   return false;
+  }catch(e){
+   console.warn(e);
+   return true;
+  }
+ },
+ async useCloud(){
+  startupCheckMsg.textContent='Cloud-Stand wird geprüft und geladen …';
+  try{
+   await LVStartupState.loadCloud();
+   await LVStartupState.confirm('cloud');
+   location.reload();
+  }catch(e){msg(startupCheckMsg,e.message,false)}
+ },
+ async useLocal(){
+  try{
+   if(this.data?.cloudNewer){
+    const ok=confirm('Die Cloud-Datei ist neuer als dein lokaler Stand. Möchtest du wirklich mit dem älteren lokalen Stand weiterarbeiten?');
+    if(!ok)return;
+   }
+   await LVStartupState.confirm('local');
+   startupCheckOverlay.style.display='none';
+   document.body.style.overflow='';
+  }catch(e){msg(startupCheckMsg,e.message,false)}
+ },
+ selectOther(){
+  startupOtherFileInput.value='';
+  startupOtherFileInput.click();
+ },
+ async importOther(input){
+  try{
+   const r=await LVStorage.openExistingFile(input);
+   await LVStartupState.confirm('other');
+   startupCheckMsg.textContent=`${r.articles} Artikel und ${r.movements} Buchungen wurden geladen.`;
+   setTimeout(()=>location.reload(),300);
+  }catch(e){msg(startupCheckMsg,e.message,false)}
+ },
+ async createNew(){
+  const ok=confirm('Möchtest du wirklich eine neue leere Datenbank erstellen? Der bisherige lokale Stand bleibt nur über vorhandene Backups erhalten.');
+  if(!ok)return;
+  try{
+   await LVStartupState.createNew();
+   await LVStartupState.confirm('new');
+   location.reload();
+  }catch(e){msg(startupCheckMsg,e.message,false)}
+ }
+};
+
 window.LVLogout={
  async open(){
   try{
@@ -1186,13 +1332,24 @@ window.LVLogout={
    this.finish(result);
   }catch(e){msg(logoutMsg,e.message,false)}
  },
+ async closeWithoutSaving(){
+  const ok=confirm('Alle Änderungen seit dem letzten gespeicherten Datenbankstand werden verworfen. Wirklich ohne Speichern schließen?');
+  if(!ok)return;
+  logoutMsg.textContent='Änderungen werden verworfen …';
+  try{
+   const result=await LVSession.close('discard');
+   this.finish(result);
+  }catch(e){msg(logoutMsg,e.message,false)}
+ },
  finish(result){
   sessionStorage.clear();
   window.LVAdminSession?.lock();
   logoutOverlay.style.display='none';
   closedModeText.textContent=result.mode==='sync'
    ?'Der aktuelle Stand wurde synchronisiert und zusätzlich gesichert.'
-   :'Der aktuelle Stand wurde nur lokal gesichert. Vor dem Arbeiten auf einem anderen Gerät dort zuerst den aktuellen Cloud-Stand laden.';
+   :result.mode==='discard'
+    ?'Die nicht gespeicherten Änderungen wurden verworfen. Es wurde keine neue Sicherung erstellt.'
+    :'Der aktuelle Stand wurde nur lokal gesichert. Vor dem Arbeiten auf einem anderen Gerät dort zuerst den aktuellen Cloud-Stand laden.';
   closedOverlay.style.display='block';
   document.body.style.overflow='hidden';
  }
@@ -1243,5 +1400,6 @@ async function restoreAdminSession(){
  await loadArticles();
  await refreshDatabaseStatus();
  addRow('i');addRow('o');
+ await LVStartup.check();
 })();
 </script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('service-worker.js');</script></body></html>

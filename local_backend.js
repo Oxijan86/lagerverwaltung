@@ -76,7 +76,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','30');
+  setSetting('database_version','31');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -133,7 +133,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'30.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'31.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -278,6 +278,24 @@ window.LVStorage={
  }
 };
 
+
+async function cloudState(){
+ if(!handle)return {connected:false};
+ try{
+  if(!await permission(handle,'read'))return {connected:true,accessible:false,file:handle.name||'lager.db'};
+  const file=await handle.getFile();
+  return {connected:true,accessible:true,file:file.name,modified:Number(file.lastModified||0),size:Number(file.size||0)};
+ }catch(e){
+  return {connected:true,accessible:false,file:handle?.name||'lager.db',error:e.message};
+ }
+}
+async function localCounts(){
+ return {
+  articles:Number(scalar('SELECT COUNT(*) FROM articles')||0),
+  movements:tableExists('movements')?Number(scalar('SELECT COUNT(*) FROM movements')||0):0
+ };
+}
+
 window.LVDatabaseStatus={
  async get(){
   await ready;
@@ -314,6 +332,59 @@ window.LVSync={
  flush(){if(handle){clearTimeout(autoTimer);this.sync(true)}}
 };
 
+
+window.LVStartupState={
+ async get(){
+  await ready;
+  const m=await ig(METAKEY)||{};
+  const c=await cloudState();
+  const counts=await localCounts();
+  const localModified=Number(m.localModified||0);
+  const cloudModified=Number(c.modified||0);
+  return {
+   needsConfirmation:sessionStorage.getItem('lv_startup_confirmed')!=='1',
+   localModified,
+   localArticles:counts.articles,
+   localMovements:counts.movements,
+   cloudConnected:!!c.connected,
+   cloudAccessible:!!c.accessible,
+   cloudModified,
+   cloudFile:c.file||'',
+   cloudNewer:!!(c.accessible&&cloudModified>localModified+1000),
+   localNewer:!!(c.accessible&&localModified>cloudModified+1000)
+  };
+ },
+ async confirm(mode){
+  await ready;
+  const m=await ig(METAKEY)||{};
+  m.startupConfirmedAt=Date.now();
+  m.startupConfirmedMode=mode;
+  await ip(METAKEY,m);
+  sessionStorage.setItem('lv_startup_confirmed','1');
+  return {ok:true};
+ },
+ async loadCloud(){
+  await ready;
+  if(!handle)throw Error('Kein Synchronisationsordner verbunden.');
+  await LVSync.load();
+ },
+ async createNew(){
+  await ready;
+  await createBackup('Sicherheitsbackup','Vor neuer Datenbank');
+  db.close();
+  db=new SQL.Database();
+  initSchema();
+  setSetting('setup_complete','0');
+  setSetting('database_version','31');
+  const m=await ig(METAKEY)||{};
+  m.dirty=true;
+  m.localModified=Date.now();
+  await ip(METAKEY,m);
+  await persist(true);
+  return {ok:true};
+ }
+};
+
 window.LVSession={
  async status(){
   await ready;
@@ -323,13 +394,27 @@ window.LVSession={
  async close(mode){
   await ready;
   clearTimeout(autoTimer);
+  clearTimeout(automaticBackupTimer);
   if(mode==='sync'){
    if(!handle)throw Error('Es ist kein Synchronisationsordner verbunden. Nutze „Nur lokal schließen“ oder richte zuerst unter Dateisynchronisierung einen Ordner ein.');
    await saveToFolder(true);
    await createBackup('Abschluss','Nach Synchronisierung beim Abmelden');
-  }else{
+  }else if(mode==='local'){
    await createBackup('Abschluss','Lokales Abmelden ohne Synchronisierung');
    await persist(false);
+  }else if(mode==='discard'){
+   const stored=await ig(DBKEY);
+   if(stored){
+    try{db.close()}catch{}
+    db=new SQL.Database(new Uint8Array(stored));
+    initSchema();
+   }
+   const m=await ig(METAKEY)||{};
+   m.dirty=false;
+   m.sessionClosed=Date.now();
+   await ip(METAKEY,m);
+   try{db.close()}catch{}
+   return {ok:true,mode};
   }
   const m=await ig(METAKEY)||{};
   m.sessionClosed=Date.now();

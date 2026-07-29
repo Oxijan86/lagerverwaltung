@@ -1,37 +1,30 @@
-# Lagerverwaltung Lovrencic V30
+# Lagerverwaltung Lovrencic V31
 
-## Automatische Backups
+## Startabgleich
 
-Automatische lokale Backups sind immer aktiv, auch ohne verbundenen Cloud-Ordner.
+Bei jedem neuen Start wird vor der Arbeit geprüft:
 
-Ein Backup wird erstellt:
+- wann der lokale Stand zuletzt geändert wurde,
+- wann die Cloud-Datei zuletzt geändert wurde,
+- wie viele Artikel und Buchungen lokal vorhanden sind,
+- ob der lokale oder der Cloud-Stand neuer ist.
 
-- etwa 15 Sekunden nach einer gespeicherten Änderung,
-- mindestens einmal täglich,
-- vor Inventuren,
-- vor Importen,
-- vor Lieferschein-Einbuchungen,
-- beim Abmelden bzw. Schließen.
+Anschließend muss bewusst gewählt werden:
 
-Sobald ein Synchronisationsordner verbunden wurde, speichert die App Backups zusätzlich im Cloud-Unterordner `Backup`.
+- aktuellen Cloud-Stand laden,
+- lokalen Stand verwenden,
+- andere `lager.db` auswählen,
+- neue Datenbank erstellen.
 
-## Anzeige in der Kopfzeile
+Ist die Cloud-Datei neuer, wird deutlich davor gewarnt, mit einem älteren lokalen Stand weiterzuarbeiten.
 
-Oben wird angezeigt:
+## Schließen
 
-`Datenbank zuletzt aktualisiert: Datum und Uhrzeit`
+Beim Beenden gibt es vier Möglichkeiten:
 
-Der Zeitstempel wird nach jeder gespeicherten Änderung aktualisiert.
+1. Synchronisieren und schließen
+2. Nur lokal speichern und schließen
+3. Ohne Speichern schließen
+4. Abbrechen
 
-## Backup-Status
-
-Im Menü `Backups` wird angezeigt:
-
-- lokale Backups aktiv,
-- Cloud-Backups aktiv oder nicht verbunden,
-- Aufbewahrung der letzten 30 Sicherungen,
-- Zeitpunkt des letzten automatischen Backups.
-
-## Hinweis
-
-Lokale Browser-Backups können verloren gehen, wenn die Website-Daten manuell gelöscht werden. Für geräteübergreifende Sicherheit wird deshalb weiterhin ein freiwillig verbundener Cloud-Ordner empfohlen.
+`Ohne Speichern schließen` verwirft alle Änderungen seit dem letzten gespeicherten Datenbankstand. Es wird weder lokal noch in die Cloud geschrieben und kein neues Backup erzeugt.
