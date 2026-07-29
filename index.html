@@ -359,6 +359,21 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </main></div><script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+window.LVAdminSession = window.LVAdminSession || {
+  unlocked: sessionStorage.getItem('lv_admin_unlocked') === '1',
+  unlock() {
+    this.unlocked = true;
+    sessionStorage.setItem('lv_admin_unlocked','1');
+  },
+  lock() {
+    this.unlocked = false;
+    sessionStorage.removeItem('lv_admin_unlocked');
+  }
+};
+</script>
+
 <script src="local_backend.js"></script>
 <script>
 let arts=[],deliveryp=[],servicep=[],csvp=[],deliveryUnknown=[],serviceUnknown=[],csvUnknown=[],historyData=[],inventoryData=[],md={},lastImportFilename='',appDateFormat='DD.MM.YYYY',helpFiles=[];
@@ -376,7 +391,7 @@ function formatAppDate(value,withTime=false){
  if(withTime&&m[4])date+=` ${m[4]}:${m[5]}${m[6]?':'+m[6]:''}`;
  return date;
 }
-async function api(u,o={}){await LVBackend.ready;let r=await fetch(u,{headers:{'Content-Type':'application/json'},...o});let d=await r.json();if(!r.ok)throw Error(d.error||'Fehler');return d}
+async function api(u,o={}){await LVBackend.ready;const h={'Content-Type':'application/json',...(o.headers||{})};if(window.LVAdminSession?.unlocked)h['X-LV-Admin-Unlocked']='1';let r=await fetch(u,{...o,headers:h});let d=await r.json();if(!r.ok)throw Error(d.error||'Fehler');return d}
 function msg(e,t,ok){e.textContent=t;e.className='message '+(ok?'ok':'error')}
 function show(id,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='req')loadReq();if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'&&sessionStorage.admin==='1'){loadEditTable();loadSettings()}if(id==='help')loadHelpList()}
 

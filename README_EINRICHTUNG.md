@@ -1,14 +1,29 @@
-# Lagerverwaltung Lovrencic V25
+# Lagerverwaltung Lovrencic V26 – Stammdaten-Freischaltung
 
-## Änderungen
+## Behoben
 
-- Ein fehlendes Administratorpasswort kann direkt auf der gesperrten Stammdatenseite angelegt werden.
-- Die falschen Passwort-Feldnamen zwischen Oberfläche und lokalem Backend wurden korrigiert.
-- In der gesamten Lagerliste gibt es eine Suche nach Artikelnummer, Bezeichnung, Lagerort und Maschine.
-- Pro Artikelzeile gibt es keinen eigenen Speicherbutton mehr.
-- Geänderte Zeilen werden gesammelt über **Alle Änderungen speichern** gespeichert.
-- Bestandsänderungen erzeugen weiterhin ordnungsgemäße Korrekturbuchungen in Historie und Audit.
+Bei übernommenen älteren Datenbanken konnten Artikel geladen werden, aber die Stammdaten blieben intern gesperrt. Dadurch ließen sich insbesondere Techniker, Lagerorte und Maschinen trotz sichtbarer Eingabefelder nicht speichern.
 
-## Aktualisierung auf GitHub
+Version 26 trennt jetzt sauber zwischen:
 
-Alle Dateien hochladen und ersetzen. Anschließend mit `Strg + F5` neu laden. Bei einer installierten PWA gegebenenfalls die PWA schließen, entfernen und erneut installieren, falls weiterhin Version 24 erscheint.
+- vorhandenen Lagerdaten,
+- vorhandenem Administratorpasswort,
+- Freischaltung der aktuellen Sitzung.
+
+## Neues Verhalten
+
+1. Eine alte Datenbank mit Artikeln wird direkt geladen.
+2. Fehlt ein Passwort, kann einmalig ein neues Administratorpasswort festgelegt werden.
+3. Nach erfolgreicher Passwortanlage sind die Stammdaten sofort freigeschaltet.
+4. Die Freischaltung bleibt für die aktuelle Browser-Sitzung erhalten.
+5. Techniker, Lagerorte, Maschinen, Fahrzeuge und Artikeländerungen können anschließend gespeichert werden.
+6. Beim Schließen des Browsers endet die Freischaltung automatisch.
+
+## Update auf GitHub
+
+1. ZIP entpacken.
+2. Alle Dateien in das bestehende Repository hochladen und ersetzen.
+3. Commit durchführen.
+4. Einige Minuten warten.
+5. Seite mit `Strg + F5` neu laden.
+6. Bei installierter PWA diese vollständig schließen oder neu installieren, falls weiterhin Version 25 angezeigt wird.
