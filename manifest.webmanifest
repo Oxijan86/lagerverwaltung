@@ -1,11 +1,11 @@
 {
-  "name": "Lagerverwaltung Lovrencic V20",
-  "short_name": "Lager V20",
+  "name": "Lagerverwaltung Lovrencic V21",
+  "short_name": "Lager V21",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f6f5",
-  "theme_color": "#1f5f4a",
+  "background_color": "#f2f5f3",
+  "theme_color": "#245b48",
   "icons": [
     {
       "src": "icons/icon-192.svg",

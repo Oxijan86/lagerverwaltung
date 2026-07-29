@@ -1,168 +1,971 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#1f5f4a">
-  <meta name="description" content="Lagerverwaltung Lovrencic – PWA mit SQLite und OneDrive">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon-192.svg">
-  <title>Lagerverwaltung Lovrencic</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+<!doctype html><html lang="de"><head>
+<meta name="theme-color" content="#245b48">
+<meta name="description" content="Lagerverwaltung Lovrencic V21 PWA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
+<style>
+body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header{background:#173e5e;color:#fff;padding:16px 22px;position:sticky;top:0;z-index:5}header h1{margin:0;font-size:20px}.shell{display:grid;grid-template-columns:255px 1fr}nav{background:#fff;padding:14px;min-height:calc(100vh - 54px)}nav button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:13px;border-radius:8px;margin:3px 0;font-size:15px;cursor:pointer}nav button.active,nav button:hover{background:#e7f0f7;font-weight:bold}main{padding:22px}.view{display:none}.view.active{display:block}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:#fff;border:1px solid #d9e0e6;border-radius:12px;padding:18px;margin-bottom:14px}.kpi b{font-size:30px;display:block}input,select,textarea{width:100%;padding:10px;border:1px solid #b9c4ce;border-radius:7px;box-sizing:border-box}textarea{min-height:170px}button.primary,button.secondary,button.danger{border:0;border-radius:7px;padding:10px 15px;font-weight:bold;cursor:pointer}.primary{background:#1d5f91;color:#fff}.secondary{background:#e8edf1}.danger{background:#b42318;color:#fff}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.tablewrap{overflow:auto;background:#fff;border:1px solid #d9e0e6;border-radius:10px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:9px;border-bottom:1px solid #e4e9ed;text-align:left}th{background:#edf2f5}.low{background:#fff0ee}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cart-row{display:grid;grid-template-columns:1fr 110px 42px;gap:8px;margin:8px 0}.message{padding:11px;border-radius:7px;margin-top:10px;display:none}.ok{display:block;background:#e7f6ed;color:#12613d}.error{display:block;background:#fdecea;color:#8a1c13}.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.adminlocked{padding:20px;background:#fff4e5;border:1px solid #f0c36d;border-radius:10px}.small{font-size:13px;color:#65717e}.edit-table input,.edit-table select{min-width:100px;padding:7px}
+.help-topic{display:block;width:100%;text-align:left;border:0;background:#eef3f7;padding:10px;margin:5px 0;border-radius:7px;cursor:pointer}
+.help-topic:hover{background:#dce9f2}.help-content h1,.help-content h2,.help-content h3{color:#173e5e}
+.help-content pre{background:#17202a;color:#fff;padding:14px;border-radius:8px;white-space:pre-wrap;overflow:auto}
+.help-content code{font-family:Consolas,monospace}.copy-prompt{margin:6px 0 14px}
+.article-search{position:relative}.suggestions{display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid #9aa8b5;border-radius:7px;max-height:280px;overflow:auto;z-index:20;box-shadow:0 6px 18px rgba(0,0,0,.15)}
+.suggestions div{padding:9px;cursor:pointer}.suggestions div:hover,.suggestions div.active{background:#e7f0f7}.suggestions span{float:right;color:#65717e;font-size:12px}
+.search-row{grid-template-columns:minmax(300px,1fr) 110px 42px}@media(max-width:900px){.shell{display:block}nav{display:flex;overflow:auto;min-height:auto;position:sticky;top:52px;z-index:4}nav button{width:auto;white-space:nowrap}.grid{grid-template-columns:1fr 1fr}.formgrid,.split{grid-template-columns:1fr}main{padding:14px}}
+
+.setup-card{max-width:760px;margin:4vh auto;border:3px solid #1d5f91}
+.setup-progress{display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.setup-dot{width:34px;height:34px;border-radius:50%;background:#d7e0e8;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.setup-dot.active{background:#1d5f91;color:white}
+.setup-line{height:3px;width:60px;background:#d7e0e8}
+.setup-actions{display:flex;justify-content:space-between;gap:12px;margin-top:24px}
+.summary-box{background:#eef5f9;border-radius:8px;padding:14px}
+.mobile-menu-button{display:none}
+@media(max-width:800px){
+ .mobile-menu-button{display:block;margin:8px}
+ #mainNav{display:none;flex-direction:column;align-items:stretch}
+ #mainNav.open{display:flex}
+ #mainNav button{width:100%;text-align:left}
+ .split{grid-template-columns:1fr!important}
+ .formgrid{grid-template-columns:1fr!important}
+ .setup-card{margin:1vh auto}
+ table{font-size:12px}
+ .tablewrap{overflow-x:auto}
+}
+</style></head><body>
+<div id="initialSetupOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,30,40,.9);z-index:1000;padding:20px;overflow:auto">
+  <div class="card setup-card">
+    <div class="setup-progress">
+      <div id="setupDot1" class="setup-dot active">1</div>
+      <div class="setup-line"></div>
+      <div id="setupDot2" class="setup-dot">2</div>
+      <div class="setup-line"></div>
+      <div id="setupDot3" class="setup-dot">3</div>
+      <div class="setup-line"></div>
+      <div id="setupDot4" class="setup-dot">4</div>
+    </div>
+
+    <div id="setupStep1" class="setup-step">
+      <h2>👋 Willkommen</h2>
+      <p>Die Lagerverwaltung wird jetzt für die erste Benutzung eingerichtet.</p>
+      <p>Benötigt werden lediglich:</p>
+      <ul>
+        <li>ein Administratorpasswort,</li>
+        <li>der Name des Technikers,</li>
+        <li>das gewünschte Datumsformat.</li>
+      </ul>
+      <p>Lagerorte und Maschinen können später bei Bedarf unter <b>Stammdaten</b> angelegt werden.</p>
+      <div class="setup-actions">
+        <span></span>
+        <button class="primary" onclick="setupNext(2)">Weiter</button>
+      </div>
+    </div>
+
+    <div id="setupStep2" class="setup-step" style="display:none">
+      <h2>🔐 Administratorpasswort</h2>
+      <p>Das Passwort schützt Stammdaten, Einstellungen und den vollständigen Reset.</p>
+      <div class="formgrid">
+        <label>Administratorpasswort *
+          <input id="setupPassword" type="password" autocomplete="new-password" oninput="updatePasswordStrength()">
+        </label>
+        <label>Passwort wiederholen *
+          <input id="setupPasswordRepeat" type="password" autocomplete="new-password">
+        </label>
+      </div>
+      <div id="passwordStrength" class="small">Mindestens 8 Zeichen erforderlich.</div>
+      <div class="setup-actions">
+        <button class="secondary" onclick="setupNext(1)">Zurück</button>
+        <button class="primary" onclick="validatePasswordStep()">Weiter</button>
+      </div>
+    </div>
+
+    <div id="setupStep3" class="setup-step" style="display:none">
+      <h2>👤 Techniker und Datumsformat</h2>
+      <div class="formgrid">
+        <label>Name des Technikers *
+          <input id="setupTechnician" maxlength="100" placeholder="z. B. Tobias Lovrencic">
+        </label>
+        <label>Datumsformat *
+          <select id="setupDateFormat">
+            <option value="DD.MM.YYYY">TT.MM.JJJJ – 29.07.2026</option>
+            <option value="YYYY-MM-DD">JJJJ-MM-TT – 2026-07-29</option>
+            <option value="MM/DD/YYYY">MM/TT/JJJJ – 07/29/2026</option>
+          </select>
+        </label>
+      </div>
+      <p class="small">Eine E-Mail-Adresse ist nicht erforderlich.</p>
+      <div class="setup-actions">
+        <button class="secondary" onclick="setupNext(2)">Zurück</button>
+        <button class="primary" onclick="validateTechnicianStep()">Weiter</button>
+      </div>
+    </div>
+
+    <div id="setupStep4" class="setup-step" style="display:none">
+      <h2>✅ Einrichtung abschließen</h2>
+      <div class="summary-box">
+        <p><b>Techniker:</b> <span id="setupSummaryTechnician"></span></p>
+        <p><b>Datumsformat:</b> <span id="setupSummaryDate"></span></p>
+        <p><b>Passwort:</b> wurde festgelegt</p>
+      </div>
+      <p>Mit dem Abschluss wird die Lagerverwaltung freigeschaltet.</p>
+      <div class="setup-actions">
+        <button class="secondary" onclick="setupNext(3)">Zurück</button>
+        <button class="primary" onclick="completeFirstSetup()">Einrichtung abschließen</button>
+      </div>
+    </div>
+
+    <div id="initialSetupMsg" class="message"></div>
+  </div>
+</div>
 <header>
-  <div>
-    <h1>Lagerverwaltung Lovrencic</h1>
-    <div class="subtitle">V20 PWA · SQLite · Dateisynchronisierung</div>
-  </div>
-  <button id="installBtn" class="secondary hidden">App installieren</button>
-</header>
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><h1>📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">21.0</span></h1></header><div class="shell"><nav id="mainNav">
+<button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this)">☁ Dateisynchronisierung</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
+<section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
+<div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
+<div class="card"><h3>Letzte Buchungen</h3><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th></tr></thead><tbody id="dashRecent"></tbody></table></div></div>
+<div class="card" style="margin-top:14px"><h3>Systeminformation</h3><div class="formgrid">
+<div><span class="small">Programmversion</span><br><b id="infoVersion">–</b></div>
+<div><span class="small">Aktive Artikel</span><br><b id="infoArticles">–</b></div>
+<div><span class="small">Buchungen insgesamt</span><br><b id="infoMovements">–</b></div>
+<div><span class="small">Datenbank</span><br><b>lager.db</b></div>
+</div></div></section>
 
-<nav>
-  <button data-view="dashboard" class="active">Dashboard</button>
-  <button data-view="articles">Artikel</button>
-  <button data-view="booking">Buchen</button>
-  <button data-view="history">Historie</button>
-  <button data-view="cloud">OneDrive</button>
-  <button data-view="settings">Einstellungen</button>
-</nav>
+<section id="newmaterial" class="view"><h2>Neues Material anlegen</h2>
+<div id="newlock" class="adminlocked"><h3>🔒 Materialanlage gesperrt</h3>
+<p>Die Materialanlage gehört zu den Stammdaten. Bitte zuerst mit dem Stammdaten-Passwort freischalten.</p>
+<div class="toolbar"><input id="newpw" type="password" placeholder="Passwort"><button class="primary" onclick="unlockNewMaterial()">Freischalten</button></div>
+<div id="newunlockmsg" class="message"></div></div>
+<div id="newform" style="display:none"><div class="card">
+<div class="formgrid">
+<label>Artikelnummer *<input id="nm_no"></label>
+<label>Bezeichnung *<input id="nm_desc"></label>
+<label>Anfangsbestand / Anzahl *<input id="nm_initial" type="number" min="0" step="0.01" value="0"></label>
+<label>Einheit *<select id="nm_unit"><option>Stk.</option><option>m</option><option>kg</option><option>Liter</option><option>Satz</option><option>Rolle</option><option>Packung</option></select></label>
+<label>Sollbestand *<input id="nm_target" type="number" min="0" step="0.01" value="0"></label>
+<label>Mindestbestand *<input id="nm_min" type="number" min="0" step="0.01" value="0"></label>
+<label>Lagerort *<select id="nm_location"></select></label>
+<label>Maschine<select id="nm_machine"></select></label>
+<label>Hersteller<input id="nm_manufacturer"></label>
+<label>Lieferant<input id="nm_supplier"></label>
+<label>Lieferanten-Artikelnummer<input id="nm_supplier_no"></label>
+<label>EAN / Barcode<input id="nm_barcode"></label>
 
-<main>
-<section id="dashboard" class="view active">
-  <h2>Dashboard</h2>
-  <div class="grid kpis">
-    <article><span>Artikel</span><b id="kpiArticles">0</b></article>
-    <article><span>Unterbestand</span><b id="kpiLow">0</b></article>
-    <article><span>Buchungen</span><b id="kpiMoves">0</b></article>
-    <article><span>Cloudstatus</span><b id="kpiCloud">Lokal</b></article>
-  </div>
-  <div class="card">
-    <h3>Artikel unter Mindestbestand</h3>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Bestand</th><th>Mindest.</th></tr></thead>
-      <tbody id="lowRows"></tbody>
-    </table></div>
-  </div>
-</section>
 
-<section id="articles" class="view">
-  <h2>Artikel</h2>
-  <div class="card">
-    <div class="formgrid">
-      <label>Artikelnummer<input id="articleNo"></label>
-      <label>Bezeichnung<input id="articleDescription"></label>
-      <label>Einheit<input id="articleUnit" value="Stk."></label>
-      <label>Mindestbestand<input id="articleMinimum" type="number" min="0" step="0.01" value="0"></label>
-      <label>Zielbestand<input id="articleTarget" type="number" min="0" step="0.01" value="0"></label>
-      <label>Lagerort<input id="articleLocation"></label>
-      <label>Maschine<input id="articleMachine"></label>
-    </div>
-    <div class="toolbar">
-      <button id="saveArticleBtn">Artikel speichern</button>
-      <button id="cancelArticleBtn" class="secondary">Abbrechen</button>
-    </div>
-    <div id="articleMsg" class="message"></div>
-  </div>
-  <div class="card">
-    <input id="articleSearch" placeholder="Artikel suchen …">
-    <div class="tablewrap"><table>
-      <thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Bestand</th><th>Lagerort</th><th>Aktion</th></tr></thead>
-      <tbody id="articleRows"></tbody>
-    </table></div>
-  </div>
-</section>
 
-<section id="booking" class="view">
-  <h2>Ein- und Ausbuchung</h2>
-  <div class="card">
-    <div class="formgrid">
-      <label>Buchungsart
-        <select id="movementType"><option value="OUT">Entnahme</option><option value="IN">Einbuchung</option></select>
-      </label>
-      <label>Artikel<select id="movementArticle"></select></label>
-      <label>Menge<input id="movementQty" type="number" min="0.01" step="0.01"></label>
-      <label>Techniker<input id="movementTechnician"></label>
-      <label>Kunde<input id="movementCustomer"></label>
-      <label>Maschine<input id="movementMachine"></label>
-      <label>Bemerkung<input id="movementNote"></label>
-    </div>
-    <button id="bookBtn">Buchung speichern</button>
-    <div id="bookingMsg" class="message"></div>
-  </div>
-</section>
+<label>Aktiv<select id="nm_active"><option value="true">Ja</option><option value="false">Nein</option></select></label>
+<label style="grid-column:1/-1">Bemerkung<textarea id="nm_notes"></textarea></label>
+</div>
+<button class="primary" onclick="createMaterial()">Material speichern</button>
+<button class="secondary" onclick="clearMaterialForm()">Formular leeren</button>
+<div id="nm_msg" class="message"></div></div></div></section>
 
-<section id="history" class="view">
-  <h2>Historie</h2>
-  <div class="card">
-    <div class="formgrid">
-      <label>Art<select id="historyType"><option value="">Alle</option><option value="IN">Einbuchung</option><option value="OUT">Entnahme</option></select></label>
-      <label>Suche<input id="historySearch" placeholder="Artikel, Kunde oder Techniker"></label>
-    </div>
-    <button id="exportCsvBtn" class="secondary">CSV exportieren</button>
-  </div>
-  <div class="tablewrap"><table>
-    <thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th><th>Kunde</th></tr></thead>
-    <tbody id="historyRows"></tbody>
-  </table></div>
-</section>
+<section id="articles" class="view"><h2>Lagerbestand</h2><div class="toolbar"><input id="search" placeholder="Artikelnummer, Bezeichnung, Lagerort oder Maschine"><button class="primary" onclick="loadArticles()">Suchen</button></div><div class="tablewrap"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Soll</th><th>Mindest.</th><th>Ist</th><th>Differenz</th><th>Lagerort</th><th>Maschine</th></tr></thead><tbody id="arows"></tbody></table></div></section>
+<section id="in" class="view"><h2>Einbuchung</h2>
+<div class="card"><h3>Manuelle Einbuchung</h3>
+<div class="formgrid"><label>Datum<input type="date" id="idate"></label>
+<label>Techniker<select id="itech"></select></label>
+<label>Bemerkung<input id="inote"></label></div>
+<p class="small">Artikelnummer oder Bezeichnung direkt eintippen. Vorschläge erscheinen automatisch; Auswahl mit Maus oder Pfeiltasten und Enter.</p>
+<div id="icart"></div>
+<button class="secondary" onclick="addRow('i')">+ Position</button>
+<button class="primary" onclick="saveMove('i')">Einbuchung bestätigen</button>
+<div id="imsg" class="message"></div></div>
 
-<section id="cloud" class="view">
-<h2>Dateisynchronisierung</h2>
-<div class="card">
-<p>Wähle eine gemeinsame <code>lager.db</code> über den System-Dateidialog aus. Auf Android kann die OneDrive-App als Speicherort angeboten werden. Innerhalb der Lagerverwaltung ist keine Microsoft-Anmeldung erforderlich.</p>
+<div class="card"><h3>Lieferschein M365</h3>
+<div class="split"><div>
+<p>Lieferschein in Microsoft 365/Copilot auslesen lassen und ausschließlich Artikelnummer und Menge hier einfügen.</p>
+<textarea id="dtext" placeholder="Artikelnummer    Menge&#10;7079             2&#10;126084           4"></textarea>
+<button class="secondary" onclick="deliveryPreview()">Extraktion prüfen</button></div>
+<div class="formgrid">
+<label>Datum<input type="date" id="ddate"></label>
+<label>Techniker<select id="dtech"></select></label>
+<label>Bemerkung<input id="dnote"></label>
+</div></div>
+<button id="dcommit" class="primary" disabled onclick="deliveryCommit()">Geprüfte Lieferung einbuchen</button>
+<div id="dmsg" class="message"></div>
+<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="drows"></tbody></table></div>
+<div id="derrors"></div><div id="dunknown"></div></div></section>
+
+<section id="out" class="view"><h2>Entnahme</h2>
+<div class="card"><h3>Manuelle Entnahme</h3>
+<div class="formgrid"><label>Datum<input type="date" id="odate"></label>
+<label>Techniker<select id="otech"></select></label>
+<label>Kunde<input id="ocustomer"></label>
+<label>Maschine<select id="omachine"></select></label>
+<label>Bemerkung<input id="onote"></label></div>
+<p class="small">Artikelnummer oder Bezeichnung direkt eintippen. Vorschläge erscheinen automatisch; Auswahl mit Maus oder Pfeiltasten und Enter.</p>
+<div id="ocart"></div>
+<button class="secondary" onclick="addRow('o')">+ Position</button>
+<button class="danger" onclick="saveMove('o')">Entnahme bestätigen</button>
+<div id="omsg" class="message"></div></div>
+
+<div class="card"><h3>Servicebericht M365/Copilot</h3>
+<div class="split"><div>
+<p>Servicebericht mit Microsoft 365/Copilot auslesen lassen und ausschließlich Artikelnummer und Menge einfügen.</p>
+<textarea id="stext" placeholder="Artikelnummer    Menge&#10;7079             2&#10;126084           1"></textarea>
+<button class="secondary" onclick="servicePreview()">Extraktion prüfen</button></div>
+<div class="formgrid">
+<label>Datum<input type="date" id="sdate"></label>
+<label>Techniker<select id="stech"></select></label>
+<label>Kunde<input id="scustomer"></label>
+<label>Maschine<select id="smachine"></select></label>
+<label>Bemerkung<input id="snote"></label>
+</div></div>
+<button id="scommit" class="danger" disabled onclick="serviceCommit()">Geprüfte Entnahme buchen</button>
+<div id="smsg" class="message"></div>
+<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="srows"></tbody></table></div>
+<div id="serrors"></div><div id="sunknown"></div></div></section>
+
+<section id="req" class="view"><h2>Materialanforderung</h2><div class="card"><div class="toolbar"><select id="rtech"></select><button class="secondary" onclick="loadReq()">Unterbestand laden</button><button class="secondary" onclick="previewReq()">Vorschau prüfen</button><button class="primary" onclick="exportReq()">Materialanforderung exportieren</button></div><p class="small">Maximal 25 Positionen entsprechend der Original-Excel-Vorlage. Doppelte Artikel werden zusammengefasst.</p><div class="tablewrap"><table><thead><tr><th>Export</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Menge</th></tr></thead><tbody id="rrows"></tbody></table></div><div id="reqPreview"></div><div id="rmsg" class="message"></div></div></section>
+<section id="csv" class="view"><h2>CSV-Center</h2>
+<div class="card"><h3>CSV-Exporte</h3>
+<p>Die Dateien werden im Excel-kompatiblen CSV-Format mit Semikolon und UTF-8 erstellt.</p>
 <div class="toolbar">
-<button id="connectFileBtn">Gemeinsame Datei auswählen</button>
-<button id="syncFileBtn">Jetzt synchronisieren</button>
-<button id="loadFileBtn" class="secondary">Stand aus Datei laden</button>
-<button id="saveFileBtn" class="secondary">Lokalen Stand speichern</button>
-<button id="disconnectFileBtn" class="secondary">Verknüpfung lösen</button>
+<button class="primary" onclick="location.href='/api/export/stock.csv'">Lagerbestand exportieren</button>
+<button class="secondary" onclick="location.href='/api/export/inbookings.csv'">Einbuchungen exportieren</button>
+<button class="secondary" onclick="location.href='/api/export/outbookings.csv'">Entnahmen exportieren</button>
+</div></div>
+<div class="split">
+<div class="card"><h3>SAP-Excel/CSV als Einbuchung importieren</h3>
+<p>Unterstützte Dateien: <b>XLSX, CSV und TXT</b>. Erkannte SAP-Spalten: <b>Material</b>, <b>Bezeichnung zum Material</b>, <b>Lagerort</b>, <b>Bezeichnung des Lagerorts</b>, <b>Frei verwendbar</b>.</p>
+<input id="cfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadImportFile(this)">
+<textarea id="ctext" placeholder="Material;Bezeichnung zum Material;Lagerort;Bezeichnung des Lagerorts;Frei verwendbar"></textarea>
+<button class="secondary" onclick="csvPreview()">Import prüfen</button>
+<button id="ccommit" class="primary" disabled onclick="csvCommit()">Bekannte Artikel einbuchen</button><button id="callcommit" class="danger" disabled onclick="createAndBookAll()">Neue Artikel anlegen und alles einbuchen</button>
+<div id="cmsg" class="message"></div></div></div>
+<div class="card"><h3>Gültige Einbuchungen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Lagerort</th></tr></thead><tbody id="crows"></tbody></table></div></div>
+<div id="cunknown"></div><div id="cerr"></div>
+<div class="card"><h3>Inventur</h3><p>Inventurliste exportieren, gezählte Bestände eintragen und als CSV, TXT oder XLSX wieder einlesen.</p><div class="toolbar"><button class="primary" onclick="location.href='/api/export/inventory.csv'">Inventurliste exportieren</button><input id="invfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadInventoryFile(this)"></div><textarea id="invtext" placeholder="Artikelnummer;Gezählter Bestand"></textarea><div class="toolbar"><button class="secondary" onclick="inventoryPreview()">Inventur prüfen</button><button id="invcommit" class="danger" disabled onclick="inventoryCommit()">Bestandskorrekturen buchen</button></div><div id="invmsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>System</th><th>Gezählt</th><th>Differenz</th></tr></thead><tbody id="invrows"></tbody></table></div><div id="inverrors"></div></div></section>
+
+<section id="hist" class="view"><h2>Historie</h2><div class="card"><div class="formgrid"><label>Art<select id="historyFilter"><option value="ALL">Alle Buchungen</option><option value="IN">Nur Einbuchungen</option><option value="OUT">Nur Entnahmen</option></select></label><label>Von<input id="historyFrom" type="date"></label><label>Bis<input id="historyTo" type="date"></label><label>Techniker<input id="historyTechnician"></label><label>Artikelnummer oder Bezeichnung<input id="historyArticle"></label></div><div class="toolbar"><button class="primary" onclick="hist()">Filter anwenden</button><button class="secondary" onclick="clearHistoryFilters()">Filter löschen</button><button class="secondary" onclick="exportHistory()">CSV exportieren</button></div><div id="historyMsg" class="message"></div></div><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Kunde</th><th>Techniker</th><th>Fahrzeug</th><th>Maschine</th><th>Lieferschein</th><th>Quelle</th><th>Bemerkung</th></tr></thead><tbody id="hrows"></tbody></table></div></section>
+<section id="master" class="view"><h2>Stammdaten</h2><div id="lockbox" class="adminlocked"><h3>🔒 Stammdaten gesperrt</h3><div id="setupRequiredHint" class="message error" style="display:none">Nach dem Zurücksetzen muss zuerst ein neues Passwort festgelegt werden.</div><p>Zur Bearbeitung von Lagerorten, Maschinen, Technikern und der vollständigen Lagerliste ist das Passwort erforderlich.</p><div class="toolbar"><input id="adminpw" type="password" placeholder="Passwort"><button class="primary" onclick="unlockAdmin()">Stammdaten freischalten</button></div><div id="unlockmsg" class="message"></div></div><div id="adminarea" style="display:none"><div class="split"><div class="card"><h3>Lagerort anlegen</h3><input id="locname" placeholder="z. B. Regal A1"><input id="locdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('location')">Speichern</button></div><div class="card"><h3>Maschine anlegen</h3><input id="machname" placeholder="z. B. Rondostar 3000"><input id="machdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('machine')">Speichern</button></div><div class="card"><h3>Techniker anlegen</h3><input id="techname" placeholder="Name"><button class="primary" onclick="addMaster('technician')">Speichern</button></div></div><div id="mastermsg" class="message"></div><div class="card">
+<h3>📅 Datumsformat</h3>
+<p>Das Datumsformat gilt sofort für vorhandene und neue Daten in Ansichten und Exporten. Die Datenbank speichert Datumswerte intern weiterhin sicher im ISO-Format.</p>
+<div class="formgrid">
+<label>Datumsformat
+<select id="masterDateFormat">
+<option value="DD.MM.YYYY">TT.MM.JJJJ – 29.07.2026</option>
+<option value="YYYY-MM-DD">JJJJ-MM-TT – 2026-07-29</option>
+<option value="MM/DD/YYYY">MM/TT/JJJJ – 07/29/2026</option>
+</select></label>
+<label>Stammdaten-Passwort
+<input id="dateFormatPassword" type="password">
+</label>
 </div>
-<div id="cloudMsg" class="message"></div>
-<div class="statusgrid">
-<div><span>Verknüpfte Datei</span><b id="linkedFileStatus">Keine</b></div>
-<div><span>Lokale Änderungen</span><b id="dirtyStatus">Nein</b></div>
-<div><span>Letzte Synchronisierung</span><b id="lastSync">Noch nie</b></div>
-<div><span>Dateizugriff</span><b id="fileApiStatus">Prüfung …</b></div>
-</div>
+<button class="primary" onclick="saveDateFormat()">Datumsformat speichern</button>
+<div id="dateFormatMsg" class="message"></div>
 </div>
 <div class="card">
-<h3>Manuelle Rückfalllösung</h3>
-<p>Falls kein dauerhafter Dateizugriff möglich ist, exportiere die SQLite-Datei und speichere sie über den Android-Dateidialog in OneDrive. Auf dem anderen Gerät importierst du dieselbe Datei.</p>
+<h3>🔐 Passwortverwaltung</h3>
+<div id="passwordChangeArea">
+<p>Hier kann das Passwort für die geschützten Stammdaten geändert werden.</p>
+<div class="formgrid">
+<label>Aktuelles Passwort<input id="pwCurrent" type="password"></label>
+<label>Neues Passwort<input id="pwNew" type="password"></label>
+<label>Neues Passwort wiederholen<input id="pwRepeat" type="password"></label>
+</div>
+<button class="primary" onclick="changeAdminPassword()">Passwort ändern</button>
+</div>
+
+<div id="passwordSetupArea" style="display:none">
+<p><b>Nach dem vollständigen Zurücksetzen muss ein neues Passwort festgelegt werden.</b></p>
+<div class="formgrid">
+<label>Neues Passwort<input id="pwSetupNew" type="password"></label>
+<label>Neues Passwort wiederholen<input id="pwSetupRepeat" type="password"></label>
+</div>
+<button class="primary" onclick="setupAdminPassword()">Neues Passwort festlegen</button>
+</div>
+<div id="passwordmsg" class="message"></div>
+</div>
+<div class="card" style="border:2px solid #b42318">
+<h3 style="color:#b42318">⚠ Lagerverwaltung vollständig zurücksetzen</h3>
+<p>Diese Funktion löscht unwiderruflich:</p>
+<ul>
+<li>alle Artikel und Lagerbestände,</li>
+<li>alle Einbuchungen und Entnahmen,</li>
+<li>alle Lagerorte und Maschinen,</li>
+<li>alle Techniker- und Stammdaten,</li>
+<li>die gesamte Historie und das Audit-Protokoll.</li>
+</ul>
+<p><b>Die Excel-Vorlage und das Programm selbst bleiben erhalten.</b></p>
+<button class="danger" onclick="resetWarehouse()">Lagerverwaltung vollständig zurücksetzen</button>
+<div id="resetmsg" class="message"></div>
+</div>
+<div class="card"><h3>Gesamte Lagerliste bearbeiten</h3>
+<p class="small">Der Istbestand wird aus allen Ein- und Ausbuchungen berechnet. Eine manuelle Änderung erzeugt automatisch eine Bestandskorrektur in der Historie.</p>
 <div class="toolbar">
-<button id="manualExportBtn" class="secondary">SQLite-Datei exportieren</button>
-<label class="filebtn">SQLite-Datei importieren<input id="manualImportInput" type="file" accept=".db,.sqlite,.sqlite3,application/x-sqlite3"></label>
+<button class="secondary" onclick="copyStockToLevels('target')">Sollbestand aus Istbestand übernehmen</button>
+<button class="secondary" onclick="copyStockToLevels('minimum')">Mindestbestand aus Istbestand übernehmen</button>
+<button class="primary" onclick="copyStockToLevels('both')">Soll und Mindestbestand aus Istbestand übernehmen</button>
 </div>
+<div class="tablewrap"><table class="edit-table"><thead><tr><th>Art.-Nr.</th><th>Bezeichnung</th><th>Istbestand</th><th>Soll</th><th>Mindest.</th><th>Einheit</th><th>Lagerort</th><th>Maschine</th><th>Aktiv</th><th></th></tr></thead><tbody id="editrows"></tbody></table></div></div></div></section>
+
+<section id="sync" class="view"><h2>Dateisynchronisierung</h2>
+<div class="card">
+<p>Die Lagerverwaltung arbeitet lokal mit SQLite. Über den System-Dateidialog kannst du eine gemeinsame <code>lager.db</code> auswählen, beispielsweise im lokal verfügbaren OneDrive-Ordner. Innerhalb der App ist keine Microsoft-Anmeldung erforderlich.</p>
+<div class="toolbar">
+<button class="primary" onclick="LVSync.choose()">Gemeinsame Datei auswählen</button>
+<button class="primary" onclick="LVSync.sync()">Jetzt synchronisieren</button>
+<button class="secondary" onclick="LVSync.load()">Stand aus Datei laden</button>
+<button class="secondary" onclick="LVSync.save()">Lokalen Stand speichern</button>
+<button class="secondary" onclick="LVSync.disconnect()">Verknüpfung lösen</button>
 </div>
-<div class="card warning">
-<h3>Wichtige Nutzungsregel</h3>
-<p><b>Nicht gleichzeitig auf zwei Geräten arbeiten.</b> Vor dem Gerätewechsel synchronisieren und die App schließen. Auf dem neuen Gerät zuerst den Stand aus der Datei laden.</p>
-</div>
+<div id="syncMsg" class="message"></div>
+<div class="formgrid" style="margin-top:14px">
+<div><span class="small">Verknüpfte Datei</span><br><b id="syncFile">Keine</b></div>
+<div><span class="small">Lokale Änderungen</span><br><b id="syncDirty">Nein</b></div>
+<div><span class="small">Letzte Synchronisierung</span><br><b id="syncLast">Noch nie</b></div>
+<div><span class="small">Direkter Dateizugriff</span><br><b id="syncSupport">Prüfung …</b></div>
+</div></div>
+<div class="card"><h3>Manuelle Rückfalllösung</h3>
+<div class="toolbar">
+<button class="secondary" onclick="LVSync.exportDb()">SQLite-Datei exportieren</button>
+<label class="filebutton">SQLite-Datei importieren<input type="file" accept=".db,.sqlite,.sqlite3" onchange="LVSync.importDb(this)"></label>
+</div></div>
+<div class="card low"><h3>Wichtig</h3><p>Nicht gleichzeitig auf zwei Geräten arbeiten. Auf Gerät A synchronisieren und schließen. Auf Gerät B zuerst den Stand aus der Datei laden.</p></div>
 </section>
 
-<section id="settings" class="view">
-  <h2>Einstellungen</h2>
-  <div class="card">
-    <div class="formgrid">
-      <label>Technikername<input id="settingTechnician"></label>
-    </div>
-    <div class="toolbar">
-      <button id="saveSettingsBtn">Einstellungen speichern</button>
-      <button id="exportDbBtn" class="secondary">SQLite-Datei exportieren</button>
-      <label class="filebtn">SQLite-Datei importieren<input id="importDbInput" type="file" accept=".db,.sqlite,.sqlite3"></label>
-    </div>
-    <div id="settingsMsg" class="message"></div>
-  </div>
-  <div class="card">
-    <h3>Technische Daten</h3>
-    <p>Lokaler Speicher: Browser IndexedDB<br>
-       Datenbankformat: SQLite<br>
-       Gemeinsame Datei: frei wählbare <code>lager.db</code>, zum Beispiel in OneDrive</p>
-  </div>
+<section id="help" class="view"><h2>Hilfe</h2>
+<div class="split" style="grid-template-columns:280px 1fr">
+<div class="card">
+<input id="helpSearch" placeholder="Titel und Inhalte durchsuchen" oninput="filterHelpTopics()">
+<div id="helpTopics" style="margin-top:12px"></div>
+</div>
+<div class="card">
+<div id="helpContent"><h3>Hilfethema auswählen</h3><p>Wähle links ein Thema aus.</p></div>
+</div>
+</div>
 </section>
-</main>
+<section id="audit" class="view"><h2>Audit-Protokoll</h2><div class="tablewrap"><table><thead><tr><th>Zeit</th><th>Benutzer</th><th>Aktion</th><th>Objekt</th><th>ID</th><th>Details</th></tr></thead><tbody id="auditrows"></tbody></table></div></section>
+</main></div><script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="local_backend.js"></script>
+<script>
+let arts=[],deliveryp=[],servicep=[],csvp=[],deliveryUnknown=[],serviceUnknown=[],csvUnknown=[],historyData=[],inventoryData=[],md={},lastImportFilename='',appDateFormat='DD.MM.YYYY',helpFiles=[];
+const td=()=>new Date().toISOString().slice(0,10);
+idate.value=td();odate.value=td();ddate.value=td();sdate.value=td();
+const esc=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+const n=x=>Number(x||0).toLocaleString('de-DE',{maximumFractionDigits:2});
+function formatAppDate(value,withTime=false){
+ let s=String(value||'').trim();if(!s)return '';
+ let m=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+ if(!m)return s;
+ let date=appDateFormat==='YYYY-MM-DD'?`${m[1]}-${m[2]}-${m[3]}`:
+          appDateFormat==='MM/DD/YYYY'?`${m[2]}/${m[3]}/${m[1]}`:
+          `${m[3]}.${m[2]}.${m[1]}`;
+ if(withTime&&m[4])date+=` ${m[4]}:${m[5]}${m[6]?':'+m[6]:''}`;
+ return date;
+}
+async function api(u,o={}){await LVBackend.ready;let r=await fetch(u,{headers:{'Content-Type':'application/json'},...o});let d=await r.json();if(!r.ok)throw Error(d.error||'Fehler');return d}
+function msg(e,t,ok){e.textContent=t;e.className='message '+(ok?'ok':'error')}
+function show(id,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='req')loadReq();if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'&&sessionStorage.admin==='1'){loadEditTable();loadSettings()}if(id==='help')loadHelpList()}
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
-<script src="app.js"></script>
-</body>
-</html>
+async function master(){
+ md=await api('/api/masterdata');
+ let to=md.technicians.map(x=>`<option>${esc(x.name)}</option>`).join('');
+ let mo='<option></option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');
+ ['itech','otech','dtech','stech','rtech'].forEach(id=>{let e=document.getElementById(id);if(e)e.innerHTML=to});
+ omachine.innerHTML=mo;smachine.innerHTML=mo;
+ if(document.getElementById('nm_location'))fillNewMaterialLists()
+}
+async function loadAppInfo(){
+ try{
+  let d=await api('/api/info');
+  appVersion.textContent=d.version;
+  infoVersion.textContent=d.version;
+  infoArticles.textContent=d.articles;
+  infoMovements.textContent=d.movements;
+  document.title='Lagerverwaltung Lovrencic – Version '+d.version;
+ }catch(e){
+  appVersion.textContent='11.0';
+  infoVersion.textContent='11.0';
+ }
+}
+async function dash(){let d=await api('/api/dashboard');ka.textContent=d.articles;kl.textContent=d.low_stock;kt.textContent=d.today;km.textContent=d.movements;kv.textContent=Number(d.stock_value||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});dashLow.innerHTML=(d.low_stock_items||[]).map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.minimum_stock)}</td></tr>`).join('')||'<tr><td colspan="4">Kein Unterbestand</td></tr>';dashTop.innerHTML=(d.top_out||[]).map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('')||'<tr><td colspan="3">Noch keine Entnahmen</td></tr>';dashRecent.innerHTML=(d.recent||[]).map(x=>`<tr><td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.technician)}</td></tr>`).join('')||'<tr><td colspan="6">Noch keine Buchungen</td></tr>'}
+async function loadArticles(){arts=await api('/api/articles?q='+encodeURIComponent(search.value||''));arows.innerHTML=arts.filter(a=>a.active).map(a=>`<tr class="${a.stock<a.minimum_stock?'low':''}"><td>${esc(a.article_no)}</td><td>${esc(a.description)}</td><td>${n(a.target_stock)}</td><td>${n(a.minimum_stock)}</td><td><b>${n(a.stock)}</b></td><td>${n(a.stock-a.target_stock)}</td><td>${esc(a.location)}</td><td>${esc(a.machine)}</td></tr>`).join('')}
+
+async function addRow(t){
+ if(!arts.length)arts=await api('/api/articles');
+ let d=document.createElement('div');d.className='cart-row search-row';
+ d.innerHTML=`<div class="article-search"><input class="article-input" autocomplete="off" placeholder="Artikelnummer oder Bezeichnung eingeben"><input type="hidden" class="article-id"><div class="suggestions"></div></div><input class="qty" type="number" min=".01" step=".01" value="1"><button onclick="this.parentElement.remove()">×</button>`;
+ document.getElementById(t+'cart').appendChild(d);
+ setupAutocomplete(d);
+}
+function setupAutocomplete(row){
+ let input=row.querySelector('.article-input'),hidden=row.querySelector('.article-id'),box=row.querySelector('.suggestions');
+ let active=-1;
+ function results(){
+  let q=input.value.trim().toLowerCase();
+  if(!q){box.innerHTML='';box.style.display='none';return}
+  let found=arts.filter(a=>a.active&&(a.article_no.toLowerCase().includes(q)||a.description.toLowerCase().includes(q)||(a.barcode||'').toLowerCase().includes(q))).slice(0,12);
+  box.innerHTML=found.map((a,i)=>`<div data-id="${a.id}" data-label="${esc(a.article_no+' – '+a.description)}"><b>${esc(a.article_no)}</b> – ${esc(a.description)} <span>Bestand ${n(a.stock)}</span></div>`).join('');
+  box.style.display=found.length?'block':'none';active=-1;
+ }
+ input.addEventListener('input',()=>{hidden.value='';results()});
+ input.addEventListener('keydown',e=>{
+  let opts=[...box.children];
+  if(e.key==='ArrowDown'){e.preventDefault();active=Math.min(active+1,opts.length-1)}
+  else if(e.key==='ArrowUp'){e.preventDefault();active=Math.max(active-1,0)}
+  else if(e.key==='Enter'&&active>=0){e.preventDefault();select(opts[active])}
+  opts.forEach((x,i)=>x.classList.toggle('active',i===active))
+ });
+ box.addEventListener('mousedown',e=>{let opt=e.target.closest('[data-id]');if(opt)select(opt)});
+ function select(opt){hidden.value=opt.dataset.id;input.value=opt.dataset.label;box.style.display='none'}
+}
+async function saveMove(t){
+ let rs=[...document.querySelectorAll('#'+t+'cart .cart-row')],el=document.getElementById(t+'msg');
+ if(!rs.length)return msg(el,'Position fehlt.',false);
+ let items=rs.map(r=>({article_id:+r.querySelector('.article-id').value,quantity:+r.querySelector('.qty').value}));
+ if(items.some(x=>!x.article_id))return msg(el,'Bitte jeden Artikel aus der Vorschlagsliste auswählen.',false);
+ try{
+  let d=await api('/api/movements',{method:'POST',body:JSON.stringify({
+   movement_type:t==='i'?'IN':'OUT',items,movement_date:document.getElementById(t+'date').value,
+   technician:document.getElementById(t+'tech').value,note:document.getElementById(t+'note').value,
+   customer:t==='o'?ocustomer.value:'',machine:t==='o'?omachine.value:''
+  })});
+  msg(el,d.count+' Position(en) gebucht.',true);document.getElementById(t+'cart').innerHTML='';arts=[];await loadArticles();addRow(t);dash()
+ }catch(e){msg(el,e.message,false)}
+}
+
+async function deliveryPreview(){
+ let d=await api('/api/delivery-note/preview',{method:'POST',body:JSON.stringify({text:dtext.value})});
+ deliveryp=d.items;deliveryUnknown=d.unknown||[];
+ drows.innerHTML=deliveryp.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('');
+ derrors.innerHTML=d.errors.length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
+ dunknown.innerHTML=unknownBlock(deliveryUnknown,'delivery');
+ dcommit.disabled=!deliveryp.length;msg(dmsg,deliveryp.length+' bekannte Position(en), '+deliveryUnknown.length+' neue Artikel, '+d.errors.length+' Fehler.',deliveryp.length>0)
+}
+async function deliveryCommit(){
+ try{
+  let d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify({items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value})});
+  msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);deliveryp=[];dcommit.disabled=true;arts=[];dash()
+ }catch(e){msg(dmsg,e.message,false)}
+}
+
+function unknownBlock(rows,source){
+ if(!rows.length)return '';
+ let body=rows.map((x,i)=>`<tr><td>${esc(x.article_no)}</td><td><input value="${esc(x.description)}" data-field="description"></td><td>${n(x.quantity)}</td><td><input value="${esc(x.location||'')}" data-field="location"></td><td><input type="number" value="0" data-field="minimum_stock"></td><td><input type="number" value="0" data-field="target_stock"></td></tr>`).join('');
+ return `<div class="card"><h3>Neue, noch nicht vorhandene Artikel</h3><p>Bezeichnung und Stammdaten prüfen. Danach können die Artikel direkt angelegt werden.</p><div class="tablewrap"><table data-unknown="${source}"><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Lagerort</th><th>Mindestbestand</th><th>Sollbestand</th></tr></thead><tbody>${body}</tbody></table></div><button class="primary" onclick="createUnknown('${source}')">Fehlende Artikel anlegen</button></div>`
+}
+async function createUnknown(source){
+ let list=source==='delivery'?deliveryUnknown:(source==='service'?serviceUnknown:csvUnknown);
+ let table=document.querySelector(`table[data-unknown="${source}"]`);
+ if(!table)return;
+ let rows=[...table.tBodies[0].rows];
+ let items=list.map((x,i)=>({...x,
+  description:rows[i].querySelector('[data-field="description"]').value,
+  location:rows[i].querySelector('[data-field="location"]').value,
+  minimum_stock:+rows[i].querySelector('[data-field="minimum_stock"]').value,
+  target_stock:+rows[i].querySelector('[data-field="target_stock"]').value
+ }));
+ let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');
+ if(!password)return;
+ try{
+  let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({password,items})});
+  sessionStorage.adminPassword=password;sessionStorage.admin='1';
+  alert(d.created.length+' Artikel wurden angelegt. Bitte den Import erneut prüfen, damit sie eingebucht werden können.');
+  arts=[];await master();if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()
+ }catch(e){alert(e.message)}
+}
+
+async function loadImportFile(input){
+ let f=input.files[0];if(!f)return;
+ lastImportFilename=f.name;
+ ctext.value='';
+ msg(cmsg,'Datei wird eingelesen …',true);
+ try{
+  let buffer=await f.arrayBuffer();
+  let bytes=new Uint8Array(buffer),chunk=0x8000,binary='';
+  for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+  let d=await api('/api/import/file-preview',{method:'POST',body:JSON.stringify({
+    filename:f.name,content_base64:btoa(binary)
+  })});
+  applyImportPreview(d);
+  if(d.text)ctext.value=d.text;
+  let where=d.sheet?' – Tabellenblatt: '+d.sheet:'';
+  msg(cmsg,`${d.items.length} bekannte Position(en), ${d.unknown.length} neue Artikel, ${d.errors.length} Fehler${where}.`,d.items.length>0||d.unknown.length>0);
+ }catch(e){msg(cmsg,e.message,false)}
+}
+function applyImportPreview(d){
+ csvp=d.items||[];csvUnknown=d.unknown||[];
+ crows.innerHTML=csvp.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.location||'')}</td></tr>`).join('');
+ cunknown.innerHTML=unknownBlock(csvUnknown,'csv');
+ cerr.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
+ ccommit.disabled=!csvp.length;
+ callcommit.disabled=!(csvp.length||csvUnknown.length);
+}
+async function csvPreview(){
+ let d=await api('/api/import/preview',{method:'POST',body:JSON.stringify({text:ctext.value})});
+ applyImportPreview(d);
+ msg(cmsg,csvp.length+' bekannte Position(en), '+csvUnknown.length+' neue Artikel, '+d.errors.length+' Fehler.',csvp.length>0||csvUnknown.length>0)
+}
+async function createAndBookAll(){
+ if(!csvp.length&&!csvUnknown.length)return;
+ let table=document.querySelector('table[data-unknown="csv"]');
+ let newItems=csvUnknown.map((x,i)=>{
+  if(!table)return x;
+  let row=table.tBodies[0].rows[i];
+  return {...x,
+   description:row.querySelector('[data-field="description"]').value,
+   location:row.querySelector('[data-field="location"]').value,
+   minimum_stock:+row.querySelector('[data-field="minimum_stock"]').value,
+   target_stock:+row.querySelector('[data-field="target_stock"]').value
+  }
+ });
+ let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');
+ if(!password)return;
+ try{
+  let d=await api('/api/import/create-and-book',{method:'POST',body:JSON.stringify({
+   password,known_items:csvp,new_items:newItems,technician:'Lovrencic',
+   movement_date:td(),note:'SAP-Import '+(lastImportFilename||'')
+  })});
+  sessionStorage.adminPassword=password;sessionStorage.admin='1';
+  msg(cmsg,`${d.created} neue Artikel angelegt und ${d.booked} Position(en) eingebucht.`,true);
+  csvp=[];csvUnknown=[];crows.innerHTML='';cunknown.innerHTML='';cerr.innerHTML='';
+  ccommit.disabled=true;callcommit.disabled=true;arts=[];await loadArticles();await master();dash()
+ }catch(e){msg(cmsg,e.message,false)}
+}
+async function csvCommit(){
+ try{
+  let d=await api('/api/import/commit',{method:'POST',body:JSON.stringify({items:csvp,technician:'Lovrencic',movement_date:td(),note:'SAP-CSV-Import'})});
+  msg(cmsg,d.count+' Position(en) eingebucht.',true);csvp=[];ccommit.disabled=true;arts=[];dash()
+ }catch(e){msg(cmsg,e.message,false)}
+}
+
+
+function renderInventory(d){inventoryData=d.items||[];invrows.innerHTML=inventoryData.map(x=>`<tr data-id="${x.article_id}"><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.system_stock)}</td><td><input type="number" min="0" step=".01" value="${x.counted_stock}"></td><td>${n(x.difference)}</td></tr>`).join('');inverrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';invcommit.disabled=!inventoryData.length;msg(invmsg,inventoryData.length+' Inventurposition(en) erkannt, '+(d.errors||[]).length+' Fehler.',inventoryData.length>0)}
+async function inventoryPreview(){try{renderInventory(await api('/api/inventory/preview',{method:'POST',body:JSON.stringify({text:invtext.value})}))}catch(e){msg(invmsg,e.message,false)}}
+async function loadInventoryFile(input){let f=input.files[0];if(!f)return;try{let buffer=await f.arrayBuffer(),bytes=new Uint8Array(buffer),binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));renderInventory(await api('/api/inventory/file-preview',{method:'POST',body:JSON.stringify({filename:f.name,content_base64:btoa(binary)})}))}catch(e){msg(invmsg,e.message,false)}}
+async function inventoryCommit(){let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');if(!password)return;let items=[...invrows.children].map(r=>({article_id:+r.dataset.id,counted_stock:+r.children[3].firstChild.value}));try{let d=await api('/api/inventory/commit',{method:'POST',body:JSON.stringify({password,items,technician:(md.technicians?.[0]?.name||'Techniker'),movement_date:td()})});sessionStorage.adminPassword=password;msg(invmsg,`${d.changed} Bestandskorrektur(en) gebucht, ${d.unchanged} unverändert.`,true);inventoryData=[];invcommit.disabled=true;arts=[];await loadArticles();await dash()}catch(e){msg(invmsg,e.message,false)}}
+
+async function servicePreview(){
+ let d=await api('/api/service-report/preview',{method:'POST',body:JSON.stringify({text:stext.value})});
+ servicep=d.items;serviceUnknown=d.unknown||[];
+ srows.innerHTML=servicep.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('');
+ serrors.innerHTML=d.errors.length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
+ sunknown.innerHTML=unknownBlock(serviceUnknown,'service');
+ scommit.disabled=!servicep.length;
+ msg(smsg,servicep.length+' bekannte Position(en), '+serviceUnknown.length+' neue Artikel, '+d.errors.length+' Fehler.',servicep.length>0)
+}
+async function serviceCommit(){
+ try{
+  let d=await api('/api/service-report/commit',{method:'POST',body:JSON.stringify({
+   items:servicep,technician:stech.value,movement_date:sdate.value,
+   customer:scustomer.value,machine:smachine.value,note:snote.value
+  })});
+  msg(smsg,d.count+' Position(en) aus dem Servicebericht als Entnahme gebucht.',true);
+  servicep=[];scommit.disabled=true;arts=[];dash()
+ }catch(e){msg(smsg,e.message,false)}
+}
+
+async function loadReq(){let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.target_stock)}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}
+function reqItems(){return [...rrows.children].filter(r=>r.children[0].firstChild.checked).map(r=>({article_id:+r.dataset.id,quantity:+r.children[5].firstChild.value}))}
+async function previewReq(){try{let d=await api('/api/material-request/preview',{method:'POST',body:JSON.stringify({technician:rtech.value,items:reqItems()})});reqPreview.innerHTML=`<div class="card"><h3>Exportvorschau (${d.count}/25 Positionen)</h3><div class="tablewrap"><table><thead><tr><th>Pos.</th><th>Menge</th><th>Artikelnummer</th><th>Bezeichnung</th></tr></thead><tbody>${d.items.map((x,i)=>`<tr><td>${i+1}</td><td>${n(x.quantity)}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td></tr>`).join('')}</tbody></table></div></div>`;msg(rmsg,'Vorschau geprüft.',true)}catch(e){msg(rmsg,e.message,false)}}
+async function exportReq(){let r=await fetch('/api/export/material-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({technician:rtech.value,items:reqItems()})});if(!r.ok){let d=await r.json();return msg(rmsg,d.error,false)}let b=await r.blob(),a=document.createElement('a'),m=/filename="([^"]+)"/.exec(r.headers.get('content-disposition')||'');a.href=URL.createObjectURL(b);a.download=m?m[1]:'Materialanforderung.xlsx';a.click();msg(rmsg,'Excel-Datei im Originalvorlagen-Layout heruntergeladen.',true)}
+function historyQuery(){let p=new URLSearchParams();p.set('type',historyFilter.value);if(historyFrom.value)p.set('date_from',historyFrom.value);if(historyTo.value)p.set('date_to',historyTo.value);if(historyTechnician.value)p.set('technician',historyTechnician.value);if(historyArticle.value)p.set('article',historyArticle.value);return p.toString()}
+async function hist(){historyData=await api('/api/history?'+historyQuery());renderHistory();msg(historyMsg,historyData.length+' Buchung(en) gefunden.',true)}
+function renderHistory(){hrows.innerHTML=historyData.map(x=>`<tr><td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.customer)}</td><td>${esc(x.technician)}</td><td>${esc(x.vehicle)}</td><td>${esc(x.machine)}</td><td>${esc(x.delivery_note)}</td><td>${esc(x.source)}</td><td>${esc(x.note||'')}</td></tr>`).join('')}
+function clearHistoryFilters(){historyFilter.value='ALL';historyFrom.value='';historyTo.value='';historyTechnician.value='';historyArticle.value='';hist()}
+function exportHistory(){location.href='/api/export/history.csv?'+historyQuery()}
+
+
+async function unlockNewMaterial(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:newpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(newunlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(newunlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=newpw.value;newlock.style.display='none';newform.style.display='block';fillNewMaterialLists()}
+function fillNewMaterialLists(){let loc='<option value="">Bitte auswählen</option>'+md.locations.map(x=>`<option>${esc(x.name)}</option>`).join('');let mach='<option value="">Keine Zuordnung</option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');nm_location.innerHTML=loc;nm_machine.innerHTML=mach}
+async function createMaterial(){
+ let body={password:sessionStorage.adminPassword||'',article_no:nm_no.value,description:nm_desc.value,initial_stock:+nm_initial.value,target_stock:+nm_target.value,minimum_stock:+nm_min.value,unit:nm_unit.value,location:nm_location.value,machine:nm_machine.value,manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true'};
+ try{await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});msg(nm_msg,'Material wurde erfolgreich angelegt.',true);clearMaterialForm();arts=[];dash()}catch(e){msg(nm_msg,e.message,false)}
+}
+function clearMaterialForm(){['nm_no','nm_desc','nm_manufacturer','nm_supplier','nm_supplier_no','nm_barcode','nm_notes'].forEach(id=>document.getElementById(id).value='');nm_initial.value=0;nm_target.value=0;nm_min.value=0;nm_active.value='true'}
+
+async function unlockAdmin(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:adminpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(unlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(unlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=adminpw.value;lockbox.style.display='none';adminarea.style.display='block';loadEditTable()}
+async function addMaster(type){
+ let body={type};
+ if(type==='location'){body.name=locname.value;body.description=locdesc.value}
+ else if(type==='machine'){body.name=machname.value;body.description=machdesc.value}
+ else if(type==='technician'){body.name=techname.value}
+ try{await api('/api/masterdata',{method:'POST',body:JSON.stringify(body)});msg(mastermsg,'Stammdatum gespeichert.',true);await master();loadEditTable()}catch(e){msg(mastermsg,e.message,false)}
+}
+async function loadEditTable(){
+ arts=await api('/api/articles');
+ let locs='<option></option>'+md.locations.map(x=>`<option>${esc(x.name)}</option>`).join('');
+ let machs='<option></option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');
+
+ editrows.innerHTML=arts.map(a=>`<tr data-id="${a.id}">
+  <td><input value="${esc(a.article_no)}"></td>
+  <td><input value="${esc(a.description)}"></td>
+  <td><input type="number" step="0.01" min="0" value="${a.stock}"></td>
+  <td><input type="number" step="0.01" min="0" value="${a.target_stock}"></td>
+  <td><input type="number" step="0.01" min="0" value="${a.minimum_stock}"></td>
+  <td><input value="${esc(a.unit)}"></td>
+  <td><select>${locs}</select></td>
+  <td><select>${machs}</select></td>
+  <td><input type="checkbox" ${a.active?'checked':''}></td>
+  <td><button class="primary" onclick="saveArticle(this)">Speichern</button></td>
+ </tr>`).join('');
+
+ [...editrows.children].forEach((row,index)=>{
+  row.children[6].firstChild.value=arts[index].location||'';
+  row.children[7].firstChild.value=arts[index].machine||'';
+ });
+}
+
+async function saveArticle(button){
+ let row=button.closest('tr'),cells=row.children;
+ let body={
+  password:sessionStorage.adminPassword||'',
+  id:+row.dataset.id,
+  article_no:cells[0].firstChild.value,
+  description:cells[1].firstChild.value,
+  current_stock:+cells[2].firstChild.value,
+  target_stock:+cells[3].firstChild.value,
+  minimum_stock:+cells[4].firstChild.value,
+  unit:cells[5].firstChild.value,
+  location:cells[6].firstChild.value,
+  machine:cells[7].firstChild.value,
+  active:cells[8].firstChild.checked
+ };
+
+ try{
+  await api('/api/article/update',{
+   method:'POST',
+   body:JSON.stringify(body)
+  });
+  button.textContent='Gespeichert';
+  setTimeout(()=>button.textContent='Speichern',1200);
+  arts=[];
+  await loadArticles();
+  await dash();
+  await loadAppInfo();
+ }catch(e){
+  alert(e.message);
+ }
+}
+
+async function copyStockToLevels(mode){
+ let labels={
+  target:'Sollbestand',
+  minimum:'Mindestbestand',
+  both:'Soll- und Mindestbestand'
+ };
+ let label=labels[mode];
+
+ if(!confirm(`Soll bei allen aktiven Artikeln der aktuelle Istbestand als ${label} übernommen werden?`)){
+  return;
+ }
+
+ let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');
+ if(!password)return;
+
+ try{
+  let result=await api('/api/articles/stock-to-levels',{
+   method:'POST',
+   body:JSON.stringify({password,mode})
+  });
+  sessionStorage.adminPassword=password;
+  msg(mastermsg,`${label} wurde bei ${result.count} Artikeln aus dem Istbestand übernommen.`,true);
+  await loadEditTable();
+  await loadArticles();
+  await dash();
+ }catch(e){
+  msg(mastermsg,e.message,false);
+ }
+}
+
+
+
+
+let currentSetupStep=1;
+
+function setupNext(step){
+ currentSetupStep=step;
+ for(let i=1;i<=4;i++){
+  document.getElementById('setupStep'+i).style.display=i===step?'block':'none';
+  document.getElementById('setupDot'+i).classList.toggle('active',i<=step);
+ }
+ initialSetupMsg.textContent='';
+}
+
+function updatePasswordStrength(){
+ let p=setupPassword.value;
+ let text='Zu kurz';
+ if(p.length>=8)text='Ausreichend';
+ if(p.length>=10&&/[A-Z]/.test(p)&&/[a-z]/.test(p)&&/\d/.test(p))text='Gut';
+ if(p.length>=12&&/[^\w]/.test(p))text='Sehr gut';
+ passwordStrength.textContent='Passwortstärke: '+text;
+}
+
+function validatePasswordStep(){
+ if(setupPassword.value.length<8){
+  return msg(initialSetupMsg,'Das Passwort muss mindestens 8 Zeichen lang sein.',false);
+ }
+ if(setupPassword.value!==setupPasswordRepeat.value){
+  return msg(initialSetupMsg,'Die Passwörter stimmen nicht überein.',false);
+ }
+ setupNext(3);
+}
+
+function validateTechnicianStep(){
+ let name=setupTechnician.value.trim();
+ if(name.length<2){
+  return msg(initialSetupMsg,'Bitte einen gültigen Technikernamen eingeben.',false);
+ }
+ setupSummaryTechnician.textContent=name;
+ setupSummaryDate.textContent=setupDateFormat.options[setupDateFormat.selectedIndex].text;
+ setupNext(4);
+}
+
+function toggleMobileMenu(){
+ mainNav.classList.toggle('open');
+}
+
+async function refreshSetupStatus(){
+ try{
+  let d=await api('/api/setup/status');
+  appDateFormat=d.date_format||'DD.MM.YYYY';
+  initialSetupOverlay.style.display=d.setup_required?'block':'none';if(d.setup_required)setupNext(1);
+  document.body.style.overflow=d.setup_required?'hidden':'';
+  if(d.setup_required){
+   sessionStorage.removeItem('admin');
+   sessionStorage.removeItem('adminPassword');
+  }
+ }catch(e){console.error(e)}
+}
+
+async function completeFirstSetup(){
+ try{
+  let d=await api('/api/setup/complete',{
+   method:'POST',
+   body:JSON.stringify({
+    password:setupPassword.value,
+    repeat_password:setupPasswordRepeat.value,
+    technician:setupTechnician.value,
+    date_format:setupDateFormat.value
+   })
+  });
+  sessionStorage.admin='1';
+  sessionStorage.adminPassword=setupPassword.value;
+  appDateFormat=d.date_format;
+  initialSetupOverlay.style.display='none';
+  document.body.style.overflow='';
+  await master();await dash();await loadAppInfo();
+  msg(initialSetupMsg,'Die Ersteinrichtung wurde abgeschlossen.',true);
+ }catch(e){msg(initialSetupMsg,e.message,false)}
+}
+
+async function loadSettings(){
+ try{
+  let d=await api('/api/settings');
+  appDateFormat=d.date_format||'DD.MM.YYYY';
+  masterDateFormat.value=appDateFormat;
+ }catch(e){}
+}
+
+async function saveDateFormat(){
+ try{
+  let d=await api('/api/settings/date-format',{
+   method:'POST',
+   body:JSON.stringify({
+    date_format:masterDateFormat.value,
+    password:dateFormatPassword.value
+   })
+  });
+  appDateFormat=d.date_format;
+  dateFormatPassword.value='';
+  msg(dateFormatMsg,'Das Datumsformat wurde geändert. Bestehende Daten werden sofort im neuen Format angezeigt.',true);
+  if(historyData.length)renderHistory();
+  auditLoad();
+ }catch(e){msg(dateFormatMsg,e.message,false)}
+}
+
+function renderMarkdown(md){
+ let text=esc(md);
+ text=text.replace(/^### (.*)$/gm,'<h3>$1</h3>')
+          .replace(/^## (.*)$/gm,'<h2>$1</h2>')
+          .replace(/^# (.*)$/gm,'<h1>$1</h1>')
+          .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+          .replace(/`([^`\n]+)`/g,'<code>$1</code>')
+          .replace(/```([\s\S]*?)```/g,(m,p)=>`<pre><code>${p.trim()}</code></pre><button class="secondary copy-prompt" onclick="copyPreviousPrompt(this)">Prompt kopieren</button>`)
+          .replace(/^- (.*)$/gm,'<li>$1</li>')
+          .replace(/\n\n/g,'</p><p>')
+          .replace(/\n/g,'<br>');
+ text=text.replace(/(<li>.*?<\/li>(?:<br>)?)+/g,m=>'<ul>'+m.replace(/<br>/g,'')+'</ul>');
+ return `<div class="help-content"><p>${text}</p></div>`;
+}
+async function loadHelpList(){
+ if(helpFiles.length)return;
+ try{
+  let files=await api('/api/help/list');
+  helpFiles=[];
+  for(let f of files){
+   try{
+    let d=await api('/api/help/content?file='+encodeURIComponent(f.file));
+    helpFiles.push({...f,content:d.content||''});
+   }catch(e){
+    helpFiles.push({...f,content:''});
+   }
+  }
+  renderHelpTopics(helpFiles);
+  if(helpFiles.length)openHelp(helpFiles[0].file);
+ }catch(e){helpContent.innerHTML='<p>Hilfe konnte nicht geladen werden.</p>'}
+}
+function renderHelpTopics(files){
+ helpTopics.innerHTML=files.map(x=>`<button class="help-topic" onclick="openHelp('${x.file}')">${esc(x.title)}</button>`).join('');
+}
+function filterHelpTopics(){
+ let q=helpSearch.value.toLowerCase();
+ renderHelpTopics(helpFiles.filter(x=>(x.title+' '+x.content).toLowerCase().includes(q)));
+}
+async function openHelp(file){
+ let d=await api('/api/help/content?file='+encodeURIComponent(file));
+ helpContent.innerHTML=renderMarkdown(d.content);
+}
+async function copyPreviousPrompt(button){
+ let pre=button.previousElementSibling;
+ await navigator.clipboard.writeText(pre.innerText);
+ button.textContent='Kopiert ✓';
+ setTimeout(()=>button.textContent='Prompt kopieren',1500);
+}
+
+async function refreshPasswordStatus(){
+ try{
+  let d=await api('/api/admin/password-status');
+
+  let setupRequired=!!d.setup_required;
+  initialSetupOverlay.style.display=setupRequired?'block':'none';
+  passwordSetupArea.style.display=setupRequired?'block':'none';
+  passwordChangeArea.style.display=setupRequired?'none':'block';
+  setupRequiredHint.style.display=setupRequired?'block':'none';
+
+  if(setupRequired){
+   sessionStorage.removeItem('admin');
+   sessionStorage.removeItem('adminPassword');
+   lockbox.style.display='block';
+   adminarea.style.display='none';
+   document.body.style.overflow='hidden';
+  }else{
+   document.body.style.overflow='';
+  }
+ }catch(e){
+  console.error(e);
+ }
+}
+
+
+async function completeInitialSetup(){
+ try{
+  let result=await api('/api/admin/setup-password',{
+   method:'POST',
+   body:JSON.stringify({
+    new_password:initialPwNew.value,
+    repeat_password:initialPwRepeat.value
+   })
+  });
+
+  sessionStorage.admin='1';
+  sessionStorage.adminPassword=initialPwNew.value;
+  initialPwNew.value='';
+  initialPwRepeat.value='';
+
+  msg(initialSetupMsg,'Das neue Passwort wurde gespeichert.',true);
+  await refreshSetupStatus();await refreshPasswordStatus();
+
+  lockbox.style.display='none';
+  adminarea.style.display='block';
+  await master();
+  await loadEditTable();
+  await loadAppInfo();
+  await dash();
+ }catch(e){
+  msg(initialSetupMsg,e.message,false);
+ }
+}
+
+async function changeAdminPassword(){
+ try{
+  await api('/api/admin/change-password',{
+   method:'POST',
+   body:JSON.stringify({
+    current_password:pwCurrent.value,
+    new_password:pwNew.value,
+    repeat_password:pwRepeat.value
+   })
+  });
+  sessionStorage.adminPassword=pwNew.value;
+  pwCurrent.value='';pwNew.value='';pwRepeat.value='';
+  msg(passwordmsg,'Das Passwort wurde erfolgreich geändert.',true);
+ }catch(e){
+  msg(passwordmsg,e.message,false);
+ }
+}
+
+async function setupAdminPassword(){
+ try{
+  await api('/api/admin/setup-password',{
+   method:'POST',
+   body:JSON.stringify({
+    new_password:pwSetupNew.value,
+    repeat_password:pwSetupRepeat.value
+   })
+  });
+  sessionStorage.admin='1';
+  sessionStorage.adminPassword=pwSetupNew.value;
+  pwSetupNew.value='';pwSetupRepeat.value='';
+  lockbox.style.display='none';
+  adminarea.style.display='block';
+  msg(passwordmsg,'Das neue Passwort wurde erfolgreich eingerichtet.',true);
+  await refreshSetupStatus();await refreshPasswordStatus();
+  await master();
+  await loadEditTable();
+ }catch(e){
+  msg(passwordmsg,e.message,false);
+ }
+}
+
+async function resetWarehouse(){
+ const warning=
+  'ACHTUNG!\\n\\n'+
+  'Es werden alle Artikel, Bestände, Einbuchungen, Entnahmen, Lagerorte, '+
+  'Maschinen, Stammdaten und die gesamte Historie unwiderruflich gelöscht.\\n\\n'+
+  'Möchtest du die Lagerverwaltung wirklich vollständig zurücksetzen?';
+
+ if(!confirm(warning)){
+  msg(resetmsg,'Zurücksetzen wurde abgebrochen.',false);
+  return;
+ }
+
+ let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten eingeben:');
+ if(!password){
+  msg(resetmsg,'Zurücksetzen wurde abgebrochen.',false);
+  return;
+ }
+
+ try{
+  let result=await api('/api/admin/reset',{
+   method:'POST',
+   body:JSON.stringify({password,confirmed:true})
+  });
+
+  sessionStorage.adminPassword=password;
+  msg(resetmsg,result.message,true);
+
+  // Ansichten und Zwischenspeicher leeren/neu laden.
+  arts=[];historyData=[];csvp=[];csvUnknown=[];deliveryp=[];servicep=[];
+  arows.innerHTML='';hrows.innerHTML='';editrows.innerHTML='';
+  icart.innerHTML='';ocart.innerHTML='';
+  await master();
+  await loadArticles();
+  addRow('i');addRow('o');
+  await dash();
+
+  alert('Die Lagerverwaltung wurde vollständig zurückgesetzt. Jetzt muss ein neues Passwort festgelegt werden.');await refreshSetupStatus();await refreshPasswordStatus();
+ }catch(e){
+  msg(resetmsg,e.message,false);
+ }
+}
+
+async function auditLoad(){let d=await api('/api/audit');auditrows.innerHTML=d.map(x=>`<tr><td>${esc(x.event_time)}</td><td>${esc(x.user_name)}</td><td>${esc(x.action)}</td><td>${esc(x.entity)}</td><td>${esc(x.entity_id)}</td><td>${esc(x.details)}</td></tr>`).join('')}
+
+if(sessionStorage.admin==='1'){lockbox.style.display='none';adminarea.style.display='block';newlock.style.display='none';newform.style.display='block'}
+refreshSetupStatus();refreshPasswordStatus();loadSettings();master().then(()=>{if(sessionStorage.admin==='1')loadEditTable()});loadAppInfo();dash();loadArticles().then(()=>{addRow('i');addRow('o')});
+</script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('service-worker.js');</script></body></html>
