@@ -145,7 +145,11 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <label>Artikelnummer *<input id="nm_no"></label>
 <label>Bezeichnung *<input id="nm_desc"></label>
 <label>Anfangsbestand / Anzahl *<input id="nm_initial" type="number" min="0" step="0.01" value="0"></label>
-<label>Einheit *<select id="nm_unit"><option>Stk.</option><option>m</option><option>kg</option><option>Liter</option><option>Satz</option><option>Rolle</option><option>Packung</option></select></label>
+<label>Einheit *<select id="nm_unit" onchange="adjustNewMaterialUnit()">
+<option>Stk.</option><option>Liter</option><option>ml</option><option>kg</option><option>g</option>
+<option>m</option><option>cm</option><option>mm</option><option>Satz</option><option>Rolle</option>
+<option>Packung</option><option>Karton</option>
+</select></label>
 <label>Sollbestand *<input id="nm_target" type="number" min="0" step="0.01" value="0"></label>
 <label>Mindestbestand *<input id="nm_min" type="number" min="0" step="0.01" value="0"></label>
 <label>Lagerort *<select id="nm_location"></select></label>
@@ -249,17 +253,11 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div id="unlockmsg" class="message"></div></div><div id="adminarea" style="display:none"><div class="split"><div class="card"><h3>Lagerort anlegen</h3><input id="locname" placeholder="z. B. Regal A1"><input id="locdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('location')">Speichern</button></div><div class="card"><h3>Maschine anlegen</h3><input id="machname" placeholder="z. B. Rondostar 3000"><input id="machdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('machine')">Speichern</button></div><div class="card"><h3>Techniker anlegen</h3><input id="techname" placeholder="Name"><button class="primary" onclick="addMaster('technician')">Speichern</button></div></div><div id="mastermsg" class="message"></div><div class="card">
 <h3>📅 Datumsformat</h3>
 <p>Das Datumsformat gilt sofort für vorhandene und neue Daten in Ansichten und Exporten. Die Datenbank speichert Datumswerte intern weiterhin sicher im ISO-Format.</p>
-<div class="formgrid">
-<label>Datumsformat
-<select id="masterDateFormat">
+<div class="formgrid"><label>Datumsformat<select id="masterDateFormat">
 <option value="DD.MM.YYYY">TT.MM.JJJJ – 29.07.2026</option>
 <option value="YYYY-MM-DD">JJJJ-MM-TT – 2026-07-29</option>
 <option value="MM/DD/YYYY">MM/TT/JJJJ – 07/29/2026</option>
-</select></label>
-<label>Stammdaten-Passwort
-<input id="dateFormatPassword" type="password">
-</label>
-</div>
+</select></label></div>
 <button class="primary" onclick="saveDateFormat()">Datumsformat speichern</button>
 <div id="dateFormatMsg" class="message"></div>
 </div>
@@ -607,14 +605,15 @@ function exportHistory(){location.href='/api/export/history.csv?'+historyQuery()
 async function unlockNewMaterial(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:newpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(newunlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(newunlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=newpw.value;window.LVAdminSession?.unlock();newlock.style.display='none';newform.style.display='block';fillNewMaterialLists()}
 function fillNewMaterialLists(){let loc='<option value="">Bitte auswählen</option>'+md.locations.map(x=>`<option>${esc(x.name)}</option>`).join('');let mach='<option value="">Keine Zuordnung</option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');nm_location.innerHTML=loc;nm_machine.innerHTML=mach}
 async function createMaterial(){
- let body={password:sessionStorage.adminPassword||'',article_no:nm_no.value,description:nm_desc.value,initial_stock:+nm_initial.value,target_stock:+nm_target.value,minimum_stock:+nm_min.value,unit:nm_unit.value,location:nm_location.value,machine:nm_machine.value,manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true'};
+ let whole=isWholeNumberUnit(nm_unit.value),num=v=>whole?Math.round(Number(v||0)):Number(v||0);
+ let body={password:sessionStorage.adminPassword||'',article_no:nm_no.value,description:nm_desc.value,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:nm_location.value,machine:nm_machine.value,manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true'};
  try{await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});msg(nm_msg,'Material wurde erfolgreich angelegt.',true);clearMaterialForm();arts=[];dash()}catch(e){msg(nm_msg,e.message,false)}
 }
 function clearMaterialForm(){['nm_no','nm_desc','nm_manufacturer','nm_supplier','nm_supplier_no','nm_barcode','nm_notes'].forEach(id=>document.getElementById(id).value='');nm_initial.value=0;nm_target.value=0;nm_min.value=0;nm_active.value='true'}
 
 async function unlockAdmin(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:adminpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(unlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(unlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=adminpw.value;window.LVAdminSession?.unlock();lockbox.style.display='none';adminarea.style.display='block';loadEditTable()}
 async function addMaster(type){
- let body={type,password:sessionStorage.adminPassword||''};
+ let body={type}; if(type!=='technician')body.password=sessionStorage.adminPassword||'';
  if(type==='location'){body.name=locname.value.trim();body.description=locdesc.value.trim()}
  else if(type==='machine'){body.name=machname.value.trim();body.description=machdesc.value.trim()}
  else if(type==='technician'){body.name=techname.value.trim()}
@@ -629,6 +628,33 @@ async function addMaster(type){
   await loadEditTable();
  }catch(e){msg(mastermsg,e.message,false)}
 }
+
+const LV_UNITS=['Stk.','Liter','ml','kg','g','m','cm','mm','Satz','Rolle','Packung','Karton'];
+function isWholeNumberUnit(unit){return ['Stk.','Satz','Rolle','Packung','Karton'].includes(String(unit||''));}
+function displayStockValue(value,unit){
+ const num=Number(value||0);
+ return isWholeNumberUnit(unit)?String(Math.round(num)):String(num);
+}
+function unitOptions(selected){
+ return LV_UNITS.map(u=>`<option value="${esc(u)}" ${u===selected?'selected':''}>${esc(u)}</option>`).join('');
+}
+function adjustStockInputsForRow(select){
+ const row=select.closest('tr'),whole=isWholeNumberUnit(select.value);
+ [2,3,4].forEach(i=>{
+  const input=row.children[i].firstChild;
+  input.step=whole?'1':'0.01';
+  if(whole)input.value=String(Math.round(Number(input.value||0)));
+ });
+ markMasterRowChanged(select);
+}
+function adjustNewMaterialUnit(){
+ const whole=isWholeNumberUnit(nm_unit.value);
+ [nm_initial,nm_target,nm_min].forEach(input=>{
+  input.step=whole?'1':'0.01';
+  if(whole)input.value=String(Math.round(Number(input.value||0)));
+ });
+}
+
 async function loadEditTable(){
  arts=await api('/api/articles');
  let locs='<option></option>'+md.locations.map(x=>`<option>${esc(x.name)}</option>`).join('');
@@ -637,10 +663,10 @@ async function loadEditTable(){
  editrows.innerHTML=arts.map(a=>`<tr data-id="${a.id}" data-search="${esc((a.article_no+' '+a.description+' '+(a.location||'')+' '+(a.machine||'')).toLowerCase())}">
   <td><input value="${esc(a.article_no)}" oninput="markMasterRowChanged(this)"></td>
   <td><input value="${esc(a.description)}" oninput="markMasterRowChanged(this)"></td>
-  <td><input type="number" step="0.01" min="0" value="${a.stock}" oninput="markMasterRowChanged(this)"></td>
-  <td><input type="number" step="0.01" min="0" value="${a.target_stock}" oninput="markMasterRowChanged(this)"></td>
-  <td><input type="number" step="0.01" min="0" value="${a.minimum_stock}" oninput="markMasterRowChanged(this)"></td>
-  <td><input value="${esc(a.unit)}" oninput="markMasterRowChanged(this)"></td>
+  <td><input type="number" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" min="0" value="${displayStockValue(a.stock,a.unit)}" oninput="markMasterRowChanged(this)"></td>
+  <td><input type="number" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" min="0" value="${displayStockValue(a.target_stock,a.unit)}" oninput="markMasterRowChanged(this)"></td>
+  <td><input type="number" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" min="0" value="${displayStockValue(a.minimum_stock,a.unit)}" oninput="markMasterRowChanged(this)"></td>
+  <td><select onchange="adjustStockInputsForRow(this)">${unitOptions(a.unit||'Stk.')}</select></td>
   <td><select onchange="markMasterRowChanged(this)">${locs}</select></td>
   <td><select onchange="markMasterRowChanged(this)">${machs}</select></td>
   <td><input type="checkbox" ${a.active?'checked':''} onchange="markMasterRowChanged(this)"></td>
@@ -659,7 +685,7 @@ function clearMasterSearch(){masterArticleSearch.value='';filterMasterArticles()
 async function saveAllArticles(){
  let rows=[...editrows.children].filter(r=>r.dataset.changed==='1');
  if(!rows.length)return msg(saveAllArticlesMsg,'Es wurden keine Änderungen vorgenommen.',true);
- let items=rows.map(row=>{let c=row.children;return {id:+row.dataset.id,article_no:c[0].firstChild.value,description:c[1].firstChild.value,current_stock:+c[2].firstChild.value,target_stock:+c[3].firstChild.value,minimum_stock:+c[4].firstChild.value,unit:c[5].firstChild.value,location:c[6].firstChild.value,machine:c[7].firstChild.value,active:c[8].firstChild.checked}});
+ let items=rows.map(row=>{let c=row.children,unit=c[5].firstChild.value,whole=isWholeNumberUnit(unit),num=v=>whole?Math.round(Number(v||0)):Number(v||0);return {id:+row.dataset.id,article_no:c[0].firstChild.value,description:c[1].firstChild.value,current_stock:num(c[2].firstChild.value),target_stock:num(c[3].firstChild.value),minimum_stock:num(c[4].firstChild.value),unit,location:c[6].firstChild.value,machine:c[7].firstChild.value,active:c[8].firstChild.checked}});
  saveAllArticlesButton.disabled=true;saveAllArticlesButton.textContent='Speichert …';
  try{let d=await api('/api/articles/batch-update',{method:'POST',body:JSON.stringify({password:sessionStorage.adminPassword||'',items})});rows.forEach(r=>delete r.dataset.changed);msg(saveAllArticlesMsg,`${d.updated} Artikel gespeichert. ${d.corrected||0} Bestandskorrektur(en) gebucht.`,true);saveAllArticlesButton.textContent='Alle Änderungen speichern';arts=[];await loadArticles();await dash();await loadAppInfo();await loadEditTable();}
  catch(e){msg(saveAllArticlesMsg,e.message,false);saveAllArticlesButton.textContent='Änderungen speichern';}
@@ -834,12 +860,10 @@ async function saveDateFormat(){
   let d=await api('/api/settings/date-format',{
    method:'POST',
    body:JSON.stringify({
-    date_format:masterDateFormat.value,
-    password:dateFormatPassword.value
+    date_format:masterDateFormat.value
    })
   });
   appDateFormat=d.date_format;
-  dateFormatPassword.value='';
   msg(dateFormatMsg,'Das Datumsformat wurde geändert. Bestehende Daten werden sofort im neuen Format angezeigt.',true);
   if(historyData.length)renderHistory();
   auditLoad();

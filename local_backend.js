@@ -25,6 +25,10 @@ function adminAuthorized(d,opt){
   return unlocked||validPw(d?.password)||validPw(d?.admin_password);
  }catch{return validPw(d?.password)||validPw(d?.admin_password)}
 }
+function normalizeQuantityForUnit(value,unit){
+ const n=Number(value||0);
+ return ['Stk.','Satz','Rolle','Packung','Karton'].includes(String(unit||''))?Math.round(n):n;
+}
 function stockExpr(){return "a.initial_stock+COALESCE(SUM(CASE WHEN m.movement_type='IN' THEN m.quantity WHEN m.movement_type='OUT' THEN -m.quantity ELSE 0 END),0)"}
 function audit(user,action,entity,id='',details=''){run('INSERT INTO audit_log(event_time,user_name,action,entity,entity_id,details) VALUES(?,?,?,?,?,?)',[stamp().replace('T',' ').slice(0,19),user||'Techniker',action,entity,String(id||''),details||''])}
 async function persist(dirty=true){await ip(DBKEY,db.export().buffer);const m=await ig(METAKEY)||{};if(dirty)m.dirty=true;m.localModified=Date.now();await ip(METAKEY,m);await syncStatus();if(dirty)scheduleAutoSync()}
@@ -60,7 +64,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','27');
+  setSetting('database_version','28');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -117,7 +121,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'27.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'28.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -136,7 +140,7 @@ async function route(url,opt={}){
   if(p==='/api/export/inventory.csv'){const a=articles();return csvResp(`Inventur_${fmtDate(today())}.csv`,['Artikelnummer','Bezeichnung','Systembestand','Gezählter Bestand','Lagerort','Maschine'],a.map(x=>[x.article_no,x.description,x.stock,'',x.location,x.machine]))}
  }
  if(p==='/api/setup/complete'){if(!d.password||d.password.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');setSetting('admin_password_hash',hash(d.password));setSetting('primary_technician',d.technician||'Techniker');setSetting('date_format',d.date_format||'DD.MM.YYYY');setSetting('setup_complete','1');run('INSERT OR IGNORE INTO technicians(name) VALUES(?)',[d.technician||'Techniker']);audit(d.technician,'EINRICHTUNG','System','','Ersteinrichtung');await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY')})}
- if(p==='/api/settings/date-format'){setSetting('date_format',d.date_format);await persist();return response({ok:true})}
+ if(p==='/api/settings/date-format'){setSetting('date_format',d.date_format);await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY')})}
  if(p==='/api/admin/unlock')return response({ok:validPw(d.password),has_password:!!setting('admin_password_hash')});
  if(p==='/api/admin/lock')return response({ok:true});
  if(p==='/api/admin/setup-password'){const np=d.password||d.new_password||d.newPassword||'';const rp=d.repeat_password||d.repeatPassword||np;if(!np||np.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');if(np!==rp)throw Error('Die Passwörter stimmen nicht überein.');setSetting('admin_password_hash',hash(np));setSetting('setup_complete','1');setSetting('database_adopted','1');audit('Administrator','PASSWORT','System','','Administratorpasswort erstmalig eingerichtet');await persist();return response({ok:true,has_password:true})}
@@ -153,7 +157,26 @@ async function route(url,opt={}){
  if(p==='/api/inventory/commit'){if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');let changed=0,unchanged=0;for(const x of d.items){const a=articles().find(z=>z.id===Number(x.article_id));const diff=Number(x.counted_stock)-a.stock;if(Math.abs(diff)<1e-8){unchanged++;continue}bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{...d,source:'Inventur',note:'Inventurkorrektur'});changed++}audit(d.technician,'INVENTUR','Bestand','',`${changed} Korrekturen`);await persist();return response({ok:true,changed,unchanged})}
  if(p==='/api/material-request/preview'){const x=await materialXlsx(d);return response({count:x.count,items:x.items})}
  if(p==='/api/export/material-request'){const x=await materialXlsx(d);const tech=(d.technician||'Techniker').replace(/[^\wÄÖÜäöüß-]+/g,'_');return response(x.blob,200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':`attachment; filename="Bestellung_${fmtDate(today())}_${tech}.xlsx"`})}
- if(p==='/api/masterdata'){if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet. Bitte das Passwort erneut eingeben.');const map={location:'locations',machine:'machines',technician:'technicians',vehicle:'vehicles'},table=map[d.type];if(!table)throw Error('Ungültiger Stammdatentyp.');const name=String(d.name||'').trim();if(!name)throw Error('Bitte einen Namen eingeben.');run(`INSERT OR IGNORE INTO ${table}(name,description) VALUES(?,?)`,[name,d.description||'']);const created=Number(db.getRowsModified())>0;if(!created)throw Error('Dieser Eintrag ist bereits vorhanden.');audit('Techniker','ANLAGE',d.type,'',name);await persist();return response({ok:true,name},201)}
+ if(p==='/api/masterdata'){
+  const type=String(d.type||'');
+  if(type!=='technician'&&!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet. Bitte das Passwort erneut eingeben.');
+  const name=String(d.name||'').trim();
+  if(!name)throw Error('Bitte einen Namen eingeben.');
+  if(type==='technician'){
+    run('INSERT OR IGNORE INTO technicians(name,email,default_vehicle,active) VALUES(?,?,?,1)',[name,d.email||'',d.default_vehicle||'']);
+  }else if(type==='location'){
+    run('INSERT OR IGNORE INTO locations(name,description,active) VALUES(?,?,1)',[name,d.description||'']);
+  }else if(type==='machine'){
+    run('INSERT OR IGNORE INTO machines(name,description,active) VALUES(?,?,1)',[name,d.description||'']);
+  }else if(type==='vehicle'){
+    run('INSERT OR IGNORE INTO vehicles(name,description,active) VALUES(?,?,1)',[name,d.description||'']);
+  }else throw Error('Ungültiger Stammdatentyp.');
+  const created=Number(db.getRowsModified())>0;
+  if(!created)throw Error('Dieser Eintrag ist bereits vorhanden.');
+  audit('Techniker','ANLAGE',type,'',name);
+  await persist();
+  return response({ok:true,name},201)
+ }
  if(p==='/api/article/create'){if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');run(`INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at,manufacturer,supplier,supplier_article_no,barcode,purchase_price,notes,image_url,datasheet_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,[d.article_no,d.description,Number(d.target_stock||0),Number(d.minimum_stock||0),Number(d.initial_stock||0),d.unit||'Stk.',d.location||'',d.machine||'',d.active===false?0:1,stamp(),d.manufacturer||'',d.supplier||'',d.supplier_article_no||'',d.barcode||'',Number(d.purchase_price||0),d.notes||'',d.image_url||'',d.datasheet_url||'']);audit('Techniker','ANLAGE','Artikel','',d.article_no);await persist();return response({ok:true},201)}
  if(p==='/api/articles/batch-update'){
   if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
@@ -166,9 +189,9 @@ async function route(url,opt={}){
     const a=articles().find(z=>z.id===Number(x.id));
     if(!a)continue;
     run('UPDATE articles SET article_no=?,description=?,target_stock=?,minimum_stock=?,unit=?,location=?,machine=?,active=? WHERE id=?',[
-      String(x.article_no||'').trim(),String(x.description||'').trim(),Number(x.target_stock||0),Number(x.minimum_stock||0),String(x.unit||'Stk.').trim()||'Stk.',String(x.location||''),String(x.machine||''),x.active?1:0,Number(x.id)
+      String(x.article_no||'').trim(),String(x.description||'').trim(),normalizeQuantityForUnit(x.target_stock,x.unit),normalizeQuantityForUnit(x.minimum_stock,x.unit),String(x.unit||'Stk.').trim()||'Stk.',String(x.location||''),String(x.machine||''),x.active?1:0,Number(x.id)
     ]);
-    const diff=Number(x.current_stock)-Number(a.stock);
+    const diff=normalizeQuantityForUnit(x.current_stock,x.unit)-Number(a.stock);
     if(Math.abs(diff)>1e-8){bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{source:'Bestandskorrektur Stammdaten',note:'Istbestand über Sammelspeicherung geändert'});corrected++}
     updated++;
    }

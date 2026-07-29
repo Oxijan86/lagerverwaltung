@@ -1,26 +1,21 @@
-# Lagerverwaltung Lovrencic V27 Cloud – Stammdaten-Fix
+# Lagerverwaltung Lovrencic V28 Cloud
 
-## Behoben
+## Änderungen
 
-Version 26 konnte die Stammdaten sichtbar freischalten, obwohl die gespeicherte Sitzung im Backend nicht mehr gültig war. Dadurch erschien beim Anlegen eines Technikers weiterhin „Stammdaten sind nicht freigeschaltet“.
+- Techniker können ohne Passwortabfrage angelegt werden.
+- Der Fehler `table technicians has no column named description` wurde behoben.
+- Das Datumsformat kann ohne Passwort geändert werden.
+- Das Passwortfeld beim Datumsformat wurde entfernt.
+- Die Einheit kann in der Stammdaten-Lagerliste geändert werden.
+- Zusätzliche Einheiten: Liter, ml, kg, g, m, cm, mm, Satz, Rolle, Packung und Karton.
+- Bei Stück, Satz, Rolle, Packung und Karton werden Ist-, Soll- und Mindestbestand ohne Dezimalstellen angezeigt und gespeichert.
+- Bei Liter, ml, kg, g, m, cm und mm bleiben Dezimalwerte möglich.
 
-Version 27:
+## GitHub-Update
 
-- prüft ein gespeichertes Passwort beim App-Start erneut,
-- zeigt die Stammdaten nur nach erfolgreicher Prüfung als freigeschaltet,
-- sendet das Passwort bei jeder Anlage von Technikern, Maschinen und Lagerorten ausdrücklich mit,
-- erkennt korrekt, ob überhaupt ein Passwort vorhanden ist,
-- ermöglicht bei alten Datenbanken die erstmalige Passwortanlage,
-- löscht ungültige alte Sitzungsdaten automatisch,
-- meldet doppelte Techniker oder Stammdaten verständlich.
-
-## Nach dem Update
-
-1. Dateien in GitHub vollständig ersetzen.
-2. Commit durchführen.
-3. Einige Minuten warten.
-4. Seite mit Strg+F5 neu laden.
-5. Unter Stammdaten das Passwort erneut eingeben.
-6. Danach Techniker anlegen.
-
-Falls Version 26 angezeigt wird, die Website-Daten bzw. die installierte PWA löschen und neu öffnen.
+1. ZIP entpacken.
+2. Alle Dateien im Repository ersetzen.
+3. Commit durchführen.
+4. Einige Minuten warten.
+5. Seite mit Strg+F5 neu laden.
+6. Falls weiterhin V27 erscheint, PWA/Website-Daten löschen und neu öffnen.
