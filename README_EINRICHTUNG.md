@@ -1,30 +1,36 @@
-# Lagerverwaltung Lovrencic V31
+# Lagerverwaltung Lovrencic V32 – Cloudstart-Fix
+
+## Behobener Fehler
+
+Der Synchronisationsordner wurde im Startabgleich fälschlich wie eine einzelne Datei behandelt. Dadurch erschien:
+
+- Cloud-Stand: unbekannt
+- Datei: Name des Ordners
+- Klick auf „Aktuellen Cloud-Stand laden“ ohne erkennbare Reaktion
+
+V32 liest jetzt korrekt die Datei `lager.db` innerhalb des verbundenen Synchronisationsordners.
 
 ## Startabgleich
 
-Bei jedem neuen Start wird vor der Arbeit geprüft:
+Beim Start werden korrekt verglichen:
 
-- wann der lokale Stand zuletzt geändert wurde,
-- wann die Cloud-Datei zuletzt geändert wurde,
-- wie viele Artikel und Buchungen lokal vorhanden sind,
-- ob der lokale oder der Cloud-Stand neuer ist.
+- letzter tatsächlicher lokaler Änderungszeitpunkt,
+- Änderungszeitpunkt der Cloud-Datei `lager.db`,
+- lokaler Artikelbestand,
+- lokale Buchungsanzahl.
 
-Anschließend muss bewusst gewählt werden:
+Das bloße Öffnen der App verändert den lokalen Zeitstempel nicht mehr.
 
-- aktuellen Cloud-Stand laden,
-- lokalen Stand verwenden,
-- andere `lager.db` auswählen,
-- neue Datenbank erstellen.
+## Cloud-Stand laden
 
-Ist die Cloud-Datei neuer, wird deutlich davor gewarnt, mit einem älteren lokalen Stand weiterzuarbeiten.
+Beim Klick auf `Aktuellen Cloud-Stand laden`:
 
-## Schließen
+1. wird die Ordnerberechtigung geprüft,
+2. wird `lager.db` im verbundenen Ordner gesucht,
+3. wird die SQLite-Datei geprüft,
+4. wird vor dem Laden ein Sicherheitsbackup erstellt,
+5. wird der Cloud-Stand lokal übernommen,
+6. wird die Startauswahl bestätigt,
+7. startet die App mit dem geladenen Stand neu.
 
-Beim Beenden gibt es vier Möglichkeiten:
-
-1. Synchronisieren und schließen
-2. Nur lokal speichern und schließen
-3. Ohne Speichern schließen
-4. Abbrechen
-
-`Ohne Speichern schließen` verwirft alle Änderungen seit dem letzten gespeicherten Datenbankstand. Es wird weder lokal noch in die Cloud geschrieben und kein neues Backup erzeugt.
+Fehlt `lager.db` oder wurde die Berechtigung entzogen, erscheint eine verständliche Fehlermeldung.
