@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#1f5f4a">
+  <meta name="description" content="Lagerverwaltung Lovrencic – PWA mit SQLite und OneDrive">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.svg">
+  <title>Lagerverwaltung Lovrencic</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>Lagerverwaltung Lovrencic</h1>
+    <div class="subtitle">V19 PWA · SQLite · persönliches OneDrive</div>
+  </div>
+  <button id="installBtn" class="secondary hidden">App installieren</button>
+</header>
+
+<nav>
+  <button data-view="dashboard" class="active">Dashboard</button>
+  <button data-view="articles">Artikel</button>
+  <button data-view="booking">Buchen</button>
+  <button data-view="history">Historie</button>
+  <button data-view="cloud">OneDrive</button>
+  <button data-view="settings">Einstellungen</button>
+</nav>
+
+<main>
+<section id="dashboard" class="view active">
+  <h2>Dashboard</h2>
+  <div class="grid kpis">
+    <article><span>Artikel</span><b id="kpiArticles">0</b></article>
+    <article><span>Unterbestand</span><b id="kpiLow">0</b></article>
+    <article><span>Buchungen</span><b id="kpiMoves">0</b></article>
+    <article><span>Cloudstatus</span><b id="kpiCloud">Lokal</b></article>
+  </div>
+  <div class="card">
+    <h3>Artikel unter Mindestbestand</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Bestand</th><th>Mindest.</th></tr></thead>
+      <tbody id="lowRows"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="articles" class="view">
+  <h2>Artikel</h2>
+  <div class="card">
+    <div class="formgrid">
+      <label>Artikelnummer<input id="articleNo"></label>
+      <label>Bezeichnung<input id="articleDescription"></label>
+      <label>Einheit<input id="articleUnit" value="Stk."></label>
+      <label>Mindestbestand<input id="articleMinimum" type="number" min="0" step="0.01" value="0"></label>
+      <label>Zielbestand<input id="articleTarget" type="number" min="0" step="0.01" value="0"></label>
+      <label>Lagerort<input id="articleLocation"></label>
+      <label>Maschine<input id="articleMachine"></label>
+    </div>
+    <div class="toolbar">
+      <button id="saveArticleBtn">Artikel speichern</button>
+      <button id="cancelArticleBtn" class="secondary">Abbrechen</button>
+    </div>
+    <div id="articleMsg" class="message"></div>
+  </div>
+  <div class="card">
+    <input id="articleSearch" placeholder="Artikel suchen …">
+    <div class="tablewrap"><table>
+      <thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Bestand</th><th>Lagerort</th><th>Aktion</th></tr></thead>
+      <tbody id="articleRows"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="booking" class="view">
+  <h2>Ein- und Ausbuchung</h2>
+  <div class="card">
+    <div class="formgrid">
+      <label>Buchungsart
+        <select id="movementType"><option value="OUT">Entnahme</option><option value="IN">Einbuchung</option></select>
+      </label>
+      <label>Artikel<select id="movementArticle"></select></label>
+      <label>Menge<input id="movementQty" type="number" min="0.01" step="0.01"></label>
+      <label>Techniker<input id="movementTechnician"></label>
+      <label>Kunde<input id="movementCustomer"></label>
+      <label>Maschine<input id="movementMachine"></label>
+      <label>Bemerkung<input id="movementNote"></label>
+    </div>
+    <button id="bookBtn">Buchung speichern</button>
+    <div id="bookingMsg" class="message"></div>
+  </div>
+</section>
+
+<section id="history" class="view">
+  <h2>Historie</h2>
+  <div class="card">
+    <div class="formgrid">
+      <label>Art<select id="historyType"><option value="">Alle</option><option value="IN">Einbuchung</option><option value="OUT">Entnahme</option></select></label>
+      <label>Suche<input id="historySearch" placeholder="Artikel, Kunde oder Techniker"></label>
+    </div>
+    <button id="exportCsvBtn" class="secondary">CSV exportieren</button>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th><th>Kunde</th></tr></thead>
+    <tbody id="historyRows"></tbody>
+  </table></div>
+</section>
+
+<section id="cloud" class="view">
+  <h2>OneDrive-Synchronisierung</h2>
+  <div class="card">
+    <p>Die Datenbank liegt lokal auf diesem Gerät. Beim Synchronisieren wird eine Kopie im persönlichen OneDrive-App-Ordner gespeichert.</p>
+    <div class="toolbar">
+      <button id="loginBtn">Mit Microsoft anmelden</button>
+      <button id="logoutBtn" class="secondary">Abmelden</button>
+      <button id="syncBtn">Jetzt synchronisieren</button>
+      <button id="downloadBtn" class="secondary">Cloudstand herunterladen</button>
+      <button id="backupBtn" class="secondary">Cloud-Backup erstellen</button>
+    </div>
+    <div id="cloudMsg" class="message"></div>
+    <div class="statusgrid">
+      <div><span>Microsoft-Konto</span><b id="accountStatus">Nicht angemeldet</b></div>
+      <div><span>Lokale Änderungen</span><b id="dirtyStatus">Nein</b></div>
+      <div><span>Letzte Synchronisierung</span><b id="lastSync">Noch nie</b></div>
+      <div><span>Cloud-Datei</span><b id="cloudFileStatus">Unbekannt</b></div>
+    </div>
+  </div>
+  <div class="card warning">
+    <h3>Konfliktschutz</h3>
+    <p>Vor dem Gerätewechsel immer zuerst auf <b>Jetzt synchronisieren</b> tippen. Danach die App auf dem anderen Gerät öffnen und den Cloudstand herunterladen. Gleichzeitige Bearbeitung auf zwei Geräten wird nicht unterstützt.</p>
+  </div>
+</section>
+
+<section id="settings" class="view">
+  <h2>Einstellungen</h2>
+  <div class="card">
+    <div class="formgrid">
+      <label>Technikername<input id="settingTechnician"></label>
+      <label>Microsoft Client-ID<input id="settingClientId" placeholder="00000000-0000-0000-0000-000000000000"></label>
+      <label>Tenant<input id="settingTenant" value="common"></label>
+    </div>
+    <div class="toolbar">
+      <button id="saveSettingsBtn">Einstellungen speichern</button>
+      <button id="exportDbBtn" class="secondary">SQLite-Datei exportieren</button>
+      <label class="filebtn">SQLite-Datei importieren<input id="importDbInput" type="file" accept=".db,.sqlite,.sqlite3"></label>
+    </div>
+    <div id="settingsMsg" class="message"></div>
+  </div>
+  <div class="card">
+    <h3>Technische Daten</h3>
+    <p>Lokaler Speicher: Browser IndexedDB<br>
+       Datenbankformat: SQLite<br>
+       OneDrive-Ziel: <code>Apps/Lagerverwaltung Lovrencic/lager.db</code></p>
+  </div>
+</section>
+</main>
+
+<script src="config.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
