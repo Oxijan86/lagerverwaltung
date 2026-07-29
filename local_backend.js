@@ -1,7 +1,7 @@
 
 (function(){
 const nativeFetch=window.fetch.bind(window);
-const DBKEY='lv22-db', METAKEY='lv22-meta', HANDLEKEY='lv22-directory', BACKUPKEY='lv22-backups';
+const DBKEY='lv22-db', METAKEY='lv22-meta', HANDLEKEY='lv22-directory', BACKUPKEY='lv22-backups', SESSIONKEY='lv34-session-start';
 let SQL,db,handle=null,autoTimer=null,isSyncing=false;
 const helpData={"07-csv-center.md": "# CSV-Center\n\n## Exporte\n\n- Lagerbestand\n- Einbuchungen\n- Entnahmen\n\nDie CSV-Dateien verwenden Semikolon als Trennzeichen und UTF-8 mit BOM, damit Excel die Spalten korrekt erkennt.\n\n## SAP-Excel oder CSV importieren\n\nUnterstützte Spalten sind unter anderem:\n\n- Material\n- Bezeichnung zum Material\n- Lagerort\n- Bezeichnung des Lagerorts\n- Frei verwendbar\n\nVor dem Buchen wird eine Vorschau angezeigt. Fehlende Artikel können direkt angelegt werden.\n", "02-neues-material.md": "# Neues Material\n\nDer Reiter **Neues Material** ist passwortgeschützt.\n\n## Vorgehen\n\n- Stammdatenpasswort eingeben.\n- Artikelnummer und Bezeichnung erfassen.\n- Anfangsbestand, Sollbestand und Mindestbestand festlegen.\n- Einheit auswählen.\n- Lagerort und Maschine optional auswählen.\n- Material speichern.\n\nDer Anfangsbestand wird als Basisbestand des Artikels geführt.\n", "17-abschluss-und-tests.md": "# Abschluss Phase 1–7\n\nVersion 17.0 schließt das ursprünglich geplante Projekt ab.\n\nAbnahmetest:\n- Artikel anlegen\n- Ein- und Ausbuchung\n- CSV-Export\n- Inventurkorrektur\n- Materialanforderung in Excel öffnen\n- Historienfilter testen\n- Passwortverwaltung prüfen\n", "08-historie.md": "# Historie\n\nDie Historie enthält alle Einbuchungen und Entnahmen.\n\nSie kann gefiltert werden nach:\n\n- Alle Buchungen\n- Nur Einbuchungen\n- Nur Entnahmen\n\nDas unter **Stammdaten** gewählte Datumsformat wird auch auf bereits vorhandene Einträge angewendet.\n", "01-dashboard.md": "# Dashboard\n\nDas Dashboard zeigt die wichtigsten Kennzahlen:\n\n- **Aktive Artikel:** Anzahl aller verwendbaren Artikel.\n- **Unterbestand:** Artikel unterhalb ihres Mindestbestands.\n- **Heute:** Anzahl der heutigen Buchungen.\n- **Buchungen:** Gesamtzahl aller Ein- und Ausbuchungen.\n\nDie Werte werden aus der lokalen Datenbank `lager.db` berechnet.\n", "04-einbuchung.md": "# Einbuchung\n\n## Manuelle Einbuchung\n\n- Datum auswählen.\n- Techniker auswählen.\n- Artikel und Menge hinzufügen.\n- Einbuchung bestätigen.\n\n## Lieferschein mit Microsoft 365 Copilot auslesen\n\nLade den Lieferschein in Microsoft 365 Copilot hoch und verwende diesen Befehl:\n\n```\nLies den beigefügten Lieferschein vollständig aus.\n\nExtrahiere ausschließlich die tatsächlich gelieferten Materialpositionen.\nGib nur diese zwei Spalten aus:\n\nArtikelnummer;Menge\n\nRegeln:\n- Eine Position pro Zeile.\n- Keine Bezeichnung.\n- Keine Überschrift außerhalb der Tabelle.\n- Keine Erklärungen oder Zusammenfassung.\n- Mengen als reine Zahl ausgeben.\n- Gleiche Artikelnummern zu einer Gesamtmenge zusammenfassen.\n```\n\nDas Ergebnis in das Feld **Lieferschein M365/Copilot** einfügen, prüfen und anschließend buchen.\n", "09-stammdaten.md": "# Stammdaten\n\nDie Stammdaten sind durch das Administratorpasswort geschützt.\n\n## Funktionen\n\n- Lagerorte anlegen.\n- Maschinen anlegen.\n- Techniker mit ausschließlich einem Namen anlegen.\n- Artikelstammdaten und Istbestände bearbeiten.\n- Passwort ändern.\n- Datumsformat ändern.\n- Lagerverwaltung vollständig zurücksetzen.\n\n## Datumsformat\n\nVerfügbare Formate:\n\n- TT.MM.JJJJ\n- JJJJ-MM-TT\n- MM/TT/JJJJ\n\nDatumswerte bleiben intern im ISO-Format gespeichert. Dadurch werden nach einer Formatänderung auch bestehende Daten sofort korrekt dargestellt.\n", "15-historienfilter.md": "# Historienfilter und Export\n\nFilter:\n- Buchungsart\n- Zeitraum\n- Techniker\n- Artikelnummer oder Bezeichnung\n\nDer CSV-Export übernimmt die aktuell eingestellten Filter.\n", "03-lagerbestand.md": "# Lagerbestand\n\nIm Lagerbestand können Artikel über Artikelnummer, Bezeichnung, Lagerort oder Maschine gesucht werden.\n\n## Spalten\n\n- Sollbestand\n- Mindestbestand\n- Istbestand\n- Differenz zum Sollbestand\n- Lagerort\n- Maschine\n\nEin Artikel wird als Unterbestand hervorgehoben, wenn sein Istbestand unter dem Mindestbestand liegt.\n", "14-inventur.md": "# Inventur\n\n- Inventurliste im CSV-Center exportieren.\n- Gezählten Bestand eintragen.\n- CSV, TXT oder XLSX einlesen.\n- Differenzen prüfen.\n- Bestandskorrekturen mit Administratorpasswort buchen.\n\nNur Differenzen werden als Buchungen mit der Quelle **Inventur** gespeichert.\n", "06-materialanforderung.md": "# Materialanforderung\n\n- Techniker auswählen.\n- **Unterbestand laden** anklicken.\n- Gewünschte Positionen markieren.\n- Bestellmenge prüfen oder ändern.\n- **Materialanforderung exportieren** anklicken.\n\nDie Excel-Datei wird anhand der hinterlegten Vorlage erzeugt. Der Dateiname enthält Datum und Technikername.\n", "13-fehlerbehebung.md": "# Fehlerbehebung\n\n## Anmeldung funktioniert nicht\n\n- Groß- und Kleinschreibung des Passworts prüfen.\n- Nach einem vollständigen Reset muss die Ersteinrichtung abgeschlossen werden.\n- Das alte Passwort ist nach dem Reset nicht mehr gültig.\n\n## Excel- oder CSV-Datei lässt sich nicht importieren\n\n- Prüfen, ob die Datei geöffnet und gespeichert werden kann.\n- Bei CSV möglichst Semikolon als Trennzeichen verwenden.\n- Artikelnummern und Mengen dürfen nicht leer sein.\n\n## M365-Ergebnis wird nicht erkannt\n\n- Den Prompt aus der Hilfe unverändert verwenden.\n- Ausgabeformat `Artikelnummer;Menge` prüfen.\n- Zusätzliche Erklärungen von Copilot entfernen.\n", "16-materialanforderung-export.md": "# Materialanforderung\n\nDie Originalvorlage `materialanforderung_vorlage.xlsx` bleibt unverändert erhalten.\n\nPrüfungen:\n- maximal 25 Positionen\n- nur positive Mengen\n- doppelte Artikel werden zusammengefasst\n- Vorschau vor Export\n- Sortierung nach Artikelnummer\n\nDateiname: `Bestellung_Datum_Techniker.xlsx`\n", "10-reset.md": "# Vollständiges Zurücksetzen\n\nDer vollständige Reset löscht:\n\n- Artikel\n- Bestände\n- Buchungen\n- Historie\n- Audit-Protokoll\n- Lagerorte\n- Maschinen\n- Techniker\n- Administratorpasswort\n- Einstellungen\n\nProgrammdateien, Excel-Vorlage und Hilfedateien bleiben erhalten.\n\nNach dem Reset erscheint wieder automatisch die vollständige Ersteinrichtung.\n", "11-m365-prompts.md": "# Microsoft 365 Copilot – Prompts\n\n## SAP- oder Materialliste prüfen\n\n```\nPrüfe die beigefügte Materialliste.\n\nErstelle eine Tabelle mit:\nArtikelnummer;Bezeichnung;Menge;Lagerort\n\nRegeln:\n- Eine Position pro Zeile.\n- Leere Zeilen entfernen.\n- Gleiche Artikelnummern zusammenfassen.\n- Mengen als reine Zahl ausgeben.\n- Keine Erklärungen außerhalb der Tabelle.\n```\n\n## Inventurliste auslesen\n\n```\nLies die beigefügte Inventurliste aus.\n\nGib ausschließlich diese Spalten aus:\nArtikelnummer;Menge\n\nRegeln:\n- Eine Position pro Zeile.\n- Gleiche Artikelnummern zusammenfassen.\n- Mengen als reine Zahl ausgeben.\n- Unleserliche Positionen nicht raten, sondern mit PRÜFEN kennzeichnen.\n- Keine zusätzlichen Erklärungen.\n```\n", "00-erste-schritte.md": "# Erste Schritte\n\nDie Lagerverwaltung startet nach der Erstinstallation mit einem Einrichtungsassistenten.\n\n## Ersteinrichtung\n\n- Administratorpasswort mit mindestens 8 Zeichen vergeben.\n- Namen des Technikers eingeben.\n- Datumsformat auswählen.\n- Einrichtung abschließen.\n\nLagerorte und Maschinen müssen bei der Ersteinrichtung nicht angelegt werden. Sie können später unter **Stammdaten** ergänzt werden.\n", "12-mobile-bedienung.md": "# Mobile Bedienung\n\nAuf schmalen Bildschirmen wird die Navigation über die Schaltfläche **Menü** geöffnet.\n\n## Hinweise\n\n- Tabellen können seitlich verschoben werden.\n- Eingabefelder werden untereinander dargestellt.\n- Die Ersteinrichtung ist für Smartphone und Tablet optimiert.\n- Für umfangreiche CSV- und Excel-Arbeiten ist ein Windows-PC komfortabler.\n", "05-entnahme.md": "# Entnahme\n\n## Manuelle Entnahme\n\n- Datum, Techniker, Kunde und Maschine eintragen.\n- Artikel und entnommene Menge hinzufügen.\n- Entnahme bestätigen.\n\n## Servicebericht mit Microsoft 365 Copilot auslesen\n\n```\nLies den beigefügten Servicebericht vollständig aus.\n\nExtrahiere ausschließlich die im Servicebericht tatsächlich verwendeten oder verbauten Materialien.\nGib nur diese zwei Spalten aus:\n\nArtikelnummer;Menge\n\nRegeln:\n- Eine Position pro Zeile.\n- Keine Bezeichnung.\n- Keine Erklärungen oder Zusammenfassung.\n- Mengen als reine Zahl ausgeben.\n- Gleiche Artikelnummern zu einer Gesamtmenge zusammenfassen.\n- Nicht verbaute, nur erwähnte oder empfohlene Materialien nicht übernehmen.\n```\n\nDas Copilot-Ergebnis in das Feld **Servicebericht M365/Copilot** einfügen, mit **Extraktion prüfen** kontrollieren und danach buchen.\n"};
 
@@ -31,11 +31,80 @@ function normalizeQuantityForUnit(value,unit){
 }
 function stockExpr(){return "a.initial_stock+COALESCE(SUM(CASE WHEN m.movement_type='IN' THEN m.quantity WHEN m.movement_type='OUT' THEN -m.quantity ELSE 0 END),0)"}
 function audit(user,action,entity,id='',details=''){run('INSERT INTO audit_log(event_time,user_name,action,entity,entity_id,details) VALUES(?,?,?,?,?,?)',[stamp().replace('T',' ').slice(0,19),user||'Techniker',action,entity,String(id||''),details||''])}
+
+function randomId(){
+ if(globalThis.crypto?.randomUUID)return crypto.randomUUID();
+ return 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+}
+function syncValue(key,def=''){
+ try{
+  const r=rows('SELECT value FROM sync_state WHERE key=?',[key])[0];
+  return r?String(r.value):def;
+ }catch{return def}
+}
+function setSyncValue(key,value){
+ run('INSERT INTO sync_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',[key,String(value)]);
+}
+function ensureSyncState(){
+ if(!syncValue('database_id'))setSyncValue('database_id',randomId());
+ if(!syncValue('revision'))setSyncValue('revision','0');
+ if(!syncValue('revision_id'))setSyncValue('revision_id',randomId());
+ if(!syncValue('changed_at'))setSyncValue('changed_at',String(Date.now()));
+}
+function currentDbState(){
+ ensureSyncState();
+ return {
+  database_id:syncValue('database_id'),
+  revision:Number(syncValue('revision','0')),
+  revision_id:syncValue('revision_id'),
+  parent_revision_id:syncValue('parent_revision_id',''),
+  changed_at:Number(syncValue('changed_at','0')),
+  articles:Number(scalar('SELECT COUNT(*) FROM articles')||0),
+  movements:tableExists('movements')?Number(scalar('SELECT COUNT(*) FROM movements')||0):0
+ };
+}
+function bumpRevision(){
+ ensureSyncState();
+ const oldId=syncValue('revision_id');
+ setSyncValue('parent_revision_id',oldId);
+ setSyncValue('revision',String(Number(syncValue('revision','0'))+1));
+ setSyncValue('revision_id',randomId());
+ setSyncValue('changed_at',String(Date.now()));
+}
+function stateFromDatabase(test){
+ const get=(key,def='')=>{
+  try{
+   const stmt=test.prepare('SELECT value FROM sync_state WHERE key=?');
+   stmt.bind([key]);
+   const value=stmt.step()?String(stmt.getAsObject().value):def;
+   stmt.free();
+   return value;
+  }catch{return def}
+ };
+ const count=table=>{
+  try{
+   const r=test.exec(`SELECT COUNT(*) AS c FROM ${table}`);
+   return Number(r[0]?.values?.[0]?.[0]||0);
+  }catch{return 0}
+ };
+ return {
+  database_id:get('database_id','legacy'),
+  revision:Number(get('revision','0')),
+  revision_id:get('revision_id','legacy-'+count('articles')+'-'+count('movements')),
+  parent_revision_id:get('parent_revision_id',''),
+  changed_at:Number(get('changed_at','0')),
+  articles:count('articles'),
+  movements:count('movements')
+ };
+}
 async function persist(dirty=true){
+ if(dirty)bumpRevision();
  await ip(DBKEY,db.export().buffer);
  const m=await ig(METAKEY)||{};
- if(dirty)m.dirty=true;
- m.localModified=Date.now();
+ if(dirty){
+  m.dirty=true;
+  m.localModified=currentDbState().changed_at;
+ }
  await ip(METAKEY,m);
  await syncStatus();
  if(dirty){
@@ -48,6 +117,7 @@ function scheduleAutoSync(){clearTimeout(autoTimer);autoTimer=setTimeout(()=>{if
 function initSchema(){
 db.run(`PRAGMA foreign_keys=ON;
 CREATE TABLE IF NOT EXISTS app_settings(setting_key TEXT PRIMARY KEY,setting_value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS sync_state(key TEXT PRIMARY KEY,value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS articles(id INTEGER PRIMARY KEY AUTOINCREMENT,article_no TEXT NOT NULL UNIQUE,description TEXT NOT NULL,target_stock REAL NOT NULL DEFAULT 0,minimum_stock REAL NOT NULL DEFAULT 0,initial_stock REAL NOT NULL DEFAULT 0,unit TEXT NOT NULL DEFAULT 'Stk.',location TEXT NOT NULL DEFAULT '',machine TEXT NOT NULL DEFAULT '',active INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL,manufacturer TEXT NOT NULL DEFAULT '',supplier TEXT NOT NULL DEFAULT '',supplier_article_no TEXT NOT NULL DEFAULT '',barcode TEXT NOT NULL DEFAULT '',purchase_price REAL NOT NULL DEFAULT 0,notes TEXT NOT NULL DEFAULT '',image_url TEXT NOT NULL DEFAULT '',datasheet_url TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS movements(id INTEGER PRIMARY KEY AUTOINCREMENT,movement_date TEXT NOT NULL,movement_type TEXT NOT NULL,article_id INTEGER NOT NULL,quantity REAL NOT NULL,customer TEXT NOT NULL DEFAULT '',technician TEXT NOT NULL DEFAULT '',note TEXT NOT NULL DEFAULT '',source TEXT NOT NULL DEFAULT 'App',created_at TEXT NOT NULL,vehicle TEXT NOT NULL DEFAULT '',machine TEXT NOT NULL DEFAULT '',delivery_note TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS locations(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,description TEXT NOT NULL DEFAULT '',active INTEGER NOT NULL DEFAULT 1);
@@ -55,6 +125,7 @@ CREATE TABLE IF NOT EXISTS machines(id INTEGER PRIMARY KEY AUTOINCREMENT,name TE
 CREATE TABLE IF NOT EXISTS technicians(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,email TEXT NOT NULL DEFAULT '',default_vehicle TEXT NOT NULL DEFAULT '',active INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS vehicles(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,description TEXT NOT NULL DEFAULT '',active INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT,event_time TEXT NOT NULL,user_name TEXT NOT NULL,action TEXT NOT NULL,entity TEXT NOT NULL,entity_id TEXT NOT NULL DEFAULT '',details TEXT NOT NULL DEFAULT '');`);
+ensureSyncState();
 if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
 }
 
@@ -76,7 +147,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','33');
+  setSetting('database_version','34');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -86,7 +157,12 @@ function setupIsRequired(){
 
 async function initialize(){
  SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
- const b=await ig(DBKEY);db=b?new SQL.Database(new Uint8Array(b)):new SQL.Database();initSchema();adoptExistingDatabase();handle=await ig(HANDLEKEY)||null;await persist(false);
+ const b=await ig(DBKEY);db=b?new SQL.Database(new Uint8Array(b)):new SQL.Database();
+ initSchema();adoptExistingDatabase();handle=await ig(HANDLEKEY)||null;
+ const m=await ig(METAKEY)||{};
+ if(!m.localModified)m.localModified=currentDbState().changed_at;
+ await ip(METAKEY,m);
+ await persist(false);
 }
 function response(data,status=200,headers={}){return new Response(typeof data==='string'||data instanceof Blob||data instanceof ArrayBuffer?data:JSON.stringify(data),{status,headers:{...(typeof data==='object'&&!(data instanceof Blob)&&!(data instanceof ArrayBuffer)?{'Content-Type':'application/json'}:{}),...headers}})}
 function body(opt){try{return JSON.parse(opt?.body||'{}')}catch{return {}}}
@@ -133,7 +209,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'33.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'34.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -221,11 +297,56 @@ async function route(url,opt={}){
 
 function safeName(s){return String(s||'').replace(/[^a-zA-Z0-9ÄÖÜäöüß_-]+/g,'_').slice(0,45)}
 function backupStamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`}
-async function getBackupIndex(){return await ig(BACKUPKEY)||[]}
+
+async function storedBackupIndex(){return await ig(BACKUPKEY)||[]}
 async function setBackupIndex(x){await ip(BACKUPKEY,x)}
 async function backupDir(create=true){if(!handle)return null;try{return await handle.getDirectoryHandle('Backup',{create})}catch{return null}}
-async function createBackup(kind='Automatisch',comment=''){const bytes=db.export(),created=Date.now(),name=`Backup_${backupStamp()}${comment?'_'+safeName(comment):''}.db`;let storage='local';const bd=await backupDir(true);if(bd&&await permission(handle,'readwrite')){const fh=await bd.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(bytes);await w.close();storage='folder'}else{await ip('backup:'+name,bytes.buffer)}let list=await getBackupIndex();list.unshift({name,created,kind,comment,size:bytes.byteLength,storage});while(list.length>30){const old=list.pop();if(old.storage==='local')await idel('backup:'+old.name);else try{const d=await backupDir(false);await d.removeEntry(old.name)}catch{}}await setBackupIndex(list);return list[0]}
-
+async function cloudBackupEntries(){
+ const result=[];
+ const d=await backupDir(false);
+ if(!d||!await permission(handle,'read'))return result;
+ try{
+  for await(const [name,entry] of d.entries()){
+   if(entry.kind!=='file'||!name.toLowerCase().endsWith('.db'))continue;
+   const f=await entry.getFile();
+   result.push({name,created:Number(f.lastModified||0),kind:'Cloud-Backup',comment:'Im Cloud-Ordner gefunden',size:f.size,storage:'folder'});
+  }
+ }catch(e){console.warn('Cloud-Backups konnten nicht gelesen werden',e)}
+ return result;
+}
+async function getBackupIndex(){
+ const local=await storedBackupIndex();
+ const cloud=await cloudBackupEntries();
+ const map=new Map();
+ for(const x of [...local,...cloud]){
+  const old=map.get(x.name);
+  if(!old||x.storage==='folder')map.set(x.name,x);
+ }
+ return [...map.values()].sort((a,b)=>Number(b.created)-Number(a.created));
+}
+async function writeBackupBytes(bytes,kind='Automatisch',comment='',preferCloud=true){
+ const created=Date.now();
+ const name=`Backup_${backupStamp()}${comment?'_'+safeName(comment):''}.db`;
+ let storage='local';
+ const bd=preferCloud?await backupDir(true):null;
+ if(bd&&await permission(handle,'readwrite')){
+  const fh=await bd.getFileHandle(name,{create:true}),w=await fh.createWritable();
+  await w.write(bytes);await w.close();storage='folder';
+ }else{
+  await ip('backup:'+name,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
+ }
+ let list=await storedBackupIndex();
+ list.unshift({name,created,kind,comment,size:bytes.byteLength,storage});
+ while(list.length>30){
+  const old=list.pop();
+  if(old.storage==='local')await idel('backup:'+old.name);
+ }
+ await setBackupIndex(list);
+ return list[0];
+}
+async function createBackup(kind='Automatisch',comment=''){
+ return await writeBackupBytes(db.export(),kind,comment,true);
+}
 let automaticBackupTimer=null;
 function scheduleAutomaticBackup(){
  clearTimeout(automaticBackupTimer);
@@ -249,12 +370,113 @@ async function ensureDailyBackup(){
   }
  }catch(e){console.warn('Tägliches Backup fehlgeschlagen:',e)}
 }
+async function readBackup(x){
+ if(!x)throw Error('Backup nicht gefunden.');
+ if(x.storage==='folder'){
+  const d=await backupDir(false);
+  if(!d)throw Error('Cloud-Backup-Ordner ist nicht erreichbar.');
+  const f=await (await d.getFileHandle(x.name)).getFile();
+  return new Uint8Array(await f.arrayBuffer());
+ }
+ const raw=await ig('backup:'+x.name);
+ if(!raw)throw Error('Lokale Backup-Datei wurde nicht gefunden.');
+ return new Uint8Array(raw);
+}
+async function restoreBackup(name){
+ const list=await getBackupIndex(),x=list.find(z=>z.name===name);
+ if(!x)throw Error('Backup nicht gefunden.');
+ await createBackup('Sicherheitsbackup','Vor Wiederherstellung');
+ const bytes=await readBackup(x),test=new SQL.Database(bytes);
+ if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Backup ist beschädigt.');
+ const restoredState=stateFromDatabase(test);
+ db.close();db=test;initSchema();adoptExistingDatabase();
+ await ip(DBKEY,db.export().buffer);
+ const m=await ig(METAKEY)||{};
+ m.dirty=true;
+ m.localModified=restoredState.changed_at||Date.now();
+ m.restorePending=true;
+ m.writeBlocked=true;
+ m.restoreBackupName=name;
+ await ip(METAKEY,m);
+ return {...x,state:restoredState};
+}
+async function deleteBackup(name){
+ const list=await getBackupIndex(),x=list.find(z=>z.name===name);
+ if(!x)return;
+ if(x.storage==='folder'){
+  try{const d=await backupDir(false);await d.removeEntry(name)}catch{}
+ }else await idel('backup:'+name);
+ const stored=(await storedBackupIndex()).filter(z=>z.name!==name);
+ await setBackupIndex(stored);
+}
+async function inspectCloudDatabase(){
+ if(!handle)return {connected:false};
+ if(!await permission(handle,'read'))return {connected:true,accessible:false,error:'Leseberechtigung fehlt.'};
+ try{
+  const fh=await handle.getFileHandle('lager.db'),f=await fh.getFile();
+  const bytes=new Uint8Array(await f.arrayBuffer());
+  const test=new SQL.Database(bytes);
+  if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Cloud-Datenbank ist beschädigt.');
+  const state=stateFromDatabase(test);
+  test.close();
+  return {connected:true,accessible:true,file:'lager.db',modified:f.lastModified,size:f.size,bytes,state};
+ }catch(e){
+  return {connected:true,accessible:false,file:'lager.db',error:e.message};
+ }
+}
+async function saveToFolder(makeBackup=true,force=false){
+ if(!handle)throw Error('Kein Synchronisationsordner verbunden.');
+ if(!await permission(handle,'readwrite'))throw Error('Schreibberechtigung fehlt.');
+ const m=await ig(METAKEY)||{};
+ const local=currentDbState();
+ const cloud=await inspectCloudDatabase();
 
-async function readBackup(x){if(x.storage==='folder'){const d=await backupDir(false),f=await (await d.getFileHandle(x.name)).getFile();return new Uint8Array(await f.arrayBuffer())}return new Uint8Array(await ig('backup:'+x.name))}
-async function restoreBackup(name){let list=await getBackupIndex(),x=list.find(z=>z.name===name);if(!x)throw Error('Backup nicht gefunden.');await createBackup('Sicherheitsbackup','Vor Wiederherstellung');const bytes=await readBackup(x),test=new SQL.Database(bytes);if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Backup ist beschädigt.');db.close();db=test;initSchema();adoptExistingDatabase();await persist(true);return x}
-async function deleteBackup(name){let list=await getBackupIndex(),x=list.find(z=>z.name===name);if(!x)return;if(x.storage==='folder')try{const d=await backupDir(false);await d.removeEntry(name)}catch{}else await idel('backup:'+name);await setBackupIndex(list.filter(z=>z.name!==name))}
-async function saveToFolder(makeBackup=true){if(!handle)throw Error('Kein Synchronisationsordner verbunden.');if(!await permission(handle,'readwrite'))throw Error('Schreibberechtigung fehlt.');if(makeBackup)await createBackup('Automatisch','Vor Synchronisierung');const fh=await handle.getFileHandle('lager.db',{create:true}),w=await fh.createWritable();await w.write(db.export());await w.close();const f=await fh.getFile(),m=await ig(METAKEY)||{};m.dirty=false;m.lastSync=Date.now();m.fileModified=f.lastModified;await ip(METAKEY,m);await syncStatus()}
-async function loadFromFolder(){if(!handle)throw Error('Kein Synchronisationsordner verbunden.');if(!await permission(handle,'read'))throw Error('Leseberechtigung fehlt.');const fh=await handle.getFileHandle('lager.db'),f=await fh.getFile(),test=new SQL.Database(new Uint8Array(await f.arrayBuffer()));if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Die lager.db ist beschädigt.');await createBackup('Automatisch','Vor Laden aus Synchronisation');db.close();db=test;initSchema();adoptExistingDatabase();const m=await ig(METAKEY)||{};m.dirty=false;m.lastSync=Date.now();m.fileModified=f.lastModified;await ip(METAKEY,m);await persist(false)}
+ if(cloud.accessible&&!force){
+  if(m.writeBlocked)throw Error('Cloud-Schreiben ist gesperrt, weil der Datenstand nicht eindeutig auf der aktuellen Cloud-Revision basiert.');
+  if(!m.expectedCloudRevisionId)
+   throw Error('Die erwartete Cloud-Revision ist nicht bekannt. Lade zuerst den Cloud-Stand oder verwende die ausdrückliche Überschreibfunktion.');
+  if(cloud.state.revision_id!==m.expectedCloudRevisionId)
+   throw Error('Konflikt: Die Cloud-Datenbank wurde auf einem anderen Gerät verändert. Cloud-Stand neu laden.');
+ }
+ if(cloud.accessible&&force){
+  await writeBackupBytes(cloud.bytes,'Sicherheitsbackup','Cloud_vor_ausdrücklichem_Überschreiben',true);
+ }
+ if(makeBackup)await createBackup('Automatisch','Vor Synchronisierung');
+
+ const fh=await handle.getFileHandle('lager.db',{create:true}),w=await fh.createWritable();
+ await w.write(db.export());await w.close();
+ const f=await fh.getFile();
+ m.dirty=false;
+ m.lastSync=Date.now();
+ m.fileModified=f.lastModified;
+ m.expectedCloudRevisionId=local.revision_id;
+ m.expectedCloudDatabaseId=local.database_id;
+ m.writeBlocked=false;
+ m.restorePending=false;
+ await ip(METAKEY,m);
+ await syncStatus();
+ return {ok:true,state:local};
+}
+async function loadFromFolder(){
+ if(!handle)throw Error('Kein Synchronisationsordner verbunden.');
+ const cloud=await inspectCloudDatabase();
+ if(!cloud.accessible)throw Error('Cloud-Datenbank konnte nicht gelesen werden: '+(cloud.error||''));
+ await createBackup('Sicherheitsbackup','Vor Laden aus Synchronisation');
+ const test=new SQL.Database(cloud.bytes);
+ db.close();db=test;initSchema();adoptExistingDatabase();
+ await ip(DBKEY,db.export().buffer);
+ const m=await ig(METAKEY)||{};
+ m.dirty=false;
+ m.lastSync=Date.now();
+ m.fileModified=cloud.modified;
+ m.localModified=cloud.state.changed_at||cloud.modified;
+ m.expectedCloudRevisionId=cloud.state.revision_id;
+ m.expectedCloudDatabaseId=cloud.state.database_id;
+ m.writeBlocked=false;
+ m.restorePending=false;
+ await ip(METAKEY,m);
+ return {ok:true,state:cloud.state};
+}
 window.LVStorage={
  async prepareNewDatabase(){if('showDirectoryPicker'in window){handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await saveToFolder(false)}},
  async openExistingFolder(){if(!('showDirectoryPicker'in window))throw Error('Ordnerauswahl wird von diesem Browser nicht unterstützt. Nutze die Dateiauswahl.');handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await loadFromFolder()},
@@ -273,43 +495,32 @@ window.LVStorage={
   if(existingDatabaseHasContent())setSetting('setup_complete','1');
   const articleCount=Number(scalar('SELECT COUNT(*) FROM articles')||0);
   const movementCount=tableExists('movements')?Number(scalar('SELECT COUNT(*) FROM movements')||0):0;
-  await persist(true);
+  await ip(DBKEY,db.export().buffer);
+  const state=currentDbState();
+  const meta=await ig(METAKEY)||{};
+  meta.dirty=true;
+  meta.localModified=state.changed_at;
+  meta.writeBlocked=!!handle;
+  meta.restorePending=false;
+  await ip(METAKEY,meta);
   return {ok:true,articles:articleCount,movements:movementCount,file:f.name};
  }
 };
 
 
 async function cloudState(){
- if(!handle)return {connected:false};
- try{
-  if(!await permission(handle,'read')){
-   return {
-    connected:true,
-    accessible:false,
-    file:'lager.db',
-    folder:handle.name||'',
-    error:'Leseberechtigung fehlt.'
-   };
-  }
-  const fileHandle=await handle.getFileHandle('lager.db');
-  const file=await fileHandle.getFile();
-  return {
-   connected:true,
-   accessible:true,
-   file:file.name,
-   folder:handle.name||'',
-   modified:Number(file.lastModified||0),
-   size:Number(file.size||0)
-  };
- }catch(e){
-  return {
-   connected:true,
-   accessible:false,
-   file:'lager.db',
-   folder:handle?.name||'',
-   error:e.message
-  };
- }
+ const c=await inspectCloudDatabase();
+ if(!c.connected)return {connected:false};
+ return {
+  connected:true,
+  accessible:!!c.accessible,
+  file:'lager.db',
+  folder:handle?.name||'',
+  modified:Number(c.modified||0),
+  size:Number(c.size||0),
+  state:c.state||null,
+  error:c.error||''
+ };
 }
 async function localCounts(){
  return {
@@ -323,7 +534,7 @@ window.LVDatabaseStatus={
   await ready;
   const m=await ig(METAKEY)||{};
   return {
-   lastModified:Number(m.localModified||0),
+   lastModified:currentDbState().changed_at||Number(m.localModified||0),
    lastAutomaticBackup:Number(m.lastAutomaticBackup||0),
    cloudConnected:!!handle,
    dirty:!!m.dirty,
@@ -335,7 +546,36 @@ window.LVDatabaseStatus={
 window.LVBackup={
  async manual(){try{const x=await createBackup('Manuell',backupComment.value.trim());backupComment.value='';msg(backupMsg,'Backup erstellt: '+x.name,true);await this.refresh()}catch(e){msg(backupMsg,e.message,false)}},
  async refresh(){await ready;const list=await getBackupIndex();if(!window.backupRows)return;backupRows.innerHTML=list.map(x=>`<tr><td>${new Date(x.created).toLocaleString('de-DE')}</td><td>${x.kind}</td><td>${x.comment||'–'}</td><td>${(x.size/1024).toLocaleString('de-DE',{maximumFractionDigits:1})} KB</td><td><button class="secondary" onclick="LVBackup.restore('${x.name.replaceAll("'","\\'")}')">Wiederherstellen</button> <button class="secondary" onclick="LVBackup.download('${x.name.replaceAll("'","\\'")}')">Herunterladen</button> <button class="danger" onclick="LVBackup.remove('${x.name.replaceAll("'","\\'")}')">Löschen</button></td></tr>`).join('')||'<tr><td colspan="5">Noch keine Backups</td></tr>'},
- async restore(name){if(!confirm('Diesen Datenstand wiederherstellen? Vorher wird ein Sicherheitsbackup erstellt.'))return;try{await restoreBackup(name);await LVSync.save();location.reload()}catch(e){msg(backupMsg,e.message,false)}},
+ async restore(name){
+  if(!confirm('Diesen Datenstand lokal wiederherstellen? Vorher wird ein Sicherheitsbackup des aktuellen lokalen Stands erstellt. Die Cloud-Datei wird noch nicht verändert.'))return;
+  try{
+   const result=await restoreBackup(name);
+   sessionStorage.removeItem('lv_startup_confirmed');
+   alert('Backup wurde lokal wiederhergestellt. Die Cloud-Datei bleibt unverändert. Prüfe den Bestand und veröffentliche ihn nur bewusst als neuen Cloud-Stand.');
+   location.reload();
+  }catch(e){msg(backupMsg,e.message,false)}
+ },
+ async refreshPending(){
+  try{
+   const s=await LVBackupState.get();
+   if(window.restorePendingBox)restorePendingBox.style.display=s.restorePending?'block':'none';
+  }catch(e){console.warn(e)}
+ },
+ async publishRestored(){
+  if(!confirm('Der wiederhergestellte, möglicherweise ältere Datenstand überschreibt die aktuelle Cloud-Datei. Vorher wird die jetzige Cloud-Datei als Sicherheitsbackup gesichert. Wirklich veröffentlichen?'))return;
+  try{
+   await LVBackupState.publishRestored();
+   msg(restorePendingMsg,'Wiederhergestellter Stand wurde als neuer Cloud-Stand veröffentlicht.',true);
+   setTimeout(()=>location.reload(),500);
+  }catch(e){msg(restorePendingMsg,e.message,false)}
+ },
+ async discardRestore(){
+  if(!confirm('Lokale Wiederherstellung verwerfen und den aktuellen Cloud-Stand erneut laden?'))return;
+  try{
+   await LVBackupState.discardRestore();
+   location.reload();
+  }catch(e){msg(restorePendingMsg,e.message,false)}
+ },
  async remove(name){if(!confirm('Backup wirklich löschen?'))return;await deleteBackup(name);await this.refresh()},
  async download(name){const x=(await getBackupIndex()).find(z=>z.name===name),bytes=await readBackup(x),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download=x.name;a.click()}
 };
@@ -344,7 +584,21 @@ window.fetch=route;
 async function syncStatus(){const m=await ig(METAKEY)||{};if(window.syncFile)syncFile.textContent=handle?.name||'Keiner';if(window.syncDirty)syncDirty.textContent=m.dirty?'Ja':'Nein';if(window.syncLast)syncLast.textContent=m.lastSync?new Date(m.lastSync).toLocaleString('de-DE'):'Noch nie';if(window.syncAuto)syncAuto.textContent=handle?'Aktiv':'Wartet auf Ordner'}
 async function permission(h,m){if((await h.queryPermission({mode:m}))==='granted')return true;return (await h.requestPermission({mode:m}))==='granted'}
 window.LVSync={
- async chooseFolder(){try{if(!('showDirectoryPicker'in window))throw Error('Ordnerauswahl wird in diesem Browser nicht unterstützt.');handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await syncStatus();msg(syncMsg,'Ordner verbunden: '+handle.name,true)}catch(e){if(e.name!=='AbortError')msg(syncMsg,e.message,false)}},
+ async chooseFolder(){
+  try{
+   if(!('showDirectoryPicker'in window))throw Error('Ordnerauswahl wird in diesem Browser nicht unterstützt.');
+   handle=await showDirectoryPicker({mode:'readwrite'});
+   await ip(HANDLEKEY,handle);
+   const m=await ig(METAKEY)||{};
+   m.writeBlocked=true;
+   delete m.expectedCloudRevisionId;
+   await ip(METAKEY,m);
+   sessionStorage.removeItem('lv_startup_confirmed');
+   await syncStatus();
+   alert('Ordner verbunden. Der lokale und der Cloud-Datenstand werden jetzt vor der weiteren Arbeit verglichen.');
+   location.reload();
+  }catch(e){if(e.name!=='AbortError')msg(syncMsg,e.message,false)}
+ },
  async load(reloadAfter=true){
   try{
    await loadFromFolder();
@@ -355,8 +609,37 @@ window.LVSync={
    throw e;
   }
  },
- async save(){try{isSyncing=true;await saveToFolder(true);msg(syncMsg,'Datenbank und Backup gespeichert.',true)}catch(e){msg(syncMsg,e.message,false)}finally{isSyncing=false}},
- async sync(silent=false){try{if(!handle){if(!silent)throw Error('Kein Synchronisationsordner verbunden.');return}isSyncing=true;const m=await ig(METAKEY)||{};let changed=false;try{const f=await (await handle.getFileHandle('lager.db')).getFile();changed=!!m.fileModified&&f.lastModified!==m.fileModified}catch{}if(changed&&m.dirty)throw Error('Konflikt: Cloud-Datei und lokaler Stand wurden verändert. Bitte bewusst Laden oder Speichern.');if(changed&&!m.dirty){await loadFromFolder();if(!silent)location.reload()}else{await saveToFolder(true);if(!silent)msg(syncMsg,'Synchronisierung erfolgreich.',true)}}catch(e){if(!silent&&window.syncMsg)msg(syncMsg,e.message,false);else console.warn(e)}finally{isSyncing=false}},
+ async save(){
+  try{isSyncing=true;await saveToFolder(true,false);msg(syncMsg,'Datenbank und Backup sicher gespeichert.',true)}
+  catch(e){msg(syncMsg,e.message,false)}
+  finally{isSyncing=false}
+ },
+ async forceSave(){
+  if(!confirm('ACHTUNG: Der lokale Datenstand überschreibt die aktuelle Cloud-Datei. Die bisherige Cloud-Datei wird vorher als Sicherheitsbackup gespeichert. Wirklich fortfahren?'))return;
+  try{isSyncing=true;await saveToFolder(true,true);msg(syncMsg,'Cloud-Datei wurde ausdrücklich überschrieben und vorher gesichert.',true)}
+  catch(e){msg(syncMsg,e.message,false)}
+  finally{isSyncing=false}
+ },
+ async sync(silent=false){
+  try{
+   if(!handle){if(!silent)throw Error('Kein Synchronisationsordner verbunden.');return}
+   isSyncing=true;
+   const m=await ig(METAKEY)||{};
+   const cloud=await inspectCloudDatabase();
+   if(!cloud.accessible)throw Error('Cloud-Datenbank kann nicht gelesen werden.');
+   if(m.dirty){
+    await saveToFolder(true,false);
+    if(!silent)msg(syncMsg,'Synchronisierung erfolgreich.',true);
+   }else if(m.expectedCloudRevisionId!==cloud.state.revision_id){
+    await loadFromFolder();
+    if(!silent)location.reload();
+   }else if(!silent){
+    msg(syncMsg,'Lokaler und Cloud-Stand sind bereits identisch.',true);
+   }
+  }catch(e){
+   if(!silent&&window.syncMsg)msg(syncMsg,e.message,false);else console.warn(e);
+  }finally{isSyncing=false}
+ },
  async disconnect(){handle=null;await idel(HANDLEKEY);await syncStatus();msg(syncMsg,'Verknüpfung gelöst.',true)},
  exportDb(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([db.export()],{type:'application/octet-stream'}));a.download='lager.db';a.click()},
  async importDb(input){try{await LVStorage.openExistingFile(input);location.reload()}catch(e){alert(e.message)}},
@@ -369,30 +652,50 @@ window.LVStartupState={
   await ready;
   const m=await ig(METAKEY)||{};
   const c=await cloudState();
-  const counts=await localCounts();
-  const localModified=Number(m.localModified||0);
-  const cloudModified=Number(c.modified||0);
+  const local=currentDbState();
+  let comparison='none';
+  if(c.accessible&&c.state){
+   if(local.database_id===c.state.database_id&&local.revision_id===c.state.revision_id){
+    comparison='identical';
+   }else if(local.database_id!==c.state.database_id){
+    comparison='conflict';
+   }else if(c.state.revision>local.revision){
+    comparison='cloud_newer';
+   }else if(local.revision>c.state.revision){
+    comparison=m.expectedCloudRevisionId===c.state.revision_id?'local_newer_safe':'local_newer_unverified';
+   }else{
+    comparison='conflict';
+   }
+  }
   return {
    needsConfirmation:sessionStorage.getItem('lv_startup_confirmed')!=='1',
-   localModified,
-   localArticles:counts.articles,
-   localMovements:counts.movements,
+   localModified:local.changed_at||Number(m.localModified||0),
+   localArticles:local.articles,
+   localMovements:local.movements,
+   localRevisionLabel:`${local.revision} · ${local.revision_id.slice(0,8)}`,
    cloudConnected:!!c.connected,
    cloudAccessible:!!c.accessible,
-   cloudModified,
+   cloudModified:Number(c.modified||0),
    cloudFile:c.file||'',
-   cloudNewer:!!(c.accessible&&cloudModified>localModified+1000),
-   localNewer:!!(c.accessible&&localModified>cloudModified+1000)
+   cloudRevisionLabel:c.state?`${c.state.revision} · ${c.state.revision_id.slice(0,8)}`:'–',
+   comparison
   };
  },
  async confirm(mode){
   await ready;
   const m=await ig(METAKEY)||{};
+  const c=await inspectCloudDatabase();
+  const local=currentDbState();
   m.startupConfirmedAt=Date.now();
   m.startupConfirmedMode=mode;
+  if(mode==='local'&&c.accessible){
+   const safe=m.expectedCloudRevisionId===c.state.revision_id&&local.database_id===c.state.database_id;
+   m.writeBlocked=!safe&&local.revision_id!==c.state.revision_id;
+  }
+  await ip(SESSIONKEY,db.export().buffer);
   await ip(METAKEY,m);
   sessionStorage.setItem('lv_startup_confirmed','1');
-  return {ok:true};
+  return {ok:true,writeBlocked:!!m.writeBlocked};
  },
  async loadCloud(){
   await ready;
@@ -415,12 +718,35 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','33');
+  setSetting('database_version','34');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
   await ip(METAKEY,m);
   await persist(true);
+  return {ok:true};
+ }
+};
+
+window.LVBackupState={
+ async get(){
+  await ready;
+  const m=await ig(METAKEY)||{};
+  return {restorePending:!!m.restorePending,writeBlocked:!!m.writeBlocked,backupName:m.restoreBackupName||''};
+ },
+ async publishRestored(){
+  await ready;
+  const m=await ig(METAKEY)||{};
+  if(!m.restorePending)throw Error('Es ist kein wiederhergestellter Datenstand vorgemerkt.');
+  if(!handle)throw Error('Kein Synchronisationsordner verbunden.');
+  await saveToFolder(true,true);
+  return {ok:true};
+ },
+ async discardRestore(){
+  await ready;
+  const m=await ig(METAKEY)||{};
+  if(!m.restorePending)throw Error('Es ist kein wiederhergestellter Datenstand vorgemerkt.');
+  await loadFromFolder();
   return {ok:true};
  }
 };
@@ -437,20 +763,22 @@ window.LVSession={
   clearTimeout(automaticBackupTimer);
   if(mode==='sync'){
    if(!handle)throw Error('Es ist kein Synchronisationsordner verbunden. Nutze „Nur lokal schließen“ oder richte zuerst unter Dateisynchronisierung einen Ordner ein.');
-   await saveToFolder(true);
+   await saveToFolder(true,false);
    await createBackup('Abschluss','Nach Synchronisierung beim Abmelden');
   }else if(mode==='local'){
    await createBackup('Abschluss','Lokales Abmelden ohne Synchronisierung');
    await persist(false);
   }else if(mode==='discard'){
-   const stored=await ig(DBKEY);
+   const stored=await ig(SESSIONKEY);
    if(stored){
     try{db.close()}catch{}
     db=new SQL.Database(new Uint8Array(stored));
     initSchema();
+    await ip(DBKEY,db.export().buffer);
    }
    const m=await ig(METAKEY)||{};
    m.dirty=false;
+   m.restorePending=false;
    m.sessionClosed=Date.now();
    await ip(METAKEY,m);
    try{db.close()}catch{}

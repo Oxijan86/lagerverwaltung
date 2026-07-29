@@ -46,13 +46,15 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
         <div><span class="small">Zuletzt aktualisiert</span><br><b id="startupLocalModified">–</b></div>
         <div style="margin-top:8px"><span class="small">Artikel</span><br><b id="startupLocalArticles">–</b></div>
         <div style="margin-top:8px"><span class="small">Buchungen</span><br><b id="startupLocalMovements">–</b></div>
+<div style="margin-top:8px"><span class="small">Datenbankrevision</span><br><b id="startupLocalRevision">–</b></div>
       </div>
 
       <div class="card">
         <h3>Cloud-Stand</h3>
         <div><span class="small">Zuletzt aktualisiert</span><br><b id="startupCloudModified">Nicht verbunden</b></div>
         <div style="margin-top:8px"><span class="small">Synchronisationsdatei</span><br><b id="startupCloudFile">–</b></div>
-        <div style="margin-top:8px"><span class="small">Status</span><br><b id="startupComparison">–</b></div>
+        <div style="margin-top:8px"><span class="small">Datenbankrevision</span><br><b id="startupCloudRevision">–</b></div>
+<div style="margin-top:8px"><span class="small">Status</span><br><b id="startupComparison">–</b></div>
       </div>
     </div>
 
@@ -205,7 +207,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">33.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">34.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this)">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -399,6 +401,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <button class="primary" onclick="LVSync.sync()">Jetzt synchronisieren</button>
 <button class="secondary" onclick="LVSync.load()">Stand aus Datei laden</button>
 <button class="secondary" onclick="LVSync.save()">Lokalen Stand speichern</button>
+<button class="danger" onclick="LVSync.forceSave()">Cloud-Stand ausdrücklich überschreiben</button>
 <button class="secondary" onclick="LVSync.disconnect()">Verknüpfung lösen</button>
 </div>
 <div id="syncMsg" class="message"></div>
@@ -416,6 +419,15 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </section>
 
 <section id="backup" class="view"><h2>Backups</h2>
+<div id="restorePendingBox" class="card" style="display:none;border:2px solid #b45309">
+<h3>⚠ Wiederhergestellter Datenstand ist noch nicht veröffentlicht</h3>
+<p>Das Backup wurde lokal wiederhergestellt. Die Cloud-Datei wurde bewusst noch nicht verändert.</p>
+<div class="toolbar">
+<button class="danger" onclick="LVBackup.publishRestored()">Wiederhergestellten Stand als Cloud-Stand veröffentlichen</button>
+<button class="secondary" onclick="LVBackup.discardRestore()">Wiederherstellung verwerfen und Cloud-Stand laden</button>
+</div>
+<div id="restorePendingMsg" class="message"></div>
+</div>
 <div class="card">
 <h3>🛡 Automatische Sicherung</h3>
 <p>Automatische lokale Backups sind immer aktiv. Sobald ein Synchronisationsordner verbunden ist, werden zusätzliche Sicherungen im Cloud-Unterordner <code>Backup</code> erstellt.</p>
@@ -1217,12 +1229,14 @@ window.LVStartup={
     :'Noch keine Änderung';
    startupLocalArticles.textContent=this.data.localArticles;
    startupLocalMovements.textContent=this.data.localMovements;
+   startupLocalRevision.textContent=this.data.localRevisionLabel;
 
    if(this.data.cloudConnected){
     startupCloudModified.textContent=this.data.cloudModified
       ?new Date(this.data.cloudModified).toLocaleString('de-DE')
       :'Unbekannt';
     startupCloudFile.textContent=this.data.cloudFile||'lager.db';
+    startupCloudRevision.textContent=this.data.cloudRevisionLabel||'–';
     startupUseCloudBtn.disabled=!this.data.cloudAccessible;
     startupUseCloudBtn.title=this.data.cloudAccessible
       ?'lager.db aus dem verbundenen Synchronisationsordner laden'
@@ -1230,6 +1244,7 @@ window.LVStartup={
    }else{
     startupCloudModified.textContent='Nicht verbunden';
     startupCloudFile.textContent='–';
+    startupCloudRevision.textContent='–';
     startupUseCloudBtn.disabled=true;
    }
 
@@ -1238,18 +1253,22 @@ window.LVStartup={
    if(this.data.cloudConnected&&!this.data.cloudAccessible){
     text='Cloud-Datei nicht lesbar';
     warning='⚠ Der Synchronisationsordner ist verbunden, aber lager.db konnte nicht gelesen werden. Prüfe die Berechtigung und ob die Datei vorhanden ist.';
-   }else if(this.data.cloudConnected){
-    if(this.data.cloudNewer){
-      text='Cloud-Stand ist neuer';
-      warning='⚠ Die Cloud-Datei ist neuer als der lokale Stand. Empfohlen: Cloud-Stand laden.';
-    }else if(this.data.localNewer){
-      text='Lokaler Stand ist neuer';
-      warning='Der lokale Stand ist neuer als die Cloud-Datei. Prüfe vor dem späteren Synchronisieren, ob wirklich keine Änderungen auf einem anderen Gerät fehlen.';
-    }else{
-      text='Beide Stände sind gleich alt';
-      warning='Bitte bestätige trotzdem den gewünschten Datenstand.';
-    }
-   }else{
+   }else if(this.data.comparison==='identical'){
+    text='Beide Datenstände sind identisch';
+    warning='Die internen Revisionskennungen stimmen überein.';
+   }else if(this.data.comparison==='cloud_newer'){
+    text='Cloud-Stand ist neuer';
+    warning='⚠ Die Cloud-Datenbank besitzt eine höhere interne Revision. Empfohlen: Cloud-Stand laden.';
+   }else if(this.data.comparison==='local_newer_safe'){
+    text='Lokaler Stand ist neuer – Cloud unverändert';
+    warning='Der lokale Stand baut auf der zuletzt geladenen Cloud-Revision auf und kann sicher synchronisiert werden.';
+   }else if(this.data.comparison==='local_newer_unverified'){
+    text='Lokaler Stand ist neuer – Herkunft nicht sicher';
+    warning='⚠ Ein automatisches Überschreiben der Cloud ist gesperrt. Verwende nur nach genauer Prüfung die ausdrückliche Überschreibfunktion.';
+   }else if(this.data.comparison==='conflict'){
+    text='Konflikt: unabhängige Datenstände';
+    warning='⚠ Lokal und Cloud wurden unabhängig verändert oder gehören zu unterschiedlichen Datenbanken. Automatisches Speichern in die Cloud ist gesperrt.';
+   }else if(!this.data.cloudConnected){
     text='Kein Cloud-Ordner verbunden';
     warning='Du kannst lokal weiterarbeiten, eine andere Datenbank wählen oder eine neue Datenbank erstellen.';
    }
@@ -1281,8 +1300,8 @@ window.LVStartup={
  },
  async useLocal(){
   try{
-   if(this.data?.cloudNewer){
-    const ok=confirm('Die Cloud-Datei ist neuer als dein lokaler Stand. Möchtest du wirklich mit dem älteren lokalen Stand weiterarbeiten?');
+   if(['cloud_newer','conflict','local_newer_unverified'].includes(this.data?.comparison)){
+    const ok=confirm('Dieser lokale Stand darf die Cloud nicht automatisch überschreiben. Möchtest du trotzdem zunächst nur lokal weiterarbeiten?');
     if(!ok)return;
    }
    await LVStartupState.confirm('local');
@@ -1414,5 +1433,6 @@ async function restoreAdminSession(){
  await refreshDatabaseStatus();
  addRow('i');addRow('o');
  await LVStartup.check();
+ if(window.LVBackup)await LVBackup.refreshPending();
 })();
 </script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('service-worker.js');</script></body></html>

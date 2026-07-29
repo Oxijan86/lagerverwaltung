@@ -1,23 +1,45 @@
-# Lagerverwaltung Lovrencic V33 – Cloudstand laden
+# Lagerverwaltung Lovrencic V34 – Revisionsschutz und Backup-Wiederherstellung
 
-## Behobene Fehler
+## Interne Revisionen
 
-1. Der verbundene Synchronisationsordner wurde bisher fälschlich wie eine Datei behandelt.
-   V33 liest jetzt korrekt `lager.db` innerhalb des gewählten Ordners.
+Jede fachliche Änderung erzeugt in der SQLite-Datenbank:
 
-2. Beim Klick auf `Aktuellen Cloud-Stand laden` wurde die Seite zu früh neu geladen.
-   Dadurch konnte die Startbestätigung nicht gespeichert werden und der Startdialog erschien erneut.
+- eine fortlaufende Revisionsnummer,
+- eine eindeutige Revisions-ID,
+- die vorherige Revisions-ID,
+- einen internen Änderungszeitpunkt,
+- eine dauerhafte Datenbank-ID.
 
-## Neuer Ablauf
+Der Startvergleich verwendet diese Werte und nicht nur das Dateidatum.
 
-Beim Klick auf `Aktuellen Cloud-Stand laden`:
+## Sicherer Cloud-Schreibschutz
 
-1. Ordnerberechtigung prüfen
-2. `lager.db` im Synchronisationsordner suchen
-3. SQLite-Datenbank prüfen
-4. Sicherheitsbackup des lokalen Stands erstellen
-5. Cloud-Datei lokal laden
-6. Startauswahl als bestätigt speichern
-7. Seite einmal kontrolliert neu laden
+Vor jedem Schreiben wird die Cloud-Datenbank nochmals gelesen.
 
-Fehlt die Datei oder die Berechtigung, wird der konkrete Fehler direkt im Startdialog angezeigt.
+Das Speichern wird blockiert, wenn:
+
+- die Cloud-Revision seit dem Laden verändert wurde,
+- der lokale Stand aus einer unbekannten Quelle stammt,
+- ein Backup lokal wiederhergestellt wurde,
+- ein neuer Synchronisationsordner noch nicht abgeglichen wurde.
+
+Eine erzwungene Überschreibung ist nur über die ausdrücklich benannte Schaltfläche möglich. Die vorherige Cloud-Datei wird dabei zuerst als Sicherheitsbackup gespeichert.
+
+## Backup-Wiederherstellung
+
+Ein Backup wird zunächst ausschließlich lokal wiederhergestellt.
+
+Danach gibt es zwei Möglichkeiten:
+
+1. den wiederhergestellten Stand ausdrücklich als neuen Cloud-Stand veröffentlichen,
+2. die Wiederherstellung verwerfen und die aktuelle Cloud-Datei erneut laden.
+
+Die Cloud-Datei wird niemals automatisch durch ein wiederhergestelltes, möglicherweise älteres Backup überschrieben.
+
+## Geräteübergreifende Backup-Liste
+
+Backups im Cloud-Unterordner `Backup` werden direkt aus dem Ordner gelesen. Dadurch sind sie auch auf einem anderen Gerät sichtbar, selbst wenn dessen lokaler Browser-Index die Sicherungen nicht kennt.
+
+## Ohne Speichern schließen
+
+Beim Bestätigen des Startstands wird eine unveränderliche Sitzungskopie erstellt. `Ohne Speichern schließen` stellt genau diesen Stand wieder her und verwirft alle Änderungen der aktuellen Sitzung.
