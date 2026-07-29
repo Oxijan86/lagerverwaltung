@@ -1,6 +1,5 @@
-const CACHE='lager-v19-shell-1';
-const ASSETS=['./','index.html','styles.css','app.js','config.js','manifest.webmanifest','icons/icon-192.svg','icons/icon-512.svg',
-'https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js',
+const CACHE='lager-v20-shell-1';
+const ASSETS=['./','index.html','styles.css','app.js','manifest.webmanifest','icons/icon-192.svg','icons/icon-512.svg',
 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js',
 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(ASSETS.map(a=>c.add(a))))));

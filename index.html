@@ -14,7 +14,7 @@
 <header>
   <div>
     <h1>Lagerverwaltung Lovrencic</h1>
-    <div class="subtitle">V19 PWA · SQLite · persönliches OneDrive</div>
+    <div class="subtitle">V20 PWA · SQLite · Dateisynchronisierung</div>
   </div>
   <button id="installBtn" class="secondary hidden">App installieren</button>
 </header>
@@ -108,28 +108,36 @@
 </section>
 
 <section id="cloud" class="view">
-  <h2>OneDrive-Synchronisierung</h2>
-  <div class="card">
-    <p>Die Datenbank liegt lokal auf diesem Gerät. Beim Synchronisieren wird eine Kopie im persönlichen OneDrive-App-Ordner gespeichert.</p>
-    <div class="toolbar">
-      <button id="loginBtn">Mit Microsoft anmelden</button>
-      <button id="logoutBtn" class="secondary">Abmelden</button>
-      <button id="syncBtn">Jetzt synchronisieren</button>
-      <button id="downloadBtn" class="secondary">Cloudstand herunterladen</button>
-      <button id="backupBtn" class="secondary">Cloud-Backup erstellen</button>
-    </div>
-    <div id="cloudMsg" class="message"></div>
-    <div class="statusgrid">
-      <div><span>Microsoft-Konto</span><b id="accountStatus">Nicht angemeldet</b></div>
-      <div><span>Lokale Änderungen</span><b id="dirtyStatus">Nein</b></div>
-      <div><span>Letzte Synchronisierung</span><b id="lastSync">Noch nie</b></div>
-      <div><span>Cloud-Datei</span><b id="cloudFileStatus">Unbekannt</b></div>
-    </div>
-  </div>
-  <div class="card warning">
-    <h3>Konfliktschutz</h3>
-    <p>Vor dem Gerätewechsel immer zuerst auf <b>Jetzt synchronisieren</b> tippen. Danach die App auf dem anderen Gerät öffnen und den Cloudstand herunterladen. Gleichzeitige Bearbeitung auf zwei Geräten wird nicht unterstützt.</p>
-  </div>
+<h2>Dateisynchronisierung</h2>
+<div class="card">
+<p>Wähle eine gemeinsame <code>lager.db</code> über den System-Dateidialog aus. Auf Android kann die OneDrive-App als Speicherort angeboten werden. Innerhalb der Lagerverwaltung ist keine Microsoft-Anmeldung erforderlich.</p>
+<div class="toolbar">
+<button id="connectFileBtn">Gemeinsame Datei auswählen</button>
+<button id="syncFileBtn">Jetzt synchronisieren</button>
+<button id="loadFileBtn" class="secondary">Stand aus Datei laden</button>
+<button id="saveFileBtn" class="secondary">Lokalen Stand speichern</button>
+<button id="disconnectFileBtn" class="secondary">Verknüpfung lösen</button>
+</div>
+<div id="cloudMsg" class="message"></div>
+<div class="statusgrid">
+<div><span>Verknüpfte Datei</span><b id="linkedFileStatus">Keine</b></div>
+<div><span>Lokale Änderungen</span><b id="dirtyStatus">Nein</b></div>
+<div><span>Letzte Synchronisierung</span><b id="lastSync">Noch nie</b></div>
+<div><span>Dateizugriff</span><b id="fileApiStatus">Prüfung …</b></div>
+</div>
+</div>
+<div class="card">
+<h3>Manuelle Rückfalllösung</h3>
+<p>Falls kein dauerhafter Dateizugriff möglich ist, exportiere die SQLite-Datei und speichere sie über den Android-Dateidialog in OneDrive. Auf dem anderen Gerät importierst du dieselbe Datei.</p>
+<div class="toolbar">
+<button id="manualExportBtn" class="secondary">SQLite-Datei exportieren</button>
+<label class="filebtn">SQLite-Datei importieren<input id="manualImportInput" type="file" accept=".db,.sqlite,.sqlite3,application/x-sqlite3"></label>
+</div>
+</div>
+<div class="card warning">
+<h3>Wichtige Nutzungsregel</h3>
+<p><b>Nicht gleichzeitig auf zwei Geräten arbeiten.</b> Vor dem Gerätewechsel synchronisieren und die App schließen. Auf dem neuen Gerät zuerst den Stand aus der Datei laden.</p>
+</div>
 </section>
 
 <section id="settings" class="view">
@@ -137,8 +145,6 @@
   <div class="card">
     <div class="formgrid">
       <label>Technikername<input id="settingTechnician"></label>
-      <label>Microsoft Client-ID<input id="settingClientId" placeholder="00000000-0000-0000-0000-000000000000"></label>
-      <label>Tenant<input id="settingTenant" value="common"></label>
     </div>
     <div class="toolbar">
       <button id="saveSettingsBtn">Einstellungen speichern</button>
@@ -151,13 +157,11 @@
     <h3>Technische Daten</h3>
     <p>Lokaler Speicher: Browser IndexedDB<br>
        Datenbankformat: SQLite<br>
-       OneDrive-Ziel: <code>Apps/Lagerverwaltung Lovrencic/lager.db</code></p>
+       Gemeinsame Datei: frei wählbare <code>lager.db</code>, zum Beispiel in OneDrive</p>
   </div>
 </section>
 </main>
 
-<script src="config.js"></script>
-<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script src="app.js"></script>
 </body>

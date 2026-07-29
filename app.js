@@ -1,8 +1,5 @@
-let SQL, db, editingArticleId=null, installPrompt=null, msalInstance=null, currentEtag=null;
-const DB_KEY='lager-db-v19', META_KEY='lager-meta-v19', SETTINGS_KEY='lager-settings-v19';
-const GRAPH='https://graph.microsoft.com/v1.0';
-const CLOUD_PATH='/me/drive/special/approot:/lager.db:/content';
-const BACKUP_FOLDER='/me/drive/special/approot:/Backups';
+let SQL, db, editingArticleId=null, installPrompt=null, linkedHandle=null;
+const DB_KEY='lager-db-v20', META_KEY='lager-meta-v20', SETTINGS_KEY='lager-settings-v20', HANDLE_KEY='lager-file-handle-v20';
 
 const $=id=>document.getElementById(id);
 function msg(el,text,ok=true){el.textContent=text;el.className='message '+(ok?'ok':'error')}
@@ -56,6 +53,7 @@ async function loadDb(){
  SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
  const bytes=await idbGet(DB_KEY);
  db=bytes?new SQL.Database(new Uint8Array(bytes)):new SQL.Database();
+ linkedHandle=await idbGet(HANDLE_KEY)||null;
  initSchema();
  await saveDb(false);
 }
@@ -65,9 +63,8 @@ async function saveDb(markDirty=true){
  const meta=(await idbGet(META_KEY))||{};
  if(markDirty)meta.dirty=true;
  meta.localModified=now();
- if(currentEtag)meta.etag=currentEtag;
  await idbSet(META_KEY,meta);
- updateCloudStatus();
+ updateFileStatus();
 }
 function rows(sql,params=[]){
  const s=db.prepare(sql);s.bind(params);const out=[];
@@ -84,7 +81,7 @@ function settings(){return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')}
 function saveSettings(s){localStorage.setItem(SETTINGS_KEY,JSON.stringify(s))}
 
 async function renderAll(){
- renderDashboard();renderArticles();renderArticleSelect();renderHistory();updateSettings();updateCloudStatus();
+ renderDashboard();renderArticles();renderArticleSelect();renderHistory();updateSettings();updateFileStatus();
 }
 function renderDashboard(){
  const a=getArticles();
@@ -154,101 +151,82 @@ function exportCsv(){
  downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),`Historie_${new Date().toLocaleDateString('de-DE').replaceAll('.','-')}.csv`);
 }
 
-function msalConfig(){
- const s=settings(),clientId=s.clientId||window.LAGER_CONFIG.clientId;
- if(!clientId)return null;
- return {auth:{clientId,authority:`https://login.microsoftonline.com/${s.tenant||window.LAGER_CONFIG.tenant||'common'}`,redirectUri:location.origin+location.pathname},cache:{cacheLocation:'localStorage'}};
+
+function fileApiAvailable(){return 'showOpenFilePicker' in window && 'showSaveFilePicker' in window}
+async function requestPermission(handle,mode='readwrite'){
+ if(!handle)return false;
+ if((await handle.queryPermission({mode}))==='granted')return true;
+ return (await handle.requestPermission({mode}))==='granted';
 }
-function ensureMsal(){
- const cfg=msalConfig();if(!cfg)throw new Error('Zuerst unter Einstellungen die Microsoft Client-ID eintragen.');
- if(!msalInstance)msalInstance=new msal.PublicClientApplication(cfg);
- return msalInstance;
+async function verifyAndUse(bytes){
+ const test=new SQL.Database(new Uint8Array(bytes)),check=test.exec('PRAGMA quick_check');
+ if(!check.length||check[0].values[0][0]!=='ok'){test.close();throw new Error('Integritätsprüfung fehlgeschlagen.')}
+ db.close();db=test;initSchema();await saveDb(false);renderAll();
 }
-async function login(){
+async function chooseSharedFile(){
  try{
-  const inst=ensureMsal();
-  const result=await inst.loginPopup({scopes:window.LAGER_CONFIG.graphScopes});
-  inst.setActiveAccount(result.account);updateCloudStatus();msg($('cloudMsg'),'Microsoft-Anmeldung erfolgreich.',true);
- }catch(e){msg($('cloudMsg'),'Anmeldung fehlgeschlagen: '+e.message,false)}
-}
-async function token(){
- const inst=ensureMsal();
- let account=inst.getActiveAccount()||inst.getAllAccounts()[0];
- if(!account){await login();account=inst.getActiveAccount()||inst.getAllAccounts()[0]}
- if(!account)throw new Error('Keine Microsoft-Anmeldung.');
- try{return (await inst.acquireTokenSilent({account,scopes:window.LAGER_CONFIG.graphScopes})).accessToken}
- catch{return (await inst.acquireTokenPopup({account,scopes:window.LAGER_CONFIG.graphScopes})).accessToken}
-}
-async function graph(url,opt={}){
- const t=await token();opt.headers={...(opt.headers||{}),Authorization:`Bearer ${t}`};
- const r=await fetch(GRAPH+url,opt);
- if(!r.ok){let text=await r.text();throw new Error(`Microsoft Graph ${r.status}: ${text}`)}
- return r;
-}
-async function cloudMeta(){
- try{
-  const r=await graph('/me/drive/special/approot:/lager.db');
-  const j=await r.json();currentEtag=j.eTag;return j;
- }catch(e){if(String(e).includes('404'))return null;throw e}
-}
-async function sync(){
- try{
-  const meta=(await idbGet(META_KEY))||{},remote=await cloudMeta();
-  if(remote&&meta.etag&&remote.eTag!==meta.etag&&meta.dirty){
-   throw new Error('Synchronisationskonflikt: Cloud und lokaler Stand wurden beide geändert. Zuerst ein Backup exportieren und anschließend bewusst Cloudstand herunterladen oder lokal hochladen.');
+  if(!fileApiAvailable())throw new Error('Bitte aktuelles Chrome oder Edge verwenden oder den manuellen Import/Export nutzen.');
+  try{
+   const handles=await window.showOpenFilePicker({multiple:false,types:[{description:'SQLite-Datenbank',accept:{'application/x-sqlite3':['.db','.sqlite','.sqlite3'],'application/octet-stream':['.db']}}]});
+   linkedHandle=handles[0];
+  }catch(e){
+   if(e.name==='AbortError')return;
+   linkedHandle=await window.showSaveFilePicker({suggestedName:'lager.db',types:[{description:'SQLite-Datenbank',accept:{'application/x-sqlite3':['.db']}}]});
+   const w=await linkedHandle.createWritable();await w.write(db.export());await w.close();
   }
-  if(remote&&remote.lastModifiedDateTime&&meta.localModified&&!meta.dirty&&new Date(remote.lastModifiedDateTime)>new Date(meta.lastSync||0)){
-   return await downloadCloud();
+  await idbSet(HANDLE_KEY,linkedHandle);await updateFileStatus();
+  msg($('cloudMsg'),'Gemeinsame Datei verknüpft: '+linkedHandle.name,true);
+ }catch(e){msg($('cloudMsg'),'Dateiauswahl fehlgeschlagen: '+e.message,false)}
+}
+async function readLinkedFile(){
+ if(!linkedHandle)throw new Error('Zuerst eine gemeinsame Datei auswählen.');
+ if(!(await requestPermission(linkedHandle,'read')))throw new Error('Leseberechtigung wurde nicht erteilt.');
+ const f=await linkedHandle.getFile();if(!f.size)throw new Error('Die ausgewählte Datei ist leer.');
+ return {bytes:await f.arrayBuffer(),modified:f.lastModified};
+}
+async function writeLinkedFile(){
+ if(!linkedHandle)throw new Error('Zuerst eine gemeinsame Datei auswählen.');
+ if(!(await requestPermission(linkedHandle,'readwrite')))throw new Error('Schreibberechtigung wurde nicht erteilt.');
+ const w=await linkedHandle.createWritable();await w.write(db.export());await w.close();
+}
+async function loadFromLinked(){
+ try{
+  const f=await readLinkedFile();await verifyAndUse(f.bytes);
+  const meta=(await idbGet(META_KEY))||{};meta.dirty=false;meta.lastSync=now();meta.fileModified=f.modified;await idbSet(META_KEY,meta);
+  await updateFileStatus();msg($('cloudMsg'),'Stand aus der gemeinsamen Datei geladen.',true);
+ }catch(e){msg($('cloudMsg'),'Laden fehlgeschlagen: '+e.message,false)}
+}
+async function saveToLinked(){
+ try{
+  await writeLinkedFile();const f=await linkedHandle.getFile(),meta=(await idbGet(META_KEY))||{};
+  meta.dirty=false;meta.lastSync=now();meta.fileModified=f.lastModified;await idbSet(META_KEY,meta);
+  await updateFileStatus();msg($('cloudMsg'),'Lokaler Stand gespeichert.',true);
+ }catch(e){msg($('cloudMsg'),'Speichern fehlgeschlagen: '+e.message,false)}
+}
+async function synchronizeFile(){
+ try{
+  const meta=(await idbGet(META_KEY))||{},file=await readLinkedFile();
+  const remoteChanged=meta.fileModified&&Number(file.modified)!==Number(meta.fileModified);
+  if(remoteChanged&&meta.dirty)throw new Error('Konflikt: Datei und lokaler Stand wurden beide verändert. Nutze bewusst „Stand aus Datei laden“ oder „Lokalen Stand speichern“.');
+  if(remoteChanged&&!meta.dirty){
+   await verifyAndUse(file.bytes);meta.dirty=false;meta.lastSync=now();meta.fileModified=file.modified;await idbSet(META_KEY,meta);
+   await updateFileStatus();return msg($('cloudMsg'),'Neueren Dateistand geladen.',true);
   }
-  const bytes=db.export();
-  const headers={'Content-Type':'application/octet-stream'};
-  if(currentEtag)headers['If-Match']=currentEtag;
-  const r=await graph(CLOUD_PATH,{method:'PUT',headers,body:bytes});
-  const j=await r.json();currentEtag=j.eTag;
-  await idbSet(META_KEY,{dirty:false,etag:j.eTag,lastSync:now(),localModified:meta.localModified});
-  await createBackup(false);
-  updateCloudStatus();msg($('cloudMsg'),'OneDrive-Synchronisierung abgeschlossen.',true);
- }catch(e){msg($('cloudMsg'),e.message,false)}
+  await writeLinkedFile();const updated=await linkedHandle.getFile();meta.dirty=false;meta.lastSync=now();meta.fileModified=updated.lastModified;await idbSet(META_KEY,meta);
+  await updateFileStatus();msg($('cloudMsg'),'Synchronisierung abgeschlossen.',true);
+ }catch(e){msg($('cloudMsg'),'Synchronisierung nicht möglich: '+e.message,false)}
 }
-async function downloadCloud(){
- try{
-  const meta=await cloudMeta();if(!meta)throw new Error('In OneDrive wurde noch keine Datenbank gefunden.');
-  const r=await graph(CLOUD_PATH);const bytes=new Uint8Array(await r.arrayBuffer());
-  const test=new SQL.Database(bytes),check=test.exec('PRAGMA quick_check');
-  if(!check.length||check[0].values[0][0]!=='ok')throw new Error('Cloud-Datenbank ist nicht intakt.');
-  db.close();db=test;initSchema();currentEtag=meta.eTag;
-  await idbSet(DB_KEY,db.export().buffer);
-  await idbSet(META_KEY,{dirty:false,etag:meta.eTag,lastSync:now(),localModified:now()});
-  renderAll();msg($('cloudMsg'),'Cloudstand heruntergeladen.',true);
- }catch(e){msg($('cloudMsg'),e.message,false)}
+async function disconnectFile(){linkedHandle=null;await idbDelete(HANDLE_KEY);await updateFileStatus();msg($('cloudMsg'),'Verknüpfung gelöst.',true)}
+async function updateFileStatus(){
+ const meta=(await idbGet(META_KEY))||{};
+ if($('dirtyStatus'))$('dirtyStatus').textContent=meta.dirty?'Ja':'Nein';
+ if($('lastSync'))$('lastSync').textContent=meta.lastSync?deDate(meta.lastSync):'Noch nie';
+ if($('linkedFileStatus'))$('linkedFileStatus').textContent=linkedHandle?.name||'Keine';
+ if($('fileApiStatus'))$('fileApiStatus').textContent=fileApiAvailable()?'Unterstützt':'Nur manuell';
+ if($('kpiCloud'))$('kpiCloud').textContent=linkedHandle?(meta.dirty?'Nicht synchron':'Verbunden'):'Lokal';
 }
-async function createBackup(show=true){
- try{
-  const stamp=new Date().toISOString().replaceAll(':','-').replace('T','_').slice(0,19);
-  const bytes=db.export();
-  await graph(`/me/drive/special/approot:/Backups/${stamp}_lager.db:/content`,{method:'PUT',headers:{'Content-Type':'application/octet-stream'},body:bytes});
-  if(show)msg($('cloudMsg'),'Cloud-Backup erstellt.',true);
- }catch(e){if(show)msg($('cloudMsg'),'Backup fehlgeschlagen: '+e.message,false)}
-}
-async function logout(){
- try{const i=ensureMsal();const a=i.getActiveAccount()||i.getAllAccounts()[0];if(a)await i.logoutPopup({account:a});updateCloudStatus()}catch(e){msg($('cloudMsg'),e.message,false)}
-}
-async function updateCloudStatus(){
- const meta=(await idbGet(META_KEY))||{},s=settings();
- $('dirtyStatus').textContent=meta.dirty?'Ja':'Nein';$('lastSync').textContent=meta.lastSync?deDate(meta.lastSync):'Noch nie';
- $('kpiCloud').textContent=meta.dirty?'Änderungen offen':(meta.lastSync?'Synchron':'Lokal');
- $('settingTechnician').value=s.technician||'';$('settingClientId').value=s.clientId||window.LAGER_CONFIG.clientId||'';$('settingTenant').value=s.tenant||window.LAGER_CONFIG.tenant||'common';
- $('movementTechnician').value=s.technician||$('movementTechnician').value;
- try{
-  if(msalConfig()){const i=ensureMsal(),a=i.getActiveAccount()||i.getAllAccounts()[0];$('accountStatus').textContent=a?a.username:'Nicht angemeldet'}
-  else $('accountStatus').textContent='Client-ID fehlt';
- }catch{$('accountStatus').textContent='Nicht eingerichtet'}
-}
-function updateSettings(){const s=settings();$('movementTechnician').value=s.technician||''}
-async function saveSettingsUi(){
- const s={technician:$('settingTechnician').value.trim(),clientId:$('settingClientId').value.trim(),tenant:$('settingTenant').value.trim()||'common'};
- saveSettings(s);msalInstance=null;updateSettings();updateCloudStatus();msg($('settingsMsg'),'Einstellungen gespeichert.',true);
-}
+function updateSettings(){const s=settings();$('movementTechnician').value=s.technician||'';$('settingTechnician').value=s.technician||''}
+async function saveSettingsUi(){saveSettings({technician:$('settingTechnician').value.trim()});updateSettings();msg($('settingsMsg'),'Einstellungen gespeichert.',true)}
 
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
@@ -258,7 +236,10 @@ $('saveArticleBtn').onclick=saveArticle;$('cancelArticleBtn').onclick=clearArtic
 $('bookBtn').onclick=book;$('historyType').onchange=renderHistory;$('historySearch').oninput=renderHistory;
 $('exportCsvBtn').onclick=exportCsv;$('saveSettingsBtn').onclick=saveSettingsUi;$('exportDbBtn').onclick=exportDb;
 $('importDbInput').onchange=e=>e.target.files[0]&&importDb(e.target.files[0]);
-$('loginBtn').onclick=login;$('logoutBtn').onclick=logout;$('syncBtn').onclick=sync;$('downloadBtn').onclick=downloadCloud;$('backupBtn').onclick=()=>createBackup(true);
+$('connectFileBtn').onclick=chooseSharedFile;$('syncFileBtn').onclick=synchronizeFile;
+$('loadFileBtn').onclick=loadFromLinked;$('saveFileBtn').onclick=saveToLinked;
+$('disconnectFileBtn').onclick=disconnectFile;$('manualExportBtn').onclick=exportDb;
+$('manualImportInput').onchange=e=>e.target.files[0]&&importDb(e.target.files[0]);
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn').classList.remove('hidden')});
 $('installBtn').onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn').classList.add('hidden')}};

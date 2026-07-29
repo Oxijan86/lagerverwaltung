@@ -1,6 +1,6 @@
 {
-  "name": "Lagerverwaltung Lovrencic",
-  "short_name": "Lager",
+  "name": "Lagerverwaltung Lovrencic V20",
+  "short_name": "Lager V20",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

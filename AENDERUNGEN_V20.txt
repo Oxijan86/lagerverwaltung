@@ -1,0 +1,6 @@
+V20
+- Microsoft Graph/MSAL entfernt
+- keine Client-ID oder Entra-Registrierung
+- gemeinsame lager.db über System-Dateidialog
+- Lesen, Schreiben und Konflikterkennung
+- manueller SQLite-Import/-Export als Rückfalllösung
