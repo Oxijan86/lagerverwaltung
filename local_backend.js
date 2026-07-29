@@ -3,7 +3,7 @@
 const nativeFetch=window.fetch.bind(window);
 const DBKEY='lv22-db', METAKEY='lv22-meta', HANDLEKEY='lv22-directory', BACKUPKEY='lv22-backups', SESSIONKEY='lv34-session-start';
 let SQL,db,handle=null,autoTimer=null,isSyncing=false;
-const helpData={"07-csv-center.md": "# CSV-Center\n\n## Exporte\n\n- Lagerbestand\n- Einbuchungen\n- Entnahmen\n\nDie CSV-Dateien verwenden Semikolon als Trennzeichen und UTF-8 mit BOM, damit Excel die Spalten korrekt erkennt.\n\n## SAP-Excel oder CSV importieren\n\nUnterstützte Spalten sind unter anderem:\n\n- Material\n- Bezeichnung zum Material\n- Lagerort\n- Bezeichnung des Lagerorts\n- Frei verwendbar\n\nVor dem Buchen wird eine Vorschau angezeigt. Fehlende Artikel können direkt angelegt werden.\n", "02-neues-material.md": "# Neues Material\n\nDer Reiter **Neues Material** ist passwortgeschützt.\n\n## Vorgehen\n\n- Stammdatenpasswort eingeben.\n- Artikelnummer und Bezeichnung erfassen.\n- Anfangsbestand, Sollbestand und Mindestbestand festlegen.\n- Einheit auswählen.\n- Lagerort und Maschine optional auswählen.\n- Material speichern.\n\nDer Anfangsbestand wird als Basisbestand des Artikels geführt.\n", "17-abschluss-und-tests.md": "# Abschluss Phase 1–7\n\nVersion 17.0 schließt das ursprünglich geplante Projekt ab.\n\nAbnahmetest:\n- Artikel anlegen\n- Ein- und Ausbuchung\n- CSV-Export\n- Inventurkorrektur\n- Materialanforderung in Excel öffnen\n- Historienfilter testen\n- Passwortverwaltung prüfen\n", "08-historie.md": "# Historie\n\nDie Historie enthält alle Einbuchungen und Entnahmen.\n\nSie kann gefiltert werden nach:\n\n- Alle Buchungen\n- Nur Einbuchungen\n- Nur Entnahmen\n\nDas unter **Stammdaten** gewählte Datumsformat wird auch auf bereits vorhandene Einträge angewendet.\n", "01-dashboard.md": "# Dashboard\n\nDas Dashboard zeigt die wichtigsten Kennzahlen:\n\n- **Aktive Artikel:** Anzahl aller verwendbaren Artikel.\n- **Unterbestand:** Artikel unterhalb ihres Mindestbestands.\n- **Heute:** Anzahl der heutigen Buchungen.\n- **Buchungen:** Gesamtzahl aller Ein- und Ausbuchungen.\n\nDie Werte werden aus der lokalen Datenbank `lager.db` berechnet.\n", "04-einbuchung.md": "# Einbuchung\n\n## Manuelle Einbuchung\n\n- Datum auswählen.\n- Techniker auswählen.\n- Artikel und Menge hinzufügen.\n- Einbuchung bestätigen.\n\n## Lieferschein mit Microsoft 365 Copilot auslesen\n\nLade den Lieferschein in Microsoft 365 Copilot hoch und verwende diesen Befehl:\n\n```\nLies den beigefügten Lieferschein vollständig aus.\n\nExtrahiere ausschließlich die tatsächlich gelieferten Materialpositionen.\nGib nur diese zwei Spalten aus:\n\nArtikelnummer;Menge\n\nRegeln:\n- Eine Position pro Zeile.\n- Keine Bezeichnung.\n- Keine Überschrift außerhalb der Tabelle.\n- Keine Erklärungen oder Zusammenfassung.\n- Mengen als reine Zahl ausgeben.\n- Gleiche Artikelnummern zu einer Gesamtmenge zusammenfassen.\n```\n\nDas Ergebnis in das Feld **Lieferschein M365/Copilot** einfügen, prüfen und anschließend buchen.\n", "09-stammdaten.md": "# Stammdaten\n\nDie Stammdaten sind durch das Administratorpasswort geschützt.\n\n## Funktionen\n\n- Lagerorte anlegen.\n- Maschinen anlegen.\n- Techniker mit ausschließlich einem Namen anlegen.\n- Artikelstammdaten und Istbestände bearbeiten.\n- Passwort ändern.\n- Datumsformat ändern.\n- Lagerverwaltung vollständig zurücksetzen.\n\n## Datumsformat\n\nVerfügbare Formate:\n\n- TT.MM.JJJJ\n- JJJJ-MM-TT\n- MM/TT/JJJJ\n\nDatumswerte bleiben intern im ISO-Format gespeichert. Dadurch werden nach einer Formatänderung auch bestehende Daten sofort korrekt dargestellt.\n", "15-historienfilter.md": "# Historienfilter und Export\n\nFilter:\n- Buchungsart\n- Zeitraum\n- Techniker\n- Artikelnummer oder Bezeichnung\n\nDer CSV-Export übernimmt die aktuell eingestellten Filter.\n", "03-lagerbestand.md": "# Lagerbestand\n\nIm Lagerbestand können Artikel über Artikelnummer, Bezeichnung, Lagerort oder Maschine gesucht werden.\n\n## Spalten\n\n- Sollbestand\n- Mindestbestand\n- Istbestand\n- Differenz zum Sollbestand\n- Lagerort\n- Maschine\n\nEin Artikel wird als Unterbestand hervorgehoben, wenn sein Istbestand unter dem Mindestbestand liegt.\n", "14-inventur.md": "# Inventur\n\n- Inventurliste im CSV-Center exportieren.\n- Gezählten Bestand eintragen.\n- CSV, TXT oder XLSX einlesen.\n- Differenzen prüfen.\n- Bestandskorrekturen mit Administratorpasswort buchen.\n\nNur Differenzen werden als Buchungen mit der Quelle **Inventur** gespeichert.\n", "06-materialanforderung.md": "# Materialanforderung\n\n- Techniker auswählen.\n- **Unterbestand laden** anklicken.\n- Gewünschte Positionen markieren.\n- Bestellmenge prüfen oder ändern.\n- **Materialanforderung exportieren** anklicken.\n\nDie Excel-Datei wird anhand der hinterlegten Vorlage erzeugt. Der Dateiname enthält Datum und Technikername.\n", "13-fehlerbehebung.md": "# Fehlerbehebung\n\n## Anmeldung funktioniert nicht\n\n- Groß- und Kleinschreibung des Passworts prüfen.\n- Nach einem vollständigen Reset muss die Ersteinrichtung abgeschlossen werden.\n- Das alte Passwort ist nach dem Reset nicht mehr gültig.\n\n## Excel- oder CSV-Datei lässt sich nicht importieren\n\n- Prüfen, ob die Datei geöffnet und gespeichert werden kann.\n- Bei CSV möglichst Semikolon als Trennzeichen verwenden.\n- Artikelnummern und Mengen dürfen nicht leer sein.\n\n## M365-Ergebnis wird nicht erkannt\n\n- Den Prompt aus der Hilfe unverändert verwenden.\n- Ausgabeformat `Artikelnummer;Menge` prüfen.\n- Zusätzliche Erklärungen von Copilot entfernen.\n", "16-materialanforderung-export.md": "# Materialanforderung\n\nDie Originalvorlage `materialanforderung_vorlage.xlsx` bleibt unverändert erhalten.\n\nPrüfungen:\n- maximal 25 Positionen\n- nur positive Mengen\n- doppelte Artikel werden zusammengefasst\n- Vorschau vor Export\n- Sortierung nach Artikelnummer\n\nDateiname: `Bestellung_Datum_Techniker.xlsx`\n", "10-reset.md": "# Vollständiges Zurücksetzen\n\nDer vollständige Reset löscht:\n\n- Artikel\n- Bestände\n- Buchungen\n- Historie\n- Audit-Protokoll\n- Lagerorte\n- Maschinen\n- Techniker\n- Administratorpasswort\n- Einstellungen\n\nProgrammdateien, Excel-Vorlage und Hilfedateien bleiben erhalten.\n\nNach dem Reset erscheint wieder automatisch die vollständige Ersteinrichtung.\n", "11-m365-prompts.md": "# Microsoft 365 Copilot – Prompts\n\n## SAP- oder Materialliste prüfen\n\n```\nPrüfe die beigefügte Materialliste.\n\nErstelle eine Tabelle mit:\nArtikelnummer;Bezeichnung;Menge;Lagerort\n\nRegeln:\n- Eine Position pro Zeile.\n- Leere Zeilen entfernen.\n- Gleiche Artikelnummern zusammenfassen.\n- Mengen als reine Zahl ausgeben.\n- Keine Erklärungen außerhalb der Tabelle.\n```\n\n## Inventurliste auslesen\n\n```\nLies die beigefügte Inventurliste aus.\n\nGib ausschließlich diese Spalten aus:\nArtikelnummer;Menge\n\nRegeln:\n- Eine Position pro Zeile.\n- Gleiche Artikelnummern zusammenfassen.\n- Mengen als reine Zahl ausgeben.\n- Unleserliche Positionen nicht raten, sondern mit PRÜFEN kennzeichnen.\n- Keine zusätzlichen Erklärungen.\n```\n", "00-erste-schritte.md": "# Erste Schritte\n\nDie Lagerverwaltung startet nach der Erstinstallation mit einem Einrichtungsassistenten.\n\n## Ersteinrichtung\n\n- Administratorpasswort mit mindestens 8 Zeichen vergeben.\n- Namen des Technikers eingeben.\n- Datumsformat auswählen.\n- Einrichtung abschließen.\n\nLagerorte und Maschinen müssen bei der Ersteinrichtung nicht angelegt werden. Sie können später unter **Stammdaten** ergänzt werden.\n", "12-mobile-bedienung.md": "# Mobile Bedienung\n\nAuf schmalen Bildschirmen wird die Navigation über die Schaltfläche **Menü** geöffnet.\n\n## Hinweise\n\n- Tabellen können seitlich verschoben werden.\n- Eingabefelder werden untereinander dargestellt.\n- Die Ersteinrichtung ist für Smartphone und Tablet optimiert.\n- Für umfangreiche CSV- und Excel-Arbeiten ist ein Windows-PC komfortabler.\n", "05-entnahme.md": "# Entnahme\n\n## Manuelle Entnahme\n\n- Datum, Techniker, Kunde und Maschine eintragen.\n- Artikel und entnommene Menge hinzufügen.\n- Entnahme bestätigen.\n\n## Servicebericht mit Microsoft 365 Copilot auslesen\n\n```\nLies den beigefügten Servicebericht vollständig aus.\n\nExtrahiere ausschließlich die im Servicebericht tatsächlich verwendeten oder verbauten Materialien.\nGib nur diese zwei Spalten aus:\n\nArtikelnummer;Menge\n\nRegeln:\n- Eine Position pro Zeile.\n- Keine Bezeichnung.\n- Keine Erklärungen oder Zusammenfassung.\n- Mengen als reine Zahl ausgeben.\n- Gleiche Artikelnummern zu einer Gesamtmenge zusammenfassen.\n- Nicht verbaute, nur erwähnte oder empfohlene Materialien nicht übernehmen.\n```\n\nDas Copilot-Ergebnis in das Feld **Servicebericht M365/Copilot** einfügen, mit **Extraktion prüfen** kontrollieren und danach buchen.\n"};
+const helpData={"07-csv-center.md": "# CSV-Center\n\n## Exporte\n\n- Lagerbestand\n- Einbuchungen\n- Entnahmen\n\nDie CSV-Dateien werden direkt im Browser heruntergeladen. Das vorgegebene Tabellenlayout, Semikolon als Trennzeichen und UTF-8 mit BOM bleiben erhalten.\n\n## SAP-Excel oder CSV importieren\n\nUnterstützte Spalten sind unter anderem:\n\n- Material\n- Bezeichnung zum Material\n- Lagerort\n- Bezeichnung des Lagerorts\n- Frei verwendbar\n\nVor dem Buchen wird eine Vorschau angezeigt. Fehlende Artikel können direkt angelegt werden.\n", "02-neues-material.md": "# Neues Material\n\nDer Reiter **Neues Material** ist passwortgeschützt.\n\n## Vorgehen\n\n- Stammdatenpasswort eingeben.\n- Artikelnummer und Bezeichnung erfassen.\n- Anfangsbestand, Sollbestand und Mindestbestand festlegen.\n- Einheit auswählen.\n- Lagerort und Maschine optional auswählen.\n- Material speichern.\n\nDer Anfangsbestand wird als Basisbestand des Artikels geführt.\n", "17-abschluss-und-tests.md": "# Abschluss Phase 1–7\n\nVersion 17.0 schließt das ursprünglich geplante Projekt ab.\n\nAbnahmetest:\n- Artikel anlegen\n- Ein- und Ausbuchung\n- CSV-Export\n- Inventurkorrektur\n- Materialanforderung in Excel öffnen\n- Historienfilter testen\n- Passwortverwaltung prüfen\n", "08-historie.md": "# Historie\n\nDie Historie enthält alle Einbuchungen und Entnahmen.\n\nSie kann gefiltert werden nach:\n\n- Alle Buchungen\n- Nur Einbuchungen\n- Nur Entnahmen\n\nDas unter **Stammdaten** gewählte Datumsformat wird auch auf bereits vorhandene Einträge angewendet.\n", "01-dashboard.md": "# Dashboard\n\nDas Dashboard zeigt die wichtigsten Kennzahlen:\n\n- **Aktive Artikel:** Anzahl aller verwendbaren Artikel.\n- **Unterbestand:** Artikel unterhalb ihres Mindestbestands.\n- **Heute:** Anzahl der heutigen Buchungen.\n- **Buchungen:** Gesamtzahl aller Ein- und Ausbuchungen.\n\nDie Werte werden aus der lokalen Datenbank `lager.db` berechnet.\n", "04-einbuchung.md": "# Einbuchung\n\n## Manuelle Einbuchung\n\n- Datum auswählen.\n- Techniker auswählen.\n- Artikel und Menge hinzufügen.\n- Einbuchung bestätigen.\n\n## Lieferschein mit Microsoft 365 Copilot auslesen\n\nLade den Lieferschein in Microsoft 365 Copilot hoch und verwende diesen Befehl:\n\n```\nLies den beigefügten Lieferschein vollständig aus.\n\nExtrahiere ausschließlich die tatsächlich gelieferten Materialpositionen.\nGib nur diese zwei Spalten aus:\n\nArtikelnummer;Menge\n\nRegeln:\n- Eine Position pro Zeile.\n- Keine Bezeichnung.\n- Keine Überschrift außerhalb der Tabelle.\n- Keine Erklärungen oder Zusammenfassung.\n- Mengen als reine Zahl ausgeben.\n- Gleiche Artikelnummern zu einer Gesamtmenge zusammenfassen.\n```\n\nDas Ergebnis in das Feld **Lieferschein M365/Copilot** einfügen, prüfen und anschließend buchen.\n", "09-stammdaten.md": "# Stammdaten\n\nDie Stammdaten sind durch das Administratorpasswort geschützt.\n\n## Funktionen\n\n- Lagerorte anlegen.\n- Maschinen anlegen.\n- Techniker mit ausschließlich einem Namen anlegen.\n- Artikelstammdaten und Istbestände bearbeiten.\n- Passwort ändern.\n- Datumsformat ändern.\n- Lagerverwaltung vollständig zurücksetzen.\n\n## Datumsformat\n\nVerfügbare Formate:\n\n- TT.MM.JJJJ\n- JJJJ-MM-TT\n- MM/TT/JJJJ\n\nDatumswerte bleiben intern im ISO-Format gespeichert. Dadurch werden nach einer Formatänderung auch bestehende Daten sofort korrekt dargestellt.\n", "15-historienfilter.md": "# Historienfilter und Export\n\nFilter:\n- Buchungsart\n- Zeitraum\n- Techniker\n- Artikelnummer oder Bezeichnung\n\nDer CSV-Export übernimmt die aktuell eingestellten Filter.\n", "03-lagerbestand.md": "# Lagerbestand\n\nIm Lagerbestand können Artikel über Artikelnummer, Bezeichnung, Lagerort oder Maschine gesucht werden.\n\n## Spalten\n\n- Sollbestand\n- Mindestbestand\n- Istbestand\n- Differenz zum Sollbestand\n- Lagerort\n- Maschine\n\nEin Artikel wird als Unterbestand hervorgehoben, wenn sein Istbestand unter dem Mindestbestand liegt.\n", "14-inventur.md": "# Inventur\n\n- Inventurliste im CSV-Center exportieren.\n- Gezählten Bestand eintragen.\n- CSV, TXT oder XLSX einlesen.\n- Differenzen prüfen.\n- Bestandskorrekturen mit Administratorpasswort buchen.\n\nNur Differenzen werden als Buchungen mit der Quelle **Inventur** gespeichert.\n", "06-materialanforderung.md": "# Materialanforderung\n\n- Techniker auswählen.\n- **Unterbestand laden** anklicken.\n- Gewünschte Positionen markieren.\n- Bestellmenge prüfen oder ändern.\n- **Materialanforderung exportieren** anklicken.\n\nDie Excel-Datei wird anhand der hinterlegten Vorlage erzeugt. Der Dateiname enthält Datum und Technikername.\n", "13-fehlerbehebung.md": "# Fehlerbehebung\n\n## Anmeldung funktioniert nicht\n\n- Groß- und Kleinschreibung des Passworts prüfen.\n- Nach einem vollständigen Reset muss die Ersteinrichtung abgeschlossen werden.\n- Das alte Passwort ist nach dem Reset nicht mehr gültig.\n\n## Excel- oder CSV-Datei lässt sich nicht importieren\n\n- Prüfen, ob die Datei geöffnet und gespeichert werden kann.\n- Bei CSV möglichst Semikolon als Trennzeichen verwenden.\n- Artikelnummern und Mengen dürfen nicht leer sein.\n\n## M365-Ergebnis wird nicht erkannt\n\n- Den Prompt aus der Hilfe unverändert verwenden.\n- Ausgabeformat `Artikelnummer;Menge` prüfen.\n- Zusätzliche Erklärungen von Copilot entfernen.\n", "16-materialanforderung-export.md": "# Materialanforderung\n\nDie Originalvorlage `materialanforderung_vorlage.xlsx` bleibt unverändert erhalten.\n\nPrüfungen:\n- maximal 25 Positionen\n- nur positive Mengen\n- doppelte Artikel werden zusammengefasst\n- Vorschau vor Export\n- Sortierung nach Artikelnummer\n\nDateiname: `Bestellung_Datum_Techniker.xlsx`\n", "10-reset.md": "# Vollständiges Zurücksetzen\n\nDer vollständige Reset löscht:\n\n- Artikel\n- Bestände\n- Buchungen\n- Historie\n- Audit-Protokoll\n- Lagerorte\n- Maschinen\n- Techniker\n- Administratorpasswort\n- Einstellungen\n\nProgrammdateien, Excel-Vorlage und Hilfedateien bleiben erhalten.\n\nNach dem Reset erscheint wieder automatisch die vollständige Ersteinrichtung.\n", "11-m365-prompts.md": "# Microsoft 365 Copilot – Prompts\n\n## SAP- oder Materialliste prüfen\n\n```\nPrüfe die beigefügte Materialliste.\n\nErstelle eine Tabelle mit:\nArtikelnummer;Bezeichnung;Menge;Lagerort\n\nRegeln:\n- Eine Position pro Zeile.\n- Leere Zeilen entfernen.\n- Gleiche Artikelnummern zusammenfassen.\n- Mengen als reine Zahl ausgeben.\n- Keine Erklärungen außerhalb der Tabelle.\n```\n\n## Inventurliste auslesen\n\n```\nLies die beigefügte Inventurliste aus.\n\nGib ausschließlich diese Spalten aus:\nArtikelnummer;Menge\n\nRegeln:\n- Eine Position pro Zeile.\n- Gleiche Artikelnummern zusammenfassen.\n- Mengen als reine Zahl ausgeben.\n- Unleserliche Positionen nicht raten, sondern mit PRÜFEN kennzeichnen.\n- Keine zusätzlichen Erklärungen.\n```\n", "00-erste-schritte.md": "# Erste Schritte\n\nDie Lagerverwaltung startet nach der Erstinstallation mit einem Einrichtungsassistenten.\n\n## Ersteinrichtung\n\n- Administratorpasswort mit mindestens 8 Zeichen vergeben.\n- Namen des Technikers eingeben.\n- Datumsformat auswählen.\n- Einrichtung abschließen.\n\nLagerorte und Maschinen müssen bei der Ersteinrichtung nicht angelegt werden. Sie können später unter **Stammdaten** ergänzt werden.\n", "12-mobile-bedienung.md": "# Mobile Bedienung\n\nAuf schmalen Bildschirmen wird die Navigation über die Schaltfläche **Menü** geöffnet.\n\n## Hinweise\n\n- Tabellen können seitlich verschoben werden.\n- Eingabefelder werden untereinander dargestellt.\n- Die Ersteinrichtung ist für Smartphone und Tablet optimiert.\n- Für umfangreiche CSV- und Excel-Arbeiten ist ein Windows-PC komfortabler.\n", "05-entnahme.md": "# Entnahme\n\n## Manuelle Entnahme\n\n- Datum, Techniker, Kunde und Maschine eintragen.\n- Artikel und entnommene Menge hinzufügen.\n- Entnahme bestätigen.\n\n## Servicebericht mit Microsoft 365 Copilot auslesen\n\n```\nLies den beigefügten Servicebericht vollständig aus.\n\nExtrahiere ausschließlich die im Servicebericht tatsächlich verwendeten oder verbauten Materialien.\nGib nur diese zwei Spalten aus:\n\nArtikelnummer;Menge\n\nRegeln:\n- Eine Position pro Zeile.\n- Keine Bezeichnung.\n- Keine Erklärungen oder Zusammenfassung.\n- Mengen als reine Zahl ausgeben.\n- Gleiche Artikelnummern zu einer Gesamtmenge zusammenfassen.\n- Nicht verbaute, nur erwähnte oder empfohlene Materialien nicht übernehmen.\n```\n\nDas Copilot-Ergebnis in das Feld **Servicebericht M365/Copilot** einfügen, mit **Extraktion prüfen** kontrollieren und danach buchen.\n"};
 
 function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open('LagerverwaltungLovrencicV21',1);r.onupgradeneeded=()=>r.result.createObjectStore('data');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function ig(k){const d=await idbOpen();return new Promise((res,rej)=>{const r=d.transaction('data').objectStore('data').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
@@ -147,7 +147,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','37');
+  setSetting('database_version','38');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -190,26 +190,154 @@ function rowsToItems(data){
  const out=[];for(const r of data){const vals=r.map(x=>String(x??'').trim());if(!vals.some(Boolean))continue;let no=vals[0],qty=Number(vals[1].replace(',','.')),desc=vals[2]||'';if(!Number.isFinite(qty)){const ix=vals.findIndex((v,i)=>i>0&&Number.isFinite(Number(v.replace(',','.'))));if(ix>0){qty=Number(vals[ix].replace(',','.'));desc=vals.slice(1,ix).join(' ')}}if(no&&qty>0)out.push({article_no:no,quantity:qty,description:desc})}return out
 }
 async function materialXlsx(d){
- let items=d.items||[];const grouped={};for(const x of items){if(!x.selected&&x.selected!==undefined)continue;const a=rows('SELECT article_no,description FROM articles WHERE id=?',[Number(x.article_id)])[0]||x;const no=a.article_no||x.article_no;if(!no)continue;if(!grouped[no])grouped[no]={article_no:no,description:a.description||x.description||'',quantity:0};grouped[no].quantity+=Number(x.quantity||0)}
- items=Object.values(grouped).filter(x=>x.quantity>0);if(items.length>25)throw Error('Maximal 25 Positionen möglich.');
- const template=await nativeFetch('materialanforderung_vorlage.xlsx').then(r=>r.arrayBuffer());const zip=await JSZip.loadAsync(template);
- const parser=new DOMParser(),ser=new XMLSerializer();let xml=await zip.file('xl/worksheets/sheet2.xml').async('text');const doc=parser.parseFromString(xml,'application/xml');const ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+ const source=Array.isArray(d.items)?d.items:[];
+ const grouped=new Map();
+ const errors=[];
+
+ for(let i=0;i<source.length;i++){
+  const x=source[i]||{};
+  if(x.selected===false)continue;
+
+  const articleId=Number(x.article_id);
+  const qty=Number(x.quantity);
+
+  if(!Number.isInteger(articleId)||articleId<=0){
+   errors.push(`Position ${i+1}: Artikel konnte nicht eindeutig zugeordnet werden.`);
+   continue;
+  }
+  if(!Number.isFinite(qty)||qty<=0){
+   errors.push(`Position ${i+1}: Menge muss größer als 0 sein.`);
+   continue;
+  }
+
+  const article=rows(
+   'SELECT id,article_no,description,unit,active FROM articles WHERE id=?',
+   [articleId]
+  )[0];
+
+  if(!article){
+   errors.push(`Position ${i+1}: Artikel-ID ${articleId} ist nicht mehr vorhanden.`);
+   continue;
+  }
+
+  const articleNo=String(article.article_no||'').trim();
+  const description=String(article.description||'').trim();
+
+  if(!articleNo){
+   errors.push(`Position ${i+1}: Für „${description||'unbekannter Artikel'}“ fehlt die Artikelnummer.`);
+   continue;
+  }
+  if(!description){
+   errors.push(`Position ${i+1}: Für Artikel ${articleNo} fehlt die Bezeichnung.`);
+   continue;
+  }
+
+  if(x.article_no!==undefined&&String(x.article_no||'').trim()&&String(x.article_no).trim()!==articleNo){
+   errors.push(`Position ${i+1}: Artikelnummer stimmt nicht mehr mit den Stammdaten überein (${x.article_no} ≠ ${articleNo}). Bitte Unterbestand neu laden.`);
+   continue;
+  }
+  if(x.description!==undefined&&String(x.description||'').trim()&&String(x.description).trim()!==description){
+   errors.push(`Position ${i+1}: Bezeichnung für Artikel ${articleNo} stimmt nicht mehr mit den Stammdaten überein. Bitte Unterbestand neu laden.`);
+   continue;
+  }
+
+  const key=String(article.id);
+  if(!grouped.has(key)){
+   grouped.set(key,{
+    article_id:article.id,
+    article_no:articleNo,
+    description,
+    unit:String(article.unit||'Stk'),
+    quantity:0,
+    first_position:i+1
+   });
+  }
+  grouped.get(key).quantity+=qty;
+ }
+
+ if(errors.length)throw Error('Materialanforderung nicht exportiert:\n• '+errors.join('\n• '));
+
+ const items=[...grouped.values()];
+ if(!items.length)throw Error('Keine gültige Position für den Export ausgewählt.');
+ if(items.length>25)throw Error('Maximal 25 Positionen möglich.');
+
+ items.sort((a,b)=>a.first_position-b.first_position);
+
+ const templateResponse=await nativeFetch('materialanforderung_vorlage.xlsx');
+ if(!templateResponse.ok)throw Error('Excel-Vorlage materialanforderung_vorlage.xlsx konnte nicht geladen werden.');
+ const template=await templateResponse.arrayBuffer();
+ const zip=await JSZip.loadAsync(template);
+
+ const parser=new DOMParser(),ser=new XMLSerializer();
+ let xml=await zip.file('xl/worksheets/sheet2.xml').async('text');
+ const doc=parser.parseFromString(xml,'application/xml');
+ const ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
  const sheetData=doc.getElementsByTagNameNS(ns,'sheetData')[0];
- function cell(ref){let c=[...doc.getElementsByTagNameNS(ns,'c')].find(x=>x.getAttribute('r')===ref);if(c)return c;const m=ref.match(/([A-Z]+)(\d+)/),rn=m[2];let row=[...doc.getElementsByTagNameNS(ns,'row')].find(x=>x.getAttribute('r')===rn);if(!row){row=doc.createElementNS(ns,'row');row.setAttribute('r',rn);sheetData.appendChild(row)}c=doc.createElementNS(ns,'c');c.setAttribute('r',ref);row.appendChild(c);return c}
- function clear(ref){const c=cell(ref);while(c.firstChild)c.removeChild(c.firstChild);c.removeAttribute('t')}
- function text(ref,v){const c=cell(ref);while(c.firstChild)c.removeChild(c.firstChild);c.setAttribute('t','inlineStr');const is=doc.createElementNS(ns,'is'),t=doc.createElementNS(ns,'t');t.textContent=String(v);is.appendChild(t);c.appendChild(is)}
- function num(ref,v){const c=cell(ref);while(c.firstChild)c.removeChild(c.firstChild);c.removeAttribute('t');const n=doc.createElementNS(ns,'v');n.textContent=String(v);c.appendChild(n)}
- text('F1',d.technician||setting('primary_technician','Techniker'));num('H1',Math.floor((Date.now()-Date.UTC(1899,11,30))/86400000));
+
+ function cell(ref){
+  let c=[...doc.getElementsByTagNameNS(ns,'c')].find(x=>x.getAttribute('r')===ref);
+  if(c)return c;
+  const m=ref.match(/([A-Z]+)(\d+)/),rn=m[2];
+  let row=[...doc.getElementsByTagNameNS(ns,'row')].find(x=>x.getAttribute('r')===rn);
+  if(!row){
+   row=doc.createElementNS(ns,'row');
+   row.setAttribute('r',rn);
+   sheetData.appendChild(row);
+  }
+  c=doc.createElementNS(ns,'c');
+  c.setAttribute('r',ref);
+  row.appendChild(c);
+  return c;
+ }
+ function clear(ref){
+  const c=cell(ref);
+  while(c.firstChild)c.removeChild(c.firstChild);
+  c.removeAttribute('t');
+ }
+ function text(ref,v){
+  const c=cell(ref);
+  while(c.firstChild)c.removeChild(c.firstChild);
+  c.setAttribute('t','inlineStr');
+  const is=doc.createElementNS(ns,'is'),t=doc.createElementNS(ns,'t');
+  t.textContent=String(v);
+  is.appendChild(t);
+  c.appendChild(is);
+ }
+ function num(ref,v){
+  const c=cell(ref);
+  while(c.firstChild)c.removeChild(c.firstChild);
+  c.removeAttribute('t');
+  const value=doc.createElementNS(ns,'v');
+  value.textContent=String(v);
+  c.appendChild(value);
+ }
+
+ text('F1',String(d.technician||setting('primary_technician','Techniker')).trim());
+ num('H1',Math.floor((Date.now()-Date.UTC(1899,11,30))/86400000));
+
  for(let r=4;r<=28;r++)['B','C','F','H'].forEach(c=>clear(c+r));
- items.forEach((x,i)=>{const r=4+i;num('B'+r,x.quantity);text('C'+r,x.article_no);text('F'+r,x.description)});
- zip.file('xl/worksheets/sheet2.xml',ser.serializeToString(doc));zip.remove('xl/calcChain.xml');
- return {blob:await zip.generateAsync({type:'blob'}),count:items.length,items};
+
+ items.forEach((x,i)=>{
+  const r=4+i;
+  num('B'+r,x.quantity);
+  text('C'+r,x.article_no);
+  text('F'+r,x.description);
+ });
+
+ zip.file('xl/worksheets/sheet2.xml',ser.serializeToString(doc));
+ zip.remove('xl/calcChain.xml');
+
+ return {
+  blob:await zip.generateAsync({type:'blob'}),
+  count:items.length,
+  items:items.map(({first_position,...x})=>x)
+ };
 }
 async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'37.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'38.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -718,7 +846,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','37');
+  setSetting('database_version','38');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();

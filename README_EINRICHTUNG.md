@@ -1,20 +1,13 @@
-# Lagerverwaltung Lovrencic V37 – direkter Gerätewechsel
+# Lagerverwaltung Lovrencic V38
 
-Browserdaten sind gerätebezogen. Das Schließen auf dem PC kann auf dem Smartphone keinen lokalen Marker setzen.
+## CSV-Exporte
 
-V37 prüft deshalb die Cloud-Revision selbstständig:
+Buttons, Bezeichnungen, Anordnung und Tabellenlayouts bleiben unverändert.
 
-- sofort beim Wechsel in den Vordergrund,
-- beim Fokus auf das Browserfenster,
-- beim Wiederherstellen einer mobilen Browserseite,
-- zusätzlich alle 15 Sekunden bei sichtbarer App.
+Korrigiert wurden Lagerbestand, Einbuchungen, Entnahmen, Inventurliste und gefilterte Historie. Die Dateien werden direkt im Browser heruntergeladen und öffnen keine 404-Seite mehr.
 
-Nur wenn Cloud und lokaler Stand nicht identisch sind, erscheint der Startdialog. Eine Wartezeit von 60 Sekunden entfällt.
+## Materialanforderung
 
-Empfohlener Ablauf:
+Die Excel-Vorlage wurde bytegenau unverändert übernommen.
 
-1. Gerät A: Synchronisieren und schließen
-2. Gerät B öffnen oder in den Vordergrund holen
-3. Startdialog erscheint bei erkannter neuer Cloud-Revision
-4. Aktuellen Cloud-Stand laden
-5. Danach weiterarbeiten
+Vor Vorschau und Export werden Artikel-ID, Artikelnummer, Bezeichnung und Menge jeder Position geprüft. Veraltete oder verschobene Zuordnungen werden blockiert. Die sichtbare Reihenfolge bleibt erhalten, doppelte Artikel werden nach Artikel-ID zusammengefasst und die Menge bleibt eine reine Zahl ohne angehängte Einheit.

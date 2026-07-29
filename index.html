@@ -207,7 +207,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">37.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">38.0</span></h1><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9;margin-top:3px">Datenbank zuletzt aktualisiert: –</div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this)">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -314,10 +314,10 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div class="card"><h3>CSV-Exporte</h3>
 <p>Die Dateien werden im Excel-kompatiblen CSV-Format mit Semikolon und UTF-8 erstellt.</p>
 <div class="toolbar">
-<button class="primary" onclick="location.href='/api/export/stock.csv'">Lagerbestand exportieren</button>
-<button class="secondary" onclick="location.href='/api/export/inbookings.csv'">Einbuchungen exportieren</button>
-<button class="secondary" onclick="location.href='/api/export/outbookings.csv'">Entnahmen exportieren</button>
-</div></div>
+<button class="primary" onclick="downloadCsv('/api/export/stock.csv','csvmsg')">Lagerbestand exportieren</button>
+<button class="secondary" onclick="downloadCsv('/api/export/inbookings.csv','csvmsg')">Einbuchungen exportieren</button>
+<button class="secondary" onclick="downloadCsv('/api/export/outbookings.csv','csvmsg')">Entnahmen exportieren</button>
+</div><div id="csvmsg" class="message"></div></div>
 <div class="split">
 <div class="card"><h3>SAP-Excel/CSV als Einbuchung importieren</h3>
 <p>Unterstützte Dateien: <b>XLSX, CSV und TXT</b>. Erkannte SAP-Spalten: <b>Material</b>, <b>Bezeichnung zum Material</b>, <b>Lagerort</b>, <b>Bezeichnung des Lagerorts</b>, <b>Frei verwendbar</b>.</p>
@@ -328,7 +328,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div id="cmsg" class="message"></div></div></div>
 <div class="card"><h3>Gültige Einbuchungen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Lagerort</th></tr></thead><tbody id="crows"></tbody></table></div></div>
 <div id="cunknown"></div><div id="cerr"></div>
-<div class="card"><h3>Inventur</h3><p>Inventurliste exportieren, gezählte Bestände eintragen und als CSV, TXT oder XLSX wieder einlesen.</p><div class="toolbar"><button class="primary" onclick="location.href='/api/export/inventory.csv'">Inventurliste exportieren</button><input id="invfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadInventoryFile(this)"></div><textarea id="invtext" placeholder="Artikelnummer;Gezählter Bestand"></textarea><div class="toolbar"><button class="secondary" onclick="inventoryPreview()">Inventur prüfen</button><button id="invcommit" class="danger" disabled onclick="inventoryCommit()">Bestandskorrekturen buchen</button></div><div id="invmsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>System</th><th>Gezählt</th><th>Differenz</th></tr></thead><tbody id="invrows"></tbody></table></div><div id="inverrors"></div></div></section>
+<div class="card"><h3>Inventur</h3><p>Inventurliste exportieren, gezählte Bestände eintragen und als CSV, TXT oder XLSX wieder einlesen.</p><div class="toolbar"><button class="primary" onclick="downloadCsv('/api/export/inventory.csv','invmsg')">Inventurliste exportieren</button><input id="invfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadInventoryFile(this)"></div><textarea id="invtext" placeholder="Artikelnummer;Gezählter Bestand"></textarea><div class="toolbar"><button class="secondary" onclick="inventoryPreview()">Inventur prüfen</button><button id="invcommit" class="danger" disabled onclick="inventoryCommit()">Bestandskorrekturen buchen</button></div><div id="invmsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>System</th><th>Gezählt</th><th>Differenz</th></tr></thead><tbody id="invrows"></tbody></table></div><div id="inverrors"></div></div></section>
 
 <section id="hist" class="view"><h2>Historie</h2><div class="card"><div class="formgrid"><label>Art<select id="historyFilter"><option value="ALL">Alle Buchungen</option><option value="IN">Nur Einbuchungen</option><option value="OUT">Nur Entnahmen</option></select></label><label>Von<input id="historyFrom" type="date"></label><label>Bis<input id="historyTo" type="date"></label><label>Techniker<input id="historyTechnician"></label><label>Artikelnummer oder Bezeichnung<input id="historyArticle"></label></div><div class="toolbar"><button class="primary" onclick="hist()">Filter anwenden</button><button class="secondary" onclick="clearHistoryFilters()">Filter löschen</button><button class="secondary" onclick="exportHistory()">CSV exportieren</button></div><div id="historyMsg" class="message"></div></div><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Kunde</th><th>Techniker</th><th>Fahrzeug</th><th>Maschine</th><th>Lieferschein</th><th>Quelle</th><th>Bemerkung</th></tr></thead><tbody id="hrows"></tbody></table></div></section>
 <section id="master" class="view"><h2>Stammdaten</h2><div id="lockbox" class="adminlocked"><h3>🔒 Stammdaten gesperrt</h3>
@@ -698,13 +698,89 @@ async function serviceCommit(){
 
 async function loadReq(){let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.target_stock)}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}
 function reqItems(){return [...rrows.children].filter(r=>r.children[0].firstChild.checked).map(r=>({article_id:+r.dataset.id,quantity:+r.children[5].firstChild.value}))}
-async function previewReq(){try{let d=await api('/api/material-request/preview',{method:'POST',body:JSON.stringify({technician:rtech.value,items:reqItems()})});reqPreview.innerHTML=`<div class="card"><h3>Exportvorschau (${d.count}/25 Positionen)</h3><div class="tablewrap"><table><thead><tr><th>Pos.</th><th>Menge</th><th>Artikelnummer</th><th>Bezeichnung</th></tr></thead><tbody>${d.items.map((x,i)=>`<tr><td>${i+1}</td><td>${n(x.quantity)}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td></tr>`).join('')}</tbody></table></div></div>`;msg(rmsg,'Vorschau geprüft.',true)}catch(e){msg(rmsg,e.message,false)}}
-async function exportReq(){let r=await fetch('/api/export/material-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({technician:rtech.value,items:reqItems()})});if(!r.ok){let d=await r.json();return msg(rmsg,d.error,false)}let b=await r.blob(),a=document.createElement('a'),m=/filename="([^"]+)"/.exec(r.headers.get('content-disposition')||'');a.href=URL.createObjectURL(b);a.download=m?m[1]:'Materialanforderung.xlsx';a.click();msg(rmsg,'Excel-Datei im Originalvorlagen-Layout heruntergeladen.',true)}
+async function previewReq(){
+ try{
+  const d=await api('/api/material-request/preview',{
+   method:'POST',
+   body:JSON.stringify({technician:rtech.value,items:reqItems()})
+  });
+  reqPreview.innerHTML=`<div class="card"><h3>Exportvorschau (${d.count}/25 Positionen)</h3>
+   <div class="tablewrap"><table><thead><tr>
+    <th>Pos.</th><th>Menge</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Prüfung</th>
+   </tr></thead><tbody>${d.items.map((x,i)=>`<tr>
+    <td>${i+1}</td><td>${n(x.quantity)}</td><td>${esc(x.article_no)}</td>
+    <td>${esc(x.description)}</td><td>✓ korrekt zugeordnet</td>
+   </tr>`).join('')}</tbody></table></div></div>`;
+  msg(rmsg,`${d.count} Position(en) geprüft: Menge, Artikelnummer und Bezeichnung stimmen mit den Stammdaten überein.`,true);
+ }catch(e){
+  reqPreview.innerHTML='';
+  msg(rmsg,e.message,false);
+ }
+}
+async function exportReq(){
+ try{
+  const items=reqItems();
+  await api('/api/material-request/preview',{
+   method:'POST',
+   body:JSON.stringify({technician:rtech.value,items})
+  });
+  await downloadResponse('/api/export/material-request','rmsg',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({technician:rtech.value,items}),
+   fallbackName:'Materialanforderung.xlsx'
+  });
+  msg(rmsg,'Excel-Datei im unveränderten Originalvorlagen-Layout heruntergeladen. Alle Positionen wurden gegen die Stammdaten geprüft.',true);
+ }catch(e){
+  msg(rmsg,e.message,false);
+ }
+}
 function historyQuery(){let p=new URLSearchParams();p.set('type',historyFilter.value);if(historyFrom.value)p.set('date_from',historyFrom.value);if(historyTo.value)p.set('date_to',historyTo.value);if(historyTechnician.value)p.set('technician',historyTechnician.value);if(historyArticle.value)p.set('article',historyArticle.value);return p.toString()}
 async function hist(){historyData=await api('/api/history?'+historyQuery());renderHistory();msg(historyMsg,historyData.length+' Buchung(en) gefunden.',true)}
 function renderHistory(){hrows.innerHTML=historyData.map(x=>`<tr><td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.customer)}</td><td>${esc(x.technician)}</td><td>${esc(x.vehicle)}</td><td>${esc(x.machine)}</td><td>${esc(x.delivery_note)}</td><td>${esc(x.source)}</td><td>${esc(x.note||'')}</td></tr>`).join('')}
 function clearHistoryFilters(){historyFilter.value='ALL';historyFrom.value='';historyTo.value='';historyTechnician.value='';historyArticle.value='';hist()}
-function exportHistory(){location.href='/api/export/history.csv?'+historyQuery()}
+
+async function downloadResponse(url,messageTarget,options={}){
+ const target=messageTarget?document.getElementById(messageTarget):null;
+ try{
+  if(target)msg(target,'Datei wird erstellt …',true);
+  const response=await fetch(url,options);
+  if(!response.ok){
+   let detail='';
+   try{const data=await response.json();detail=data.error||data.message||''}
+   catch{try{detail=await response.text()}catch{}}
+   throw Error(detail||`Export fehlgeschlagen (${response.status}).`);
+  }
+  const blob=await response.blob();
+  const disposition=response.headers.get('content-disposition')||'';
+  const utf8=/filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  const normal=/filename="?([^";]+)"?/i.exec(disposition);
+  let filename=utf8?decodeURIComponent(utf8[1]):(normal?normal[1]:(options.fallbackName||'Exportdatei'));
+  filename=filename.replace(/[\\/:*?"<>|]+/g,'_');
+
+  const objectUrl=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=objectUrl;
+  link.download=filename;
+  link.style.display='none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(objectUrl),1500);
+
+  if(target)msg(target,`${filename} wurde heruntergeladen.`,true);
+  return {filename,size:blob.size};
+ }catch(e){
+  if(target)msg(target,e.message||'Export fehlgeschlagen.',false);
+  else alert(e.message||'Export fehlgeschlagen.');
+  throw e;
+ }
+}
+async function downloadCsv(url,messageTarget){
+ return downloadResponse(url,messageTarget);
+}
+
+function exportHistory(){downloadCsv('/api/export/history.csv?'+historyQuery(),'historyMsg')}
 
 
 async function unlockNewMaterial(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:newpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(newunlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(newunlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=newpw.value;window.LVAdminSession?.unlock();newlock.style.display='none';newform.style.display='block';fillNewMaterialLists()}
