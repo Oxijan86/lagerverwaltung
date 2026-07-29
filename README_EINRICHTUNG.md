@@ -1,29 +1,26 @@
-# Lagerverwaltung Lovrencic V26 – Stammdaten-Freischaltung
+# Lagerverwaltung Lovrencic V27 Cloud – Stammdaten-Fix
 
 ## Behoben
 
-Bei übernommenen älteren Datenbanken konnten Artikel geladen werden, aber die Stammdaten blieben intern gesperrt. Dadurch ließen sich insbesondere Techniker, Lagerorte und Maschinen trotz sichtbarer Eingabefelder nicht speichern.
+Version 26 konnte die Stammdaten sichtbar freischalten, obwohl die gespeicherte Sitzung im Backend nicht mehr gültig war. Dadurch erschien beim Anlegen eines Technikers weiterhin „Stammdaten sind nicht freigeschaltet“.
 
-Version 26 trennt jetzt sauber zwischen:
+Version 27:
 
-- vorhandenen Lagerdaten,
-- vorhandenem Administratorpasswort,
-- Freischaltung der aktuellen Sitzung.
+- prüft ein gespeichertes Passwort beim App-Start erneut,
+- zeigt die Stammdaten nur nach erfolgreicher Prüfung als freigeschaltet,
+- sendet das Passwort bei jeder Anlage von Technikern, Maschinen und Lagerorten ausdrücklich mit,
+- erkennt korrekt, ob überhaupt ein Passwort vorhanden ist,
+- ermöglicht bei alten Datenbanken die erstmalige Passwortanlage,
+- löscht ungültige alte Sitzungsdaten automatisch,
+- meldet doppelte Techniker oder Stammdaten verständlich.
 
-## Neues Verhalten
+## Nach dem Update
 
-1. Eine alte Datenbank mit Artikeln wird direkt geladen.
-2. Fehlt ein Passwort, kann einmalig ein neues Administratorpasswort festgelegt werden.
-3. Nach erfolgreicher Passwortanlage sind die Stammdaten sofort freigeschaltet.
-4. Die Freischaltung bleibt für die aktuelle Browser-Sitzung erhalten.
-5. Techniker, Lagerorte, Maschinen, Fahrzeuge und Artikeländerungen können anschließend gespeichert werden.
-6. Beim Schließen des Browsers endet die Freischaltung automatisch.
+1. Dateien in GitHub vollständig ersetzen.
+2. Commit durchführen.
+3. Einige Minuten warten.
+4. Seite mit Strg+F5 neu laden.
+5. Unter Stammdaten das Passwort erneut eingeben.
+6. Danach Techniker anlegen.
 
-## Update auf GitHub
-
-1. ZIP entpacken.
-2. Alle Dateien in das bestehende Repository hochladen und ersetzen.
-3. Commit durchführen.
-4. Einige Minuten warten.
-5. Seite mit `Strg + F5` neu laden.
-6. Bei installierter PWA diese vollständig schließen oder neu installieren, falls weiterhin Version 25 angezeigt wird.
+Falls Version 26 angezeigt wird, die Website-Daten bzw. die installierte PWA löschen und neu öffnen.

@@ -393,7 +393,7 @@ function formatAppDate(value,withTime=false){
 }
 async function api(u,o={}){await LVBackend.ready;const h={'Content-Type':'application/json',...(o.headers||{})};if(window.LVAdminSession?.unlocked)h['X-LV-Admin-Unlocked']='1';let r=await fetch(u,{...o,headers:h});let d=await r.json();if(!r.ok)throw Error(d.error||'Fehler');return d}
 function msg(e,t,ok){e.textContent=t;e.className='message '+(ok?'ok':'error')}
-function show(id,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='req')loadReq();if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'&&sessionStorage.admin==='1'){loadEditTable();loadSettings()}if(id==='help')loadHelpList()}
+function show(id,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='req')loadReq();if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()}
 
 async function master(){
  md=await api('/api/masterdata');
@@ -604,7 +604,7 @@ function clearHistoryFilters(){historyFilter.value='ALL';historyFrom.value='';hi
 function exportHistory(){location.href='/api/export/history.csv?'+historyQuery()}
 
 
-async function unlockNewMaterial(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:newpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(newunlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(newunlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=newpw.value;newlock.style.display='none';newform.style.display='block';fillNewMaterialLists()}
+async function unlockNewMaterial(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:newpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(newunlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(newunlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=newpw.value;window.LVAdminSession?.unlock();newlock.style.display='none';newform.style.display='block';fillNewMaterialLists()}
 function fillNewMaterialLists(){let loc='<option value="">Bitte auswählen</option>'+md.locations.map(x=>`<option>${esc(x.name)}</option>`).join('');let mach='<option value="">Keine Zuordnung</option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');nm_location.innerHTML=loc;nm_machine.innerHTML=mach}
 async function createMaterial(){
  let body={password:sessionStorage.adminPassword||'',article_no:nm_no.value,description:nm_desc.value,initial_stock:+nm_initial.value,target_stock:+nm_target.value,minimum_stock:+nm_min.value,unit:nm_unit.value,location:nm_location.value,machine:nm_machine.value,manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true'};
@@ -612,13 +612,22 @@ async function createMaterial(){
 }
 function clearMaterialForm(){['nm_no','nm_desc','nm_manufacturer','nm_supplier','nm_supplier_no','nm_barcode','nm_notes'].forEach(id=>document.getElementById(id).value='');nm_initial.value=0;nm_target.value=0;nm_min.value=0;nm_active.value='true'}
 
-async function unlockAdmin(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:adminpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(unlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(unlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=adminpw.value;lockbox.style.display='none';adminarea.style.display='block';loadEditTable()}
+async function unlockAdmin(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:adminpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(unlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(unlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=adminpw.value;window.LVAdminSession?.unlock();lockbox.style.display='none';adminarea.style.display='block';loadEditTable()}
 async function addMaster(type){
- let body={type};
- if(type==='location'){body.name=locname.value;body.description=locdesc.value}
- else if(type==='machine'){body.name=machname.value;body.description=machdesc.value}
- else if(type==='technician'){body.name=techname.value}
- try{await api('/api/masterdata',{method:'POST',body:JSON.stringify(body)});msg(mastermsg,'Stammdatum gespeichert.',true);await master();loadEditTable()}catch(e){msg(mastermsg,e.message,false)}
+ let body={type,password:sessionStorage.adminPassword||''};
+ if(type==='location'){body.name=locname.value.trim();body.description=locdesc.value.trim()}
+ else if(type==='machine'){body.name=machname.value.trim();body.description=machdesc.value.trim()}
+ else if(type==='technician'){body.name=techname.value.trim()}
+ if(!body.name)return msg(mastermsg,'Bitte zuerst einen Namen eingeben.',false);
+ try{
+  await api('/api/masterdata',{method:'POST',body:JSON.stringify(body)});
+  if(type==='location'){locname.value='';locdesc.value=''}
+  else if(type==='machine'){machname.value='';machdesc.value=''}
+  else if(type==='technician'){techname.value=''}
+  msg(mastermsg,'Stammdatum gespeichert.',true);
+  await master();
+  await loadEditTable();
+ }catch(e){msg(mastermsg,e.message,false)}
 }
 async function loadEditTable(){
  arts=await api('/api/articles');
@@ -892,7 +901,7 @@ async function refreshPasswordStatus(){
 
   // Das fehlende Stammdaten-Passwort ist kein Grund, den Datenbank-Assistenten zu öffnen.
   // Der Datenbank-Assistent wird ausschließlich durch /api/setup/status gesteuert.
-  let passwordSetupRequired=!!d.setup_required;
+  const passwordSetupRequired=!d.has_password;
   passwordSetupArea.style.display=passwordSetupRequired?'block':'none';
   passwordChangeArea.style.display=passwordSetupRequired?'none':'block';
   if(window.firstPasswordArea)firstPasswordArea.style.display=passwordSetupRequired?'block':'none';
@@ -901,8 +910,11 @@ async function refreshPasswordStatus(){
   if(passwordSetupRequired){
    sessionStorage.removeItem('admin');
    sessionStorage.removeItem('adminPassword');
+   window.LVAdminSession?.lock();
    lockbox.style.display='block';
    adminarea.style.display='none';
+   if(window.newlock)newlock.style.display='block';
+   if(window.newform)newform.style.display='none';
   }
  }catch(e){
   console.error(e);
@@ -915,7 +927,7 @@ async function createFirstAdminPassword(){
   if(firstPwNew.value.length<6)throw Error('Das Passwort muss mindestens 6 Zeichen haben.');
   if(firstPwNew.value!==firstPwRepeat.value)throw Error('Die Passwörter stimmen nicht überein.');
   await api('/api/admin/setup-password',{method:'POST',body:JSON.stringify({password:firstPwNew.value,repeat_password:firstPwRepeat.value})});
-  sessionStorage.admin='1';sessionStorage.adminPassword=firstPwNew.value;
+  sessionStorage.admin='1';sessionStorage.adminPassword=firstPwNew.value;window.LVAdminSession?.unlock();
   firstPwNew.value='';firstPwRepeat.value='';
   lockbox.style.display='none';adminarea.style.display='block';
   msg(unlockmsg,'Das Passwort wurde gespeichert. Die Stammdaten sind freigeschaltet.',true);
@@ -935,6 +947,7 @@ async function completeInitialSetup(){
 
   sessionStorage.admin='1';
   sessionStorage.adminPassword=initialPwNew.value;
+  window.LVAdminSession?.unlock();
   initialPwNew.value='';
   initialPwRepeat.value='';
 
@@ -981,6 +994,7 @@ async function setupAdminPassword(){
   });
   sessionStorage.admin='1';
   sessionStorage.adminPassword=pwSetupNew.value;
+  window.LVAdminSession?.unlock();
   pwSetupNew.value='';pwSetupRepeat.value='';
   lockbox.style.display='none';
   adminarea.style.display='block';
@@ -1037,6 +1051,49 @@ async function resetWarehouse(){
 
 async function auditLoad(){let d=await api('/api/audit');auditrows.innerHTML=d.map(x=>`<tr><td>${esc(x.event_time)}</td><td>${esc(x.user_name)}</td><td>${esc(x.action)}</td><td>${esc(x.entity)}</td><td>${esc(x.entity_id)}</td><td>${esc(x.details)}</td></tr>`).join('')}
 
-if(sessionStorage.admin==='1'){lockbox.style.display='none';adminarea.style.display='block';newlock.style.display='none';newform.style.display='block'}
-refreshSetupStatus();refreshPasswordStatus();loadSettings();master().then(()=>{if(sessionStorage.admin==='1')loadEditTable()});loadAppInfo();dash();loadArticles().then(()=>{addRow('i');addRow('o')});
+async function restoreAdminSession(){
+ const savedPassword=sessionStorage.adminPassword||'';
+ if(!savedPassword){
+  sessionStorage.removeItem('admin');
+  window.LVAdminSession?.lock();
+  lockbox.style.display='block';
+  adminarea.style.display='none';
+  newlock.style.display='block';
+  newform.style.display='none';
+  return false;
+ }
+ try{
+  const result=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:savedPassword})});
+  if(!result.ok)throw Error('Ungültige Sitzung');
+  sessionStorage.admin='1';
+  window.LVAdminSession?.unlock();
+  lockbox.style.display='none';
+  adminarea.style.display='block';
+  newlock.style.display='none';
+  newform.style.display='block';
+  return true;
+ }catch{
+  sessionStorage.removeItem('admin');
+  sessionStorage.removeItem('adminPassword');
+  window.LVAdminSession?.lock();
+  lockbox.style.display='block';
+  adminarea.style.display='none';
+  newlock.style.display='block';
+  newform.style.display='none';
+  return false;
+ }
+}
+
+(async()=>{
+ await refreshSetupStatus();
+ await refreshPasswordStatus();
+ await loadSettings();
+ await master();
+ const restored=await restoreAdminSession();
+ if(restored)await loadEditTable();
+ await loadAppInfo();
+ await dash();
+ await loadArticles();
+ addRow('i');addRow('o');
+})();
 </script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('service-worker.js');</script></body></html>
