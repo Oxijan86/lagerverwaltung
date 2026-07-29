@@ -147,7 +147,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','38');
+  setSetting('database_version','39');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -194,6 +194,7 @@ async function materialXlsx(d){
  const grouped=new Map();
  const errors=[];
 
+ // 1. Every row is resolved by its stable article ID.
  for(let i=0;i<source.length;i++){
   const x=source[i]||{};
   if(x.selected===false)continue;
@@ -232,6 +233,7 @@ async function materialXlsx(d){
    continue;
   }
 
+  // Detect stale or shifted rows before anything is written.
   if(x.article_no!==undefined&&String(x.article_no||'').trim()&&String(x.article_no).trim()!==articleNo){
    errors.push(`Position ${i+1}: Artikelnummer stimmt nicht mehr mit den Stammdaten überein (${x.article_no} ≠ ${articleNo}). Bitte Unterbestand neu laden.`);
    continue;
@@ -255,80 +257,138 @@ async function materialXlsx(d){
   grouped.get(key).quantity+=qty;
  }
 
- if(errors.length)throw Error('Materialanforderung nicht exportiert:\n• '+errors.join('\n• '));
+ if(errors.length){
+  throw Error('Materialanforderung nicht exportiert:\n• '+errors.join('\n• '));
+ }
 
  const items=[...grouped.values()];
  if(!items.length)throw Error('Keine gültige Position für den Export ausgewählt.');
  if(items.length>25)throw Error('Maximal 25 Positionen möglich.');
 
+ // Preserve the visible order from the material-request screen.
  items.sort((a,b)=>a.first_position-b.first_position);
 
+ if(typeof ExcelJS==='undefined'){
+  throw Error('Excel-Exportbibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen und die Seite neu laden.');
+ }
+
+ // 2. Load the original template as a normal workbook.
  const templateResponse=await nativeFetch('materialanforderung_vorlage.xlsx');
- if(!templateResponse.ok)throw Error('Excel-Vorlage materialanforderung_vorlage.xlsx konnte nicht geladen werden.');
- const template=await templateResponse.arrayBuffer();
- const zip=await JSZip.loadAsync(template);
+ if(!templateResponse.ok){
+  throw Error('Excel-Vorlage materialanforderung_vorlage.xlsx konnte nicht geladen werden.');
+ }
+ const templateBuffer=await templateResponse.arrayBuffer();
 
- const parser=new DOMParser(),ser=new XMLSerializer();
- let xml=await zip.file('xl/worksheets/sheet2.xml').async('text');
- const doc=parser.parseFromString(xml,'application/xml');
- const ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
- const sheetData=doc.getElementsByTagNameNS(ns,'sheetData')[0];
+ const workbook=new ExcelJS.Workbook();
+ await workbook.xlsx.load(templateBuffer);
 
- function cell(ref){
-  let c=[...doc.getElementsByTagNameNS(ns,'c')].find(x=>x.getAttribute('r')===ref);
-  if(c)return c;
-  const m=ref.match(/([A-Z]+)(\d+)/),rn=m[2];
-  let row=[...doc.getElementsByTagNameNS(ns,'row')].find(x=>x.getAttribute('r')===rn);
-  if(!row){
-   row=doc.createElementNS(ns,'row');
-   row.setAttribute('r',rn);
-   sheetData.appendChild(row);
-  }
-  c=doc.createElementNS(ns,'c');
-  c.setAttribute('r',ref);
-  row.appendChild(c);
-  return c;
- }
- function clear(ref){
-  const c=cell(ref);
-  while(c.firstChild)c.removeChild(c.firstChild);
-  c.removeAttribute('t');
- }
- function text(ref,v){
-  const c=cell(ref);
-  while(c.firstChild)c.removeChild(c.firstChild);
-  c.setAttribute('t','inlineStr');
-  const is=doc.createElementNS(ns,'is'),t=doc.createElementNS(ns,'t');
-  t.textContent=String(v);
-  is.appendChild(t);
-  c.appendChild(is);
- }
- function num(ref,v){
-  const c=cell(ref);
-  while(c.firstChild)c.removeChild(c.firstChild);
-  c.removeAttribute('t');
-  const value=doc.createElementNS(ns,'v');
-  value.textContent=String(v);
-  c.appendChild(value);
+ // The original export sheet is Tabelle1 (second worksheet in the template).
+ const worksheet=workbook.getWorksheet('Tabelle1')||workbook.worksheets[1];
+ if(!worksheet){
+  throw Error('Exportblatt Tabelle1 wurde in der Excel-Vorlage nicht gefunden.');
  }
 
- text('F1',String(d.technician||setting('primary_technician','Techniker')).trim());
- num('H1',Math.floor((Date.now()-Date.UTC(1899,11,30))/86400000));
+ // 3. Change values only. Existing formatting, borders, widths, row heights,
+ // print settings, page layout and merged cells remain attached to the cells.
+ worksheet.getCell('F1').value=String(
+  d.technician||setting('primary_technician','Techniker')
+ ).trim();
 
- for(let r=4;r<=28;r++)['B','C','F','H'].forEach(c=>clear(c+r));
+ const exportDate=new Date();
+ exportDate.setHours(0,0,0,0);
+ worksheet.getCell('H1').value=exportDate;
+ // Keep the original cell style but enforce the requested visible date.
+ worksheet.getCell('H1').numFmt='dd.mm.yyyy';
 
- items.forEach((x,i)=>{
-  const r=4+i;
-  num('B'+r,x.quantity);
-  text('C'+r,x.article_no);
-  text('F'+r,x.description);
+ // Clear only the cell values in the 25 prepared template rows.
+ for(let row=4;row<=28;row++){
+  worksheet.getCell(`B${row}`).value=null;
+  worksheet.getCell(`C${row}`).value=null;
+  worksheet.getCell(`F${row}`).value=null;
+  worksheet.getCell(`H${row}`).value=null;
+ }
+
+ items.forEach((x,index)=>{
+  const row=4+index;
+  // Quantity is numeric only; no unit is appended.
+  worksheet.getCell(`B${row}`).value=x.quantity;
+  // Article numbers are always text so leading zeroes cannot be lost.
+  worksheet.getCell(`C${row}`).value=String(x.article_no);
+  worksheet.getCell(`C${row}`).numFmt='@';
+  worksheet.getCell(`F${row}`).value=String(x.description);
  });
 
- zip.file('xl/worksheets/sheet2.xml',ser.serializeToString(doc));
- zip.remove('xl/calcChain.xml');
+ // Avoid recalculation warnings; there are no formulas in the written area.
+ workbook.calcProperties.fullCalcOnLoad=false;
+ workbook.calcProperties.forceFullCalc=false;
+ workbook.calcProperties.calcMode='auto';
+
+ // 4. Generate a structurally valid XLSX through ExcelJS.
+ const generated=await workbook.xlsx.writeBuffer();
+
+ // 5. Self-test: open the generated workbook again and verify every value.
+ const verificationWorkbook=new ExcelJS.Workbook();
+ await verificationWorkbook.xlsx.load(generated);
+ const verificationSheet=
+  verificationWorkbook.getWorksheet('Tabelle1')||
+  verificationWorkbook.worksheets[1];
+
+ if(!verificationSheet){
+  throw Error('Interne Exportprüfung fehlgeschlagen: Exportblatt fehlt.');
+ }
+
+ const verifyErrors=[];
+ const exportedTechnician=String(verificationSheet.getCell('F1').value??'').trim();
+ const requestedTechnician=String(
+  d.technician||setting('primary_technician','Techniker')
+ ).trim();
+
+ if(exportedTechnician!==requestedTechnician){
+  verifyErrors.push('Technikername wurde nicht korrekt übernommen.');
+ }
+
+ items.forEach((x,index)=>{
+  const row=4+index;
+  const exportedQty=Number(verificationSheet.getCell(`B${row}`).value);
+  const exportedNo=String(verificationSheet.getCell(`C${row}`).value??'').trim();
+  const exportedDescription=String(
+   verificationSheet.getCell(`F${row}`).value??''
+  ).trim();
+
+  if(exportedQty!==Number(x.quantity)){
+   verifyErrors.push(`Position ${index+1}: Menge ${exportedQty} statt ${x.quantity}.`);
+  }
+  if(exportedNo!==String(x.article_no)){
+   verifyErrors.push(`Position ${index+1}: Artikelnummer ${exportedNo} statt ${x.article_no}.`);
+  }
+  if(exportedDescription!==String(x.description)){
+   verifyErrors.push(`Position ${index+1}: Bezeichnung stimmt nicht überein.`);
+  }
+ });
+
+ // Ensure no unintended data remains below the exported rows.
+ for(let index=items.length;index<25;index++){
+  const row=4+index;
+  const values=[
+   verificationSheet.getCell(`B${row}`).value,
+   verificationSheet.getCell(`C${row}`).value,
+   verificationSheet.getCell(`F${row}`).value
+  ];
+  if(values.some(v=>v!==null&&v!==undefined&&String(v)!=='')){
+   verifyErrors.push(`Position ${index+1}: Alte Zellinhalte wurden nicht vollständig entfernt.`);
+   break;
+  }
+ }
+
+ if(verifyErrors.length){
+  throw Error('Interne Prüfung der Excel-Datei fehlgeschlagen:\n• '+verifyErrors.join('\n• '));
+ }
 
  return {
-  blob:await zip.generateAsync({type:'blob'}),
+  blob:new Blob(
+   [generated],
+   {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}
+  ),
   count:items.length,
   items:items.map(({first_position,...x})=>x)
  };
@@ -337,7 +397,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'38.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'39.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -846,7 +906,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','38');
+  setSetting('database_version','39');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
