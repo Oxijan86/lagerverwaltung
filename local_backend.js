@@ -34,9 +34,36 @@ CREATE TABLE IF NOT EXISTS vehicles(id INTEGER PRIMARY KEY AUTOINCREMENT,name TE
 CREATE TABLE IF NOT EXISTS audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT,event_time TEXT NOT NULL,user_name TEXT NOT NULL,action TEXT NOT NULL,entity TEXT NOT NULL,entity_id TEXT NOT NULL DEFAULT '',details TEXT NOT NULL DEFAULT '');`);
 if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
 }
+
+function tableExists(name){
+ try{return Number(scalar("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",[name]))>0}catch{return false}
+}
+function existingDatabaseHasContent(){
+ try{
+  if(!tableExists('articles'))return false;
+  const articleCount=Number(scalar('SELECT COUNT(*) FROM articles')||0);
+  const movementCount=tableExists('movements')?Number(scalar('SELECT COUNT(*) FROM movements')||0):0;
+  const technicianCount=tableExists('technicians')?Number(scalar('SELECT COUNT(*) FROM technicians')||0):0;
+  const locationCount=tableExists('locations')?Number(scalar('SELECT COUNT(*) FROM locations')||0):0;
+  const machineCount=tableExists('machines')?Number(scalar('SELECT COUNT(*) FROM machines')||0):0;
+  return articleCount>0||movementCount>0||technicianCount>0||locationCount>0||machineCount>0;
+ }catch{return false}
+}
+function adoptExistingDatabase(){
+ if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
+  setSetting('setup_complete','1');
+  setSetting('database_adopted','1');
+  setSetting('database_version','23');
+  if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
+ }
+}
+function setupIsRequired(){
+ return setting('setup_complete','0')!=='1'&&!existingDatabaseHasContent();
+}
+
 async function initialize(){
  SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
- const b=await ig(DBKEY);db=b?new SQL.Database(new Uint8Array(b)):new SQL.Database();initSchema();handle=await ig(HANDLEKEY)||null;await persist(false);
+ const b=await ig(DBKEY);db=b?new SQL.Database(new Uint8Array(b)):new SQL.Database();initSchema();adoptExistingDatabase();handle=await ig(HANDLEKEY)||null;await persist(false);
 }
 function response(data,status=200,headers={}){return new Response(typeof data==='string'||data instanceof Blob||data instanceof ArrayBuffer?data:JSON.stringify(data),{status,headers:{...(typeof data==='object'&&!(data instanceof Blob)&&!(data instanceof ArrayBuffer)?{'Content-Type':'application/json'}:{}),...headers}})}
 function body(opt){try{return JSON.parse(opt?.body||'{}')}catch{return {}}}
@@ -83,8 +110,8 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'22.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setting('setup_complete','0')!=='1',date_format:setting('date_format','DD.MM.YYYY')});
-  if(p==='/api/setup/status')return response({setup_required:setting('setup_complete','0')!=='1',date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
+  if(p==='/api/info')return response({version:'23.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status')return response({setup_required:!setting('admin_password_hash'),has_password:!!setting('admin_password_hash'),can_unlock:!!setting('admin_password_hash')});
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
   if(p==='/api/masterdata')return response({locations:rows('SELECT * FROM locations WHERE active=1 ORDER BY name'),machines:rows('SELECT * FROM machines WHERE active=1 ORDER BY name'),technicians:rows('SELECT * FROM technicians WHERE active=1 ORDER BY name'),vehicles:rows('SELECT * FROM vehicles WHERE active=1 ORDER BY name')});
@@ -101,7 +128,7 @@ async function route(url,opt={}){
   if(p==='/api/export/stock.csv'){const a=articles();return csvResp(`Lagerbestand_${fmtDate(today())}.csv`,['Artikelnummer','Bezeichnung','Sollbestand','Mindestbestand','Istbestand','Einheit','Lagerort','Maschine','Hersteller','Lieferant','Einkaufspreis'],a.map(x=>[x.article_no,x.description,x.target_stock,x.minimum_stock,x.stock,x.unit,x.location,x.machine,x.manufacturer,x.supplier,x.purchase_price]))}
   if(p==='/api/export/inventory.csv'){const a=articles();return csvResp(`Inventur_${fmtDate(today())}.csv`,['Artikelnummer','Bezeichnung','Systembestand','Gezählter Bestand','Lagerort','Maschine'],a.map(x=>[x.article_no,x.description,x.stock,'',x.location,x.machine]))}
  }
- if(p==='/api/setup/complete'){if(!d.password||d.password.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');setSetting('admin_password_hash',hash(d.password));setSetting('primary_technician',d.technician||'Techniker');setSetting('date_format',d.date_format||'DD.MM.YYYY');setSetting('setup_complete','1');run('INSERT OR IGNORE INTO technicians(name) VALUES(?)',[d.technician||'Techniker']);audit(d.technician,'EINRICHTUNG','System','','Ersteinrichtung');await persist();return response({ok:true})}
+ if(p==='/api/setup/complete'){if(!d.password||d.password.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');setSetting('admin_password_hash',hash(d.password));setSetting('primary_technician',d.technician||'Techniker');setSetting('date_format',d.date_format||'DD.MM.YYYY');setSetting('setup_complete','1');run('INSERT OR IGNORE INTO technicians(name) VALUES(?)',[d.technician||'Techniker']);audit(d.technician,'EINRICHTUNG','System','','Ersteinrichtung');await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY')})}
  if(p==='/api/settings/date-format'){setSetting('date_format',d.date_format);await persist();return response({ok:true})}
  if(p==='/api/admin/unlock')return response({ok:validPw(d.password),setup_required:!setting('admin_password_hash')});
  if(p==='/api/admin/setup-password'){if(!d.password||d.password.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');setSetting('admin_password_hash',hash(d.password));setSetting('setup_complete','1');await persist();return response({ok:true})}
@@ -134,14 +161,14 @@ async function setBackupIndex(x){await ip(BACKUPKEY,x)}
 async function backupDir(create=true){if(!handle)return null;try{return await handle.getDirectoryHandle('Backup',{create})}catch{return null}}
 async function createBackup(kind='Automatisch',comment=''){const bytes=db.export(),created=Date.now(),name=`Backup_${backupStamp()}${comment?'_'+safeName(comment):''}.db`;let storage='local';const bd=await backupDir(true);if(bd&&await permission(handle,'readwrite')){const fh=await bd.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(bytes);await w.close();storage='folder'}else{await ip('backup:'+name,bytes.buffer)}let list=await getBackupIndex();list.unshift({name,created,kind,comment,size:bytes.byteLength,storage});while(list.length>30){const old=list.pop();if(old.storage==='local')await idel('backup:'+old.name);else try{const d=await backupDir(false);await d.removeEntry(old.name)}catch{}}await setBackupIndex(list);return list[0]}
 async function readBackup(x){if(x.storage==='folder'){const d=await backupDir(false),f=await (await d.getFileHandle(x.name)).getFile();return new Uint8Array(await f.arrayBuffer())}return new Uint8Array(await ig('backup:'+x.name))}
-async function restoreBackup(name){let list=await getBackupIndex(),x=list.find(z=>z.name===name);if(!x)throw Error('Backup nicht gefunden.');await createBackup('Sicherheitsbackup','Vor Wiederherstellung');const bytes=await readBackup(x),test=new SQL.Database(bytes);if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Backup ist beschädigt.');db.close();db=test;initSchema();await persist(true);return x}
+async function restoreBackup(name){let list=await getBackupIndex(),x=list.find(z=>z.name===name);if(!x)throw Error('Backup nicht gefunden.');await createBackup('Sicherheitsbackup','Vor Wiederherstellung');const bytes=await readBackup(x),test=new SQL.Database(bytes);if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Backup ist beschädigt.');db.close();db=test;initSchema();adoptExistingDatabase();await persist(true);return x}
 async function deleteBackup(name){let list=await getBackupIndex(),x=list.find(z=>z.name===name);if(!x)return;if(x.storage==='folder')try{const d=await backupDir(false);await d.removeEntry(name)}catch{}else await idel('backup:'+name);await setBackupIndex(list.filter(z=>z.name!==name))}
 async function saveToFolder(makeBackup=true){if(!handle)throw Error('Kein Synchronisationsordner verbunden.');if(!await permission(handle,'readwrite'))throw Error('Schreibberechtigung fehlt.');if(makeBackup)await createBackup('Automatisch','Vor Synchronisierung');const fh=await handle.getFileHandle('lager.db',{create:true}),w=await fh.createWritable();await w.write(db.export());await w.close();const f=await fh.getFile(),m=await ig(METAKEY)||{};m.dirty=false;m.lastSync=Date.now();m.fileModified=f.lastModified;await ip(METAKEY,m);await syncStatus()}
-async function loadFromFolder(){if(!handle)throw Error('Kein Synchronisationsordner verbunden.');if(!await permission(handle,'read'))throw Error('Leseberechtigung fehlt.');const fh=await handle.getFileHandle('lager.db'),f=await fh.getFile(),test=new SQL.Database(new Uint8Array(await f.arrayBuffer()));if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Die lager.db ist beschädigt.');await createBackup('Automatisch','Vor Laden aus Synchronisation');db.close();db=test;initSchema();const m=await ig(METAKEY)||{};m.dirty=false;m.lastSync=Date.now();m.fileModified=f.lastModified;await ip(METAKEY,m);await persist(false)}
+async function loadFromFolder(){if(!handle)throw Error('Kein Synchronisationsordner verbunden.');if(!await permission(handle,'read'))throw Error('Leseberechtigung fehlt.');const fh=await handle.getFileHandle('lager.db'),f=await fh.getFile(),test=new SQL.Database(new Uint8Array(await f.arrayBuffer()));if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Die lager.db ist beschädigt.');await createBackup('Automatisch','Vor Laden aus Synchronisation');db.close();db=test;initSchema();adoptExistingDatabase();const m=await ig(METAKEY)||{};m.dirty=false;m.lastSync=Date.now();m.fileModified=f.lastModified;await ip(METAKEY,m);await persist(false)}
 window.LVStorage={
  async prepareNewDatabase(){if('showDirectoryPicker'in window){handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await saveToFolder(false)}},
  async openExistingFolder(){if(!('showDirectoryPicker'in window))throw Error('Ordnerauswahl wird von diesem Browser nicht unterstützt. Nutze die Dateiauswahl.');handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await loadFromFolder()},
- async openExistingFile(input){const f=input.files?.[0];if(!f)throw Error('Keine Datei ausgewählt.');const test=new SQL.Database(new Uint8Array(await f.arrayBuffer()));if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Ungültige Datenbankdatei.');db.close();db=test;initSchema();await persist(true)}
+ async openExistingFile(input){const f=input.files?.[0];if(!f)throw Error('Keine Datei ausgewählt.');const test=new SQL.Database(new Uint8Array(await f.arrayBuffer()));if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Ungültige Datenbankdatei.');db.close();db=test;initSchema();adoptExistingDatabase();await persist(true)}
 };
 window.LVBackup={
  async manual(){try{const x=await createBackup('Manuell',backupComment.value.trim());backupComment.value='';msg(backupMsg,'Backup erstellt: '+x.name,true);await this.refresh()}catch(e){msg(backupMsg,e.message,false)}},
