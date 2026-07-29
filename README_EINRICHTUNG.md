@@ -1,13 +1,31 @@
-# Lagerverwaltung Lovrencic V40
+# Lagerverwaltung Lovrencic V41
 
-## Neue Speicherwahl
-Beim ersten Start kann jeder Benutzer zwischen lokalem Modus und Cloud-Modus wählen. Eine vorhandene Datenbank kann ebenfalls lokal übernommen werden.
+## Neuer Einrichtungsassistent
 
-## Lokal zu Cloud
-Unter „Speicher & Synchronisation“ kann die aktuelle lokale Datenbank in einen leeren, selbst gewählten Ordner übernommen werden. Vorher wird ein Sicherheitsbackup erstellt. Eine dort bereits vorhandene `lager.db` wird nicht automatisch überschrieben.
+1. Datenbank
+   - Neue Datenbank erstellen (Ersteinrichtung)
+   - Vorhandene Datenbank öffnen
+2. Speicherort
+   - lokaler Ordner
+   - Cloud-Ordner
+   - nur Browser-Speicher als Rückfalllösung
+3. Benutzer
+   - Technikername
+   - Datumsformat
+4. Sicherheit
+   - Administratorpasswort
+5. Zusammenfassung und Start
 
-## Cloud zu lokal
-Beim Wechsel zurück bleibt der aktuelle Datenstand lokal erhalten. Die Verknüpfung wird entfernt; die Cloud-Datei wird nicht gelöscht.
+## Lokaler Ordner
 
-## Voraussetzungen
-Für die normale Nutzung sind weder Python noch GitHub-Einrichtung erforderlich. Die Ordnerverknüpfung hängt von der Browserunterstützung ab. Falls Android keine dauerhafte Ordnerauswahl anbietet, bleiben lokale Nutzung sowie manueller Export und Import der `lager.db` verfügbar.
+Im lokalen Modus kann ein Ordner ausgewählt werden. Die App speichert dort automatisch `lager.db`. Zusätzlich bleibt der Datenstand im Browser gespeichert. Unter „Speicher & Synchronisation“ kann der lokale Ordner später geändert werden.
+
+Ein Ordner, der bereits eine `lager.db` enthält, wird nicht automatisch überschrieben.
+
+## Browser-Einschränkung
+
+Die Ordnerauswahl funktioniert nur in Browsern, die die File System Access API unterstützen. Falls keine Ordnerauswahl verfügbar ist, kann die Datenbank im Browser verwendet und manuell exportiert werden.
+
+## Cloud-Modus
+
+Der Cloud-Modus ist für einen synchronisierten Ordner vorgesehen. Jeder Kollege sollte eine eigene Datenbank und einen eigenen Ordner verwenden. Vor einem Gerätewechsel immer synchronisieren und schließen.

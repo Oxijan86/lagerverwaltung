@@ -113,7 +113,19 @@ async function persist(dirty=true){
  }
  if(window.refreshDatabaseStatus)window.refreshDatabaseStatus();
 }
-function scheduleAutoSync(){clearTimeout(autoTimer);autoTimer=setTimeout(()=>{if(handle&&!isSyncing)LVSync.sync(true)},1200)}
+function scheduleAutoSync(){
+ clearTimeout(autoTimer);
+ autoTimer=setTimeout(async()=>{
+  if(!handle||isSyncing)return;
+  const mode=setting('storage_mode','browser_local');
+  if(mode==='cloud')LVSync.sync(true);
+  else if(mode==='local_folder'){
+   try{isSyncing=true;await saveToFolder(false,true)}
+   catch(e){console.warn('Lokaler Ordner konnte nicht aktualisiert werden:',e)}
+   finally{isSyncing=false}
+  }
+ },1200)
+}
 function initSchema(){
 db.run(`PRAGMA foreign_keys=ON;
 CREATE TABLE IF NOT EXISTS app_settings(setting_key TEXT PRIMARY KEY,setting_value TEXT NOT NULL);
@@ -127,7 +139,7 @@ CREATE TABLE IF NOT EXISTS vehicles(id INTEGER PRIMARY KEY AUTOINCREMENT,name TE
 CREATE TABLE IF NOT EXISTS audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT,event_time TEXT NOT NULL,user_name TEXT NOT NULL,action TEXT NOT NULL,entity TEXT NOT NULL,entity_id TEXT NOT NULL DEFAULT '',details TEXT NOT NULL DEFAULT '');`);
 ensureSyncState();
 if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
-if(!setting('storage_mode'))setSetting('storage_mode','local');
+if(!setting('storage_mode'))setSetting('storage_mode','browser_local');
 }
 
 function tableExists(name){
@@ -148,7 +160,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','40');
+  setSetting('database_version','41');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -159,7 +171,7 @@ function setupIsRequired(){
 async function initialize(){
  SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
  const b=await ig(DBKEY);db=b?new SQL.Database(new Uint8Array(b)):new SQL.Database();
- initSchema();adoptExistingDatabase();handle=await ig(HANDLEKEY)||null;if(handle)setSetting('storage_mode','cloud');else if(!setting('storage_mode'))setSetting('storage_mode','local');
+ initSchema();adoptExistingDatabase();handle=await ig(HANDLEKEY)||null;if(!setting('storage_mode'))setSetting('storage_mode',handle?'local_folder':'browser_local');
  const m=await ig(METAKEY)||{};
  if(!m.localModified)m.localModified=currentDbState().changed_at;
  await ip(METAKEY,m);
@@ -398,7 +410,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'40.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'41.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -416,7 +428,7 @@ async function route(url,opt={}){
   if(p==='/api/export/stock.csv'){const a=articles();return csvResp(`Lagerbestand_${fmtDate(today())}.csv`,['Artikelnummer','Bezeichnung','Sollbestand','Mindestbestand','Istbestand','Einheit','Lagerort','Maschine','Hersteller','Lieferant','Einkaufspreis'],a.map(x=>[x.article_no,x.description,x.target_stock,x.minimum_stock,x.stock,x.unit,x.location,x.machine,x.manufacturer,x.supplier,x.purchase_price]))}
   if(p==='/api/export/inventory.csv'){const a=articles();return csvResp(`Inventur_${fmtDate(today())}.csv`,['Artikelnummer','Bezeichnung','Systembestand','Gezählter Bestand','Lagerort','Maschine'],a.map(x=>[x.article_no,x.description,x.stock,'',x.location,x.machine]))}
  }
- if(p==='/api/setup/complete'){if(!d.password||d.password.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');setSetting('admin_password_hash',hash(d.password));setSetting('primary_technician',d.technician||'Techniker');setSetting('date_format',d.date_format||'DD.MM.YYYY');setSetting('storage_mode',d.storage_mode==='cloud'&&handle?'cloud':'local');setSetting('setup_complete','1');run('INSERT OR IGNORE INTO technicians(name) VALUES(?)',[d.technician||'Techniker']);audit(d.technician,'EINRICHTUNG','System','','Ersteinrichtung');await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY'),storage_mode:setting('storage_mode','local')})}
+ if(p==='/api/setup/complete'){if(!d.password||d.password.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');setSetting('admin_password_hash',hash(d.password));setSetting('primary_technician',d.technician||'Techniker');setSetting('date_format',d.date_format||'DD.MM.YYYY');setSetting('storage_mode',handle&&['cloud','local_folder'].includes(d.storage_mode)?d.storage_mode:'browser_local');setSetting('setup_complete','1');run('INSERT OR IGNORE INTO technicians(name) VALUES(?)',[d.technician||'Techniker']);audit(d.technician,'EINRICHTUNG','System','','Ersteinrichtung');await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY'),storage_mode:setting('storage_mode','browser_local')})}
  if(p==='/api/settings/date-format'){setSetting('date_format',d.date_format);await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY')})}
  if(p==='/api/admin/unlock')return response({ok:validPw(d.password),has_password:!!setting('admin_password_hash')});
  if(p==='/api/admin/lock')return response({ok:true});
@@ -667,20 +679,34 @@ async function loadFromFolder(){
  return {ok:true,state:cloud.state};
 }
 window.LVStorage={
- async prepareNewDatabase(mode='local'){
-  if(mode==='cloud'){
-   if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine dauerhafte Ordnerverknüpfung. Starte lokal und stelle später über einen unterstützten Browser auf Cloud um.');
+ async prepareNewDatabase(mode='browser_local'){
+  if(mode==='local_folder'||mode==='cloud'){
+   if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine Ordnerauswahl. Nutzen Sie „Ohne Ordner nur im Browser speichern“.');
    const selected=await showDirectoryPicker({mode:'readwrite'});
    if(!await permission(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
-   handle=selected;await ip(HANDLEKEY,handle);setSetting('storage_mode','cloud');
-   const m=await ig(METAKEY)||{};m.writeBlocked=false;delete m.expectedCloudRevisionId;await ip(METAKEY,m);
+   handle=selected;
+   await ip(HANDLEKEY,handle);
+   setSetting('storage_mode',mode);
+   const m=await ig(METAKEY)||{};
+   m.writeBlocked=false;
+   delete m.expectedCloudRevisionId;
+   delete m.expectedCloudDatabaseId;
+   await ip(METAKEY,m);
    await saveToFolder(false,true);
-  }else{
-   handle=null;await idel(HANDLEKEY);setSetting('storage_mode','local');
-   const m=await ig(METAKEY)||{};m.writeBlocked=false;delete m.expectedCloudRevisionId;delete m.expectedCloudDatabaseId;await ip(METAKEY,m);
    await persist(false);
+   return {ok:true,mode,folder:handle.name};
   }
-  await syncStatus();return {ok:true,mode};
+  handle=null;
+  await idel(HANDLEKEY);
+  setSetting('storage_mode','browser_local');
+  const m=await ig(METAKEY)||{};
+  m.writeBlocked=false;
+  delete m.expectedCloudRevisionId;
+  delete m.expectedCloudDatabaseId;
+  await ip(METAKEY,m);
+  await persist(false);
+  await syncStatus();
+  return {ok:true,mode:'browser_local',folder:'Nur Browser-Speicher'};
  },
  async openExistingFolder(){if(!('showDirectoryPicker'in window))throw Error('Ordnerauswahl wird von diesem Browser nicht unterstützt.');handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await loadFromFolder();setSetting('storage_mode','cloud');await persist(false)},
  async openExistingFile(input){
@@ -689,7 +715,7 @@ window.LVStorage={
   let test;try{test=new SQL.Database(bytes)}catch{throw Error('Die ausgewählte Datei ist keine lesbare SQLite-Datenbank.')}
   const check=test.exec('PRAGMA quick_check');if(check[0]?.values[0][0]!=='ok')throw Error('Die Datenbankprüfung ist fehlgeschlagen.');
   if(!test.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='articles'").length)throw Error('In dieser Datei wurde keine Lagerdatenbank mit einer Artikeltabelle gefunden.');
-  db.close();db=test;initSchema();adoptExistingDatabase();setSetting('storage_mode',handle?'cloud':'local');
+  db.close();db=test;initSchema();adoptExistingDatabase();setSetting('storage_mode',handle?setting('storage_mode','local_folder'):'browser_local');
   if(existingDatabaseHasContent())setSetting('setup_complete','1');
   const articleCount=Number(scalar('SELECT COUNT(*) FROM articles')||0);
   const movementCount=tableExists('movements')?Number(scalar('SELECT COUNT(*) FROM movements')||0):0;
@@ -702,6 +728,7 @@ window.LVStorage={
 
 
 async function cloudState(){
+ if(setting('storage_mode','browser_local')!=='cloud')return {connected:false};
  const c=await inspectCloudDatabase();
  if(!c.connected)return {connected:false};
  return {
@@ -729,7 +756,7 @@ window.LVDatabaseStatus={
   return {
    lastModified:currentDbState().changed_at||Number(m.localModified||0),
    lastAutomaticBackup:Number(m.lastAutomaticBackup||0),
-   cloudConnected:!!handle,
+   cloudConnected:setting('storage_mode','browser_local')==='cloud'&&!!handle,
    dirty:!!m.dirty,
    lastSync:Number(m.lastSync||0)
   };
@@ -802,6 +829,7 @@ window.LVSync={
  },
  async sync(silent=false){
   try{
+   if(setting('storage_mode','browser_local')!=='cloud'){if(!silent)throw Error('Cloud-Modus ist nicht aktiviert.');return}
    if(!handle){if(!silent)throw Error('Kein Synchronisationsordner verbunden.');return}
    isSyncing=true;
    const m=await ig(METAKEY)||{};
@@ -820,41 +848,97 @@ window.LVSync={
    if(!silent&&window.syncMsg)msg(syncMsg,e.message,false);else console.warn(e);
   }finally{isSyncing=false}
  },
- async disconnect(){handle=null;await idel(HANDLEKEY);setSetting('storage_mode','local');await persist(false);await syncStatus();msg(syncMsg,'Lokaler Modus aktiviert. Die Cloud-Datei wurde nicht gelöscht.',true)},
+ async disconnect(){handle=null;await idel(HANDLEKEY);setSetting('storage_mode','browser_local');await persist(false);await syncStatus();msg(syncMsg,'Lokaler Modus aktiviert. Die Cloud-Datei wurde nicht gelöscht.',true)},
  exportDb(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([db.export()],{type:'application/octet-stream'}));a.download='lager.db';a.click()},
  async importDb(input){try{await LVStorage.openExistingFile(input);location.reload()}catch(e){alert(e.message)}},
- flush(){if(handle){clearTimeout(autoTimer);this.sync(true)}}
+ flush(){
+ if(!handle)return;
+ clearTimeout(autoTimer);
+ if(setting('storage_mode','browser_local')==='cloud')this.sync(true);
+ else if(setting('storage_mode','browser_local')==='local_folder')saveToFolder(false,true).catch(console.warn);
+}
 };
 
 
 
 window.LVStorageModeState={
  async get(){
-  await ready;const m=await ig(METAKEY)||{};
-  return {mode:handle?'cloud':'local',configuredMode:setting('storage_mode',handle?'cloud':'local'),connected:!!handle,folder:handle?.name||'',dirty:!!m.dirty,lastSync:Number(m.lastSync||0)};
+  await ready;
+  const m=await ig(METAKEY)||{};
+  const mode=setting('storage_mode',handle?'local_folder':'browser_local');
+  return {mode,configuredMode:mode,connected:!!handle,folder:handle?.name||'',dirty:!!m.dirty,lastSync:Number(m.lastSync||0)};
+ },
+ async chooseLocalFolder(){
+  await ready;
+  if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine dauerhafte Ordnerauswahl.');
+  const selected=await showDirectoryPicker({mode:'readwrite'});
+  if(!await permission(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
+  const previousHandle=handle;
+  handle=selected;
+  try{
+   const file=await selected.getFileHandle('lager.db',{create:false}).catch(()=>null);
+   if(file)throw Error('Im ausgewählten Ordner befindet sich bereits eine lager.db. Wählen Sie einen leeren Ordner oder importieren Sie die Datei bewusst.');
+   await ip(HANDLEKEY,handle);
+   setSetting('storage_mode','local_folder');
+   const m=await ig(METAKEY)||{};
+   m.writeBlocked=false;
+   delete m.expectedCloudRevisionId;
+   delete m.expectedCloudDatabaseId;
+   await ip(METAKEY,m);
+   await createBackup('Sicherheitsbackup','Vor Wechsel des lokalen Speicherordners');
+   await saveToFolder(false,true);
+   await persist(false);
+   return {ok:true,mode:'local_folder',folder:handle.name};
+  }catch(e){
+   handle=previousHandle;
+   if(previousHandle)await ip(HANDLEKEY,previousHandle);else await idel(HANDLEKEY);
+   throw e;
+  }
  },
  async enableCloud(){
   await ready;
-  if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine dauerhafte Ordnerverknüpfung. Die Datenbank kann lokal verwendet oder manuell exportiert werden.');
+  if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine dauerhafte Ordnerverknüpfung.');
   const selected=await showDirectoryPicker({mode:'readwrite'});
   if(!await permission(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
-  const previousHandle=handle;handle=selected;
+  const previousHandle=handle;
+  handle=selected;
   const cloud=await inspectCloudDatabase();
-  if(cloud.accessible){handle=previousHandle;throw Error('Im ausgewählten Ordner befindet sich bereits eine lager.db. Wähle für die Übernahme einen leeren Ordner.');}
-  await ip(HANDLEKEY,handle);setSetting('storage_mode','cloud');
-  const m=await ig(METAKEY)||{};m.writeBlocked=false;delete m.expectedCloudRevisionId;delete m.expectedCloudDatabaseId;await ip(METAKEY,m);
-  await createBackup('Sicherheitsbackup','Vor Umstellung von Lokal auf Cloud');
-  await saveToFolder(false,true);await persist(false);
+  if(cloud.accessible){
+   handle=previousHandle;
+   throw Error('Im ausgewählten Ordner befindet sich bereits eine lager.db. Wählen Sie für die Übernahme einen leeren Ordner.');
+  }
+  await ip(HANDLEKEY,handle);
+  setSetting('storage_mode','cloud');
+  const m=await ig(METAKEY)||{};
+  m.writeBlocked=false;
+  delete m.expectedCloudRevisionId;
+  delete m.expectedCloudDatabaseId;
+  await ip(METAKEY,m);
+  await createBackup('Sicherheitsbackup','Vor Umstellung auf Cloud');
+  await saveToFolder(false,true);
+  await persist(false);
   return {ok:true,mode:'cloud',folder:handle.name};
  },
  async enableLocal(){
-  await ready;handle=null;await idel(HANDLEKEY);setSetting('storage_mode','local');
-  const m=await ig(METAKEY)||{};m.writeBlocked=false;delete m.expectedCloudRevisionId;delete m.expectedCloudDatabaseId;await ip(METAKEY,m);
-  await persist(false);await syncStatus();return {ok:true,mode:'local'};
+  await ready;
+  handle=null;
+  await idel(HANDLEKEY);
+  setSetting('storage_mode','browser_local');
+  const m=await ig(METAKEY)||{};
+  m.writeBlocked=false;
+  delete m.expectedCloudRevisionId;
+  delete m.expectedCloudDatabaseId;
+  await ip(METAKEY,m);
+  await persist(false);
+  await syncStatus();
+  return {ok:true,mode:'browser_local'};
  },
  async changeFolder(){
-  await ready;const previousHandle=handle;handle=null;
-  try{return await this.enableCloud()}catch(e){handle=previousHandle;if(previousHandle)await ip(HANDLEKEY,previousHandle);throw e}
+  await ready;
+  const previousHandle=handle;
+  handle=null;
+  try{return await this.enableCloud()}
+  catch(e){handle=previousHandle;if(previousHandle)await ip(HANDLEKEY,previousHandle);throw e}
  }
 };
 
@@ -929,7 +1013,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','40');
+  setSetting('database_version','41');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();

@@ -41,6 +41,13 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 .storage-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
 @media(max-width:720px){.storage-choice,.storage-status-grid{grid-template-columns:1fr}}
 
+
+.setup-step-label{font-size:13px;font-weight:700;color:#52606d;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.setup-primary-choice{border:2px solid #d7e0e8;padding:18px;border-radius:12px;margin:14px 0}
+.setup-primary-choice h3{margin-top:0}
+.folder-status{margin-top:10px;padding:10px 12px;border-radius:8px;background:#eef2f5}
+.folder-status.ok{background:#e7f6ec;color:#166534}
+.setup-progress-caption{text-align:center;font-size:13px;font-weight:700;color:#52606d;margin-bottom:8px}
 </style></head><body>
 
 
@@ -128,62 +135,70 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 
 <div id="initialSetupOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,30,40,.9);z-index:1000;padding:20px;overflow:auto">
   <div class="card setup-card">
+    <div id="setupProgressCaption" class="setup-progress-caption">Schritt 1 von 5 – Datenbank</div>
     <div class="setup-progress">
-      <div id="setupDot1" class="setup-dot active">1</div>
-      <div class="setup-line"></div>
-      <div id="setupDot2" class="setup-dot">2</div>
-      <div class="setup-line"></div>
-      <div id="setupDot3" class="setup-dot">3</div>
-      <div class="setup-line"></div>
-      <div id="setupDot4" class="setup-dot">4</div>
+      <div id="setupDot1" class="setup-dot active">1</div><div class="setup-line"></div>
+      <div id="setupDot2" class="setup-dot">2</div><div class="setup-line"></div>
+      <div id="setupDot3" class="setup-dot">3</div><div class="setup-line"></div>
+      <div id="setupDot4" class="setup-dot">4</div><div class="setup-line"></div>
+      <div id="setupDot5" class="setup-dot">5</div>
     </div>
 
     <div id="setupStep1" class="setup-step">
-      <h2>👋 Speicherart auswählen</h2>
-      <p>Jeder Benutzer entscheidet selbst, ob seine Lagerverwaltung nur auf diesem Gerät oder zusätzlich in einem eigenen Synchronisationsordner gespeichert wird.</p>
-      <div class="storage-choice">
-        <div id="setupLocalCard" class="card">
-          <h3>🏠 Lokaler Modus</h3>
-          <p>Die Datenbank wird ausschließlich im Browser dieses Geräts gespeichert.</p>
-          <ul><li>keine Cloud erforderlich</li><li>keine Synchronisationskonflikte</li><li>später auf Cloud umstellbar</li></ul>
-          <button class="primary" onclick="setupSelectStorageMode('local')">Lokal verwenden</button>
-        </div>
-        <div id="setupCloudCard" class="card">
-          <h3>☁ Cloud-Modus</h3>
-          <p>Die Datenbank wird lokal verwendet und zusätzlich als <code>lager.db</code> in einem eigenen Ordner gespeichert.</p>
-          <ul><li>für PC und Android vorgesehen</li><li>eigener Ordner je Kollege</li><li>Start- und Konfliktschutz</li></ul>
-          <button class="primary" onclick="setupSelectStorageMode('cloud')">Cloud einrichten</button>
-        </div>
+      <div class="setup-step-label">Schritt 1 – Datenbank</div>
+      <h2>👋 Willkommen bei der Lagerverwaltung Lovrencic</h2>
+      <p><b>Für die erste Verwendung muss zunächst eine Lagerdatenbank erstellt oder eine vorhandene Datenbank geöffnet werden.</b></p>
+
+      <div class="setup-primary-choice">
+        <h3>🆕 Neue Datenbank erstellen (Ersteinrichtung)</h3>
+        <p>Erstellt eine neue, leere Lagerdatenbank. Im nächsten Schritt wählen Sie, ob die Datei lokal oder in einem Cloud-Ordner gespeichert wird.</p>
+        <button class="primary" onclick="setupStartNewDatabase()">Neue Datenbank erstellen (Ersteinrichtung)</button>
       </div>
-      <div class="card" style="margin-top:16px">
-        <h3>📂 Vorhandene Datenbank übernehmen</h3>
-        <p>Eine vorhandene <code>lager.db</code> wird zunächst lokal geladen und kann später in die eigene Cloud übernommen werden.</p>
-        <button class="secondary" onclick="selectExistingDatabase()">Vorhandene lager.db auswählen</button>
+
+      <div class="setup-primary-choice">
+        <h3>📂 Vorhandene Datenbank öffnen</h3>
+        <p>Öffnet eine bereits vorhandene Datei <code>lager.db</code>.</p>
+        <button class="secondary" onclick="selectExistingDatabase()">Vorhandene Datenbank öffnen</button>
         <input id="existingDatabaseInput" type="file" accept=".db,.sqlite,.sqlite3,application/octet-stream" style="display:none" onchange="setupUseExistingFile(this)">
         <div id="existingDatabaseStatus" class="small" style="margin-top:10px">Noch keine Datei ausgewählt.</div>
       </div>
-      <p class="small">Python, GitHub-Konto oder Microsoft-Anmeldung sind nicht erforderlich.</p>
+
+      <p class="small">Jeder Benutzer verwendet seine eigene Datenbank. Python, GitHub-Konto und Microsoft-Anmeldung sind nicht erforderlich.</p>
     </div>
 
     <div id="setupStep2" class="setup-step" style="display:none">
-      <h2>🔐 Administratorpasswort</h2>
-      <p>Das Passwort schützt Stammdaten, Einstellungen und den vollständigen Reset.</p>
-      <div class="formgrid">
-        <label>Administratorpasswort *
-          <input id="setupPassword" type="password" autocomplete="new-password" oninput="updatePasswordStrength()">
-        </label>
-        <label>Passwort wiederholen *
-          <input id="setupPasswordRepeat" type="password" autocomplete="new-password">
-        </label>
+      <div class="setup-step-label">Schritt 2 – Speicherort</div>
+      <h2>💾 Wo soll die neue Datenbank gespeichert werden?</h2>
+
+      <div class="storage-choice">
+        <div id="setupLocalCard" class="card">
+          <h3>🏠 Lokal speichern</h3>
+          <p>Wählen Sie einen Ordner auf diesem PC oder Smartphone. Dort wird die Datei <code>lager.db</code> gespeichert.</p>
+          <button class="primary" onclick="setupSelectStorageMode('local_folder')">Lokalen Ordner auswählen</button>
+          <div id="setupLocalFolderStatus" class="folder-status">Noch kein lokaler Ordner ausgewählt.</div>
+        </div>
+
+        <div id="setupCloudCard" class="card">
+          <h3>☁ In Cloud speichern</h3>
+          <p>Wählen Sie einen Ordner in OneDrive, Google Drive oder einer anderen synchronisierten Ablage.</p>
+          <button class="primary" onclick="setupSelectStorageMode('cloud')">Cloud-Ordner auswählen</button>
+          <div id="setupCloudFolderStatus" class="folder-status">Noch kein Cloud-Ordner ausgewählt.</div>
+        </div>
       </div>
-      <div id="passwordStrength" class="small">Mindestens 8 Zeichen erforderlich.</div>
+
+      <div class="card low">
+        <h3>Browser-Speicher als Rückfalllösung</h3>
+        <p>Falls der Browser keine Ordnerauswahl unterstützt, kann die Datenbank nur im Browser gespeichert und manuell exportiert werden.</p>
+        <button class="secondary" onclick="setupSelectStorageMode('browser_local')">Ohne Ordner nur im Browser speichern</button>
+      </div>
+
       <div class="setup-actions">
         <button class="secondary" onclick="setupNext(1)">Zurück</button>
-        <button class="primary" onclick="validatePasswordStep()">Weiter</button>
       </div>
     </div>
 
     <div id="setupStep3" class="setup-step" style="display:none">
+      <div class="setup-step-label">Schritt 3 – Benutzer</div>
       <h2>👤 Techniker und Datumsformat</h2>
       <div class="formgrid">
         <label>Name des Technikers *
@@ -197,7 +212,6 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
           </select>
         </label>
       </div>
-      <p class="small">Eine E-Mail-Adresse ist nicht erforderlich.</p>
       <div class="setup-actions">
         <button class="secondary" onclick="setupNext(2)">Zurück</button>
         <button class="primary" onclick="validateTechnicianStep()">Weiter</button>
@@ -205,17 +219,38 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
     </div>
 
     <div id="setupStep4" class="setup-step" style="display:none">
-      <h2>✅ Einrichtung abschließen</h2>
-      <div class="summary-box">
-        <p><b>Speicherart:</b> <span id="setupSummaryStorage"></span></p>
-        <p><b>Techniker:</b> <span id="setupSummaryTechnician"></span></p>
-        <p><b>Datumsformat:</b> <span id="setupSummaryDate"></span></p>
-        <p><b>Passwort:</b> wurde festgelegt</p>
+      <div class="setup-step-label">Schritt 4 – Sicherheit</div>
+      <h2>🔐 Administratorpasswort</h2>
+      <p>Das Passwort schützt Stammdaten, Einstellungen und den vollständigen Reset.</p>
+      <div class="formgrid">
+        <label>Administratorpasswort *
+          <input id="setupPassword" type="password" autocomplete="new-password" oninput="updatePasswordStrength()">
+        </label>
+        <label>Passwort wiederholen *
+          <input id="setupPasswordRepeat" type="password" autocomplete="new-password">
+        </label>
       </div>
-      <p>Mit dem Abschluss wird die Lagerverwaltung freigeschaltet.</p>
+      <div id="passwordStrength" class="small">Mindestens 8 Zeichen erforderlich.</div>
       <div class="setup-actions">
         <button class="secondary" onclick="setupNext(3)">Zurück</button>
-        <button class="primary" onclick="completeFirstSetup()">Einrichtung abschließen</button>
+        <button class="primary" onclick="validatePasswordStep()">Weiter</button>
+      </div>
+    </div>
+
+    <div id="setupStep5" class="setup-step" style="display:none">
+      <div class="setup-step-label">Schritt 5 – Fertig</div>
+      <h2>✅ Einrichtung abschließen</h2>
+      <div class="summary-box">
+        <p>✅ <b>Datenbank:</b> Neue Datenbank</p>
+        <p>✅ <b>Speicherart:</b> <span id="setupSummaryStorage"></span></p>
+        <p>✅ <b>Speicherordner:</b> <span id="setupSummaryFolder"></span></p>
+        <p>✅ <b>Techniker:</b> <span id="setupSummaryTechnician"></span></p>
+        <p>✅ <b>Datumsformat:</b> <span id="setupSummaryDate"></span></p>
+        <p>✅ <b>Passwort:</b> wurde festgelegt</p>
+      </div>
+      <div class="setup-actions">
+        <button class="secondary" onclick="setupNext(4)">Zurück</button>
+        <button class="primary" onclick="completeFirstSetup()">Lagerverwaltung starten</button>
       </div>
     </div>
 
@@ -224,7 +259,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">40.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">41.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -424,8 +459,11 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <div id="localModeActions" class="card">
 <h3>🏠 Lokaler Modus</h3>
-<p>Die aktuelle Datenbank bleibt erhalten. Bei der Umstellung wird sie zusätzlich in einen selbst gewählten, leeren Ordner kopiert.</p>
-<button class="primary" onclick="LVStorageMode.enableCloud()">☁ Lokale Datenbank in Cloud übernehmen</button>
+<p id="localFolderDescription">Die Datenbank wird lokal verwendet. Sie können einen lokalen Ordner auswählen oder ändern, in dem <code>lager.db</code> automatisch gespeichert wird.</p>
+<div class="toolbar">
+<button class="primary" onclick="LVStorageMode.chooseLocalFolder()">📂 Lokalen Speicherordner auswählen / ändern</button>
+<button class="secondary" onclick="LVStorageMode.enableCloud()">☁ Auf Cloud-Modus umstellen</button>
+</div>
 <div id="storageModeMsg" class="message"></div>
 </div>
 <div id="cloudModeActions" class="card" style="display:none">
@@ -970,19 +1008,36 @@ async function copyStockToLevels(mode){
 
 
 let setupDatabaseMode='new';
-let setupStorageMode='local';
+let setupStorageMode='';
+let setupFolderName='';
+
+function setupStartNewDatabase(){
+ setupDatabaseMode='new';
+ setupStorageMode='';
+ setupFolderName='';
+ setupNext(2);
+}
 async function setupSelectStorageMode(mode){
  setupDatabaseMode='new';
- setupStorageMode=mode;
- setupLocalCard.classList.toggle('selected',mode==='local');
- setupCloudCard.classList.toggle('selected',mode==='cloud');
  try{
-  await LVStorage.prepareNewDatabase(mode);
-  setupSummaryStorage.textContent=mode==='cloud'?'☁ Cloud-Modus':'🏠 Lokaler Modus';
-  setupNext(2);
+  const result=await LVStorage.prepareNewDatabase(mode);
+  setupStorageMode=mode;
+  setupFolderName=result.folder||'Nur Browser-Speicher';
+  setupLocalCard.classList.toggle('selected',mode==='local_folder'||mode==='browser_local');
+  setupCloudCard.classList.toggle('selected',mode==='cloud');
+  if(mode==='local_folder'){
+   setupLocalFolderStatus.textContent='Ausgewählter lokaler Ordner: '+setupFolderName;
+   setupLocalFolderStatus.className='folder-status ok';
+  }else if(mode==='cloud'){
+   setupCloudFolderStatus.textContent='Ausgewählter Cloud-Ordner: '+setupFolderName;
+   setupCloudFolderStatus.className='folder-status ok';
+  }
+  setupSummaryStorage.textContent=mode==='cloud'?'☁ Cloud-Modus':mode==='local_folder'?'🏠 Lokaler Ordner':'🏠 Nur Browser-Speicher';
+  setupSummaryFolder.textContent=setupFolderName;
+  setupNext(3);
  }catch(e){if(e.name!=='AbortError')msg(initialSetupMsg,e.message,false)}
 }
-async function setupCreateNew(){return setupSelectStorageMode('local');}
+async function setupCreateNew(){setupStartNewDatabase();}
 function selectExistingDatabase(){
  existingDatabaseInput.value='';
  existingDatabaseStatus.textContent='Dateiauswahl wird geöffnet …';
@@ -1008,11 +1063,15 @@ async function setupUseExistingFile(input){
 let currentSetupStep=1;
 
 function setupNext(step){
- currentSetupStep=step;
- for(let i=1;i<=4;i++){
+ const labels={1:'Schritt 1 von 5 – Datenbank',2:'Schritt 2 von 5 – Speicherort',3:'Schritt 3 von 5 – Benutzer',4:'Schritt 4 von 5 – Sicherheit',5:'Schritt 5 von 5 – Fertig'};
+ setupProgressCaption.textContent=labels[step]||'Ersteinrichtung';
+ for(let i=1;i<=5;i++){
   document.getElementById('setupStep'+i).style.display=i===step?'block':'none';
-  document.getElementById('setupDot'+i).classList.toggle('active',i<=step);
+  const dot=document.getElementById('setupDot'+i);
+  dot.classList.toggle('active',i===step);
+  dot.classList.toggle('done',i<step);
  }
+ initialSetupMsg.className='message';
  initialSetupMsg.textContent='';
 }
 
@@ -1026,23 +1085,19 @@ function updatePasswordStrength(){
 }
 
 function validatePasswordStep(){
- if(setupPassword.value.length<8){
-  return msg(initialSetupMsg,'Das Passwort muss mindestens 8 Zeichen lang sein.',false);
- }
- if(setupPassword.value!==setupPasswordRepeat.value){
-  return msg(initialSetupMsg,'Die Passwörter stimmen nicht überein.',false);
- }
- setupNext(3);
+ const a=setupPassword.value,b=setupPasswordRepeat.value;
+ if(a.length<8){msg(initialSetupMsg,'Das Passwort muss mindestens 8 Zeichen haben.',false);return}
+ if(a!==b){msg(initialSetupMsg,'Die Passwörter stimmen nicht überein.',false);return}
+ msg(initialSetupMsg,'',true);
+ setupNext(5);
 }
 
 function validateTechnicianStep(){
- let name=setupTechnician.value.trim();
- if(name.length<2){
-  return msg(initialSetupMsg,'Bitte einen gültigen Technikernamen eingeben.',false);
- }
- setupSummaryStorage.textContent=setupStorageMode==='cloud'?'☁ Cloud-Modus':'🏠 Lokaler Modus';
+ const name=setupTechnician.value.trim();
+ if(!name){msg(initialSetupMsg,'Bitte den Namen des Technikers eingeben.',false);return}
  setupSummaryTechnician.textContent=name;
  setupSummaryDate.textContent=setupDateFormat.options[setupDateFormat.selectedIndex].text;
+ msg(initialSetupMsg,'',true);
  setupNext(4);
 }
 
@@ -1091,12 +1146,13 @@ window.LVStorageMode={
   try{
    const s=await LVStorageModeState.get();
    const isCloud=s.mode==='cloud'&&s.connected;
+   const hasLocalFolder=s.mode==='local_folder'&&s.connected;
    if(window.storageModeBadge){
-    storageModeBadge.textContent=isCloud?'☁ Cloud-Modus':'🏠 Lokaler Modus';
+    storageModeBadge.textContent=isCloud?'☁ Cloud-Modus':hasLocalFolder?'🏠 Lokaler Ordner':'🏠 Browser lokal';
     storageModeBadge.className='mode-badge '+(isCloud?'cloud':'local');
    }
    if(window.headerStorageMode){
-    headerStorageMode.textContent=isCloud?'☁ Cloud':'🏠 Lokal';
+    headerStorageMode.textContent=isCloud?'☁ Cloud':hasLocalFolder?'🏠 Lokal: Ordner':'🏠 Browser lokal';
     headerStorageMode.className='mode-badge '+(isCloud?'cloud':'local');
    }
    if(window.localModeActions)localModeActions.style.display=isCloud?'none':'block';
@@ -1104,11 +1160,21 @@ window.LVStorageMode={
    if(window.storageModeExplanation){
     storageModeExplanation.textContent=isCloud
      ?'Cloud-Modus aktiv: Der lokale Bestand ist mit dem eigenen Synchronisationsordner verbunden.'
-     :'Lokaler Modus aktiv: Die Datenbank wird nur auf diesem Gerät gespeichert. Eine spätere Cloud-Umstellung ist möglich.';
+     :hasLocalFolder
+      ?'Lokaler Ordner aktiv: lager.db wird im ausgewählten lokalen Ordner gespeichert und zusätzlich im Browser abgesichert.'
+      :'Browser-lokaler Modus: Die Datenbank liegt nur im Browser. Wählen Sie einen lokalen Ordner für eine sichtbare lager.db-Datei.';
     storageModeExplanation.className='message '+(isCloud?'ok':'');
    }
    await syncStatus();
   }catch(e){console.warn(e)}
+ },
+ async chooseLocalFolder(){
+  try{
+   await LVStorageModeState.chooseLocalFolder();
+   await this.refresh();
+   msg(storageModeMsg,'Lokaler Speicherordner wurde verbunden. lager.db wird dort automatisch gespeichert.',true);
+   setTimeout(()=>location.reload(),500);
+  }catch(e){if(e.name!=='AbortError')msg(storageModeMsg,e.message,false)}
  },
  async enableCloud(){
   try{
