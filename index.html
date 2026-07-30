@@ -48,6 +48,13 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 .folder-status{margin-top:10px;padding:10px 12px;border-radius:8px;background:#eef2f5}
 .folder-status.ok{background:#e7f6ec;color:#166534}
 .setup-progress-caption{text-align:center;font-size:13px;font-weight:700;color:#52606d;margin-bottom:8px}
+
+.action-buttons{display:flex;gap:6px;flex-wrap:wrap}
+.action-buttons button{padding:6px 9px;font-size:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.78);z-index:1200;padding:18px;overflow:auto}
+.modal-card{max-width:820px;margin:3vh auto;background:#fff;border-radius:14px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.danger-note{background:#fff1f1;border:1px solid #efb4b4;border-radius:9px;padding:12px}
+.duplicate-box{background:#fff8e5;border:1px solid #e9cb78;border-radius:9px;padding:12px;margin:10px 0}
 </style></head><body>
 
 
@@ -259,11 +266,11 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">41.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">44.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
-<div class="card"><h3>Letzte Buchungen</h3><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th></tr></thead><tbody id="dashRecent"></tbody></table></div></div>
+<div class="card"><h3>Letzte 20 Buchungen</h3><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th></tr></thead><tbody id="dashRecent"></tbody></table></div></div>
 <div class="card" style="margin-top:14px"><h3>Systeminformation</h3><div class="formgrid">
 <div><span class="small">Programmversion</span><br><b id="infoVersion">–</b></div>
 <div><span class="small">Aktive Artikel</span><br><b id="infoArticles">–</b></div>
@@ -346,19 +353,29 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 
 <div class="card"><h3>Servicebericht M365/Copilot</h3>
 <div class="split"><div>
-<p>Servicebericht mit Microsoft 365/Copilot auslesen lassen und ausschließlich Artikelnummer und Menge einfügen.</p>
-<textarea id="stext" placeholder="Artikelnummer    Menge&#10;7079             2&#10;126084           1"></textarea>
-<button class="secondary" onclick="servicePreview()">Extraktion prüfen</button></div>
+<p>M365/Copilot soll pro Material genau eine <b>TAB-getrennte Zeile</b> ausgeben: <b>Datum → Artikelnummer → Anzahl → Kunde → Maschine</b>.</p>
+<textarea id="stext" placeholder="29.07.2026&#9;7079&#9;2&#9;Van Hamme&#9;Compas 4.0 Pro&#10;29.07.2026&#9;126084&#9;1&#9;Van Hamme&#9;Compas 4.0 Pro"></textarea>
+<div class="toolbar">
+<button class="secondary" onclick="servicePreview()">Extraktion prüfen</button>
+<button class="secondary" onclick="insertServicePrompt()">Copilot-Prompt anzeigen</button>
+</div>
+<p class="small">Fahrzeit, Arbeitszeit und Kilometer werden nicht übernommen. Die erkannten Werte bleiben vor der Buchung änderbar.</p>
+</div>
 <div class="formgrid">
-<label>Datum<input type="date" id="sdate"></label>
+<label>1. Datum<input type="date" id="sdate"></label>
 <label>Techniker<select id="stech"></select></label>
-<label>Kunde<input id="scustomer"></label>
-<label>Maschine<select id="smachine"></select></label>
+<label>3. Kunde<input id="scustomer" placeholder="Erkannter Kunde"></label>
+<label>4. Maschine
+<select id="smachine"></select>
+<input id="smachineNew" placeholder="Neue bzw. erkannte Maschine" style="margin-top:6px">
+<span id="smachineHint" class="small"></span>
+</label>
 <label>Bemerkung<input id="snote"></label>
 </div></div>
+<div id="serviceExtractedSummary" class="summary-box" style="display:none;margin-top:12px"></div>
 <button id="scommit" class="danger" disabled onclick="serviceCommit()">Geprüfte Entnahme buchen</button>
 <div id="smsg" class="message"></div>
-<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="srows"></tbody></table></div>
+<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>2. Artikelnummer</th><th>Bezeichnung</th><th>3. Anzahl</th></tr></thead><tbody id="srows"></tbody></table></div>
 <div id="serrors"></div><div id="sunknown"></div></div></section>
 
 <section id="req" class="view"><h2>Materialanforderung</h2><div class="card"><div class="toolbar"><select id="rtech"></select><button class="secondary" onclick="loadReq()">Unterbestand laden</button><button class="secondary" onclick="previewReq()">Vorschau prüfen</button><button class="primary" onclick="exportReq()">Materialanforderung exportieren</button></div><p class="small">Maximal 25 Positionen entsprechend der Original-Excel-Vorlage. Doppelte Artikel werden zusammengefasst.</p><div class="tablewrap"><table><thead><tr><th>Export</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Menge</th></tr></thead><tbody id="rrows"></tbody></table></div><div id="reqPreview"></div><div id="rmsg" class="message"></div></div></section>
@@ -382,7 +399,44 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div id="cunknown"></div><div id="cerr"></div>
 <div class="card"><h3>Inventur</h3><p>Inventurliste exportieren, gezählte Bestände eintragen und als CSV, TXT oder XLSX wieder einlesen.</p><div class="toolbar"><button class="primary" onclick="downloadCsv('/api/export/inventory.csv','invmsg')">Inventurliste exportieren</button><input id="invfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadInventoryFile(this)"></div><textarea id="invtext" placeholder="Artikelnummer;Gezählter Bestand"></textarea><div class="toolbar"><button class="secondary" onclick="inventoryPreview()">Inventur prüfen</button><button id="invcommit" class="danger" disabled onclick="inventoryCommit()">Bestandskorrekturen buchen</button></div><div id="invmsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>System</th><th>Gezählt</th><th>Differenz</th></tr></thead><tbody id="invrows"></tbody></table></div><div id="inverrors"></div></div></section>
 
-<section id="hist" class="view"><h2>Historie</h2><div class="card"><div class="formgrid"><label>Art<select id="historyFilter"><option value="ALL">Alle Buchungen</option><option value="IN">Nur Einbuchungen</option><option value="OUT">Nur Entnahmen</option></select></label><label>Von<input id="historyFrom" type="date"></label><label>Bis<input id="historyTo" type="date"></label><label>Techniker<input id="historyTechnician"></label><label>Artikelnummer oder Bezeichnung<input id="historyArticle"></label></div><div class="toolbar"><button class="primary" onclick="hist()">Filter anwenden</button><button class="secondary" onclick="clearHistoryFilters()">Filter löschen</button><button class="secondary" onclick="exportHistory()">CSV exportieren</button></div><div id="historyMsg" class="message"></div></div><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Kunde</th><th>Techniker</th><th>Fahrzeug</th><th>Maschine</th><th>Lieferschein</th><th>Quelle</th><th>Bemerkung</th></tr></thead><tbody id="hrows"></tbody></table></div></section>
+<section id="hist" class="view"><h2>Historie</h2>
+<div class="card">
+<h3>Buchungen suchen</h3>
+<div class="formgrid">
+<label>Buchungsart
+<select id="historyFilter">
+<option value="ALL">Alle</option>
+<option value="IN">Einbuchungen</option>
+<option value="OUT">Entnahmen</option>
+</select></label>
+<label>Von<input id="historyFrom" type="date"></label>
+<label>Bis<input id="historyTo" type="date"></label>
+<label>Techniker<input id="historyTechnician" placeholder="Techniker"></label>
+<label>Kunde<input id="historyCustomer" placeholder="Kundenname"></label>
+<label>Artikelnummer<input id="historyArticleNo" placeholder="Artikelnummer"></label>
+<label>Bezeichnung<input id="historyDescription" placeholder="Bezeichnung"></label>
+<label>Maschine<input id="historyMachine" placeholder="Maschine"></label>
+</div>
+<div class="toolbar">
+<button class="primary" onclick="hist()">Filtern</button>
+<button class="secondary" onclick="clearHistoryFilters()">Filter löschen</button>
+<button class="secondary" onclick="exportHistory()">Gefilterte Historie als CSV</button>
+</div>
+<div id="historyMsg" class="message"></div>
+</div>
+
+<div class="card">
+<p class="small">Korrekturen und Löschungen sind nur nach Administratorfreigabe möglich. Vor jeder Änderung wird automatisch ein Sicherheitsbackup erstellt.</p>
+<div class="tablewrap"><table>
+<thead><tr>
+<th>Datum</th><th>Art</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th>
+<th>Kunde</th><th>Techniker</th><th>Fahrzeug</th><th>Maschine</th><th>Lieferschein</th>
+<th>Quelle</th><th>Bemerkung</th><th>Aktionen</th>
+</tr></thead>
+<tbody id="hrows"></tbody>
+</table></div>
+</div>
+</section>
 <section id="master" class="view"><h2>Stammdaten</h2><div id="lockbox" class="adminlocked"><h3>🔒 Stammdaten gesperrt</h3>
 <div id="normalUnlockArea"><p>Zur Bearbeitung von Lagerorten, Maschinen, Technikern und der vollständigen Lagerliste ist das Passwort erforderlich.</p><div class="toolbar"><input id="adminpw" type="password" placeholder="Passwort"><button class="primary" onclick="unlockAdmin()">Stammdaten freischalten</button></div></div>
 <div id="firstPasswordArea" style="display:none"><div class="message error">Für diese Datenbank wurde noch kein Administratorpasswort eingerichtet. Bitte lege jetzt ein Passwort fest.</div><div class="formgrid"><label>Neues Passwort<input id="firstPwNew" type="password" minlength="6"></label><label>Passwort wiederholen<input id="firstPwRepeat" type="password" minlength="6"></label></div><button class="primary" onclick="createFirstAdminPassword()">Passwort speichern und Stammdaten öffnen</button></div>
@@ -443,7 +497,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <button id="saveAllArticlesButton" class="primary" onclick="saveAllArticles()">Alle Änderungen speichern</button>
 </div>
 <div id="saveAllArticlesMsg" class="message"></div>
-<div class="tablewrap"><table class="edit-table"><thead><tr><th>Art.-Nr.</th><th>Bezeichnung</th><th>Istbestand</th><th>Soll</th><th>Mindest.</th><th>Einheit</th><th>Lagerort</th><th>Maschine</th><th>Aktiv</th></tr></thead><tbody id="editrows"></tbody></table></div></div></div></section>
+<div class="tablewrap"><table class="edit-table"><thead><tr><th>Art.-Nr.</th><th>Bezeichnung</th><th>Istbestand</th><th>Soll</th><th>Mindest.</th><th>Einheit</th><th>Lagerort</th><th>Maschine</th><th>Aktiv</th><th>Aktion</th></tr></thead><tbody id="editrows"></tbody></table></div></div></div></section>
 
 <section id="sync" class="view"><h2>Speicher &amp; Synchronisation</h2>
 <div class="card">
@@ -527,7 +581,38 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 </section>
 <section id="audit" class="view"><h2>Audit-Protokoll</h2><div class="tablewrap"><table><thead><tr><th>Zeit</th><th>Benutzer</th><th>Aktion</th><th>Objekt</th><th>ID</th><th>Details</th></tr></thead><tbody id="auditrows"></tbody></table></div></section>
-</main></div><script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+</main>
+<div id="movementEditOverlay" class="modal-overlay">
+ <div class="modal-card">
+  <h2>Buchung korrigieren</h2>
+  <input id="movementEditId" type="hidden">
+  <div class="formgrid">
+   <label>Datum<input id="movementEditDate" type="date"></label>
+   <label>Buchungsart
+    <select id="movementEditType"><option value="IN">Einbuchung</option><option value="OUT">Entnahme</option></select>
+   </label>
+   <label>Artikel
+    <select id="movementEditArticle"></select>
+   </label>
+   <label>Menge<input id="movementEditQuantity" type="number" min="0.0001" step="0.01"></label>
+   <label>Kunde<input id="movementEditCustomer"></label>
+   <label>Techniker<input id="movementEditTechnician"></label>
+   <label>Fahrzeug<input id="movementEditVehicle"></label>
+   <label>Maschine<input id="movementEditMachine"></label>
+   <label>Lieferschein<input id="movementEditDelivery"></label>
+   <label style="grid-column:1/-1">Bemerkung<textarea id="movementEditNote"></textarea></label>
+  </div>
+  <div class="danger-note">
+   Die Änderung wirkt sich sofort auf den berechneten Lagerbestand aus. Eine Entnahme darf nicht zu einem negativen Bestand führen.
+  </div>
+  <div class="toolbar" style="margin-top:14px">
+   <button class="primary" onclick="saveMovementCorrection()">Korrektur speichern</button>
+   <button class="secondary" onclick="closeMovementEditor()">Abbrechen</button>
+  </div>
+  <div id="movementEditMsg" class="message"></div>
+ </div>
+</div>
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -563,7 +648,7 @@ function formatAppDate(value,withTime=false){
  if(withTime&&m[4])date+=` ${m[4]}:${m[5]}${m[6]?':'+m[6]:''}`;
  return date;
 }
-async function api(u,o={}){await LVBackend.ready;const h={'Content-Type':'application/json',...(o.headers||{})};if(window.LVAdminSession?.unlocked)h['X-LV-Admin-Unlocked']='1';let r=await fetch(u,{...o,headers:h});let d=await r.json();if(!r.ok)throw Error(d.error||'Fehler');return d}
+async function api(u,o={}){await LVBackend.ready;const h={'Content-Type':'application/json',...(o.headers||{})};if(window.LVAdminSession?.unlocked)h['X-LV-Admin-Unlocked']='1';let r=await fetch(u,{...o,headers:h});let d=await r.json();if(!r.ok){const e=Error(d.error||d.message||'Fehler');e.data=d;e.status=r.status;throw e}return d}
 function msg(e,t,ok){e.textContent=t;e.className='message '+(ok?'ok':'error')}
 function show(id,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='req')loadReq();if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()}
 
@@ -619,17 +704,43 @@ function setupAutocomplete(row){
  box.addEventListener('mousedown',e=>{let opt=e.target.closest('[data-id]');if(opt)select(opt)});
  function select(opt){hidden.value=opt.dataset.id;input.value=opt.dataset.label;box.style.display='none'}
 }
+
+async function confirmPossibleDuplicate(payload){
+ const result=await api('/api/movements/duplicates',{method:'POST',body:JSON.stringify(payload)});
+ if(!result.count)return true;
+ const examples=result.duplicates.slice(0,5).map(x=>
+  `${formatAppDate(x.movement_date)} – ${x.movement_type==='IN'?'Einbuchung':'Entnahme'} – ${x.article_no} – ${n(x.quantity)}`
+ ).join('\n');
+ return confirm(
+  `Mögliche Doppelbuchung erkannt (${result.count} Treffer):\n\n${examples}`+
+  `${result.count>5?'\n…':''}\n\nSoll die Buchung trotzdem durchgeführt werden?`
+ );
+}
+async function ensureAdminPassword(){
+ if(sessionStorage.admin==='1'&&sessionStorage.adminPassword)return true;
+ const password=prompt('Administratorpasswort:');
+ if(!password)return false;
+ const result=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password})});
+ if(!result.ok){alert('Passwort ist falsch.');return false}
+ sessionStorage.admin='1';
+ sessionStorage.adminPassword=password;
+ window.LVAdminSession?.unlock();
+ return true;
+}
+
 async function saveMove(t){
  let rs=[...document.querySelectorAll('#'+t+'cart .cart-row')],el=document.getElementById(t+'msg');
  if(!rs.length)return msg(el,'Position fehlt.',false);
  let items=rs.map(r=>({article_id:+r.querySelector('.article-id').value,quantity:+r.querySelector('.qty').value}));
  if(items.some(x=>!x.article_id))return msg(el,'Bitte jeden Artikel aus der Vorschlagsliste auswählen.',false);
- try{
-  let d=await api('/api/movements',{method:'POST',body:JSON.stringify({
+ const payload={
    movement_type:t==='i'?'IN':'OUT',items,movement_date:document.getElementById(t+'date').value,
    technician:document.getElementById(t+'tech').value,note:document.getElementById(t+'note').value,
    customer:t==='o'?ocustomer.value:'',machine:t==='o'?omachine.value:''
-  })});
+ };
+ try{
+  if(!await confirmPossibleDuplicate(payload))return msg(el,'Buchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
+  let d=await api('/api/movements',{method:'POST',body:JSON.stringify(payload)});
   msg(el,d.count+' Position(en) gebucht.',true);document.getElementById(t+'cart').innerHTML='';arts=[];await loadArticles();addRow(t);dash()
  }catch(e){msg(el,e.message,false)}
 }
@@ -644,7 +755,9 @@ async function deliveryPreview(){
 }
 async function deliveryCommit(){
  try{
-  let d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify({items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value})});
+  const payload={movement_type:'IN',items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value};
+  if(!await confirmPossibleDuplicate(payload))return msg(dmsg,'Einbuchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
+  let d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify(payload)});
   msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);deliveryp=[];dcommit.disabled=true;arts=[];dash()
  }catch(e){msg(dmsg,e.message,false)}
 }
@@ -745,23 +858,71 @@ async function inventoryPreview(){try{renderInventory(await api('/api/inventory/
 async function loadInventoryFile(input){let f=input.files[0];if(!f)return;try{let buffer=await f.arrayBuffer(),bytes=new Uint8Array(buffer),binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));renderInventory(await api('/api/inventory/file-preview',{method:'POST',body:JSON.stringify({filename:f.name,content_base64:btoa(binary)})}))}catch(e){msg(invmsg,e.message,false)}}
 async function inventoryCommit(){let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');if(!password)return;let items=[...invrows.children].map(r=>({article_id:+r.dataset.id,counted_stock:+r.children[3].firstChild.value}));try{let d=await api('/api/inventory/commit',{method:'POST',body:JSON.stringify({password,items,technician:(md.technicians?.[0]?.name||'Techniker'),movement_date:td()})});sessionStorage.adminPassword=password;msg(invmsg,`${d.changed} Bestandskorrektur(en) gebucht, ${d.unchanged} unverändert.`,true);inventoryData=[];invcommit.disabled=true;arts=[];await loadArticles();await dash()}catch(e){msg(invmsg,e.message,false)}}
 
+function insertServicePrompt(){
+ const prompt=`Extrahiere aus dieser Service-PDF folgende Felder und entnehme nur Material:
+
+Datum
+Artikelnummer
+Anzahl
+Kunde
+Maschine
+
+Gib alles in EINER Zeile TAB-getrennt aus.
+
+Beachte dabei nicht Fahrzeit, Arbeitszeit und Kilometer. Erstelle für jedes Material eine neue Zeile.`;
+ alert(prompt);
+}
+function selectOrPrepareExtractedMachine(machine){
+ const value=String(machine||'').trim();
+ smachineNew.value='';
+ smachineHint.textContent='';
+ if(!value)return;
+ const options=[...smachine.options];
+ const existing=options.find(o=>o.value.trim().toLowerCase()===value.toLowerCase());
+ if(existing){
+  smachine.value=existing.value;
+  smachineHint.textContent='Vorhandene Maschine erkannt.';
+ }else{
+  smachine.value='';
+  smachineNew.value=value;
+  smachineHint.textContent='Neue Maschine – wird erst beim Bestätigen der Entnahme angelegt.';
+ }
+}
+function currentServiceMachine(){
+ return smachineNew.value.trim()||smachine.value.trim();
+}
 async function servicePreview(){
  let d=await api('/api/service-report/preview',{method:'POST',body:JSON.stringify({text:stext.value})});
- servicep=d.items;serviceUnknown=d.unknown||[];
+ servicep=d.items||[];serviceUnknown=d.unknown||[];
+ if(d.metadata?.movement_date)sdate.value=d.metadata.movement_date;
+ if(d.metadata?.customer)scustomer.value=d.metadata.customer;
+ if(d.metadata?.machine)selectOrPrepareExtractedMachine(d.metadata.machine);
  srows.innerHTML=servicep.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('');
- serrors.innerHTML=d.errors.length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
+ serrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
  sunknown.innerHTML=unknownBlock(serviceUnknown,'service');
+ serviceExtractedSummary.style.display='block';
+ serviceExtractedSummary.innerHTML=`
+  <h3>Erkannte Angaben</h3>
+  <p><b>1. Datum:</b> ${esc(d.metadata?.display_date||sdate.value||'Nicht erkannt')}</p>
+  <p><b>2./3. Artikelnummer und Anzahl:</b> ${servicep.length+serviceUnknown.length} Position(en)</p>
+  <p><b>3. Kunde:</b> ${esc(d.metadata?.customer||scustomer.value||'Nicht erkannt')}</p>
+  <p><b>4. Maschine:</b> ${esc(d.metadata?.machine||currentServiceMachine()||'Nicht erkannt')}</p>`;
  scommit.disabled=!servicep.length;
- msg(smsg,servicep.length+' bekannte Position(en), '+serviceUnknown.length+' neue Artikel, '+d.errors.length+' Fehler.',servicep.length>0)
+ msg(smsg,servicep.length+' bekannte Position(en), '+serviceUnknown.length+' unbekannte Artikel, '+(d.errors||[]).length+' Fehler erkannt.',servicep.length>0)
 }
 async function serviceCommit(){
  try{
-  let d=await api('/api/service-report/commit',{method:'POST',body:JSON.stringify({
-   items:servicep,technician:stech.value,movement_date:sdate.value,
-   customer:scustomer.value,machine:smachine.value,note:snote.value
-  })});
-  msg(smsg,d.count+' Position(en) aus dem Servicebericht als Entnahme gebucht.',true);
-  servicep=[];scommit.disabled=true;arts=[];dash()
+  const machine=currentServiceMachine();
+  const payload={
+   movement_type:'OUT',items:servicep,technician:stech.value,movement_date:sdate.value,
+   customer:scustomer.value,machine,note:snote.value,create_machine_if_missing:true
+  };
+  if(!await confirmPossibleDuplicate(payload))return msg(smsg,'Entnahme wurde wegen möglicher Doppelbuchung abgebrochen.',false);
+  let d=await api('/api/service-report/commit',{method:'POST',body:JSON.stringify(payload)});
+  msg(smsg,d.count+' Position(en) aus dem Servicebericht als Entnahme gebucht.'+(d.machine_created?' Neue Maschine „'+d.machine+'“ wurde angelegt.':''),true);
+  servicep=[];serviceUnknown=[];scommit.disabled=true;arts=[];
+  smachineNew.value='';smachineHint.textContent='';serviceExtractedSummary.style.display='none';
+  await meta();dash()
  }catch(e){msg(smsg,e.message,false)}
 }
 
@@ -804,46 +965,79 @@ async function exportReq(){
   msg(rmsg,e.message,false);
  }
 }
-function historyQuery(){let p=new URLSearchParams();p.set('type',historyFilter.value);if(historyFrom.value)p.set('date_from',historyFrom.value);if(historyTo.value)p.set('date_to',historyTo.value);if(historyTechnician.value)p.set('technician',historyTechnician.value);if(historyArticle.value)p.set('article',historyArticle.value);return p.toString()}
+function historyQuery(){
+ let p=new URLSearchParams();
+ p.set('type',historyFilter.value);
+ if(historyFrom.value)p.set('date_from',historyFrom.value);
+ if(historyTo.value)p.set('date_to',historyTo.value);
+ if(historyTechnician.value)p.set('technician',historyTechnician.value);
+ if(historyCustomer.value)p.set('customer',historyCustomer.value);
+ if(historyArticleNo.value)p.set('article_no',historyArticleNo.value);
+ if(historyDescription.value)p.set('description',historyDescription.value);
+ if(historyMachine.value)p.set('machine',historyMachine.value);
+ return p.toString()
+}
 async function hist(){historyData=await api('/api/history?'+historyQuery());renderHistory();msg(historyMsg,historyData.length+' Buchung(en) gefunden.',true)}
-function renderHistory(){hrows.innerHTML=historyData.map(x=>`<tr><td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.customer)}</td><td>${esc(x.technician)}</td><td>${esc(x.vehicle)}</td><td>${esc(x.machine)}</td><td>${esc(x.delivery_note)}</td><td>${esc(x.source)}</td><td>${esc(x.note||'')}</td></tr>`).join('')}
-function clearHistoryFilters(){historyFilter.value='ALL';historyFrom.value='';historyTo.value='';historyTechnician.value='';historyArticle.value='';hist()}
-
-async function downloadResponse(url,messageTarget,options={}){
- const target=messageTarget?document.getElementById(messageTarget):null;
+function renderHistory(){
+ hrows.innerHTML=historyData.map(x=>`<tr>
+ <td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td>
+ <td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td>
+ <td>${esc(x.customer)}</td><td>${esc(x.technician)}</td><td>${esc(x.vehicle)}</td>
+ <td>${esc(x.machine)}</td><td>${esc(x.delivery_note)}</td><td>${esc(x.source)}</td><td>${esc(x.note||'')}</td>
+ <td><div class="action-buttons">
+  <button class="secondary" onclick="openMovementEditor(${x.id})">Korrigieren</button>
+  <button class="danger" onclick="deleteMovement(${x.id})">Löschen</button>
+ </div></td></tr>`).join('')||'<tr><td colspan="13">Keine Buchungen gefunden.</td></tr>'
+}
+function clearHistoryFilters(){
+ historyFilter.value='ALL';historyFrom.value='';historyTo.value='';historyTechnician.value='';
+ historyCustomer.value='';historyArticleNo.value='';historyDescription.value='';historyMachine.value='';hist()
+}
+async function openMovementEditor(id){
+ if(!await ensureAdminPassword())return;
+ const x=historyData.find(v=>Number(v.id)===Number(id));
+ if(!x)return alert('Buchung wurde nicht gefunden.');
+ if(!arts.length)arts=await api('/api/articles');
+ movementEditId.value=x.id;
+ movementEditDate.value=x.movement_date;
+ movementEditType.value=x.movement_type;
+ movementEditArticle.innerHTML=arts.map(a=>`<option value="${a.id}" ${Number(a.id)===Number(x.article_id)?'selected':''}>${esc(a.article_no)} – ${esc(a.description)}</option>`).join('');
+ movementEditQuantity.value=x.quantity;
+ movementEditCustomer.value=x.customer||'';
+ movementEditTechnician.value=x.technician||'';
+ movementEditVehicle.value=x.vehicle||'';
+ movementEditMachine.value=x.machine||'';
+ movementEditDelivery.value=x.delivery_note||'';
+ movementEditNote.value=x.note||'';
+ movementEditMsg.className='message';movementEditMsg.textContent='';
+ movementEditOverlay.style.display='block';
+}
+function closeMovementEditor(){movementEditOverlay.style.display='none'}
+async function saveMovementCorrection(){
+ const payload={
+  id:+movementEditId.value,movement_date:movementEditDate.value,movement_type:movementEditType.value,
+  article_id:+movementEditArticle.value,quantity:+movementEditQuantity.value,
+  customer:movementEditCustomer.value,technician:movementEditTechnician.value,
+  vehicle:movementEditVehicle.value,machine:movementEditMachine.value,
+  delivery_note:movementEditDelivery.value,note:movementEditNote.value,
+  password:sessionStorage.adminPassword||''
+ };
  try{
-  if(target)msg(target,'Datei wird erstellt …',true);
-  const response=await fetch(url,options);
-  if(!response.ok){
-   let detail='';
-   try{const data=await response.json();detail=data.error||data.message||''}
-   catch{try{detail=await response.text()}catch{}}
-   throw Error(detail||`Export fehlgeschlagen (${response.status}).`);
-  }
-  const blob=await response.blob();
-  const disposition=response.headers.get('content-disposition')||'';
-  const utf8=/filename\*=UTF-8''([^;]+)/i.exec(disposition);
-  const normal=/filename="?([^";]+)"?/i.exec(disposition);
-  let filename=utf8?decodeURIComponent(utf8[1]):(normal?normal[1]:(options.fallbackName||'Exportdatei'));
-  filename=filename.replace(/[\\/:*?"<>|]+/g,'_');
-
-  const objectUrl=URL.createObjectURL(blob);
-  const link=document.createElement('a');
-  link.href=objectUrl;
-  link.download=filename;
-  link.style.display='none';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(()=>URL.revokeObjectURL(objectUrl),1500);
-
-  if(target)msg(target,`${filename} wurde heruntergeladen.`,true);
-  return {filename,size:blob.size};
- }catch(e){
-  if(target)msg(target,e.message||'Export fehlgeschlagen.',false);
-  else alert(e.message||'Export fehlgeschlagen.');
-  throw e;
- }
+  await api('/api/movement/update',{method:'POST',body:JSON.stringify(payload)});
+  msg(movementEditMsg,'Buchung wurde korrigiert.',true);
+  setTimeout(async()=>{closeMovementEditor();arts=[];await hist();await dash();await loadArticles()},350);
+ }catch(e){msg(movementEditMsg,e.message,false)}
+}
+async function deleteMovement(id){
+ if(!await ensureAdminPassword())return;
+ const x=historyData.find(v=>Number(v.id)===Number(id));
+ if(!x)return;
+ const text=`Buchung wirklich dauerhaft löschen?\n\n${formatAppDate(x.movement_date)} – ${x.article_no} – ${x.description} – ${n(x.quantity)}\n\nVorher wird automatisch ein Sicherheitsbackup erstellt.`;
+ if(!confirm(text))return;
+ try{
+  await api('/api/movement/delete',{method:'POST',body:JSON.stringify({id,password:sessionStorage.adminPassword||''})});
+  await hist();arts=[];await dash();await loadArticles();
+ }catch(e){alert(e.message)}
 }
 async function downloadCsv(url,messageTarget){
  return downloadResponse(url,messageTarget);
@@ -932,6 +1126,33 @@ async function loadEditTable(){
 function markMasterRowChanged(input){input.closest('tr').dataset.changed='1';saveAllArticlesButton.textContent='Änderungen speichern';}
 function filterMasterArticles(){let q=(masterArticleSearch?.value||'').trim().toLowerCase(),shown=0;[...editrows.children].forEach(r=>{let live=[...r.querySelectorAll('input,select')].map(x=>x.type==='checkbox'?'':x.value).join(' ').toLowerCase();let ok=!q||(r.dataset.search+' '+live).includes(q);r.style.display=ok?'':'none';if(ok)shown++});if(window.masterSearchCount)masterSearchCount.textContent=`${shown} von ${editrows.children.length} Artikeln`;};
 function clearMasterSearch(){masterArticleSearch.value='';filterMasterArticles();masterArticleSearch.focus();}
+
+async function deleteArticleEntry(id,articleNo,description){
+ if(!await ensureAdminPassword())return;
+ if(!confirm(`Artikel dauerhaft löschen?\n\n${articleNo} – ${description}\n\nDie App prüft, ob Buchungen zu diesem Artikel vorhanden sind.`))return;
+ const request=async force=>api('/api/article/delete',{method:'POST',body:JSON.stringify({
+  id,force,password:sessionStorage.adminPassword||''
+ })});
+ try{
+  await request(false);
+ }catch(e){
+  if(e.status===409&&e.data?.requires_force){
+   const count=e.data.movement_count||0;
+   const proceed=confirm(
+    `Zu diesem Artikel bestehen ${count} Buchungen.\n\n`+
+    `Beim endgültigen Löschen werden der Artikel UND alle zugehörigen Buchungen entfernt. `+
+    `Dadurch ändert sich auch die Historie.\n\nTrotzdem dauerhaft löschen?`
+   );
+   if(!proceed)return;
+   await request(true);
+  }else{
+   alert(e.message);return;
+  }
+ }
+ msg(saveAllArticlesMsg,`Artikel ${articleNo} wurde gelöscht.`,true);
+ arts=[];await master();await loadEditTable();await dash();await loadArticles();
+}
+
 async function saveAllArticles(){
  let rows=[...editrows.children].filter(r=>r.dataset.changed==='1');
  if(!rows.length)return msg(saveAllArticlesMsg,'Es wurden keine Änderungen vorgenommen.',true);

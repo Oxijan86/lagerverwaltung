@@ -160,7 +160,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','41');
+  setSetting('database_version','44');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -194,6 +194,37 @@ function bookItems(items,type,d){
  run(`INSERT INTO movements(movement_date,movement_type,article_id,quantity,customer,technician,note,source,created_at,vehicle,machine,delivery_note) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`,
  [d.movement_date||today(),type,aid,qty,d.customer||'',d.technician||setting('primary_technician','Techniker'),d.note||'',d.source||'App',stamp(),d.vehicle||'',d.machine||'',d.delivery_note||'']);
  }}
+
+function normalizeTextValue(value){return String(value||'').trim().toLowerCase()}
+function possibleDuplicateMovements(payload){
+ const type=payload.movement_type||'IN';
+ const date=payload.movement_date||today();
+ const customer=normalizeTextValue(payload.customer);
+ const machine=normalizeTextValue(payload.machine);
+ const result=[];
+ for(const item of payload.items||[]){
+  const aid=Number(item.article_id)||rows('SELECT id FROM articles WHERE article_no=?',[item.article_no])[0]?.id;
+  const qty=Number(item.quantity);
+  if(!aid||!(qty>0))continue;
+  const matches=rows(`SELECT m.id,m.movement_date,m.movement_type,m.quantity,m.customer,m.machine,m.technician,m.source,
+   a.article_no,a.description
+   FROM movements m JOIN articles a ON a.id=m.article_id
+   WHERE m.movement_type=? AND m.movement_date=? AND m.article_id=? AND ABS(m.quantity-?)<0.0000001
+   ORDER BY m.id DESC`,[type,date,aid,qty]).filter(x=>
+    (!customer||normalizeTextValue(x.customer)===customer) &&
+    (!machine||normalizeTextValue(x.machine)===machine)
+   );
+  result.push(...matches);
+ }
+ return result;
+}
+function stockWithoutMovement(articleId,movementId){
+ const initial=Number(scalar('SELECT initial_stock FROM articles WHERE id=?',[articleId])||0);
+ const incoming=Number(scalar("SELECT COALESCE(SUM(quantity),0) FROM movements WHERE article_id=? AND movement_type='IN' AND id<>?",[articleId,movementId])||0);
+ const outgoing=Number(scalar("SELECT COALESCE(SUM(quantity),0) FROM movements WHERE article_id=? AND movement_type='OUT' AND id<>?",[articleId,movementId])||0);
+ return initial+incoming-outgoing;
+}
+
 function csv(headers,data){const q=v=>`"${String(v??'').replaceAll('"','""')}"`;return '\ufeff'+[headers,...data].map(r=>r.map(q).join(';')).join('\r\n')}
 function csvResp(name,headers,data){return response(new Blob([csv(headers,data)],{type:'text/csv;charset=utf-8'}),200,{'Content-Type':'text/csv;charset=utf-8','Content-Disposition':`attachment; filename="${name}"`})}
 async function xlsxRows(filename,b64){
@@ -406,19 +437,202 @@ async function materialXlsx(d){
   items:items.map(({first_position,...x})=>x)
  };
 }
+
+function normalizeExtractedDate(value){
+ const raw=String(value||'').trim();
+ if(!raw)return {iso:'',display:''};
+ let m=raw.match(/\b(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})\b/);
+ if(m){
+  const day=String(Number(m[1])).padStart(2,'0');
+  const month=String(Number(m[2])).padStart(2,'0');
+  return {iso:`${m[3]}-${month}-${day}`,display:`${day}.${month}.${m[3]}`};
+ }
+ m=raw.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+ if(m){
+  const month=String(Number(m[2])).padStart(2,'0');
+  const day=String(Number(m[3])).padStart(2,'0');
+  return {iso:`${m[1]}-${month}-${day}`,display:`${day}.${month}.${m[1]}`};
+ }
+ return {iso:'',display:raw};
+}
+
+function parseServiceTsv(text){
+ const raw=String(text||'').replace(/\r/g,'');
+ const lines=raw.split('\n').map(x=>x.trimEnd()).filter(x=>x.trim());
+ const items=[];
+ const errors=[];
+ const rows=[];
+ let firstMetadata={movement_date:'',display_date:'',customer:'',machine:''};
+
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i];
+  if(!line.includes('\t'))continue;
+  const cols=line.split('\t').map(x=>x.trim());
+
+  // Optional header row
+  const normalized=cols.map(x=>x.toLowerCase().replace(/\s+/g,' '));
+  if(
+   normalized[0]?.includes('datum') &&
+   normalized[1]?.includes('artikel') &&
+   (normalized[2]?.includes('anzahl')||normalized[2]?.includes('menge'))
+  ) continue;
+
+  if(cols.length<5){
+   errors.push({line:i+1,article_no:cols[1]||'',error:'TAB-Zeile enthält weniger als 5 Spalten.'});
+   continue;
+  }
+
+  const [dateValue,articleNo,quantityValue,customerValue,machineValue]=cols;
+  const parsedDate=normalizeExtractedDate(dateValue);
+  const qty=Number(String(quantityValue||'').replace(',','.'));
+  const article=String(articleNo||'').trim();
+
+  if(!article){
+   // Non-material lines such as travel time, labor time or mileage are ignored.
+   continue;
+  }
+
+  const lowerArticle=article.toLowerCase();
+  const combined=cols.join(' ').toLowerCase();
+  if(
+   lowerArticle.includes('fahrzeit') ||
+   lowerArticle.includes('arbeitszeit') ||
+   lowerArticle.includes('kilometer') ||
+   combined.includes('fahrzeit') ||
+   combined.includes('arbeitszeit') ||
+   combined.includes('kilometer')
+  ){
+   continue;
+  }
+
+  if(!Number.isFinite(qty)||qty<=0){
+   errors.push({line:i+1,article_no:article,error:'Anzahl fehlt oder ist ungültig.'});
+   continue;
+  }
+
+  const rowMeta={
+   movement_date:parsedDate.iso,
+   display_date:parsedDate.display,
+   customer:String(customerValue||'').trim(),
+   machine:String(machineValue||'').trim()
+  };
+  rows.push({article_no:article,quantity:qty,line:i+1,metadata:rowMeta});
+  items.push({article_no:article,quantity:qty,line:i+1});
+
+  if(!firstMetadata.movement_date&&rowMeta.movement_date)firstMetadata.movement_date=rowMeta.movement_date;
+  if(!firstMetadata.display_date&&rowMeta.display_date)firstMetadata.display_date=rowMeta.display_date;
+  if(!firstMetadata.customer&&rowMeta.customer)firstMetadata.customer=rowMeta.customer;
+  if(!firstMetadata.machine&&rowMeta.machine)firstMetadata.machine=rowMeta.machine;
+ }
+
+ return {matched:rows.length>0,items,metadata:firstMetadata,rows,errors};
+}
+
+function parseServiceReport(text){
+ const tsv=parseServiceTsv(text);
+ if(tsv.matched)return {items:tsv.items,metadata:tsv.metadata,rows:tsv.rows,errors:tsv.errors};
+ const raw=String(text||'').replace(/\r/g,'');
+ const lines=raw.split('\n');
+ const metadata={movement_date:'',display_date:'',customer:'',machine:''};
+ const items=[];
+ const errors=[];
+ let pendingArticle='';
+ let pendingLine=0;
+
+ const pushItem=(article,quantity,line)=>{
+  const no=String(article||'').trim();
+  const qty=Number(String(quantity||'').replace(',','.'));
+  if(!no)return;
+  if(!Number.isFinite(qty)||qty<=0){
+   errors.push({line,article_no:no,error:'Menge fehlt oder ist ungültig.'});
+   return;
+  }
+  items.push({article_no:no,quantity:qty,line});
+ };
+
+ for(let i=0;i<lines.length;i++){
+  const original=lines[i];
+  const line=original.trim();
+  if(!line)continue;
+  let m;
+
+  if((m=line.match(/^(?:datum|date|einsatzdatum)\s*[:\-]\s*(.+)$/i))){
+   const parsed=normalizeExtractedDate(m[1]);
+   metadata.movement_date=parsed.iso;
+   metadata.display_date=parsed.display;
+   continue;
+  }
+  if((m=line.match(/^(?:kunde|customer|kundename)\s*[:\-]\s*(.*)$/i))){
+   metadata.customer=m[1].trim();
+   continue;
+  }
+  if((m=line.match(/^(?:maschine|machine|anlage|maschinentyp)\s*[:\-]\s*(.*)$/i))){
+   metadata.machine=m[1].trim();
+   continue;
+  }
+  if((m=line.match(/^(?:artikelnummer|artikel[- ]?nr\.?|materialnummer|material[- ]?nr\.?)\s*[:\-]\s*([A-Za-z0-9._\/-]+)(?:\s+(?:menge|qty|anzahl)\s*[:\-]?\s*([\d.,]+))?$/i))){
+   if(pendingArticle)errors.push({line:pendingLine,article_no:pendingArticle,error:'Menge fehlt.'});
+   pendingArticle=m[1].trim();
+   pendingLine=i+1;
+   if(m[2]){
+    pushItem(pendingArticle,m[2],i+1);
+    pendingArticle='';
+   }
+   continue;
+  }
+  if((m=line.match(/^(?:menge|qty|anzahl)\s*[:\-]\s*([\d.,]+)$/i))){
+   if(pendingArticle){
+    pushItem(pendingArticle,m[1],pendingLine||i+1);
+    pendingArticle='';
+   }else{
+    errors.push({line:i+1,article_no:'',error:'Menge ohne vorherige Artikelnummer.'});
+   }
+   continue;
+  }
+
+  // Compact formats: "7079 2", "7079;2" or "Artikelnummer: 7079; Menge: 2"
+  m=line.match(/^(?:artikelnummer\s*[:\-]\s*)?([A-Za-z0-9._\/-]+)\s*[;,\t ]+\s*(?:menge\s*[:\-]?\s*)?(\d+(?:[.,]\d+)?)$/i);
+  if(m){
+   if(pendingArticle)errors.push({line:pendingLine,article_no:pendingArticle,error:'Menge fehlt.'});
+   pendingArticle='';
+   pushItem(m[1],m[2],i+1);
+   continue;
+  }
+ }
+ if(pendingArticle)errors.push({line:pendingLine,article_no:pendingArticle,error:'Menge fehlt.'});
+
+ // Backward-compatible fallback for older two-column Copilot output.
+ if(!items.length){
+  const legacy=parseLines(raw);
+  for(const x of legacy)items.push(x);
+ }
+ return {items,metadata,errors};
+}
+
 async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'41.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'44.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
   if(p==='/api/masterdata')return response({locations:rows('SELECT * FROM locations WHERE active=1 ORDER BY name'),machines:rows('SELECT * FROM machines WHERE active=1 ORDER BY name'),technicians:rows('SELECT * FROM technicians WHERE active=1 ORDER BY name'),vehicles:rows('SELECT * FROM vehicles WHERE active=1 ORDER BY name')});
   if(p==='/api/articles')return response(articles(q.q||''));
-  if(p==='/api/dashboard'){const a=articles().filter(x=>x.active);const low=a.filter(x=>x.stock<x.minimum_stock).sort((x,y)=>(y.minimum_stock-y.stock)-(x.minimum_stock-x.stock)).slice(0,8);const recent=rows('SELECT m.movement_date,m.movement_type,a.article_no,a.description,m.quantity,m.technician FROM movements m JOIN articles a ON a.id=m.article_id ORDER BY m.id DESC LIMIT 8');const top=rows("SELECT a.article_no,a.description,SUM(m.quantity) quantity FROM movements m JOIN articles a ON a.id=m.article_id WHERE m.movement_type='OUT' GROUP BY a.id ORDER BY quantity DESC LIMIT 8");return response({articles:a.length,low_stock:low.length,today:scalar('SELECT COUNT(*) FROM movements WHERE movement_date=?',[today()]),movements:scalar('SELECT COUNT(*) FROM movements'),stock_value:a.reduce((s,x)=>s+x.stock*x.purchase_price,0),low_stock_items:low,recent,top_out:top})}
+  if(p==='/api/dashboard'){const a=articles().filter(x=>x.active);const low=a.filter(x=>x.stock<x.minimum_stock).sort((x,y)=>(y.minimum_stock-y.stock)-(x.minimum_stock-x.stock)).slice(0,8);const recent=rows('SELECT m.id,m.movement_date,m.movement_type,a.article_no,a.description,m.quantity,m.technician,m.customer,m.machine FROM movements m JOIN articles a ON a.id=m.article_id ORDER BY m.id DESC LIMIT 20');const top=rows("SELECT a.article_no,a.description,SUM(m.quantity) quantity FROM movements m JOIN articles a ON a.id=m.article_id WHERE m.movement_type='OUT' GROUP BY a.id ORDER BY quantity DESC LIMIT 8");return response({articles:a.length,low_stock:low.length,today:scalar('SELECT COUNT(*) FROM movements WHERE movement_date=?',[today()]),movements:scalar('SELECT COUNT(*) FROM movements'),stock_value:a.reduce((s,x)=>s+x.stock*x.purchase_price,0),low_stock_items:low,recent,top_out:top})}
   if(p==='/api/material-request')return response(articles().filter(x=>x.active&&x.stock<x.target_stock).map(x=>({...x,suggested_quantity:Math.max(0,x.target_stock-x.stock)})));
-  if(p==='/api/history'){let list=rows('SELECT m.*,a.article_no,a.description FROM movements m JOIN articles a ON a.id=m.article_id ORDER BY m.movement_date DESC,m.id DESC');if(q.type&&q.type!=='ALL')list=list.filter(x=>x.movement_type===q.type);if(q.date_from)list=list.filter(x=>x.movement_date>=q.date_from);if(q.date_to)list=list.filter(x=>x.movement_date<=q.date_to);if(q.technician)list=list.filter(x=>x.technician.toLowerCase().includes(q.technician.toLowerCase()));if(q.article)list=list.filter(x=>(x.article_no+' '+x.description).toLowerCase().includes(q.article.toLowerCase()));return response(list)}
+  if(p==='/api/history'){
+  let list=rows('SELECT m.*,a.article_no,a.description FROM movements m JOIN articles a ON a.id=m.article_id ORDER BY m.movement_date DESC,m.id DESC');
+  if(q.type&&q.type!=='ALL')list=list.filter(x=>x.movement_type===q.type);
+  if(q.date_from)list=list.filter(x=>x.movement_date>=q.date_from);
+  if(q.date_to)list=list.filter(x=>x.movement_date<=q.date_to);
+  if(q.technician)list=list.filter(x=>normalizeTextValue(x.technician).includes(normalizeTextValue(q.technician)));
+  if(q.customer)list=list.filter(x=>normalizeTextValue(x.customer).includes(normalizeTextValue(q.customer)));
+  if(q.article_no)list=list.filter(x=>normalizeTextValue(x.article_no).includes(normalizeTextValue(q.article_no)));
+  if(q.description)list=list.filter(x=>normalizeTextValue(x.description).includes(normalizeTextValue(q.description)));
+  if(q.machine)list=list.filter(x=>normalizeTextValue(x.machine).includes(normalizeTextValue(q.machine)));
+  return response(list)
+ }
   if(p==='/api/audit')return response(rows('SELECT * FROM audit_log ORDER BY id DESC LIMIT 500'));
   if(p==='/api/help/list')return response(Object.keys(helpData).sort().map(file=>({file,title:file.slice(0,-3).replace(/[-_]/g,' ')})));
   if(p==='/api/help/content')return response({file:q.file,content:helpData[q.file]||'# Nicht gefunden'});
@@ -435,10 +649,96 @@ async function route(url,opt={}){
  if(p==='/api/admin/setup-password'){const np=d.password||d.new_password||d.newPassword||'';const rp=d.repeat_password||d.repeatPassword||np;if(!np||np.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');if(np!==rp)throw Error('Die Passwörter stimmen nicht überein.');setSetting('admin_password_hash',hash(np));setSetting('setup_complete','1');setSetting('database_adopted','1');audit('Administrator','PASSWORT','System','','Administratorpasswort erstmalig eingerichtet');await persist();return response({ok:true,has_password:true})}
  if(p==='/api/admin/change-password'){const oldpw=d.old_password||d.current_password||'';const newpw=d.new_password||'';const repeat=d.repeat_password??newpw;if(!validPw(oldpw))throw Error('Bisheriges Passwort ist falsch.');if(!newpw||newpw.length<6)throw Error('Neues Passwort muss mindestens 6 Zeichen haben.');if(newpw!==repeat)throw Error('Die neuen Passwörter stimmen nicht überein.');setSetting('admin_password_hash',hash(newpw));audit('Administrator','PASSWORT','System','','Administratorpasswort geändert');await persist();return response({ok:true})}
  if(p==='/api/admin/reset'){if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');db.close();db=new SQL.Database();initSchema();await persist();return response({ok:true})}
+ 
+ if(p==='/api/movements/duplicates'){
+  return response({duplicates:possibleDuplicateMovements(d),count:possibleDuplicateMovements(d).length});
+ }
+ if(p==='/api/movement/update'){
+  if(!adminAuthorized(d,opt))throw Error('Administratorfreigabe erforderlich.');
+  const id=Number(d.id);
+  const old=rows('SELECT * FROM movements WHERE id=?',[id])[0];
+  if(!old)throw Error('Buchung wurde nicht gefunden.');
+  const articleId=Number(d.article_id);
+  const quantity=Number(d.quantity);
+  if(!articleId||!(quantity>0))throw Error('Artikel und Menge müssen gültig sein.');
+  const article=rows('SELECT id,article_no FROM articles WHERE id=?',[articleId])[0];
+  if(!article)throw Error('Der ausgewählte Artikel existiert nicht mehr.');
+
+  // Validate resulting stock for affected articles before updating.
+  const affected=[...new Set([Number(old.article_id),articleId])];
+  for(const aid of affected){
+   let base=stockWithoutMovement(aid,id);
+   if(aid===articleId)base+=(d.movement_type==='IN'?quantity:-quantity);
+   if(base< -0.0000001){
+    const no=scalar('SELECT article_no FROM articles WHERE id=?',[aid])||aid;
+    throw Error(`Die Korrektur würde für Artikel ${no} einen negativen Bestand erzeugen.`);
+   }
+  }
+
+  await createBackup('Sicherheitsbackup','Vor Buchungskorrektur');
+  run(`UPDATE movements SET movement_date=?,movement_type=?,article_id=?,quantity=?,customer=?,technician=?,
+   note=?,vehicle=?,machine=?,delivery_note=?,source=? WHERE id=?`,[
+    d.movement_date||today(),d.movement_type==='OUT'?'OUT':'IN',articleId,quantity,
+    d.customer||'',d.technician||'',d.note||'',d.vehicle||'',d.machine||'',
+    d.delivery_note||'',old.source||'App',id
+  ]);
+  audit('Administrator','KORREKTUR','Buchung',String(id),
+   `${old.movement_type} ${old.quantity} → ${d.movement_type} ${quantity}; Artikel ${old.article_id} → ${articleId}`);
+  await persist();
+  return response({ok:true,id});
+ }
+ if(p==='/api/movement/delete'){
+  if(!adminAuthorized(d,opt))throw Error('Administratorfreigabe erforderlich.');
+  const id=Number(d.id);
+  const old=rows(`SELECT m.*,a.article_no,a.description FROM movements m
+   JOIN articles a ON a.id=m.article_id WHERE m.id=?`,[id])[0];
+  if(!old)throw Error('Buchung wurde nicht gefunden.');
+  const resulting=stockWithoutMovement(Number(old.article_id),id);
+  if(resulting< -0.0000001)throw Error('Diese Buchung kann nicht gelöscht werden, weil dadurch ein negativer Lagerbestand entstehen würde.');
+  await createBackup('Sicherheitsbackup','Vor Buchungslöschung');
+  run('DELETE FROM movements WHERE id=?',[id]);
+  audit('Administrator','LÖSCHUNG','Buchung',String(id),
+   `${old.movement_type} ${old.quantity} × ${old.article_no} – ${old.description}`);
+  await persist();
+  return response({ok:true,id});
+ }
+
  if(p==='/api/movements'){bookItems(d.items||[d],d.movement_type||'IN',d);audit(d.technician,'BUCHUNG',d.movement_type||'IN','',`${(d.items||[d]).length} Position(en)`);await persist();return response({ok:true,count:(d.items||[d]).length},201)}
- if(p==='/api/delivery-note/preview'||p==='/api/import/preview'||p==='/api/service-report/preview'){return response(matchItems(parseLines(d.text)))}
+ if(p==='/api/delivery-note/preview'||p==='/api/import/preview'){return response(matchItems(parseLines(d.text)))}
+ if(p==='/api/service-report/preview'){
+  const parsed=parseServiceReport(d.text);
+  const matched=matchItems(parsed.items);
+  const extraErrors=[...(parsed.errors||[])];
+
+  if(parsed.rows?.length){
+   const uniqueDates=[...new Set(parsed.rows.map(r=>r.metadata.movement_date).filter(Boolean))];
+   const uniqueCustomers=[...new Set(parsed.rows.map(r=>r.metadata.customer).filter(Boolean).map(v=>v.toLowerCase()))];
+   const uniqueMachines=[...new Set(parsed.rows.map(r=>r.metadata.machine).filter(Boolean).map(v=>v.toLowerCase()))];
+
+   if(uniqueDates.length>1)extraErrors.push({line:0,article_no:'',error:'Mehrere unterschiedliche Datumsangaben erkannt. Für die Buchung wird das Datum der ersten Materialzeile verwendet.'});
+   if(uniqueCustomers.length>1)extraErrors.push({line:0,article_no:'',error:'Mehrere unterschiedliche Kunden erkannt. Für die Buchung wird der Kunde der ersten Materialzeile verwendet.'});
+   if(uniqueMachines.length>1)extraErrors.push({line:0,article_no:'',error:'Mehrere unterschiedliche Maschinen erkannt. Für die Buchung wird die Maschine der ersten Materialzeile verwendet.'});
+  }
+
+  return response({...matched,metadata:parsed.metadata,errors:[...(matched.errors||[]),...extraErrors]});
+ }
  if(p==='/api/delivery-note/commit'){await createBackup('Sicherheitsbackup','Vor Lieferschein-Einbuchung');bookItems(d.items,'IN',{...d,source:'Lieferschein'});audit(d.technician,'BUCHUNG','Lieferschein','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
- if(p==='/api/service-report/commit'){bookItems(d.items,'OUT',{...d,source:'Servicebericht'});audit(d.technician,'BUCHUNG','Servicebericht','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
+ if(p==='/api/service-report/commit'){
+  const machine=String(d.machine||'').trim();
+  let machineCreated=false;
+  if(machine&&d.create_machine_if_missing){
+   const exists=Number(scalar('SELECT COUNT(*) FROM machines WHERE LOWER(name)=LOWER(?)',[machine])||0)>0;
+   if(!exists){
+    run('INSERT INTO machines(name,description,active) VALUES(?,?,1)',[machine,'Automatisch aus Servicebericht angelegt']);
+    machineCreated=true;
+    audit(d.technician||'Techniker','ANLAGE','machine','',machine+' – aus Servicebericht');
+   }
+  }
+  bookItems(d.items,'OUT',{...d,machine,source:'Servicebericht'});
+  audit(d.technician,'BUCHUNG','Servicebericht','',`${d.items.length} Positionen`);
+  await persist();
+  return response({ok:true,count:d.items.length,machine_created:machineCreated,machine});
+ }
  if(p==='/api/import/commit'){await createBackup('Sicherheitsbackup','Vor Import');bookItems(d.items,'IN',{...d,source:'SAP-CSV-Import'});audit(d.technician,'BUCHUNG','CSV-Import','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
  if(p==='/api/import/file-preview'){const rr=await xlsxRows(d.filename,d.content_base64);return response(matchItems(rowsToItems(rr)))}
  if(p==='/api/inventory/file-preview'){const rr=await xlsxRows(d.filename,d.content_base64);const parsed=rowsToItems(rr).map(x=>({article_no:x.article_no,counted_stock:x.quantity}));return response(parsed.map(x=>{const a=articles().find(z=>z.article_no===x.article_no);return a?{article_id:a.id,article_no:a.article_no,description:a.description,system_stock:a.stock,counted_stock:x.counted_stock,difference:x.counted_stock-a.stock}:null}).filter(Boolean))}
@@ -489,6 +789,26 @@ async function route(url,opt={}){
   audit('Techniker','SAMMELÄNDERUNG','Artikel','',`${updated} Artikel gespeichert, ${corrected} Bestandskorrekturen`);
   await persist();return response({ok:true,updated,corrected})
  }
+ 
+ if(p==='/api/article/delete'){
+  if(!adminAuthorized(d,opt))throw Error('Administratorfreigabe erforderlich.');
+  const id=Number(d.id);
+  const article=rows('SELECT * FROM articles WHERE id=?',[id])[0];
+  if(!article)throw Error('Artikel wurde nicht gefunden.');
+  const movementCount=Number(scalar('SELECT COUNT(*) FROM movements WHERE article_id=?',[id])||0);
+  if(movementCount>0&&!d.force){
+   return response({ok:false,requires_force:true,movement_count:movementCount,
+    message:`Zu diesem Artikel bestehen ${movementCount} Buchungen.`},409);
+  }
+  await createBackup('Sicherheitsbackup','Vor Artikellöschung');
+  if(movementCount>0)run('DELETE FROM movements WHERE article_id=?',[id]);
+  run('DELETE FROM articles WHERE id=?',[id]);
+  audit('Administrator','LÖSCHUNG','Artikel',String(id),
+   `${article.article_no} – ${article.description}; ${movementCount} zugehörige Buchung(en) entfernt`);
+  await persist();
+  return response({ok:true,id,movement_count:movementCount});
+ }
+
  if(p==='/api/article/update'){if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');const a=articles().find(x=>x.id===Number(d.id));run('UPDATE articles SET article_no=?,description=?,target_stock=?,minimum_stock=?,unit=?,location=?,machine=?,active=?,manufacturer=?,supplier=?,supplier_article_no=?,barcode=?,purchase_price=?,notes=?,image_url=?,datasheet_url=? WHERE id=?',[d.article_no,d.description,Number(d.target_stock||0),Number(d.minimum_stock||0),d.unit||'Stk.',d.location||'',d.machine||'',d.active?1:0,d.manufacturer||a.manufacturer,d.supplier||a.supplier,d.supplier_article_no||a.supplier_article_no,d.barcode||a.barcode,Number(d.purchase_price??a.purchase_price),d.notes||a.notes,d.image_url||a.image_url,d.datasheet_url||a.datasheet_url,Number(d.id)]);const diff=Number(d.current_stock)-a.stock;if(Math.abs(diff)>1e-8)bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{source:'Bestandskorrektur Stammdaten',note:'Istbestand geändert'});audit('Techniker','ÄNDERUNG','Artikel',a.id,d.article_no);await persist();return response({ok:true})}
  if(p==='/api/articles/stock-to-levels'){if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');for(const a of articles().filter(x=>x.active)){if(d.mode==='target'||d.mode==='both')run('UPDATE articles SET target_stock=? WHERE id=?',[a.stock,a.id]);if(d.mode==='minimum'||d.mode==='both')run('UPDATE articles SET minimum_stock=? WHERE id=?',[a.stock,a.id])}await persist();return response({ok:true,count:articles().length})}
  if(p==='/api/articles/create-import'||p==='/api/import/create-and-book'){if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');let created=0,booked=0,skipped=[];for(const x of d.items||[]){let a=rows('SELECT id FROM articles WHERE article_no=?',[x.article_no])[0];if(!a&&x.description){run('INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at) VALUES(?,?,?,?,?,?,?,?,1,?)',[x.article_no,x.description,Number(x.target_stock||0),Number(x.minimum_stock||0),0,x.unit||'Stk.',x.location||'',x.machine||'',stamp()]);a={id:scalar('SELECT last_insert_rowid()')};created++}else if(!a){skipped.push({article_no:x.article_no,reason:'Bezeichnung fehlt'});continue}if(p==='/api/import/create-and-book'&&Number(x.quantity)>0){bookItems([{article_id:a.id,quantity:Number(x.quantity)}],'IN',{...d,source:'SAP-XLSX/CSV-Import'});booked++}}await persist();return response({ok:true,created,booked,skipped},201)}
@@ -1013,7 +1333,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','41');
+  setSetting('database_version','44');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
