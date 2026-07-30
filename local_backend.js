@@ -160,7 +160,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','44');
+  setSetting('database_version','45');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -194,6 +194,72 @@ function bookItems(items,type,d){
  run(`INSERT INTO movements(movement_date,movement_type,article_id,quantity,customer,technician,note,source,created_at,vehicle,machine,delivery_note) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`,
  [d.movement_date||today(),type,aid,qty,d.customer||'',d.technician||setting('primary_technician','Techniker'),d.note||'',d.source||'App',stamp(),d.vehicle||'',d.machine||'',d.delivery_note||'']);
  }}
+
+
+function auditValue(value){
+ if(value===null||value===undefined||value==='')return '—';
+ return String(value);
+}
+function movementTypeLabel(value){return value==='IN'?'Einbuchung':'Entnahme'}
+function movementAuditSnapshot(movement){
+ const article=rows('SELECT article_no,description FROM articles WHERE id=?',[movement.article_id])[0]||{};
+ return {
+  id:Number(movement.id),
+  movement_date:movement.movement_date||'',
+  movement_type:movement.movement_type||'',
+  article_id:Number(movement.article_id)||0,
+  article_no:article.article_no||movement.article_no||'',
+  description:article.description||movement.description||'',
+  quantity:Number(movement.quantity)||0,
+  customer:movement.customer||'',
+  technician:movement.technician||'',
+  vehicle:movement.vehicle||'',
+  machine:movement.machine||'',
+  delivery_note:movement.delivery_note||'',
+  note:movement.note||'',
+  source:movement.source||''
+ };
+}
+function detailedMovementChanges(before,after){
+ const lines=[`Buchung #${before.id} korrigiert`];
+ const add=(label,oldValue,newValue)=>{
+  if(String(oldValue??'')!==String(newValue??'')){
+   lines.push('',`${label}:`,`Alt: ${auditValue(oldValue)}`,`Neu: ${auditValue(newValue)}`);
+  }
+ };
+ add('Buchungsdatum',before.movement_date,after.movement_date);
+ add('Buchungsart',movementTypeLabel(before.movement_type),movementTypeLabel(after.movement_type));
+ add('Artikelnummer',before.article_no,after.article_no);
+ add('Bezeichnung',before.description,after.description);
+ add('Menge',before.quantity,after.quantity);
+ add('Kunde',before.customer,after.customer);
+ add('Techniker',before.technician,after.technician);
+ add('Fahrzeug',before.vehicle,after.vehicle);
+ add('Maschine',before.machine,after.machine);
+ add('Lieferschein',before.delivery_note,after.delivery_note);
+ add('Bemerkung',before.note,after.note);
+ add('Quelle',before.source,after.source);
+ if(lines.length===1)lines.push('','Keine inhaltliche Änderung erkannt.');
+ return lines.join('\n');
+}
+function deletedMovementDetails(snapshot){
+ return [
+  `Buchung #${snapshot.id} gelöscht`,
+  '',
+  `Datum: ${auditValue(snapshot.movement_date)}`,
+  `Buchungsart: ${movementTypeLabel(snapshot.movement_type)}`,
+  `Artikelnummer: ${auditValue(snapshot.article_no)}`,
+  `Bezeichnung: ${auditValue(snapshot.description)}`,
+  `Menge: ${auditValue(snapshot.quantity)}`,
+  `Kunde: ${auditValue(snapshot.customer)}`,
+  `Techniker: ${auditValue(snapshot.technician)}`,
+  `Fahrzeug: ${auditValue(snapshot.vehicle)}`,
+  `Maschine: ${auditValue(snapshot.machine)}`,
+  `Lieferschein: ${auditValue(snapshot.delivery_note)}`,
+  `Quelle: ${auditValue(snapshot.source)}`,
+  `Bemerkung: ${auditValue(snapshot.note)}`
+ ].join('\n');
+}
 
 function normalizeTextValue(value){return String(value||'').trim().toLowerCase()}
 function possibleDuplicateMovements(payload){
@@ -613,7 +679,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'44.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'45.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -658,13 +724,13 @@ async function route(url,opt={}){
   const id=Number(d.id);
   const old=rows('SELECT * FROM movements WHERE id=?',[id])[0];
   if(!old)throw Error('Buchung wurde nicht gefunden.');
+  const before=movementAuditSnapshot(old);
   const articleId=Number(d.article_id);
   const quantity=Number(d.quantity);
   if(!articleId||!(quantity>0))throw Error('Artikel und Menge müssen gültig sein.');
   const article=rows('SELECT id,article_no FROM articles WHERE id=?',[articleId])[0];
   if(!article)throw Error('Der ausgewählte Artikel existiert nicht mehr.');
 
-  // Validate resulting stock for affected articles before updating.
   const affected=[...new Set([Number(old.article_id),articleId])];
   for(const aid of affected){
    let base=stockWithoutMovement(aid,id);
@@ -682,8 +748,9 @@ async function route(url,opt={}){
     d.customer||'',d.technician||'',d.note||'',d.vehicle||'',d.machine||'',
     d.delivery_note||'',old.source||'App',id
   ]);
-  audit('Administrator','KORREKTUR','Buchung',String(id),
-   `${old.movement_type} ${old.quantity} → ${d.movement_type} ${quantity}; Artikel ${old.article_id} → ${articleId}`);
+  const changed=rows('SELECT * FROM movements WHERE id=?',[id])[0];
+  const after=movementAuditSnapshot(changed);
+  audit('Administrator','KORREKTUR','Buchung',String(id),detailedMovementChanges(before,after));
   await persist();
   return response({ok:true,id});
  }
@@ -693,12 +760,12 @@ async function route(url,opt={}){
   const old=rows(`SELECT m.*,a.article_no,a.description FROM movements m
    JOIN articles a ON a.id=m.article_id WHERE m.id=?`,[id])[0];
   if(!old)throw Error('Buchung wurde nicht gefunden.');
+  const snapshot=movementAuditSnapshot(old);
   const resulting=stockWithoutMovement(Number(old.article_id),id);
   if(resulting< -0.0000001)throw Error('Diese Buchung kann nicht gelöscht werden, weil dadurch ein negativer Lagerbestand entstehen würde.');
   await createBackup('Sicherheitsbackup','Vor Buchungslöschung');
   run('DELETE FROM movements WHERE id=?',[id]);
-  audit('Administrator','LÖSCHUNG','Buchung',String(id),
-   `${old.movement_type} ${old.quantity} × ${old.article_no} – ${old.description}`);
+  audit('Administrator','LÖSCHUNG','Buchung',String(id),deletedMovementDetails(snapshot));
   await persist();
   return response({ok:true,id});
  }
@@ -1333,7 +1400,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','44');
+  setSetting('database_version','45');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();

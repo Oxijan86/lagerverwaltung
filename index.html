@@ -55,6 +55,12 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 .modal-card{max-width:820px;margin:3vh auto;background:#fff;border-radius:14px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .danger-note{background:#fff1f1;border:1px solid #efb4b4;border-radius:9px;padding:12px}
 .duplicate-box{background:#fff8e5;border:1px solid #e9cb78;border-radius:9px;padding:12px;margin:10px 0}
+
+.movement-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;font-weight:700;font-size:12px;white-space:nowrap}
+.movement-badge.in{background:#e7f6ec;color:#166534;border:1px solid #a7d8b5}
+.movement-badge.out{background:#fdeaea;color:#991b1b;border:1px solid #efb4b4}
+.icon-button{width:34px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:16px;border-radius:8px}
+.audit-details{white-space:pre-wrap;line-height:1.45}
 </style></head><body>
 
 
@@ -266,7 +272,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">44.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">45.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -429,7 +435,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <p class="small">Korrekturen und Löschungen sind nur nach Administratorfreigabe möglich. Vor jeder Änderung wird automatisch ein Sicherheitsbackup erstellt.</p>
 <div class="tablewrap"><table>
 <thead><tr>
-<th>Datum</th><th>Art</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th>
+<th>ID</th><th>Datum</th><th>Art</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th>
 <th>Kunde</th><th>Techniker</th><th>Fahrzeug</th><th>Maschine</th><th>Lieferschein</th>
 <th>Quelle</th><th>Bemerkung</th><th>Aktionen</th>
 </tr></thead>
@@ -980,14 +986,16 @@ function historyQuery(){
 async function hist(){historyData=await api('/api/history?'+historyQuery());renderHistory();msg(historyMsg,historyData.length+' Buchung(en) gefunden.',true)}
 function renderHistory(){
  hrows.innerHTML=historyData.map(x=>`<tr>
- <td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td>
+ <td>#${x.id}</td>
+ <td>${esc(formatAppDate(x.movement_date))}</td>
+ <td><span class="movement-badge ${x.movement_type==='IN'?'in':'out'}">${x.movement_type==='IN'?'🟢 Einbuchung':'🔴 Entnahme'}</span></td>
  <td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td>
  <td>${esc(x.customer)}</td><td>${esc(x.technician)}</td><td>${esc(x.vehicle)}</td>
  <td>${esc(x.machine)}</td><td>${esc(x.delivery_note)}</td><td>${esc(x.source)}</td><td>${esc(x.note||'')}</td>
  <td><div class="action-buttons">
-  <button class="secondary" onclick="openMovementEditor(${x.id})">Korrigieren</button>
-  <button class="danger" onclick="deleteMovement(${x.id})">Löschen</button>
- </div></td></tr>`).join('')||'<tr><td colspan="13">Keine Buchungen gefunden.</td></tr>'
+  <button class="secondary icon-button" title="Buchung korrigieren" aria-label="Buchung korrigieren" onclick="openMovementEditor(${x.id})">✏️</button>
+  <button class="danger icon-button" title="Buchung löschen" aria-label="Buchung löschen" onclick="deleteMovement(${x.id})">🗑️</button>
+ </div></td></tr>`).join('')||'<tr><td colspan="14">Keine Buchungen gefunden.</td></tr>'
 }
 function clearHistoryFilters(){
  historyFilter.value='ALL';historyFrom.value='';historyTo.value='';historyTechnician.value='';
@@ -1032,8 +1040,7 @@ async function deleteMovement(id){
  if(!await ensureAdminPassword())return;
  const x=historyData.find(v=>Number(v.id)===Number(id));
  if(!x)return;
- const text=`Buchung wirklich dauerhaft löschen?\n\n${formatAppDate(x.movement_date)} – ${x.article_no} – ${x.description} – ${n(x.quantity)}\n\nVorher wird automatisch ein Sicherheitsbackup erstellt.`;
- if(!confirm(text))return;
+ if(!confirm('Buchung löschen?'))return;
  try{
   await api('/api/movement/delete',{method:'POST',body:JSON.stringify({id,password:sessionStorage.adminPassword||''})});
   await hist();arts=[];await dash();await loadArticles();
