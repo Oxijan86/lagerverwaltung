@@ -160,7 +160,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','48');
+  setSetting('database_version','49');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -679,7 +679,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'48.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'49.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -1151,13 +1151,107 @@ window.LVDatabaseStatus={
  }
 };
 
+
+const MATERIAL_REQUEST_FOLDER_KEY='material-request-folder-handle';
+
+function inspectExternalDatabase(bytes){
+ const test=new SQL.Database(new Uint8Array(bytes));
+ try{
+  if(test.exec('PRAGMA quick_check')[0]?.values?.[0]?.[0]!=='ok')throw Error('Backup ist beschädigt.');
+  const hasTable=name=>!!test.exec(`SELECT name FROM sqlite_master WHERE type='table' AND name='${String(name).replaceAll("'","''")}'`)[0];
+  if(!hasTable('articles')||!hasTable('movements'))throw Error('Die Datei ist keine gültige Lagerdatenbank.');
+  const count=table=>{
+   const r=test.exec(`SELECT COUNT(*) FROM ${table}`);
+   return Number(r[0]?.values?.[0]?.[0]||0);
+  };
+  let revision='';
+  if(hasTable('sync_state')){
+   const r=test.exec("SELECT value FROM sync_state WHERE key='revision' LIMIT 1");
+   revision=String(r[0]?.values?.[0]?.[0]||'');
+  }
+  return {article_count:count('articles'),movement_count:count('movements'),revision};
+ }finally{test.close()}
+}
+
+window.LVBackupFile={
+ async inspect(buffer){
+  await ready;
+  return inspectExternalDatabase(buffer);
+ },
+ async restore(buffer,meta={}){
+  await ready;
+  if(sessionStorage.admin!=='1')throw Error('Administratorbereich ist in dieser Sitzung nicht freigeschaltet.');
+  const info=inspectExternalDatabase(buffer);
+  await createBackup('Sicherheitsbackup','Vor manuell geladenem Backup');
+  const test=new SQL.Database(new Uint8Array(buffer));
+  const restoredState=stateFromDatabase(test);
+  db.close();db=test;initSchema();adoptExistingDatabase();
+  audit('Administrator','WIEDERHERSTELLUNG','Backup',meta.file_name||'',
+   `Backup manuell geladen\nDatei: ${meta.file_name||'Unbekannt'}\nRevision: ${info.revision||'—'}\nDatum: ${meta.file_date||new Date().toLocaleString('de-DE')}`);
+  await ip(DBKEY,db.export().buffer);
+  const m=await ig(METAKEY)||{};
+  m.dirty=true;
+  m.localModified=restoredState.changed_at||Date.now();
+  m.restorePending=true;
+  m.writeBlocked=true;
+  m.restoreBackupName=meta.file_name||'Manuell geladene Datei';
+  await ip(METAKEY,m);
+  return {...info,state:restoredState};
+ }
+};
+
+window.LVMaterialRequestFolder={
+ async get(){
+  await ready;
+  const h=await ig(MATERIAL_REQUEST_FOLDER_KEY)||null;
+  return {connected:!!h,folder:h?.name||''};
+ },
+ async choose(){
+  await ready;
+  if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine direkte Ordnerauswahl.');
+  const old=await ig(MATERIAL_REQUEST_FOLDER_KEY)||null;
+  const selected=await showDirectoryPicker({mode:'readwrite'});
+  if(!await permission(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
+  await ip(MATERIAL_REQUEST_FOLDER_KEY,selected);
+  audit('Administrator','EINSTELLUNG','Materialanforderung Exportordner','',
+   `Exportordner Materialanforderung geändert\nAlt: ${old?.name||'Downloads'}\nNeu: ${selected.name}`);
+  await persist(false);
+  return {ok:true,folder:selected.name};
+ },
+ async reset(){
+  await ready;
+  const old=await ig(MATERIAL_REQUEST_FOLDER_KEY)||null;
+  await idel(MATERIAL_REQUEST_FOLDER_KEY);
+  audit('Administrator','EINSTELLUNG','Materialanforderung Exportordner','',
+   `Exportordner Materialanforderung geändert\nAlt: ${old?.name||'Downloads'}\nNeu: Downloads`);
+  await persist(false);
+  return {ok:true};
+ },
+ async save(bytes,fileName,mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
+  await ready;
+  const h=await ig(MATERIAL_REQUEST_FOLDER_KEY)||null;
+  if(!h)return {saved:false};
+  if(!await permission(h,'readwrite'))throw Error('Zugriff auf den Exportordner wurde nicht erteilt.');
+  const fh=await h.getFileHandle(fileName,{create:true});
+  const writable=await fh.createWritable();
+  await writable.write(new Blob([bytes],{type:mime}));
+  await writable.close();
+  return {saved:true,folder:h.name};
+ }
+};
+
+
 window.LVBackup={
  async manual(){try{const x=await createBackup('Manuell',backupComment.value.trim());backupComment.value='';msg(backupMsg,'Backup erstellt: '+x.name,true);await this.refresh()}catch(e){msg(backupMsg,e.message,false)}},
  async refresh(){await ready;const list=await getBackupIndex();if(!window.backupRows)return;backupRows.innerHTML=list.map(x=>`<tr><td>${new Date(x.created).toLocaleString('de-DE')}</td><td>${x.kind}</td><td>${x.comment||'–'}</td><td>${(x.size/1024).toLocaleString('de-DE',{maximumFractionDigits:1})} KB</td><td><button class="secondary" onclick="LVBackup.restore('${x.name.replaceAll("'","\\'")}')">Wiederherstellen</button> <button class="secondary" onclick="LVBackup.download('${x.name.replaceAll("'","\\'")}')">Herunterladen</button> <button class="danger" onclick="LVBackup.remove('${x.name.replaceAll("'","\\'")}')">Löschen</button></td></tr>`).join('')||'<tr><td colspan="5">Noch keine Backups</td></tr>'},
  async restore(name){
+  if(sessionStorage.admin!=='1'){msg(backupMsg,'Bitte zuerst den Administratorbereich in dieser Sitzung freischalten.',false);return}
   if(!confirm('Diesen Datenstand lokal wiederherstellen? Vorher wird ein Sicherheitsbackup des aktuellen lokalen Stands erstellt. Die Cloud-Datei wird noch nicht verändert.'))return;
   try{
    const result=await restoreBackup(name);
+   audit('Administrator','WIEDERHERSTELLUNG','Backup',name,
+    `Automatisches Backup geladen\nBackup: ${name}\nRevision: ${result.state?.revision??'—'}`);
+   await persist(false);
    sessionStorage.removeItem('lv_startup_confirmed');
    alert('Backup wurde lokal wiederhergestellt. Die Cloud-Datei bleibt unverändert. Prüfe den Bestand und veröffentliche ihn nur bewusst als neuen Cloud-Stand.');
    location.reload();
@@ -1401,7 +1495,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','48');
+  setSetting('database_version','49');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
