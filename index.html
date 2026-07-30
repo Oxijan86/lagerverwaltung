@@ -272,7 +272,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">45.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">46.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">🕘 Historie</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -342,7 +342,11 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <button id="dcommit" class="primary" disabled onclick="deliveryCommit()">Geprüfte Lieferung einbuchen</button>
 <div id="dmsg" class="message"></div>
 <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="drows"></tbody></table></div>
-<div id="derrors"></div><div id="dunknown"></div></div></section>
+<div id="derrors"></div><div id="dunknown"></div></div>
+<div class="card"><h3>Letzte 20 Einbuchungen</h3>
+<p class="small">Für jede Korrektur und Löschung ist das Administratorpasswort erneut erforderlich.</p>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Datum</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th><th>Bemerkung</th><th>Aktionen</th></tr></thead>
+<tbody id="recentInRows"></tbody></table></div></div></section>
 
 <section id="out" class="view"><h2>Entnahme</h2>
 <div class="card"><h3>Manuelle Entnahme</h3>
@@ -382,7 +386,11 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <button id="scommit" class="danger" disabled onclick="serviceCommit()">Geprüfte Entnahme buchen</button>
 <div id="smsg" class="message"></div>
 <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>2. Artikelnummer</th><th>Bezeichnung</th><th>3. Anzahl</th></tr></thead><tbody id="srows"></tbody></table></div>
-<div id="serrors"></div><div id="sunknown"></div></div></section>
+<div id="serrors"></div><div id="sunknown"></div></div>
+<div class="card"><h3>Letzte 20 Entnahmen</h3>
+<p class="small">Für jede Korrektur und Löschung ist das Administratorpasswort erneut erforderlich.</p>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Datum</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Kunde</th><th>Maschine</th><th>Techniker</th><th>Aktionen</th></tr></thead>
+<tbody id="recentOutRows"></tbody></table></div></div></section>
 
 <section id="req" class="view"><h2>Materialanforderung</h2><div class="card"><div class="toolbar"><select id="rtech"></select><button class="secondary" onclick="loadReq()">Unterbestand laden</button><button class="secondary" onclick="previewReq()">Vorschau prüfen</button><button class="primary" onclick="exportReq()">Materialanforderung exportieren</button></div><p class="small">Maximal 25 Positionen entsprechend der Original-Excel-Vorlage. Doppelte Artikel werden zusammengefasst.</p><div class="tablewrap"><table><thead><tr><th>Export</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Menge</th></tr></thead><tbody id="rrows"></tbody></table></div><div id="reqPreview"></div><div id="rmsg" class="message"></div></div></section>
 <section id="csv" class="view"><h2>CSV-Center</h2>
@@ -656,7 +664,7 @@ function formatAppDate(value,withTime=false){
 }
 async function api(u,o={}){await LVBackend.ready;const h={'Content-Type':'application/json',...(o.headers||{})};if(window.LVAdminSession?.unlocked)h['X-LV-Admin-Unlocked']='1';let r=await fetch(u,{...o,headers:h});let d=await r.json();if(!r.ok){const e=Error(d.error||d.message||'Fehler');e.data=d;e.status=r.status;throw e}return d}
 function msg(e,t,ok){e.textContent=t;e.className='message '+(ok?'ok':'error')}
-function show(id,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='req')loadReq();if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()}
+function show(id,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req')loadReq();if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()}
 
 async function master(){
  md=await api('/api/masterdata');
@@ -723,15 +731,14 @@ async function confirmPossibleDuplicate(payload){
  );
 }
 async function ensureAdminPassword(){
- if(sessionStorage.admin==='1'&&sessionStorage.adminPassword)return true;
  const password=prompt('Administratorpasswort:');
  if(!password)return false;
- const result=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password})});
- if(!result.ok){alert('Passwort ist falsch.');return false}
- sessionStorage.admin='1';
- sessionStorage.adminPassword=password;
- window.LVAdminSession?.unlock();
- return true;
+ try{
+  const result=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password})});
+  if(!result.ok){alert('Passwort ist falsch.');return false}
+  sessionStorage.adminPassword=password;
+  return true;
+ }catch(e){alert(e.message||'Passwort ist falsch.');return false}
 }
 
 async function saveMove(t){
@@ -747,7 +754,7 @@ async function saveMove(t){
  try{
   if(!await confirmPossibleDuplicate(payload))return msg(el,'Buchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
   let d=await api('/api/movements',{method:'POST',body:JSON.stringify(payload)});
-  msg(el,d.count+' Position(en) gebucht.',true);document.getElementById(t+'cart').innerHTML='';arts=[];await loadArticles();addRow(t);dash()
+  msg(el,d.count+' Position(en) gebucht.',true);document.getElementById(t+'cart').innerHTML='';arts=[];await loadArticles();addRow(t);await dash();await loadRecentMovements(t==='i'?'IN':'OUT')
  }catch(e){msg(el,e.message,false)}
 }
 
@@ -764,7 +771,7 @@ async function deliveryCommit(){
   const payload={movement_type:'IN',items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value};
   if(!await confirmPossibleDuplicate(payload))return msg(dmsg,'Einbuchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
   let d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify(payload)});
-  msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);deliveryp=[];dcommit.disabled=true;arts=[];dash()
+  msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);deliveryp=[];dcommit.disabled=true;arts=[];await dash();await loadRecentMovements('IN')
  }catch(e){msg(dmsg,e.message,false)}
 }
 
@@ -928,7 +935,7 @@ async function serviceCommit(){
   msg(smsg,d.count+' Position(en) aus dem Servicebericht als Entnahme gebucht.'+(d.machine_created?' Neue Maschine „'+d.machine+'“ wurde angelegt.':''),true);
   servicep=[];serviceUnknown=[];scommit.disabled=true;arts=[];
   smachineNew.value='';smachineHint.textContent='';serviceExtractedSummary.style.display='none';
-  await meta();dash()
+  await meta();await dash();await loadRecentMovements('OUT')
  }catch(e){msg(smsg,e.message,false)}
 }
 
@@ -971,6 +978,32 @@ async function exportReq(){
   msg(rmsg,e.message,false);
  }
 }
+
+let recentInData=[],recentOutData=[];
+function findMovementById(id){
+ return historyData.find(v=>Number(v.id)===Number(id))
+  ||recentInData.find(v=>Number(v.id)===Number(id))
+  ||recentOutData.find(v=>Number(v.id)===Number(id));
+}
+async function loadRecentMovements(type){
+ const data=await api('/api/recent-movements?type='+encodeURIComponent(type));
+ if(type==='IN'){
+  recentInData=data;
+  if(window.recentInRows)recentInRows.innerHTML=data.map(x=>`<tr>
+   <td>#${x.id}</td><td>${esc(formatAppDate(x.movement_date))}</td><td>${esc(x.article_no)}</td>
+   <td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.technician)}</td><td>${esc(x.note||'')}</td>
+   <td><div class="action-buttons"><button class="secondary icon-button" title="Einbuchung korrigieren" onclick="openMovementEditor(${x.id})">✏️</button>
+   <button class="danger icon-button" title="Einbuchung löschen" onclick="deleteMovement(${x.id})">🗑️</button></div></td></tr>`).join('')||'<tr><td colspan="8">Keine Einbuchungen vorhanden.</td></tr>';
+ }else{
+  recentOutData=data;
+  if(window.recentOutRows)recentOutRows.innerHTML=data.map(x=>`<tr>
+   <td>#${x.id}</td><td>${esc(formatAppDate(x.movement_date))}</td><td>${esc(x.article_no)}</td>
+   <td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.customer)}</td><td>${esc(x.machine)}</td><td>${esc(x.technician)}</td>
+   <td><div class="action-buttons"><button class="secondary icon-button" title="Entnahme korrigieren" onclick="openMovementEditor(${x.id})">✏️</button>
+   <button class="danger icon-button" title="Entnahme löschen" onclick="deleteMovement(${x.id})">🗑️</button></div></td></tr>`).join('')||'<tr><td colspan="9">Keine Entnahmen vorhanden.</td></tr>';
+ }
+}
+
 function historyQuery(){
  let p=new URLSearchParams();
  p.set('type',historyFilter.value);
@@ -1003,48 +1036,39 @@ function clearHistoryFilters(){
 }
 async function openMovementEditor(id){
  if(!await ensureAdminPassword())return;
- const x=historyData.find(v=>Number(v.id)===Number(id));
- if(!x)return alert('Buchung wurde nicht gefunden.');
+ const x=findMovementById(id);
+ if(!x){sessionStorage.removeItem('adminPassword');return alert('Buchung wurde nicht gefunden.')}
  if(!arts.length)arts=await api('/api/articles');
- movementEditId.value=x.id;
- movementEditDate.value=x.movement_date;
- movementEditType.value=x.movement_type;
+ movementEditId.value=x.id;movementEditDate.value=x.movement_date;movementEditType.value=x.movement_type;
  movementEditArticle.innerHTML=arts.map(a=>`<option value="${a.id}" ${Number(a.id)===Number(x.article_id)?'selected':''}>${esc(a.article_no)} – ${esc(a.description)}</option>`).join('');
- movementEditQuantity.value=x.quantity;
- movementEditCustomer.value=x.customer||'';
- movementEditTechnician.value=x.technician||'';
- movementEditVehicle.value=x.vehicle||'';
- movementEditMachine.value=x.machine||'';
- movementEditDelivery.value=x.delivery_note||'';
- movementEditNote.value=x.note||'';
- movementEditMsg.className='message';movementEditMsg.textContent='';
+ movementEditQuantity.value=x.quantity;movementEditCustomer.value=x.customer||'';movementEditTechnician.value=x.technician||'';
+ movementEditVehicle.value=x.vehicle||'';movementEditMachine.value=x.machine||'';movementEditDelivery.value=x.delivery_note||'';
+ movementEditNote.value=x.note||'';movementEditMsg.className='message';movementEditMsg.textContent='';
  movementEditOverlay.style.display='block';
 }
-function closeMovementEditor(){movementEditOverlay.style.display='none'}
+function closeMovementEditor(){movementEditOverlay.style.display='none';sessionStorage.removeItem('adminPassword')}
 async function saveMovementCorrection(){
- const payload={
-  id:+movementEditId.value,movement_date:movementEditDate.value,movement_type:movementEditType.value,
-  article_id:+movementEditArticle.value,quantity:+movementEditQuantity.value,
-  customer:movementEditCustomer.value,technician:movementEditTechnician.value,
-  vehicle:movementEditVehicle.value,machine:movementEditMachine.value,
-  delivery_note:movementEditDelivery.value,note:movementEditNote.value,
-  password:sessionStorage.adminPassword||''
- };
+ const payload={id:+movementEditId.value,movement_date:movementEditDate.value,movement_type:movementEditType.value,
+ article_id:+movementEditArticle.value,quantity:+movementEditQuantity.value,customer:movementEditCustomer.value,
+ technician:movementEditTechnician.value,vehicle:movementEditVehicle.value,machine:movementEditMachine.value,
+ delivery_note:movementEditDelivery.value,note:movementEditNote.value,password:sessionStorage.adminPassword||''};
  try{
   await api('/api/movement/update',{method:'POST',body:JSON.stringify(payload)});
   msg(movementEditMsg,'Buchung wurde korrigiert.',true);
-  setTimeout(async()=>{closeMovementEditor();arts=[];await hist();await dash();await loadArticles()},350);
+  setTimeout(async()=>{closeMovementEditor();arts=[];await hist();await dash();await loadArticles();await loadRecentMovements('IN');await loadRecentMovements('OUT')},350);
  }catch(e){msg(movementEditMsg,e.message,false)}
+ finally{sessionStorage.removeItem('adminPassword')}
 }
 async function deleteMovement(id){
  if(!await ensureAdminPassword())return;
- const x=historyData.find(v=>Number(v.id)===Number(id));
- if(!x)return;
- if(!confirm('Buchung löschen?'))return;
+ const x=findMovementById(id);
+ if(!x){sessionStorage.removeItem('adminPassword');return}
+ if(!confirm('Buchung löschen?')){sessionStorage.removeItem('adminPassword');return}
  try{
   await api('/api/movement/delete',{method:'POST',body:JSON.stringify({id,password:sessionStorage.adminPassword||''})});
-  await hist();arts=[];await dash();await loadArticles();
+  arts=[];await hist();await dash();await loadArticles();await loadRecentMovements('IN');await loadRecentMovements('OUT');
  }catch(e){alert(e.message)}
+ finally{sessionStorage.removeItem('adminPassword')}
 }
 async function downloadCsv(url,messageTarget){
  return downloadResponse(url,messageTarget);
@@ -1121,6 +1145,7 @@ async function loadEditTable(){
   <td><select onchange="markMasterRowChanged(this)">${locs}</select></td>
   <td><select onchange="markMasterRowChanged(this)">${machs}</select></td>
   <td><input type="checkbox" ${a.active?'checked':''} onchange="markMasterRowChanged(this)"></td>
+  <td><button class="danger icon-button" title="Artikel löschen" aria-label="Artikel löschen" onclick='deleteArticleEntry(${a.id},${JSON.stringify(a.article_no)},${JSON.stringify(a.description)})'>🗑️</button></td>
  </tr>`).join('');
 
  [...editrows.children].forEach((row,index)=>{
@@ -1136,28 +1161,27 @@ function clearMasterSearch(){masterArticleSearch.value='';filterMasterArticles()
 
 async function deleteArticleEntry(id,articleNo,description){
  if(!await ensureAdminPassword())return;
- if(!confirm(`Artikel dauerhaft löschen?\n\n${articleNo} – ${description}\n\nDie App prüft, ob Buchungen zu diesem Artikel vorhanden sind.`))return;
- const request=async force=>api('/api/article/delete',{method:'POST',body:JSON.stringify({
-  id,force,password:sessionStorage.adminPassword||''
- })});
+ if(!confirm(`Artikel dauerhaft löschen?
+
+${articleNo} – ${description}
+
+Die App prüft, ob Buchungen zu diesem Artikel vorhanden sind.`)){
+  sessionStorage.removeItem('adminPassword');return;
+ }
+ const request=async force=>api('/api/article/delete',{method:'POST',body:JSON.stringify({id,force,password:sessionStorage.adminPassword||''})});
  try{
   await request(false);
  }catch(e){
   if(e.status===409&&e.data?.requires_force){
    const count=e.data.movement_count||0;
-   const proceed=confirm(
-    `Zu diesem Artikel bestehen ${count} Buchungen.\n\n`+
-    `Beim endgültigen Löschen werden der Artikel UND alle zugehörigen Buchungen entfernt. `+
-    `Dadurch ändert sich auch die Historie.\n\nTrotzdem dauerhaft löschen?`
-   );
-   if(!proceed)return;
+   if(!confirm(`Zu diesem Artikel bestehen ${count} Buchungen.
+
+Artikel und alle zugehörigen Buchungen trotzdem dauerhaft löschen?`))return;
    await request(true);
-  }else{
-   alert(e.message);return;
-  }
- }
+  }else{alert(e.message);return}
+ }finally{sessionStorage.removeItem('adminPassword')}
  msg(saveAllArticlesMsg,`Artikel ${articleNo} wurde gelöscht.`,true);
- arts=[];await master();await loadEditTable();await dash();await loadArticles();
+ arts=[];await master();await loadEditTable();await dash();await loadArticles();await loadRecentMovements('IN');await loadRecentMovements('OUT');
 }
 
 async function saveAllArticles(){

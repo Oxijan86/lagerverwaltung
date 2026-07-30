@@ -160,7 +160,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','45');
+  setSetting('database_version','46');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -679,7 +679,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'45.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'46.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -687,7 +687,8 @@ async function route(url,opt={}){
   if(p==='/api/articles')return response(articles(q.q||''));
   if(p==='/api/dashboard'){const a=articles().filter(x=>x.active);const low=a.filter(x=>x.stock<x.minimum_stock).sort((x,y)=>(y.minimum_stock-y.stock)-(x.minimum_stock-x.stock)).slice(0,8);const recent=rows('SELECT m.id,m.movement_date,m.movement_type,a.article_no,a.description,m.quantity,m.technician,m.customer,m.machine FROM movements m JOIN articles a ON a.id=m.article_id ORDER BY m.id DESC LIMIT 20');const top=rows("SELECT a.article_no,a.description,SUM(m.quantity) quantity FROM movements m JOIN articles a ON a.id=m.article_id WHERE m.movement_type='OUT' GROUP BY a.id ORDER BY quantity DESC LIMIT 8");return response({articles:a.length,low_stock:low.length,today:scalar('SELECT COUNT(*) FROM movements WHERE movement_date=?',[today()]),movements:scalar('SELECT COUNT(*) FROM movements'),stock_value:a.reduce((s,x)=>s+x.stock*x.purchase_price,0),low_stock_items:low,recent,top_out:top})}
   if(p==='/api/material-request')return response(articles().filter(x=>x.active&&x.stock<x.target_stock).map(x=>({...x,suggested_quantity:Math.max(0,x.target_stock-x.stock)})));
-  if(p==='/api/history'){
+  if(p==='/api/recent-movements'){const type=q.type==='OUT'?'OUT':'IN';return response(rows(`SELECT m.*,a.article_no,a.description FROM movements m JOIN articles a ON a.id=m.article_id WHERE m.movement_type=? ORDER BY m.id DESC LIMIT 20`,[type]))}
+ if(p==='/api/history'){
   let list=rows('SELECT m.*,a.article_no,a.description FROM movements m JOIN articles a ON a.id=m.article_id ORDER BY m.movement_date DESC,m.id DESC');
   if(q.type&&q.type!=='ALL')list=list.filter(x=>x.movement_type===q.type);
   if(q.date_from)list=list.filter(x=>x.movement_date>=q.date_from);
@@ -720,7 +721,7 @@ async function route(url,opt={}){
   return response({duplicates:possibleDuplicateMovements(d),count:possibleDuplicateMovements(d).length});
  }
  if(p==='/api/movement/update'){
-  if(!adminAuthorized(d,opt))throw Error('Administratorfreigabe erforderlich.');
+  if(!verifyPassword(d.password||''))throw Error('Administratorpasswort ist falsch.');
   const id=Number(d.id);
   const old=rows('SELECT * FROM movements WHERE id=?',[id])[0];
   if(!old)throw Error('Buchung wurde nicht gefunden.');
@@ -755,7 +756,7 @@ async function route(url,opt={}){
   return response({ok:true,id});
  }
  if(p==='/api/movement/delete'){
-  if(!adminAuthorized(d,opt))throw Error('Administratorfreigabe erforderlich.');
+  if(!verifyPassword(d.password||''))throw Error('Administratorpasswort ist falsch.');
   const id=Number(d.id);
   const old=rows(`SELECT m.*,a.article_no,a.description FROM movements m
    JOIN articles a ON a.id=m.article_id WHERE m.id=?`,[id])[0];
@@ -858,7 +859,7 @@ async function route(url,opt={}){
  }
  
  if(p==='/api/article/delete'){
-  if(!adminAuthorized(d,opt))throw Error('Administratorfreigabe erforderlich.');
+  if(!verifyPassword(d.password||''))throw Error('Administratorpasswort ist falsch.');
   const id=Number(d.id);
   const article=rows('SELECT * FROM articles WHERE id=?',[id])[0];
   if(!article)throw Error('Artikel wurde nicht gefunden.');
@@ -1400,7 +1401,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','45');
+  setSetting('database_version','46');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
