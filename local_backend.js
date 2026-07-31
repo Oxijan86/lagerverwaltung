@@ -161,7 +161,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','52');
+  setSetting('database_version','53');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -183,9 +183,29 @@ function body(opt){try{return JSON.parse(opt?.body||'{}')}catch{return {}}}
 function query(url){const u=new URL(url,location.href);return Object.fromEntries(u.searchParams.entries())}
 function fmtDate(d){const f=setting('date_format','DD.MM.YYYY');if(!d)return '';const x=String(d).slice(0,10).split('-');return f==='YYYY-MM-DD'?x.join('-'):f==='MM/DD/YYYY'?`${x[1]}/${x[2]}/${x[0]}`:`${x[2]}.${x[1]}.${x[0]}`}
 function articles(q=''){let sql=`SELECT a.*,${stockExpr()} stock FROM articles a LEFT JOIN movements m ON m.article_id=a.id WHERE 1=1`,p=[];if(q){sql+=' AND (a.article_no LIKE ? OR a.description LIKE ? OR a.location LIKE ? OR a.machine LIKE ?)';p=Array(4).fill('%'+q+'%')}sql+=' GROUP BY a.id ORDER BY a.article_no';return rows(sql,p)}
+
+function detectDeclaredImportType(text){
+ const first=String(text||'').replace(/\r/g,'').split('\n').map(x=>x.trim()).find(Boolean)||'';
+ const m=first.match(/^IMPORTTYP\s*:\s*(EINBUCHUNG|ENTNAHME)$/i);
+ return m?m[1].toUpperCase():'';
+}
+function importContentLines(text){
+ return String(text||'').replace(/\r/g,'').split('\n').filter(x=>!/^\s*IMPORTTYP\s*:/i.test(x)).join('\n');
+}
+function looksLikeServiceImport(text){
+ const lines=importContentLines(text).split('\n').map(x=>x.trim()).filter(Boolean);
+ const rx=/^(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}|\d{4}-\d{1,2}-\d{1,2})[\t ;|]+[A-Za-z0-9._\/-]+[\t ;|]+\d+(?:[.,]\d+)?[\t ;|]+.+$/;
+ return !!lines.length&&lines.filter(x=>rx.test(x)).length>=Math.max(1,Math.ceil(lines.length/2));
+}
+function looksLikeDeliveryImport(text){
+ const lines=importContentLines(text).split('\n').map(x=>x.trim()).filter(Boolean);
+ const rx=/^[A-Za-z0-9._\/-]+[\t ;|]+\d+(?:[.,]\d+)?\s*$/;
+ return !!lines.length&&lines.filter(x=>rx.test(x)).length>=Math.max(1,Math.ceil(lines.length/2));
+}
+
 function parseLines(text){
  const out=[],errors=[];
- const lines=String(text||'').replace(/\r/g,'').split('\n');
+ const lines=importContentLines(text).split('\n');
  for(let i=0;i<lines.length;i++){
   const line=lines[i].trim();
   if(!line)continue;
@@ -398,7 +418,7 @@ async function materialXlsx(d){
 
  const items=[...grouped.values()];
  if(!items.length)throw Error('Keine gültige Position für den Export ausgewählt.');
- if(items.length>25)throw Error('Maximal 25 Positionen möglich.');
+ if(items.length>995)throw Error('Maximal 995 Positionen sind mit der großen Vorlage möglich.');
 
  // Preserve the visible order from the material-request screen.
  items.sort((a,b)=>a.first_position-b.first_position);
@@ -408,51 +428,52 @@ async function materialXlsx(d){
  }
 
  // 2. Load the original template as a normal workbook.
- const templateResponse=await nativeFetch('materialanforderung_vorlage.xlsx');
+ const useLargeTemplate=items.length>25;
+ const templateFile=useLargeTemplate?'materialanforderung_vorlage_lang.xlsx':'materialanforderung_vorlage.xlsx';
+ const templateResponse=await nativeFetch(templateFile);
  if(!templateResponse.ok){
-  throw Error('Excel-Vorlage materialanforderung_vorlage.xlsx konnte nicht geladen werden.');
+  throw Error(`Excel-Vorlage ${templateFile} konnte nicht geladen werden.`);
  }
  const templateBuffer=await templateResponse.arrayBuffer();
 
  const workbook=new ExcelJS.Workbook();
  await workbook.xlsx.load(templateBuffer);
 
- // The original export sheet is Tabelle1 (second worksheet in the template).
- const worksheet=workbook.getWorksheet('Tabelle1')||workbook.worksheets[1];
- if(!worksheet){
-  throw Error('Exportblatt Tabelle1 wurde in der Excel-Vorlage nicht gefunden.');
+ const worksheet=useLargeTemplate
+  ?(workbook.getWorksheet('Materialanforderung')||workbook.worksheets[0])
+  :(workbook.getWorksheet('Tabelle1')||workbook.worksheets[1]);
+ if(!worksheet)throw Error('Exportblatt wurde in der gewählten Excel-Vorlage nicht gefunden.');
+ const technician=String(d.technician||setting('primary_technician','Techniker')).trim();
+ const exportDate=new Date();exportDate.setHours(0,0,0,0);
+ if(useLargeTemplate){
+  worksheet.getCell('D1').value=technician;
+  worksheet.getCell('F1').value=exportDate;worksheet.getCell('F1').numFmt='dd.mm.yyyy';
+  for(let row=4;row<=998;row++){
+   worksheet.getCell(`A${row}`).value=row-3;
+   worksheet.getCell(`B${row}`).value=null;worksheet.getCell(`C${row}`).value=null;
+   worksheet.getCell(`D${row}`).value=null;worksheet.getCell(`F${row}`).value=null;
+  }
+  items.forEach((x,index)=>{
+   const row=4+index;
+   worksheet.getCell(`A${row}`).value=index+1;
+   worksheet.getCell(`B${row}`).value=x.quantity;worksheet.getCell(`B${row}`).numFmt='0.##';
+   worksheet.getCell(`C${row}`).value=String(x.article_no);worksheet.getCell(`C${row}`).numFmt='@';
+   worksheet.getCell(`D${row}`).value=String(x.description);
+  });
+ }else{
+  worksheet.getCell('F1').value=technician;
+  worksheet.getCell('H1').value=exportDate;worksheet.getCell('H1').numFmt='dd.mm.yyyy';
+  for(let row=4;row<=28;row++){
+   worksheet.getCell(`B${row}`).value=null;worksheet.getCell(`C${row}`).value=null;
+   worksheet.getCell(`F${row}`).value=null;worksheet.getCell(`H${row}`).value=null;
+  }
+  items.forEach((x,index)=>{
+   const row=4+index;
+   worksheet.getCell(`B${row}`).value=x.quantity;worksheet.getCell(`B${row}`).numFmt='0.##';
+   worksheet.getCell(`C${row}`).value=String(x.article_no);worksheet.getCell(`C${row}`).numFmt='@';
+   worksheet.getCell(`F${row}`).value=String(x.description);
+  });
  }
-
- // 3. Change values only. Existing formatting, borders, widths, row heights,
- // print settings, page layout and merged cells remain attached to the cells.
- worksheet.getCell('F1').value=String(
-  d.technician||setting('primary_technician','Techniker')
- ).trim();
-
- const exportDate=new Date();
- exportDate.setHours(0,0,0,0);
- worksheet.getCell('H1').value=exportDate;
- // Keep the original cell style but enforce the requested visible date.
- worksheet.getCell('H1').numFmt='dd.mm.yyyy';
-
- // Clear only the cell values in the 25 prepared template rows.
- for(let row=4;row<=28;row++){
-  worksheet.getCell(`B${row}`).value=null;
-  worksheet.getCell(`C${row}`).value=null;
-  worksheet.getCell(`F${row}`).value=null;
-  worksheet.getCell(`H${row}`).value=null;
- }
-
- items.forEach((x,index)=>{
-  const row=4+index;
-  // Quantity is numeric only; no unit is appended.
-  worksheet.getCell(`B${row}`).value=x.quantity;
-  // Article numbers are always text so leading zeroes cannot be lost.
-  worksheet.getCell(`C${row}`).value=String(x.article_no);
-  worksheet.getCell(`C${row}`).numFmt='@';
-  worksheet.getCell(`F${row}`).value=String(x.description);
- });
-
  // Avoid recalculation warnings; there are no formulas in the written area.
  workbook.calcProperties.fullCalcOnLoad=false;
  workbook.calcProperties.forceFullCalc=false;
@@ -464,9 +485,9 @@ async function materialXlsx(d){
  // 5. Self-test: open the generated workbook again and verify every value.
  const verificationWorkbook=new ExcelJS.Workbook();
  await verificationWorkbook.xlsx.load(generated);
- const verificationSheet=
-  verificationWorkbook.getWorksheet('Tabelle1')||
-  verificationWorkbook.worksheets[1];
+ const verificationSheet=useLargeTemplate
+  ?(verificationWorkbook.getWorksheet('Materialanforderung')||verificationWorkbook.worksheets[0])
+  :(verificationWorkbook.getWorksheet('Tabelle1')||verificationWorkbook.worksheets[1]);
 
  if(!verificationSheet){
   throw Error('Interne Exportprüfung fehlgeschlagen: Exportblatt fehlt.');
@@ -647,7 +668,7 @@ function splitCustomerAndMachine(remainder){
  return {customer:source,machine:''};
 }
 function parseFlexibleServiceRows(text){
- const lines=String(text||'').replace(/\r/g,'').split('\n');
+ const lines=importContentLines(text).split('\n');
  const items=[],rowsOut=[],errors=[];
  let firstMetadata={movement_date:'',display_date:'',customer:'',machine:''};
  for(let i=0;i<lines.length;i++){
@@ -762,7 +783,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'52.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'53.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -856,26 +877,24 @@ async function route(url,opt={}){
 
  if(p==='/api/movements'){bookItems(d.items||[d],d.movement_type||'IN',d);audit(d.technician,'BUCHUNG',d.movement_type||'IN','',`${(d.items||[d]).length} Position(en)`);await persist();return response({ok:true,count:(d.items||[d]).length},201)}
  if(p==='/api/delivery-note/preview'||p==='/api/import/preview'){
+  if(p==='/api/delivery-note/preview'){
+   const declared=detectDeclaredImportType(d.text);
+   if(declared==='ENTNAHME'||(!declared&&looksLikeServiceImport(d.text))){
+    return response({wrong_import_type:true,error:'Entnahme-Daten erkannt. Bitte diese Ausgabe im Bereich „Entnahme – Servicebericht M365/Copilot“ einfügen.',items:[],unknown:[],errors:[]});
+   }
+  }
   const parsed=parseLines(d.text);
   const matched=matchItems(parsed);
   return response({...matched,errors:[...(matched.errors||[]),...(parsed.errors||[])]});
  }
  if(p==='/api/service-report/preview'){
+  const declared=detectDeclaredImportType(d.text);
+  if(declared==='EINBUCHUNG'||(!declared&&looksLikeDeliveryImport(d.text))){
+   return response({wrong_import_type:true,error:'Einbuchungs-Daten erkannt. Bitte diese Ausgabe im Bereich „Einbuchung – Lieferschein M365“ einfügen.',items:[],unknown:[],errors:[],metadata:{}});
+  }
   const parsed=parseServiceReport(d.text);
   const matched=matchItems(parsed.items);
-  const extraErrors=[...(parsed.errors||[])];
-
-  if(parsed.rows?.length){
-   const uniqueDates=[...new Set(parsed.rows.map(r=>r.metadata.movement_date).filter(Boolean))];
-   const uniqueCustomers=[...new Set(parsed.rows.map(r=>r.metadata.customer).filter(Boolean).map(v=>v.toLowerCase()))];
-   const uniqueMachines=[...new Set(parsed.rows.map(r=>r.metadata.machine).filter(Boolean).map(v=>v.toLowerCase()))];
-
-   if(uniqueDates.length>1)extraErrors.push({line:0,article_no:'',error:'Mehrere unterschiedliche Datumsangaben erkannt. Für die Buchung wird das Datum der ersten Materialzeile verwendet.'});
-   if(uniqueCustomers.length>1)extraErrors.push({line:0,article_no:'',error:'Mehrere unterschiedliche Kunden erkannt. Für die Buchung wird der Kunde der ersten Materialzeile verwendet.'});
-   if(uniqueMachines.length>1)extraErrors.push({line:0,article_no:'',error:'Mehrere unterschiedliche Maschinen erkannt. Für die Buchung wird die Maschine der ersten Materialzeile verwendet.'});
-  }
-
-  return response({...matched,metadata:parsed.metadata,errors:[...(matched.errors||[]),...extraErrors]});
+  return response({...matched,metadata:parsed.metadata,rows:parsed.rows,errors:[...(matched.errors||[]),...(parsed.errors||[])]})
  }
  if(p==='/api/delivery-note/commit'){await createBackup('Sicherheitsbackup','Vor Lieferschein-Einbuchung');bookItems(d.items,'IN',{...d,source:'Lieferschein'});audit(d.technician,'BUCHUNG','Lieferschein','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
  if(p==='/api/service-report/commit'){
@@ -899,7 +918,7 @@ async function route(url,opt={}){
  if(p==='/api/inventory/file-preview'){const rr=await xlsxRows(d.filename,d.content_base64);const parsed=rowsToItems(rr).map(x=>({article_no:x.article_no,counted_stock:x.quantity}));return response(parsed.map(x=>{const a=articles().find(z=>z.article_no===x.article_no);return a?{article_id:a.id,article_no:a.article_no,description:a.description,system_stock:a.stock,counted_stock:x.counted_stock,difference:x.counted_stock-a.stock}:null}).filter(Boolean))}
  if(p==='/api/inventory/preview'){const parsed=parseLines(d.text).map(x=>({article_no:x.article_no,counted_stock:x.quantity}));return response(parsed.map(x=>{const a=articles().find(z=>z.article_no===x.article_no);return a?{article_id:a.id,article_no:a.article_no,description:a.description,system_stock:a.stock,counted_stock:x.counted_stock,difference:x.counted_stock-a.stock}:null}).filter(Boolean))}
  if(p==='/api/inventory/commit'){await createBackup('Sicherheitsbackup','Vor Inventur');if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');let changed=0,unchanged=0;for(const x of d.items){const a=articles().find(z=>z.id===Number(x.article_id));const diff=Number(x.counted_stock)-a.stock;if(Math.abs(diff)<1e-8){unchanged++;continue}bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{...d,source:'Inventur',note:'Inventurkorrektur'});changed++}audit(d.technician,'INVENTUR','Bestand','',`${changed} Korrekturen`);await persist();return response({ok:true,changed,unchanged})}
- if(p==='/api/material-request/preview'){const x=await materialXlsx(d);return response({count:x.count,items:x.items})}
+ if(p==='/api/material-request/preview'){const x=await materialXlsx(d);return response({count:x.count,items:x.items,template_type:x.template_type})}
  if(p==='/api/export/material-request'){const x=await materialXlsx(d);const tech=(d.technician||'Techniker').replace(/[^\wÄÖÜäöüß-]+/g,'_');return response(x.blob,200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':`attachment; filename="Bestellung_${fmtDate(today())}_${tech}.xlsx"`})}
  if(p==='/api/masterdata'){
   const type=String(d.type||'');
@@ -1582,7 +1601,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','52');
+  setSetting('database_version','53');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();

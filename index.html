@@ -272,7 +272,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">52.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">53.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -331,9 +331,9 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 
 <div class="card"><h3>Lieferschein M365</h3>
 <div class="split"><div>
-<p>Lieferschein in Microsoft 365/Copilot auslesen lassen und ausschließlich Artikelnummer und Menge hier einfügen.</p>
+<p>Die Copilot-Ausgabe muss mit <b>IMPORTTYP: EINBUCHUNG</b> beginnen. Danach ausschließlich Artikelnummer und Anzahl einfügen.</p>
 <textarea id="dtext" oninput="scheduleExtractionPreview('delivery')" placeholder="Artikelnummer    Menge&#10;7079             2&#10;126084           4"></textarea>
-<div class="toolbar"><button class="secondary" onclick="deliveryPreview()">Extraktion jetzt prüfen</button><button class="secondary" onclick="clearExtraction('delivery')">Eingabe leeren</button></div><p class="small">Die Vorschau aktualisiert sich automatisch. TAB, Leerzeichen, Semikolon und | werden akzeptiert.</p></div>
+<div class="toolbar"><button class="secondary" onclick="deliveryPreview()">Extraktion jetzt prüfen</button><button class="secondary" onclick="insertDeliveryPrompt()">Copilot-Prompt anzeigen</button><button class="secondary" onclick="clearExtraction('delivery')">Eingabe leeren</button></div><p class="small">Die Vorschau aktualisiert sich automatisch. TAB, Leerzeichen, Semikolon und | werden akzeptiert.</p></div>
 <div class="formgrid">
 <label>Datum<input type="date" id="ddate"></label>
 <label>Techniker<select id="dtech"></select></label>
@@ -363,7 +363,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 
 <div class="card"><h3>Servicebericht M365/Copilot</h3>
 <div class="split"><div>
-<p>M365/Copilot soll pro Material eine Zeile ausgeben: <b>Datum → Artikelnummer → Anzahl → Kunde → Maschine</b>. Die App akzeptiert TAB, mehrere Leerzeichen, Semikolon und |.</p>
+<p>Die Copilot-Ausgabe muss mit <b>IMPORTTYP: ENTNAHME</b> beginnen. Danach pro Material: <b>Datum → Artikelnummer → Anzahl → Kunde → Maschine</b>.</p>
 <textarea id="stext" oninput="scheduleExtractionPreview('service')" placeholder="29.07.2026&#9;7079&#9;2&#9;Van Hamme&#9;Compas 4.0 Pro&#10;29.07.2026&#9;126084&#9;1&#9;Van Hamme&#9;Compas 4.0 Pro"></textarea>
 <div class="toolbar">
 <button class="secondary" onclick="servicePreview()">Extraktion jetzt prüfen</button>
@@ -392,7 +392,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div class="tablewrap"><table><thead><tr><th>ID</th><th>Datum</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Kunde</th><th>Maschine</th><th>Techniker</th><th>Aktionen</th></tr></thead>
 <tbody id="recentOutRows"></tbody></table></div></div></section>
 
-<section id="req" class="view"><h2>Materialanforderung</h2><div class="card"><div class="toolbar"><select id="rtech"></select><button class="secondary" onclick="loadReq()">Unterbestand laden</button><button class="secondary" onclick="previewReq()">Vorschau prüfen</button><button class="primary" onclick="exportReq()">Materialanforderung exportieren</button></div><p class="small">Maximal 25 Positionen entsprechend der Original-Excel-Vorlage. Doppelte Artikel werden zusammengefasst.</p><div class="tablewrap"><table><thead><tr><th>Export</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Menge</th></tr></thead><tbody id="rrows"></tbody></table></div><div id="reqPreview"></div><div id="rmsg" class="message"></div></div>
+<section id="req" class="view"><h2>Materialanforderung</h2><div class="card"><div class="toolbar"><select id="rtech"></select><button class="secondary" onclick="loadReq()">Unterbestand laden</button><button class="secondary" onclick="previewReq()">Vorschau prüfen</button><button class="primary" onclick="exportReq()">Materialanforderung exportieren</button></div><p class="small">Bis 25 Positionen wird die Standardvorlage verwendet. Ab 26 Positionen wird automatisch die große Vorlage verwendet. Doppelte Artikel werden zusammengefasst.</p><div class="tablewrap"><table><thead><tr><th>Export</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Menge</th></tr></thead><tbody id="rrows"></tbody></table></div><div id="reqPreview"></div><div id="rmsg" class="message"></div></div>
 <div class="card">
 <h3>📁 Exportordner Materialanforderung</h3>
 <p>Ohne ausgewählten Ordner wird die Datei wie bisher über den normalen Browser-Download gespeichert.</p>
@@ -851,6 +851,12 @@ function renderServicePreviewRows(){
 async function deliveryPreview(silent=false){
  try{
   let d=await api('/api/delivery-note/preview',{method:'POST',body:JSON.stringify({text:dtext.value})});
+  if(d.wrong_import_type){
+   deliveryp=[];deliveryUnknown=[];renderDeliveryPreviewRows();dcommit.disabled=true;
+   deliveryExtractedSummary.style.display='none';dunknown.innerHTML='';
+   derrors.innerHTML='<div class="message error" style="display:block">'+esc(d.error)+'</div>';
+   return msg(dmsg,d.error,false);
+  }
   deliveryp=d.items||[];deliveryUnknown=d.unknown||[];
   renderDeliveryPreviewRows();
   derrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
@@ -967,20 +973,49 @@ async function csvCommit(){
 function renderInventory(d){inventoryData=d.items||[];invrows.innerHTML=inventoryData.map(x=>`<tr data-id="${x.article_id}"><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.system_stock)}</td><td><input type="number" min="0" step=".01" value="${x.counted_stock}"></td><td>${n(x.difference)}</td></tr>`).join('');inverrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';invcommit.disabled=!inventoryData.length;msg(invmsg,inventoryData.length+' Inventurposition(en) erkannt, '+(d.errors||[]).length+' Fehler.',inventoryData.length>0)}
 async function inventoryPreview(){try{renderInventory(await api('/api/inventory/preview',{method:'POST',body:JSON.stringify({text:invtext.value})}))}catch(e){msg(invmsg,e.message,false)}}
 async function loadInventoryFile(input){let f=input.files[0];if(!f)return;try{let buffer=await f.arrayBuffer(),bytes=new Uint8Array(buffer),binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));renderInventory(await api('/api/inventory/file-preview',{method:'POST',body:JSON.stringify({filename:f.name,content_base64:btoa(binary)})}))}catch(e){msg(invmsg,e.message,false)}}
-async function inventoryCommit(){let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');if(!password)return;let items=[...invrows.children].map(r=>({article_id:+r.dataset.id,counted_stock:+r.children[3].firstChild.value}));try{let d=await api('/api/inventory/commit',{method:'POST',body:JSON.stringify({password,items,technician:(md.technicians?.[0]?.name||'Techniker'),movement_date:td()})});sessionStorage.adminPassword=password;msg(invmsg,`${d.changed} Bestandskorrektur(en) gebucht, ${d.unchanged} unverändert.`,true);inventoryData=[];invcommit.disabled=true;arts=[];await loadArticles();await dash()}catch(e){msg(invmsg,e.message,false)}}
+async function inventoryCommit(){let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');if(!password)return;let items=[...invrows.children].map(r=>({article_id:+r.dataset.id,counted_stock:+r.children[3].firstChild.value}));try{let d=await api('/api/inventory/commit',{method:'POST',body:JSON.stringify({password,items,technician:(md.technicians?.[0]?.name||'Techniker'),movement_date:td()})});sessionStorage.adminPassword=password;msg(invmsg,`${d.changed} Bestandskorrektur(en) gebucht, ${d.unchanged} unverändert.`,true);inventoryData=[];invcommit.disabled=true;arts=[];await loadArticles();await dash();await loadRecentMovements('IN');await loadRecentMovements('OUT')}catch(e){msg(invmsg,e.message,false)}}
 
+function insertDeliveryPrompt(){
+ const prompt=`IMPORTTYP: EINBUCHUNG
+
+Extrahiere aus diesem Lieferschein ausschließlich das eingebuchte Material.
+
+Gib pro Material genau eine neue Zeile aus:
+Artikelnummer[TAB]Anzahl
+
+Wichtige Regeln:
+- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: EINBUCHUNG
+- Danach nur Materialpositionen ausgeben.
+- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.
+- Preise, Summen, Fahrzeit, Arbeitszeit und Kilometer ignorieren.
+- Für jedes Material eine neue Zeile erstellen.
+- Zwischen Artikelnummer und Anzahl ein echtes Tabulatorzeichen verwenden.
+
+Beispiel:
+IMPORTTYP: EINBUCHUNG
+7079[TAB]2
+126084[TAB]4`;
+ alert(prompt);
+}
 function insertServicePrompt(){
- const prompt=`Extrahiere aus dieser Service-PDF folgende Felder und entnehme nur Material:
+ const prompt=`IMPORTTYP: ENTNAHME
 
-Datum
-Artikelnummer
-Anzahl
-Kunde
-Maschine
+Extrahiere aus dieser Service-PDF ausschließlich das entnommene Material.
 
-Gib alles in EINER Zeile TAB-getrennt aus.
+Gib pro Material genau eine neue Zeile aus:
+Datum[TAB]Artikelnummer[TAB]Anzahl[TAB]Kunde[TAB]Maschine
 
-Beachte dabei nicht Fahrzeit, Arbeitszeit und Kilometer. Erstelle für jedes Material eine neue Zeile.`;
+Wichtige Regeln:
+- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: ENTNAHME
+- Danach nur Materialpositionen ausgeben.
+- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.
+- Fahrzeit, Arbeitszeit und Kilometer ignorieren.
+- Für jedes Material eine neue Zeile erstellen.
+- Zwischen allen fünf Feldern ein echtes Tabulatorzeichen verwenden.
+
+Beispiel:
+IMPORTTYP: ENTNAHME
+29.07.2026[TAB]7079[TAB]2[TAB]Van Hamme[TAB]Compas 4.0 Pro`;
  alert(prompt);
 }
 function selectOrPrepareExtractedMachine(machine){
@@ -1007,6 +1042,12 @@ function currentServiceMachine(){
 async function servicePreview(silent=false){
  try{
   let d=await api('/api/service-report/preview',{method:'POST',body:JSON.stringify({text:stext.value})});
+  if(d.wrong_import_type){
+   servicep=[];serviceUnknown=[];renderServicePreviewRows();scommit.disabled=true;
+   serviceExtractedSummary.style.display='none';sunknown.innerHTML='';
+   serrors.innerHTML='<div class="message error" style="display:block">'+esc(d.error)+'</div>';
+   return msg(smsg,d.error,false);
+  }
   servicep=d.items||[];serviceUnknown=d.unknown||[];
   if(d.metadata?.movement_date)sdate.value=d.metadata.movement_date;
   if(d.metadata?.customer)scustomer.value=d.metadata.customer;
@@ -1049,7 +1090,7 @@ async function previewReq(){
    method:'POST',
    body:JSON.stringify({technician:rtech.value,items:reqItems()})
   });
-  reqPreview.innerHTML=`<div class="card"><h3>Exportvorschau (${d.count}/25 Positionen)</h3>
+  reqPreview.innerHTML=`<div class="card"><h3>Exportvorschau (${d.count} Positionen – ${d.template_type==='large'?'große Vorlage':'Standardvorlage'})</h3>
    <div class="tablewrap"><table><thead><tr>
     <th>Pos.</th><th>Menge</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Prüfung</th>
    </tr></thead><tbody>${d.items.map((x,i)=>`<tr>
@@ -1421,7 +1462,7 @@ async function saveAllArticles(){
  if(!rows.length)return msg(saveAllArticlesMsg,'Es wurden keine Änderungen vorgenommen.',true);
  let items=rows.map(row=>{let c=row.children,unit=c[5].firstChild.value,whole=isWholeNumberUnit(unit),num=v=>whole?Math.round(Number(v||0)):Number(v||0);return {id:+row.dataset.id,article_no:c[0].firstChild.value,description:c[1].firstChild.value,current_stock:num(c[2].firstChild.value),target_stock:num(c[3].firstChild.value),minimum_stock:num(c[4].firstChild.value),unit,location:c[6].firstChild.value,machine:c[7].firstChild.value,active:c[8].firstChild.checked}});
  saveAllArticlesButton.disabled=true;saveAllArticlesButton.textContent='Speichert …';
- try{let d=await api('/api/articles/batch-update',{method:'POST',body:JSON.stringify({password:sessionStorage.adminPassword||'',items})});rows.forEach(r=>delete r.dataset.changed);msg(saveAllArticlesMsg,`${d.updated} Artikel gespeichert. ${d.corrected||0} Bestandskorrektur(en) gebucht.`,true);saveAllArticlesButton.textContent='Alle Änderungen speichern';arts=[];await loadArticles();await dash();await loadAppInfo();await loadEditTable();}
+ try{let d=await api('/api/articles/batch-update',{method:'POST',body:JSON.stringify({password:sessionStorage.adminPassword||'',items})});rows.forEach(r=>delete r.dataset.changed);msg(saveAllArticlesMsg,`${d.updated} Artikel gespeichert. ${d.corrected||0} Bestandskorrektur(en) gebucht.`,true);saveAllArticlesButton.textContent='Alle Änderungen speichern';arts=[];await loadArticles();await dash();await loadRecentMovements('IN');await loadRecentMovements('OUT');await loadAppInfo();await loadEditTable();}
  catch(e){msg(saveAllArticlesMsg,e.message,false);saveAllArticlesButton.textContent='Änderungen speichern';}
  finally{saveAllArticlesButton.disabled=false}
 }
