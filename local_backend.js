@@ -161,7 +161,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','51');
+  setSetting('database_version','52');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -184,11 +184,35 @@ function query(url){const u=new URL(url,location.href);return Object.fromEntries
 function fmtDate(d){const f=setting('date_format','DD.MM.YYYY');if(!d)return '';const x=String(d).slice(0,10).split('-');return f==='YYYY-MM-DD'?x.join('-'):f==='MM/DD/YYYY'?`${x[1]}/${x[2]}/${x[0]}`:`${x[2]}.${x[1]}.${x[0]}`}
 function articles(q=''){let sql=`SELECT a.*,${stockExpr()} stock FROM articles a LEFT JOIN movements m ON m.article_id=a.id WHERE 1=1`,p=[];if(q){sql+=' AND (a.article_no LIKE ? OR a.description LIKE ? OR a.location LIKE ? OR a.machine LIKE ?)';p=Array(4).fill('%'+q+'%')}sql+=' GROUP BY a.id ORDER BY a.article_no';return rows(sql,p)}
 function parseLines(text){
- const out=[];for(const raw of String(text||'').split(/\r?\n/)){const line=raw.trim();if(!line)continue;const p=line.split(/[;\t|]+/).map(x=>x.trim());if(p.length<2)continue;
- let no=p[0],qty=Number(String(p[1]).replace(',','.')),desc=p[2]||'';if(!Number.isFinite(qty)){qty=Number(String(p[p.length-1]).replace(',','.'));desc=p.slice(1,-1).join(' ')}
- if(no&&Number.isFinite(qty)&&qty>0)out.push({article_no:no,quantity:qty,description:desc})}return out
+ const out=[],errors=[];
+ const lines=String(text||'').replace(/\r/g,'').split('\n');
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i].trim();
+  if(!line)continue;
+  if(/^(artikel(?:nummer)?|material(?:nummer)?)\b/i.test(line)&&/\b(menge|anzahl|qty)\b/i.test(line))continue;
+  const cleaned=line.replace(/\s*[;|]\s*/g,'\t').replace(/\t+/g,'\t');
+  let parts=cleaned.includes('\t')?cleaned.split('\t').map(x=>x.trim()).filter(Boolean):cleaned.split(/\s+/);
+  const dateAtStart=normalizeExtractedDate(parts[0]||'').iso;
+  if(dateAtStart)parts.shift();
+  const article=parts[0]||'';
+  const qty=Number(String(parts[1]||'').replace(',','.'));
+  const desc=parts.slice(2).join(' ');
+  if(!article||!Number.isFinite(qty)||qty<=0){
+   errors.push({line:i+1,article_no:article,error:'Artikelnummer oder Menge konnte nicht erkannt werden.'});
+   continue;
+  }
+  out.push({article_no:article,quantity:qty,description:desc,line:i+1});
+ }
+ out.errors=errors;
+ return out;
 }
-function matchItems(items){return items.map(x=>{const a=rows('SELECT id,article_no,description FROM articles WHERE article_no=?',[x.article_no])[0];return {...x,article_id:a?.id||0,description:a?.description||x.description||'',found:!!a}})}
+function matchItems(items){
+ const matched=(items||[]).map(x=>{
+  const a=rows('SELECT id,article_no,description FROM articles WHERE article_no=?',[x.article_no])[0];
+  return {...x,article_id:a?.id||0,description:a?.description||x.description||'',found:!!a};
+ });
+ return {items:matched.filter(x=>x.found),unknown:matched.filter(x=>!x.found),errors:[]};
+}
 function bookItems(items,type,d){
  for(const x of items){const aid=Number(x.article_id)||rows('SELECT id FROM articles WHERE article_no=?',[x.article_no])[0]?.id;if(!aid)throw Error('Unbekannter Artikel: '+(x.article_no||''));const qty=Number(x.quantity);if(!(qty>0))continue;
  if(type==='OUT'){const a=articles().find(z=>z.id===aid);if(a&&qty>a.stock)throw Error(`Nicht genügend Bestand für ${a.article_no}. Verfügbar: ${a.stock}`)}
@@ -595,9 +619,67 @@ function parseServiceTsv(text){
  return {matched:rows.length>0,items,metadata:firstMetadata,rows,errors};
 }
 
+
+function machineCandidates(){
+ return rows('SELECT name FROM machines WHERE active=1 ORDER BY LENGTH(name) DESC').map(x=>String(x.name||'').trim()).filter(Boolean);
+}
+function normalizeLoose(value){
+ return String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9.]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function splitCustomerAndMachine(remainder){
+ const source=String(remainder||'').trim();
+ if(!source)return {customer:'',machine:''};
+ const normalized=normalizeLoose(source);
+ for(const candidate of machineCandidates()){
+  const nc=normalizeLoose(candidate);
+  if(!nc)continue;
+  if(normalized===nc)return {customer:'',machine:candidate};
+  if(normalized.endsWith(' '+nc)){
+   const words=source.split(/\s+/);
+   const count=candidate.split(/\s+/).length;
+   return {customer:words.slice(0,-count).join(' '),machine:words.slice(-count).join(' ')};
+  }
+ }
+ const keywords=/\b(compas|croissomat|rondostar|rondinette|ecostar|brotstar|polyline|kombi|smc|sko|croissantwickler|teigteiler)\b/i;
+ const words=source.split(/\s+/);
+ const index=words.findIndex(word=>keywords.test(word));
+ if(index>=0)return {customer:words.slice(0,index).join(' '),machine:words.slice(index).join(' ')};
+ return {customer:source,machine:''};
+}
+function parseFlexibleServiceRows(text){
+ const lines=String(text||'').replace(/\r/g,'').split('\n');
+ const items=[],rowsOut=[],errors=[];
+ let firstMetadata={movement_date:'',display_date:'',customer:'',machine:''};
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i].trim();
+  if(!line)continue;
+  if(/^(datum|date)\b/i.test(line)&&/\b(artikel|material)\b/i.test(line))continue;
+  const m=line.match(/^(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}|\d{4}-\d{1,2}-\d{1,2})[\t ;|]+([A-Za-z0-9._\/-]+)[\t ;|]+(\d+(?:[.,]\d+)?)[\t ;|]+(.+)$/);
+  if(!m)continue;
+  const parsedDate=normalizeExtractedDate(m[1]);
+  const article=m[2].trim();
+  const qty=Number(m[3].replace(',','.'));
+  const rest=splitCustomerAndMachine(m[4]);
+  if(!Number.isFinite(qty)||qty<=0){
+   errors.push({line:i+1,article_no:article,error:'Anzahl fehlt oder ist ungültig.'});
+   continue;
+  }
+  const metadata={movement_date:parsedDate.iso,display_date:parsedDate.display,customer:rest.customer,machine:rest.machine};
+  items.push({article_no:article,quantity:qty,line:i+1});
+  rowsOut.push({article_no:article,quantity:qty,line:i+1,metadata});
+  if(!firstMetadata.movement_date)firstMetadata.movement_date=metadata.movement_date;
+  if(!firstMetadata.display_date)firstMetadata.display_date=metadata.display_date;
+  if(!firstMetadata.customer)firstMetadata.customer=metadata.customer;
+  if(!firstMetadata.machine)firstMetadata.machine=metadata.machine;
+ }
+ return {matched:rowsOut.length>0,items,rows:rowsOut,metadata:firstMetadata,errors};
+}
+
 function parseServiceReport(text){
  const tsv=parseServiceTsv(text);
  if(tsv.matched)return {items:tsv.items,metadata:tsv.metadata,rows:tsv.rows,errors:tsv.errors};
+ const flexible=parseFlexibleServiceRows(text);
+ if(flexible.matched)return {items:flexible.items,metadata:flexible.metadata,rows:flexible.rows,errors:flexible.errors};
  const raw=String(text||'').replace(/\r/g,'');
  const lines=raw.split('\n');
  const metadata={movement_date:'',display_date:'',customer:'',machine:''};
@@ -680,7 +762,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'51.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'52.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -773,7 +855,11 @@ async function route(url,opt={}){
  }
 
  if(p==='/api/movements'){bookItems(d.items||[d],d.movement_type||'IN',d);audit(d.technician,'BUCHUNG',d.movement_type||'IN','',`${(d.items||[d]).length} Position(en)`);await persist();return response({ok:true,count:(d.items||[d]).length},201)}
- if(p==='/api/delivery-note/preview'||p==='/api/import/preview'){return response(matchItems(parseLines(d.text)))}
+ if(p==='/api/delivery-note/preview'||p==='/api/import/preview'){
+  const parsed=parseLines(d.text);
+  const matched=matchItems(parsed);
+  return response({...matched,errors:[...(matched.errors||[]),...(parsed.errors||[])]});
+ }
  if(p==='/api/service-report/preview'){
   const parsed=parseServiceReport(d.text);
   const matched=matchItems(parsed.items);
@@ -1496,7 +1582,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','51');
+  setSetting('database_version','52');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();

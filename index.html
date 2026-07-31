@@ -272,7 +272,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">51.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">52.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -332,19 +332,19 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div class="card"><h3>Lieferschein M365</h3>
 <div class="split"><div>
 <p>Lieferschein in Microsoft 365/Copilot auslesen lassen und ausschließlich Artikelnummer und Menge hier einfügen.</p>
-<textarea id="dtext" placeholder="Artikelnummer    Menge&#10;7079             2&#10;126084           4"></textarea>
-<button class="secondary" onclick="deliveryPreview()">Extraktion prüfen</button></div>
+<textarea id="dtext" oninput="scheduleExtractionPreview('delivery')" placeholder="Artikelnummer    Menge&#10;7079             2&#10;126084           4"></textarea>
+<div class="toolbar"><button class="secondary" onclick="deliveryPreview()">Extraktion jetzt prüfen</button><button class="secondary" onclick="clearExtraction('delivery')">Eingabe leeren</button></div><p class="small">Die Vorschau aktualisiert sich automatisch. TAB, Leerzeichen, Semikolon und | werden akzeptiert.</p></div>
 <div class="formgrid">
 <label>Datum<input type="date" id="ddate"></label>
 <label>Techniker<select id="dtech"></select></label>
 <label>Bemerkung<input id="dnote"></label>
 </div></div>
-<button id="dcommit" class="primary" disabled onclick="deliveryCommit()">Geprüfte Lieferung einbuchen</button>
+<div id="deliveryExtractedSummary" class="summary-box" style="display:none;margin-top:12px"></div><button id="dcommit" class="primary" disabled onclick="deliveryCommit()">Geprüfte Lieferung einbuchen</button>
 <div id="dmsg" class="message"></div>
-<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="drows"></tbody></table></div>
+<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Status</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Aktion</th></tr></thead><tbody id="drows"></tbody></table></div>
 <div id="derrors"></div><div id="dunknown"></div></div>
 <div class="card"><h3>Letzte 20 Einbuchungen</h3>
-<p class="small">Für jede Korrektur und Löschung ist das Administratorpasswort erneut erforderlich.</p>
+<p class="small">Ist der Administratorbereich bereits freigeschaltet, ist keine erneute Passworteingabe erforderlich.</p>
 <div class="tablewrap"><table><thead><tr><th>ID</th><th>Datum</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th><th>Bemerkung</th><th>Aktionen</th></tr></thead>
 <tbody id="recentInRows"></tbody></table></div></div></section>
 
@@ -363,11 +363,11 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 
 <div class="card"><h3>Servicebericht M365/Copilot</h3>
 <div class="split"><div>
-<p>M365/Copilot soll pro Material genau eine <b>TAB-getrennte Zeile</b> ausgeben: <b>Datum → Artikelnummer → Anzahl → Kunde → Maschine</b>.</p>
-<textarea id="stext" placeholder="29.07.2026&#9;7079&#9;2&#9;Van Hamme&#9;Compas 4.0 Pro&#10;29.07.2026&#9;126084&#9;1&#9;Van Hamme&#9;Compas 4.0 Pro"></textarea>
+<p>M365/Copilot soll pro Material eine Zeile ausgeben: <b>Datum → Artikelnummer → Anzahl → Kunde → Maschine</b>. Die App akzeptiert TAB, mehrere Leerzeichen, Semikolon und |.</p>
+<textarea id="stext" oninput="scheduleExtractionPreview('service')" placeholder="29.07.2026&#9;7079&#9;2&#9;Van Hamme&#9;Compas 4.0 Pro&#10;29.07.2026&#9;126084&#9;1&#9;Van Hamme&#9;Compas 4.0 Pro"></textarea>
 <div class="toolbar">
-<button class="secondary" onclick="servicePreview()">Extraktion prüfen</button>
-<button class="secondary" onclick="insertServicePrompt()">Copilot-Prompt anzeigen</button>
+<button class="secondary" onclick="servicePreview()">Extraktion jetzt prüfen</button>
+<button class="secondary" onclick="insertServicePrompt()">Copilot-Prompt anzeigen</button><button class="secondary" onclick="clearExtraction('service')">Eingabe leeren</button>
 </div>
 <p class="small">Fahrzeit, Arbeitszeit und Kilometer werden nicht übernommen. Die erkannten Werte bleiben vor der Buchung änderbar.</p>
 </div>
@@ -385,10 +385,10 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div id="serviceExtractedSummary" class="summary-box" style="display:none;margin-top:12px"></div>
 <button id="scommit" class="danger" disabled onclick="serviceCommit()">Geprüfte Entnahme buchen</button>
 <div id="smsg" class="message"></div>
-<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>2. Artikelnummer</th><th>Bezeichnung</th><th>3. Anzahl</th></tr></thead><tbody id="srows"></tbody></table></div>
+<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Status</th><th>2. Artikelnummer</th><th>Bezeichnung</th><th>3. Anzahl</th><th>Aktion</th></tr></thead><tbody id="srows"></tbody></table></div>
 <div id="serrors"></div><div id="sunknown"></div></div>
 <div class="card"><h3>Letzte 20 Entnahmen</h3>
-<p class="small">Für jede Korrektur und Löschung ist das Administratorpasswort erneut erforderlich.</p>
+<p class="small">Ist der Administratorbereich bereits freigeschaltet, ist keine erneute Passworteingabe erforderlich.</p>
 <div class="tablewrap"><table><thead><tr><th>ID</th><th>Datum</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Kunde</th><th>Maschine</th><th>Techniker</th><th>Aktionen</th></tr></thead>
 <tbody id="recentOutRows"></tbody></table></div></div></section>
 
@@ -784,20 +784,92 @@ async function saveMove(t){
  }catch(e){msg(el,e.message,false)}
 }
 
-async function deliveryPreview(){
- let d=await api('/api/delivery-note/preview',{method:'POST',body:JSON.stringify({text:dtext.value})});
- deliveryp=d.items;deliveryUnknown=d.unknown||[];
- drows.innerHTML=deliveryp.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('');
- derrors.innerHTML=d.errors.length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
- dunknown.innerHTML=unknownBlock(deliveryUnknown,'delivery');
- dcommit.disabled=!deliveryp.length;msg(dmsg,deliveryp.length+' bekannte Position(en), '+deliveryUnknown.length+' neue Artikel, '+d.errors.length+' Fehler.',deliveryp.length>0)
+
+let extractionPreviewTimers={delivery:null,service:null};
+function scheduleExtractionPreview(type){
+ clearTimeout(extractionPreviewTimers[type]);
+ const value=(type==='delivery'?dtext.value:stext.value).trim();
+ if(!value){clearExtractionResults(type);return}
+ extractionPreviewTimers[type]=setTimeout(()=>{
+  if(type==='delivery')deliveryPreview(true);
+  else servicePreview(true);
+ },320);
+}
+function clearExtractionResults(type){
+ if(type==='delivery'){
+  deliveryp=[];deliveryUnknown=[];drows.innerHTML='';derrors.innerHTML='';dunknown.innerHTML='';
+  dcommit.disabled=true;deliveryExtractedSummary.style.display='none';dmsg.style.display='none';
+ }else{
+  servicep=[];serviceUnknown=[];srows.innerHTML='';serrors.innerHTML='';sunknown.innerHTML='';
+  scommit.disabled=true;serviceExtractedSummary.style.display='none';smsg.style.display='none';
+ }
+}
+function clearExtraction(type){
+ if(type==='delivery')dtext.value='';
+ else stext.value='';
+ clearExtractionResults(type);
+}
+function updateExtractedQuantity(type,index,value){
+ const qty=Number(String(value).replace(',','.'));
+ const list=type==='delivery'?deliveryp:servicep;
+ if(!list[index])return;
+ if(Number.isFinite(qty)&&qty>0)list[index].quantity=qty;
+ const commit=type==='delivery'?dcommit:scommit;
+ commit.disabled=!list.length||list.some(x=>!(Number(x.quantity)>0));
+}
+function removeExtractedItem(type,index){
+ const list=type==='delivery'?deliveryp:servicep;
+ list.splice(index,1);
+ if(type==='delivery')renderDeliveryPreviewRows();
+ else renderServicePreviewRows();
+}
+function renderDeliveryPreviewRows(){
+ drows.innerHTML=deliveryp.map((x,i)=>`<tr>
+  <td title="Artikel im Lagerbestand gefunden">✅</td>
+  <td>${esc(x.article_no)}</td><td>${esc(x.description)}</td>
+  <td><input type="number" min="0.01" step="0.01" value="${Number(x.quantity)}" onchange="updateExtractedQuantity('delivery',${i},this.value)"></td>
+  <td><button class="danger icon-button" title="Position entfernen" onclick="removeExtractedItem('delivery',${i})">🗑️</button></td>
+ </tr>`).join('');
+ dcommit.disabled=!deliveryp.length;
+ if(deliveryExtractedSummary.style.display!=='none'){
+  deliveryExtractedSummary.innerHTML=`<h3>Erkannte Lieferung</h3>
+   <p><b>Positionen:</b> ${deliveryp.length+deliveryUnknown.length}</p>
+   <p><b>Bekannte Artikel:</b> ${deliveryp.length}</p>
+   <p><b>Unbekannte Artikel:</b> ${deliveryUnknown.length}</p>`;
+ }
+}
+function renderServicePreviewRows(){
+ srows.innerHTML=servicep.map((x,i)=>`<tr>
+  <td title="Artikel im Lagerbestand gefunden">✅</td>
+  <td>${esc(x.article_no)}</td><td>${esc(x.description)}</td>
+  <td><input type="number" min="0.01" step="0.01" value="${Number(x.quantity)}" onchange="updateExtractedQuantity('service',${i},this.value)"></td>
+  <td><button class="danger icon-button" title="Position entfernen" onclick="removeExtractedItem('service',${i})">🗑️</button></td>
+ </tr>`).join('');
+ scommit.disabled=!servicep.length;
+}
+
+async function deliveryPreview(silent=false){
+ try{
+  let d=await api('/api/delivery-note/preview',{method:'POST',body:JSON.stringify({text:dtext.value})});
+  deliveryp=d.items||[];deliveryUnknown=d.unknown||[];
+  renderDeliveryPreviewRows();
+  derrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
+  dunknown.innerHTML=unknownBlock(deliveryUnknown,'delivery');
+  deliveryExtractedSummary.style.display='block';
+  deliveryExtractedSummary.innerHTML=`<h3>Erkannte Lieferung</h3>
+   <p><b>Positionen:</b> ${deliveryp.length+deliveryUnknown.length}</p>
+   <p><b>Bekannte Artikel:</b> ${deliveryp.length}</p>
+   <p><b>Unbekannte Artikel:</b> ${deliveryUnknown.length}</p>`;
+  dcommit.disabled=!deliveryp.length;
+  msg(dmsg,deliveryp.length+' bekannte Position(en), '+deliveryUnknown.length+' unbekannte Artikel, '+(d.errors||[]).length+' Fehler.',deliveryp.length>0);
+ }catch(e){if(!silent)msg(dmsg,e.message,false)}
 }
 async function deliveryCommit(){
  try{
   const payload={movement_type:'IN',items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value};
   if(!await confirmPossibleDuplicate(payload))return msg(dmsg,'Einbuchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
   let d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify(payload)});
-  msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);deliveryp=[];dcommit.disabled=true;arts=[];await dash();await loadRecentMovements('IN')
+  msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);deliveryp=[];deliveryUnknown=[];dtext.value='';drows.innerHTML='';dunknown.innerHTML='';derrors.innerHTML='';deliveryExtractedSummary.style.display='none';dcommit.disabled=true;arts=[];await dash();await loadRecentMovements('IN')
  }catch(e){msg(dmsg,e.message,false)}
 }
 
@@ -913,11 +985,13 @@ Beachte dabei nicht Fahrzeit, Arbeitszeit und Kilometer. Erstelle für jedes Mat
 }
 function selectOrPrepareExtractedMachine(machine){
  const value=String(machine||'').trim();
- smachineNew.value='';
- smachineHint.textContent='';
+ smachineNew.value='';smachineHint.textContent='';
  if(!value)return;
- const options=[...smachine.options];
- const existing=options.find(o=>o.value.trim().toLowerCase()===value.toLowerCase());
+ const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+ const wanted=norm(value);
+ const options=[...smachine.options].filter(o=>o.value);
+ let existing=options.find(o=>norm(o.value)===wanted);
+ if(!existing)existing=options.find(o=>norm(o.value).includes(wanted)||wanted.includes(norm(o.value)));
  if(existing){
   smachine.value=existing.value;
   smachineHint.textContent='Vorhandene Maschine erkannt.';
@@ -930,24 +1004,26 @@ function selectOrPrepareExtractedMachine(machine){
 function currentServiceMachine(){
  return smachineNew.value.trim()||smachine.value.trim();
 }
-async function servicePreview(){
- let d=await api('/api/service-report/preview',{method:'POST',body:JSON.stringify({text:stext.value})});
- servicep=d.items||[];serviceUnknown=d.unknown||[];
- if(d.metadata?.movement_date)sdate.value=d.metadata.movement_date;
- if(d.metadata?.customer)scustomer.value=d.metadata.customer;
- if(d.metadata?.machine)selectOrPrepareExtractedMachine(d.metadata.machine);
- srows.innerHTML=servicep.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('');
- serrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
- sunknown.innerHTML=unknownBlock(serviceUnknown,'service');
- serviceExtractedSummary.style.display='block';
- serviceExtractedSummary.innerHTML=`
-  <h3>Erkannte Angaben</h3>
-  <p><b>1. Datum:</b> ${esc(d.metadata?.display_date||sdate.value||'Nicht erkannt')}</p>
-  <p><b>2./3. Artikelnummer und Anzahl:</b> ${servicep.length+serviceUnknown.length} Position(en)</p>
-  <p><b>3. Kunde:</b> ${esc(d.metadata?.customer||scustomer.value||'Nicht erkannt')}</p>
-  <p><b>4. Maschine:</b> ${esc(d.metadata?.machine||currentServiceMachine()||'Nicht erkannt')}</p>`;
- scommit.disabled=!servicep.length;
- msg(smsg,servicep.length+' bekannte Position(en), '+serviceUnknown.length+' unbekannte Artikel, '+(d.errors||[]).length+' Fehler erkannt.',servicep.length>0)
+async function servicePreview(silent=false){
+ try{
+  let d=await api('/api/service-report/preview',{method:'POST',body:JSON.stringify({text:stext.value})});
+  servicep=d.items||[];serviceUnknown=d.unknown||[];
+  if(d.metadata?.movement_date)sdate.value=d.metadata.movement_date;
+  if(d.metadata?.customer)scustomer.value=d.metadata.customer;
+  if(d.metadata?.machine)selectOrPrepareExtractedMachine(d.metadata.machine);
+  renderServicePreviewRows();
+  serrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
+  sunknown.innerHTML=unknownBlock(serviceUnknown,'service');
+  serviceExtractedSummary.style.display='block';
+  serviceExtractedSummary.innerHTML=`
+   <h3>Erkannte Angaben</h3>
+   <p><b>1. Datum:</b> ${esc(d.metadata?.display_date||sdate.value||'Nicht erkannt')}</p>
+   <p><b>2./3. Artikelnummer und Anzahl:</b> ${servicep.length+serviceUnknown.length} Position(en)</p>
+   <p><b>3. Kunde:</b> ${esc(d.metadata?.customer||scustomer.value||'Nicht erkannt')}</p>
+   <p><b>4. Maschine:</b> ${esc(d.metadata?.machine||currentServiceMachine()||'Nicht erkannt')}</p>`;
+  scommit.disabled=!servicep.length;
+  msg(smsg,servicep.length+' bekannte Position(en), '+serviceUnknown.length+' unbekannte Artikel, '+(d.errors||[]).length+' Fehler erkannt.',servicep.length>0);
+ }catch(e){if(!silent)msg(smsg,e.message,false)}
 }
 async function serviceCommit(){
  try{
@@ -959,7 +1035,7 @@ async function serviceCommit(){
   if(!await confirmPossibleDuplicate(payload))return msg(smsg,'Entnahme wurde wegen möglicher Doppelbuchung abgebrochen.',false);
   let d=await api('/api/service-report/commit',{method:'POST',body:JSON.stringify(payload)});
   msg(smsg,d.count+' Position(en) aus dem Servicebericht als Entnahme gebucht.'+(d.machine_created?' Neue Maschine „'+d.machine+'“ wurde angelegt.':''),true);
-  servicep=[];serviceUnknown=[];scommit.disabled=true;arts=[];
+  servicep=[];serviceUnknown=[];stext.value='';srows.innerHTML='';sunknown.innerHTML='';serrors.innerHTML='';scommit.disabled=true;arts=[];
   smachineNew.value='';smachineHint.textContent='';serviceExtractedSummary.style.display='none';
   await meta();await dash();await loadRecentMovements('OUT')
  }catch(e){msg(smsg,e.message,false)}
