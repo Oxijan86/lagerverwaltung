@@ -161,7 +161,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','53');
+  setSetting('database_version','54');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -494,13 +494,23 @@ async function materialXlsx(d){
  }
 
  const verifyErrors=[];
- const exportedTechnician=String(verificationSheet.getCell('F1').value??'').trim();
+ const technicianCell=useLargeTemplate?'D1':'F1';
+ const descriptionColumn=useLargeTemplate?'D':'F';
+ const dateCell=useLargeTemplate?'F1':'H1';
+ const preparedRowCount=useLargeTemplate?995:25;
+
+ const exportedTechnician=String(verificationSheet.getCell(technicianCell).value??'').trim();
  const requestedTechnician=String(
   d.technician||setting('primary_technician','Techniker')
  ).trim();
 
  if(exportedTechnician!==requestedTechnician){
-  verifyErrors.push('Technikername wurde nicht korrekt übernommen.');
+  verifyErrors.push(`Technikername wurde nicht korrekt übernommen (${technicianCell}).`);
+ }
+
+ const exportedDate=verificationSheet.getCell(dateCell).value;
+ if(!exportedDate){
+  verifyErrors.push(`Exportdatum wurde nicht korrekt übernommen (${dateCell}).`);
  }
 
  items.forEach((x,index)=>{
@@ -508,7 +518,7 @@ async function materialXlsx(d){
   const exportedQty=Number(verificationSheet.getCell(`B${row}`).value);
   const exportedNo=String(verificationSheet.getCell(`C${row}`).value??'').trim();
   const exportedDescription=String(
-   verificationSheet.getCell(`F${row}`).value??''
+   verificationSheet.getCell(`${descriptionColumn}${row}`).value??''
   ).trim();
 
   if(exportedQty!==Number(x.quantity)){
@@ -518,17 +528,17 @@ async function materialXlsx(d){
    verifyErrors.push(`Position ${index+1}: Artikelnummer ${exportedNo} statt ${x.article_no}.`);
   }
   if(exportedDescription!==String(x.description)){
-   verifyErrors.push(`Position ${index+1}: Bezeichnung stimmt nicht überein.`);
+   verifyErrors.push(`Position ${index+1}: Bezeichnung stimmt nicht überein (${descriptionColumn}${row}).`);
   }
  });
 
  // Ensure no unintended data remains below the exported rows.
- for(let index=items.length;index<25;index++){
+ for(let index=items.length;index<preparedRowCount;index++){
   const row=4+index;
   const values=[
    verificationSheet.getCell(`B${row}`).value,
    verificationSheet.getCell(`C${row}`).value,
-   verificationSheet.getCell(`F${row}`).value
+   verificationSheet.getCell(`${descriptionColumn}${row}`).value
   ];
   if(values.some(v=>v!==null&&v!==undefined&&String(v)!=='')){
    verifyErrors.push(`Position ${index+1}: Alte Zellinhalte wurden nicht vollständig entfernt.`);
@@ -537,7 +547,7 @@ async function materialXlsx(d){
  }
 
  if(verifyErrors.length){
-  throw Error('Interne Prüfung der Excel-Datei fehlgeschlagen:\n• '+verifyErrors.join('\n• '));
+  throw Error('Interne Prüfung der gewählten Excel-Vorlage fehlgeschlagen:\n• '+verifyErrors.join('\n• '));
  }
 
  return {
@@ -546,7 +556,8 @@ async function materialXlsx(d){
    {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}
   ),
   count:items.length,
-  items:items.map(({first_position,...x})=>x)
+  items:items.map(({first_position,...x})=>x),
+  template_type:useLargeTemplate?'large':'standard'
  };
 }
 
@@ -783,7 +794,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'53.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'54.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -1601,7 +1612,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','53');
+  setSetting('database_version','54');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
