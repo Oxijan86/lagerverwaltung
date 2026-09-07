@@ -161,7 +161,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','54');
+  setSetting('database_version','55');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -172,7 +172,7 @@ function setupIsRequired(){
 async function initialize(){
  SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
  const b=await ig(DBKEY);db=b?new SQL.Database(new Uint8Array(b)):new SQL.Database();
- initSchema();adoptExistingDatabase();handle=await ig(HANDLEKEY)||null;if(!setting('storage_mode'))setSetting('storage_mode',handle?'local_folder':'browser_local');
+ initSchema();adoptExistingDatabase();backfillMovementAuditV55();handle=await ig(HANDLEKEY)||null;if(!setting('storage_mode'))setSetting('storage_mode',handle?'local_folder':'browser_local');
  const m=await ig(METAKEY)||{};
  if(!m.localModified)m.localModified=currentDbState().changed_at;
  await ip(METAKEY,m);
@@ -194,18 +194,41 @@ function importContentLines(text){
 }
 function looksLikeServiceImport(text){
  const lines=importContentLines(text).split('\n').map(x=>x.trim()).filter(Boolean);
- const rx=/^(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}|\d{4}-\d{1,2}-\d{1,2})[\t ;|]+[A-Za-z0-9._\/-]+[\t ;|]+\d+(?:[.,]\d+)?[\t ;|]+.+$/;
- return !!lines.length&&lines.filter(x=>rx.test(x)).length>=Math.max(1,Math.ceil(lines.length/2));
+ if(!lines.length)return false;
+ const isQty=v=>Number.isFinite(Number(String(v||'').replace(',','.')));
+ let hits=0;
+ for(const line of lines){
+  const normalized=line.replace(/\s*[;|]\s*/g,'\t');
+  if(normalized.includes('\t')){
+   const cols=normalized.split('\t').map(x=>x.trim()).filter(Boolean);
+   const date=normalizeExtractedDate(cols[0]||'').iso;
+   if(date&&cols[1]&&(isQty(cols[2])||isQty(cols[3])))hits++;
+  }else{
+   const rx=/^(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}|\d{4}-\d{1,2}-\d{1,2})\s+[A-Za-z0-9._\/-]+\s+\d+(?:[.,]\d+)?\s+.+$/;
+   if(rx.test(line))hits++;
+  }
+ }
+ return hits>=Math.max(1,Math.ceil(lines.length/2));
 }
 function looksLikeDeliveryImport(text){
  const lines=importContentLines(text).split('\n').map(x=>x.trim()).filter(Boolean);
- const rx=/^[A-Za-z0-9._\/-]+[\t ;|]+\d+(?:[.,]\d+)?\s*$/;
- return !!lines.length&&lines.filter(x=>rx.test(x)).length>=Math.max(1,Math.ceil(lines.length/2));
+ if(!lines.length)return false;
+ const isQty=v=>Number.isFinite(Number(String(v||'').replace(',','.')));
+ let hits=0;
+ for(const line of lines){
+  const normalized=line.replace(/\s*[;|]\s*/g,'\t');
+  if(normalized.includes('\t')){
+   const cols=normalized.split('\t').map(x=>x.trim()).filter(Boolean);
+   if(cols[0]&&(isQty(cols[1])||isQty(cols[cols.length-1])))hits++;
+  }else if(/^[A-Za-z0-9._\/-]+\s+\d+(?:[.,]\d+)?\s*$/.test(line))hits++;
+ }
+ return hits>=Math.max(1,Math.ceil(lines.length/2));
 }
 
 function parseLines(text){
  const out=[],errors=[];
  const lines=importContentLines(text).split('\n');
+ const toQty=v=>Number(String(v||'').replace(',','.'));
  for(let i=0;i<lines.length;i++){
   const line=lines[i].trim();
   if(!line)continue;
@@ -214,9 +237,17 @@ function parseLines(text){
   let parts=cleaned.includes('\t')?cleaned.split('\t').map(x=>x.trim()).filter(Boolean):cleaned.split(/\s+/);
   const dateAtStart=normalizeExtractedDate(parts[0]||'').iso;
   if(dateAtStart)parts.shift();
-  const article=parts[0]||'';
-  const qty=Number(String(parts[1]||'').replace(',','.'));
-  const desc=parts.slice(2).join(' ');
+  const article=parts.shift()||'';
+  let qty=NaN,desc='';
+  if(parts.length){
+   const firstQty=toQty(parts[0]);
+   const lastQty=toQty(parts[parts.length-1]);
+   if(Number.isFinite(firstQty)){
+    qty=firstQty;desc=parts.slice(1).join(' ');
+   }else if(Number.isFinite(lastQty)){
+    qty=lastQty;desc=parts.slice(0,-1).join(' ');
+   }
+  }
   if(!article||!Number.isFinite(qty)||qty<=0){
    errors.push({line:i+1,article_no:article,error:'Artikelnummer oder Menge konnte nicht erkannt werden.'});
    continue;
@@ -234,16 +265,25 @@ function matchItems(items){
  return {items:matched.filter(x=>x.found),unknown:matched.filter(x=>!x.found),errors:[]};
 }
 function bookItems(items,type,d){
- for(const x of items){const aid=Number(x.article_id)||rows('SELECT id FROM articles WHERE article_no=?',[x.article_no])[0]?.id;if(!aid)throw Error('Unbekannter Artikel: '+(x.article_no||''));const qty=Number(x.quantity);if(!(qty>0))continue;
- if(type==='OUT'){const a=articles().find(z=>z.id===aid);if(a&&qty>a.stock)throw Error(`Nicht genügend Bestand für ${a.article_no}. Verfügbar: ${a.stock}`)}
- run(`INSERT INTO movements(movement_date,movement_type,article_id,quantity,customer,technician,note,source,created_at,vehicle,machine,delivery_note) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`,
- [d.movement_date||today(),type,aid,qty,d.customer||'',d.technician||setting('primary_technician','Techniker'),d.note||'',d.source||'App',stamp(),d.vehicle||'',d.machine||'',d.delivery_note||'']);
- }}
-
-
-function auditValue(value){
- if(value===null||value===undefined||value==='')return '—';
- return String(value);
+ const booked=[];
+ for(const x of items){
+  const aid=Number(x.article_id)||rows('SELECT id FROM articles WHERE article_no=?',[x.article_no])[0]?.id;
+  if(!aid)throw Error('Unbekannter Artikel: '+(x.article_no||''));
+  const qty=Number(x.quantity);
+  if(!(qty>0))continue;
+  if(type==='OUT'){
+   const a=articles().find(z=>z.id===aid);
+   if(a&&qty>a.stock)throw Error(`Nicht genügend Bestand für ${a.article_no}. Verfügbar: ${a.stock}`)
+  }
+  run(`INSERT INTO movements(movement_date,movement_type,article_id,quantity,customer,technician,note,source,created_at,vehicle,machine,delivery_note) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`,
+   [d.movement_date||today(),type,aid,qty,d.customer||'',d.technician||setting('primary_technician','Techniker'),d.note||'',d.source||'App',stamp(),d.vehicle||'',d.machine||'',d.delivery_note||'']);
+  const id=Number(scalar('SELECT last_insert_rowid()')||0);
+  const movement=rows('SELECT * FROM movements WHERE id=?',[id])[0];
+  const snapshot=movementAuditSnapshot(movement||{id,article_id:aid,movement_type:type,quantity:qty,...d});
+  audit(snapshot.technician,'BUCHUNG','Buchung',String(id),createdMovementDetails(snapshot));
+  booked.push(snapshot);
+ }
+ return booked;
 }
 function movementTypeLabel(value){return value==='IN'?'Einbuchung':'Entnahme'}
 function movementAuditSnapshot(movement){
@@ -262,9 +302,46 @@ function movementAuditSnapshot(movement){
   machine:movement.machine||'',
   delivery_note:movement.delivery_note||'',
   note:movement.note||'',
-  source:movement.source||''
+  source:movement.source||'',
+  created_at:movement.created_at||''
  };
 }
+function createdMovementDetails(snapshot){
+ return [
+  `Buchung #${snapshot.id}`,
+  '',
+  `Buchungsdatum: ${auditValue(snapshot.movement_date)}`,
+  `Buchungsart: ${movementTypeLabel(snapshot.movement_type)}`,
+  `Artikel-ID: ${auditValue(snapshot.article_id)}`,
+  `Artikelnummer: ${auditValue(snapshot.article_no)}`,
+  `Bezeichnung: ${auditValue(snapshot.description)}`,
+  `Menge: ${auditValue(snapshot.quantity)}`,
+  `Kunde: ${auditValue(snapshot.customer)}`,
+  `Techniker: ${auditValue(snapshot.technician)}`,
+  `Fahrzeug: ${auditValue(snapshot.vehicle)}`,
+  `Maschine: ${auditValue(snapshot.machine)}`,
+  `Lieferschein: ${auditValue(snapshot.delivery_note)}`,
+  `Quelle: ${auditValue(snapshot.source)}`,
+  `Bemerkung: ${auditValue(snapshot.note)}`,
+  `Erfasst am: ${auditValue(snapshot.created_at)}`
+ ].join('\n');
+}
+
+function backfillMovementAuditV55(){
+ if(setting('audit_movement_backfill_v55','')==='1')return;
+ let added=0;
+ for(const movement of rows('SELECT * FROM movements ORDER BY id')){
+  const id=String(movement.id);
+  const exists=Number(scalar("SELECT COUNT(*) FROM audit_log WHERE action='BUCHUNG' AND entity='Buchung' AND entity_id=?",[id])||0)>0;
+  if(exists)continue;
+  const snapshot=movementAuditSnapshot(movement);
+  audit(snapshot.technician||'Techniker','BUCHUNG','Buchung',id,createdMovementDetails(snapshot));
+  added++;
+ }
+ setSetting('audit_movement_backfill_v55','1');
+ if(added) audit('System','MIGRATION','Audit','',`${added} bestehende Buchung(en) mit vollständigen Buchungsdetails nachgetragen.`);
+}
+
 function detailedMovementChanges(before,after){
  const lines=[`Buchung #${before.id} korrigiert`];
  const add=(label,oldValue,newValue)=>{
@@ -580,40 +657,52 @@ function normalizeExtractedDate(value){
 }
 
 function parseServiceTsv(text){
- const raw=String(text||'').replace(/\r/g,'');
- const lines=raw.split('\n').map(x=>x.trimEnd()).filter(x=>x.trim());
+ const lines=importContentLines(text).split('\n').map(x=>x.trimEnd()).filter(x=>x.trim());
  const items=[];
  const errors=[];
  const rows=[];
  let firstMetadata={movement_date:'',display_date:'',customer:'',machine:''};
+ const toQty=v=>Number(String(v||'').replace(',','.'));
 
  for(let i=0;i<lines.length;i++){
-  const line=lines[i];
-  if(!line.includes('\t'))continue;
-  const cols=line.split('\t').map(x=>x.trim());
+  const normalizedLine=lines[i].replace(/\s*[;|]\s*/g,'\t');
+  if(!normalizedLine.includes('\t'))continue;
+  const cols=normalizedLine.split('\t').map(x=>x.trim()).filter(x=>x!=='');
 
-  // Optional header row
   const normalized=cols.map(x=>x.toLowerCase().replace(/\s+/g,' '));
   if(
    normalized[0]?.includes('datum') &&
    normalized[1]?.includes('artikel') &&
-   (normalized[2]?.includes('anzahl')||normalized[2]?.includes('menge'))
+   (normalized.some(x=>x.includes('anzahl'))||normalized.some(x=>x.includes('menge')))
   ) continue;
 
   if(cols.length<5){
-   errors.push({line:i+1,article_no:cols[1]||'',error:'TAB-Zeile enthält weniger als 5 Spalten.'});
+   errors.push({line:i+1,article_no:cols[1]||'',error:'Zeile enthält zu wenige Spalten.'});
    continue;
   }
 
-  const [dateValue,articleNo,quantityValue,customerValue,machineValue]=cols;
+  const dateValue=cols[0];
+  const articleNo=cols[1];
+  let description='',quantityValue='',customerValue='',machineValue='';
+
+  // Neues Format: Datum | Artikel | Bezeichnung | Anzahl | Kunde | Maschine
+  if(cols.length>=6 && !Number.isFinite(toQty(cols[2])) && Number.isFinite(toQty(cols[3]))){
+   description=cols[2];
+   quantityValue=cols[3];
+   customerValue=cols[4];
+   machineValue=cols.slice(5).join(' ');
+  }else{
+   // Rückwärtskompatibel: Datum | Artikel | Anzahl | Kunde | Maschine
+   quantityValue=cols[2];
+   customerValue=cols[3];
+   machineValue=cols.slice(4).join(' ');
+  }
+
   const parsedDate=normalizeExtractedDate(dateValue);
-  const qty=Number(String(quantityValue||'').replace(',','.'));
+  const qty=toQty(quantityValue);
   const article=String(articleNo||'').trim();
 
-  if(!article){
-   // Non-material lines such as travel time, labor time or mileage are ignored.
-   continue;
-  }
+  if(!article)continue;
 
   const lowerArticle=article.toLowerCase();
   const combined=cols.join(' ').toLowerCase();
@@ -624,9 +713,7 @@ function parseServiceTsv(text){
    combined.includes('fahrzeit') ||
    combined.includes('arbeitszeit') ||
    combined.includes('kilometer')
-  ){
-   continue;
-  }
+  ) continue;
 
   if(!Number.isFinite(qty)||qty<=0){
    errors.push({line:i+1,article_no:article,error:'Anzahl fehlt oder ist ungültig.'});
@@ -639,8 +726,8 @@ function parseServiceTsv(text){
    customer:String(customerValue||'').trim(),
    machine:String(machineValue||'').trim()
   };
-  rows.push({article_no:article,quantity:qty,line:i+1,metadata:rowMeta});
-  items.push({article_no:article,quantity:qty,line:i+1});
+  rows.push({article_no:article,description:String(description||'').trim(),quantity:qty,line:i+1,metadata:rowMeta});
+  items.push({article_no:article,description:String(description||'').trim(),quantity:qty,line:i+1});
 
   if(!firstMetadata.movement_date&&rowMeta.movement_date)firstMetadata.movement_date=rowMeta.movement_date;
   if(!firstMetadata.display_date&&rowMeta.display_date)firstMetadata.display_date=rowMeta.display_date;
@@ -794,7 +881,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'54.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'55.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -815,7 +902,7 @@ async function route(url,opt={}){
   if(q.machine)list=list.filter(x=>normalizeTextValue(x.machine).includes(normalizeTextValue(q.machine)));
   return response(list)
  }
-  if(p==='/api/audit')return response(rows('SELECT * FROM audit_log ORDER BY id DESC LIMIT 500'));
+  if(p==='/api/audit')return response(rows('SELECT * FROM audit_log ORDER BY id DESC'));
   if(p==='/api/help/list')return response(Object.keys(helpData).sort().map(file=>({file,title:file.slice(0,-3).replace(/[-_]/g,' ')})));
   if(p==='/api/help/content')return response({file:q.file,content:helpData[q.file]||'# Nicht gefunden'});
   const exType=p==='/api/export/inbookings.csv'?'IN':p==='/api/export/outbookings.csv'?'OUT':null;
@@ -886,7 +973,7 @@ async function route(url,opt={}){
   return response({ok:true,id});
  }
 
- if(p==='/api/movements'){bookItems(d.items||[d],d.movement_type||'IN',d);audit(d.technician,'BUCHUNG',d.movement_type||'IN','',`${(d.items||[d]).length} Position(en)`);await persist();return response({ok:true,count:(d.items||[d]).length},201)}
+ if(p==='/api/movements'){bookItems(d.items||[d],d.movement_type||'IN',d);await persist();return response({ok:true,count:(d.items||[d]).length},201)}
  if(p==='/api/delivery-note/preview'||p==='/api/import/preview'){
   if(p==='/api/delivery-note/preview'){
    const declared=detectDeclaredImportType(d.text);
@@ -907,7 +994,7 @@ async function route(url,opt={}){
   const matched=matchItems(parsed.items);
   return response({...matched,metadata:parsed.metadata,rows:parsed.rows,errors:[...(matched.errors||[]),...(parsed.errors||[])]})
  }
- if(p==='/api/delivery-note/commit'){await createBackup('Sicherheitsbackup','Vor Lieferschein-Einbuchung');bookItems(d.items,'IN',{...d,source:'Lieferschein'});audit(d.technician,'BUCHUNG','Lieferschein','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
+ if(p==='/api/delivery-note/commit'){await createBackup('Sicherheitsbackup','Vor Lieferschein-Einbuchung');bookItems(d.items,'IN',{...d,source:'Lieferschein'});await persist();return response({ok:true,count:d.items.length})}
  if(p==='/api/service-report/commit'){
   const machine=String(d.machine||'').trim();
   let machineCreated=false;
@@ -920,11 +1007,10 @@ async function route(url,opt={}){
    }
   }
   bookItems(d.items,'OUT',{...d,machine,source:'Servicebericht'});
-  audit(d.technician,'BUCHUNG','Servicebericht','',`${d.items.length} Positionen`);
   await persist();
   return response({ok:true,count:d.items.length,machine_created:machineCreated,machine});
  }
- if(p==='/api/import/commit'){await createBackup('Sicherheitsbackup','Vor Import');bookItems(d.items,'IN',{...d,source:'SAP-CSV-Import'});audit(d.technician,'BUCHUNG','CSV-Import','',`${d.items.length} Positionen`);await persist();return response({ok:true,count:d.items.length})}
+ if(p==='/api/import/commit'){await createBackup('Sicherheitsbackup','Vor Import');bookItems(d.items,'IN',{...d,source:'SAP-CSV-Import'});await persist();return response({ok:true,count:d.items.length})}
  if(p==='/api/import/file-preview'){const rr=await xlsxRows(d.filename,d.content_base64);return response(matchItems(rowsToItems(rr)))}
  if(p==='/api/inventory/file-preview'){const rr=await xlsxRows(d.filename,d.content_base64);const parsed=rowsToItems(rr).map(x=>({article_no:x.article_no,counted_stock:x.quantity}));return response(parsed.map(x=>{const a=articles().find(z=>z.article_no===x.article_no);return a?{article_id:a.id,article_no:a.article_no,description:a.description,system_stock:a.stock,counted_stock:x.counted_stock,difference:x.counted_stock-a.stock}:null}).filter(Boolean))}
  if(p==='/api/inventory/preview'){const parsed=parseLines(d.text).map(x=>({article_no:x.article_no,counted_stock:x.quantity}));return response(parsed.map(x=>{const a=articles().find(z=>z.article_no===x.article_no);return a?{article_id:a.id,article_no:a.article_no,description:a.description,system_stock:a.stock,counted_stock:x.counted_stock,difference:x.counted_stock-a.stock}:null}).filter(Boolean))}
@@ -951,7 +1037,34 @@ async function route(url,opt={}){
   await persist();
   return response({ok:true,name},201)
  }
- if(p==='/api/article/create'){if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');run(`INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at,manufacturer,supplier,supplier_article_no,barcode,purchase_price,notes,image_url,datasheet_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,[d.article_no,d.description,Number(d.target_stock||0),Number(d.minimum_stock||0),Number(d.initial_stock||0),d.unit||'Stk.',d.location||'',d.machine||'',d.active===false?0:1,stamp(),d.manufacturer||'',d.supplier||'',d.supplier_article_no||'',d.barcode||'',Number(d.purchase_price||0),d.notes||'',d.image_url||'',d.datasheet_url||'']);audit('Techniker','ANLAGE','Artikel','',d.article_no);await persist();return response({ok:true},201)}
+ if(p==='/api/article/create'){
+  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  if(!String(d.article_no||'').trim())throw Error('Artikelnummer fehlt.');
+  if(!String(d.description||'').trim())throw Error('Bezeichnung fehlt.');
+  if(Number(scalar('SELECT COUNT(*) FROM articles WHERE article_no=?',[String(d.article_no).trim()])||0)>0)throw Error('Diese Artikelnummer ist bereits registriert.');
+  run(`INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at,manufacturer,supplier,supplier_article_no,barcode,purchase_price,notes,image_url,datasheet_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+   [d.article_no,d.description,Number(d.target_stock||0),Number(d.minimum_stock||0),Number(d.initial_stock||0),d.unit||'Stk.',d.location||'',d.machine||'',d.active===false?0:1,stamp(),d.manufacturer||'',d.supplier||'',d.supplier_article_no||'',d.barcode||'',Number(d.purchase_price||0),d.notes||'',d.image_url||'',d.datasheet_url||'']);
+  const id=Number(scalar('SELECT last_insert_rowid()')||0);
+  audit(d.technician||setting('primary_technician','Techniker'),'ANLAGE','Artikel',String(id),[
+   `Artikelnummer: ${auditValue(d.article_no)}`,
+   `Bezeichnung: ${auditValue(d.description)}`,
+   `Anfangsbestand: ${auditValue(Number(d.initial_stock||0))}`,
+   `Sollbestand: ${auditValue(Number(d.target_stock||0))}`,
+   `Mindestbestand: ${auditValue(Number(d.minimum_stock||0))}`,
+   `Einheit: ${auditValue(d.unit||'Stk.')}`,
+   `Lagerort: ${auditValue(d.location)}`,
+   `Maschine: ${auditValue(d.machine)}`,
+   `Hersteller: ${auditValue(d.manufacturer)}`,
+   `Lieferant: ${auditValue(d.supplier)}`,
+   `Lieferanten-Artikelnummer: ${auditValue(d.supplier_article_no)}`,
+   `Barcode: ${auditValue(d.barcode)}`,
+   `Einkaufspreis: ${auditValue(Number(d.purchase_price||0))}`,
+   `Bemerkung: ${auditValue(d.notes)}`,
+   `Aktiv: ${d.active===false?'Nein':'Ja'}`
+  ].join('\n'));
+  await persist();
+  return response({ok:true,id,article_no:d.article_no},201)
+ }
  if(p==='/api/articles/batch-update'){
   if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
   const items=Array.isArray(d.items)?d.items:[];
@@ -1612,7 +1725,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','54');
+  setSetting('database_version','55');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
