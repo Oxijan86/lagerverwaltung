@@ -4,7 +4,7 @@
 const nativeFetch=window.fetch.bind(window);
 const DBKEY='lv22-db', METAKEY='lv22-meta', HANDLEKEY='lv22-directory', BACKUPKEY='lv22-backups', SESSIONKEY='lv34-session-start';
 let SQL,db,handle=null,autoTimer=null,isSyncing=false;
-const helpData={"07-csv-center.md": "# CSV-Center\n\n## Exporte\n\n- Lagerbestand\n- Einbuchungen\n- Entnahmen\n\nDie CSV-Dateien werden direkt im Browser heruntergeladen. Das vorgegebene Tabellenlayout, Semikolon als Trennzeichen und UTF-8 mit BOM bleiben erhalten.\n\n## SAP-Excel oder CSV importieren\n\nUnterstützte Spalten sind unter anderem:\n\n- Material\n- Bezeichnung zum Material\n- Lagerort\n- Bezeichnung des Lagerorts\n- Frei verwendbar\n\nVor dem Buchen wird eine Vorschau angezeigt. Fehlende Artikel können direkt angelegt werden.\n", "02-neues-material.md": "# Neues Material\n\nDer Reiter **Neues Material** ist passwortgeschützt.\n\n## Vorgehen\n\n- Stammdatenpasswort eingeben.\n- Artikelnummer und Bezeichnung erfassen.\n- Anfangsbestand, Sollbestand und Mindestbestand festlegen.\n- Einheit auswählen.\n- Lagerort und Maschine optional auswählen.\n- Material speichern.\n\nDer Anfangsbestand wird als Basisbestand des Artikels geführt.\n", "17-abschluss-und-tests.md": "# Abschluss Phase 1–7\n\nVersion 17.0 schließt das ursprünglich geplante Projekt ab.\n\nAbnahmetest:\n- Artikel anlegen\n- Ein- und Ausbuchung\n- CSV-Export\n- Inventurkorrektur\n- Materialanforderung in Excel öffnen\n- Historienfilter testen\n- Passwortverwaltung prüfen\n", "08-historie.md": "# Historie\n\nDie Historie enthält alle Einbuchungen und Entnahmen.\n\nSie kann gefiltert werden nach:\n\n- Alle Buchungen\n- Nur Einbuchungen\n- Nur Entnahmen\n\nDas unter **Stammdaten** gewählte Datumsformat wird auch auf bereits vorhandene Einträge angewendet.\n", "01-dashboard.md": "# Dashboard\n\nDas Dashboard zeigt die wichtigsten Kennzahlen:\n\n- **Aktive Artikel:** Anzahl aller verwendbaren Artikel.\n- **Unterbestand:** Artikel unterhalb ihres Mindestbestands.\n- **Heute:** Anzahl der heutigen Buchungen.\n- **Buchungen:** Gesamtzahl aller Ein- und Ausbuchungen.\n\nDie Werte werden aus der lokalen Datenbank `lager.db` berechnet.\n", "04-einbuchung.md": "# Einbuchung\n\n## Manuelle Einbuchung\n\n- Datum und Techniker auswählen.\n- Artikel und Menge hinzufügen.\n- Einbuchung bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Lieferschein mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: EINBUCHUNG` und enthält pro Material `Artikelnummer[TAB]Bezeichnung[TAB]Anzahl`.\n\nUnbekannte Artikel können direkt als neues Material angelegt oder bewusst ignoriert werden. Artikelnummer und erkannte Bezeichnung werden beim Anlegen vorausgefüllt. Ein Entnahme-Prompt wird im Einbuchungsbereich blockiert.\n", "09-stammdaten.md": "# Stammdaten\n\nDie Stammdaten sind durch das Administratorpasswort geschützt.\n\n## Funktionen\n\n- Lagerorte anlegen.\n- Maschinen anlegen.\n- Techniker mit ausschließlich einem Namen anlegen.\n- Artikelstammdaten und Istbestände bearbeiten.\n- Passwort ändern.\n- Datumsformat ändern.\n- Lagerverwaltung vollständig zurücksetzen.\n\n## Datumsformat\n\nVerfügbare Formate:\n\n- TT.MM.JJJJ\n- JJJJ-MM-TT\n- MM/TT/JJJJ\n\nDatumswerte bleiben intern im ISO-Format gespeichert. Dadurch werden nach einer Formatänderung auch bestehende Daten sofort korrekt dargestellt.\n", "15-historienfilter.md": "# Historienfilter und Export\n\nFilter:\n- Buchungsart\n- Zeitraum\n- Techniker\n- Artikelnummer oder Bezeichnung\n\nDer CSV-Export übernimmt die aktuell eingestellten Filter.\n", "03-lagerbestand.md": "# Lagerbestand\n\nIm Lagerbestand können Artikel über Artikelnummer, Bezeichnung, Lagerort oder Maschine gesucht werden.\n\n## Spalten\n\n- Sollbestand\n- Mindestbestand\n- Istbestand\n- Differenz zum Sollbestand\n- Lagerort\n- Maschine\n\nEin Artikel wird als Unterbestand hervorgehoben, wenn sein Istbestand unter dem Mindestbestand liegt.\n", "14-inventur.md": "# Inventur\n\n- Inventurliste im CSV-Center exportieren.\n- Gezählten Bestand eintragen.\n- CSV, TXT oder XLSX einlesen.\n- Differenzen prüfen.\n- Bestandskorrekturen mit Administratorpasswort buchen.\n\nNur Differenzen werden als Buchungen mit der Quelle **Inventur** gespeichert.\n", "06-materialanforderung.md": "# Materialanforderung\n\n- Techniker auswählen.\n- **Unterbestand laden** anklicken.\n- Gewünschte Positionen markieren.\n- Bestellmenge prüfen oder ändern.\n- **Materialanforderung exportieren** anklicken.\n\nDie Excel-Datei wird anhand der hinterlegten Vorlage erzeugt. Der Dateiname enthält Datum und Technikername.\n", "13-fehlerbehebung.md": "# Fehlerbehebung\n\n## Lagerbestand bleibt nach dem Start leer\n\nSeit Version 56 kann die Audit-Nachtragung den Datenbankstart nicht mehr blockieren. Falls künftig ein anderer Startfehler auftritt, erscheint eine rote Meldung statt eines stillen leeren Dashboards.\n\nBei Cloud-Betrieb prüfen, ob oben **Cloud** angezeigt wird und ob der verbundene Ordner zugreifbar ist.\n\n## M365-Ergebnis wird nicht erkannt\n\n- Aktuellen Prompt unter **Hilfe → M365-Prompts** verwenden.\n- Auf `IMPORTTYP: EINBUCHUNG` bzw. `IMPORTTYP: ENTNAHME` achten.\n- Artikelnummern und Mengen dürfen nicht leer sein.\n", "16-materialanforderung-export.md": "# Materialanforderung\n\nDie Originalvorlage `materialanforderung_vorlage.xlsx` bleibt unverändert erhalten.\n\nPrüfungen:\n- maximal 25 Positionen\n- nur positive Mengen\n- doppelte Artikel werden zusammengefasst\n- Vorschau vor Export\n- Sortierung nach Artikelnummer\n\nDateiname: `Bestellung_Datum_Techniker.xlsx`\n", "10-reset.md": "# Vollständiges Zurücksetzen\n\nDer vollständige Reset löscht:\n\n- Artikel\n- Bestände\n- Buchungen\n- Historie\n- Audit-Protokoll\n- Lagerorte\n- Maschinen\n- Techniker\n- Administratorpasswort\n- Einstellungen\n\nProgrammdateien, Excel-Vorlage und Hilfedateien bleiben erhalten.\n\nNach dem Reset erscheint wieder automatisch die vollständige Ersteinrichtung.\n", "11-m365-prompts.md": "# Microsoft 365 / Copilot – aktuelle Prompts\n\n## Lieferschein – Einbuchung\n\n```text\nIMPORTTYP: EINBUCHUNG\n\nExtrahiere aus diesem Lieferschein ausschließlich das tatsächlich gelieferte Material.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nArtikelnummer[TAB]Bezeichnung[TAB]Anzahl\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: EINBUCHUNG\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Preise, Summen, Fahrzeit, Arbeitszeit und Kilometer ignorieren.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen den Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Servicebericht – Entnahme\n\n```text\nIMPORTTYP: ENTNAHME\n\nExtrahiere aus dieser Service-PDF ausschließlich die tatsächlich verwendeten oder verbauten Materialien.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nDatum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: ENTNAHME\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Fahrzeit, Arbeitszeit und Kilometer vollständig ignorieren.\n- Nicht verbaute, nur erwähnte oder empfohlene Materialien nicht übernehmen.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen allen Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Vertauschungsschutz\n\n`IMPORTTYP: EINBUCHUNG` gehört nur zur Einbuchung. `IMPORTTYP: ENTNAHME` gehört nur zur Entnahme. Beim falschen Bereich bleibt die Buchung gesperrt.\n", "00-erste-schritte.md": "# Erste Schritte\n\nDie Lagerverwaltung startet nach der Erstinstallation mit einem Einrichtungsassistenten.\n\n## Ersteinrichtung\n\n- Administratorpasswort mit mindestens 8 Zeichen vergeben.\n- Namen des Technikers eingeben.\n- Datumsformat auswählen.\n- Einrichtung abschließen.\n\nLagerorte und Maschinen müssen bei der Ersteinrichtung nicht angelegt werden. Sie können später unter **Stammdaten** ergänzt werden.\n", "12-mobile-bedienung.md": "# Mobile Bedienung\n\nAuf schmalen Bildschirmen wird die Navigation über die Schaltfläche **Menü** geöffnet.\n\n## Hinweise\n\n- Tabellen können seitlich verschoben werden.\n- Eingabefelder werden untereinander dargestellt.\n- Die Ersteinrichtung ist für Smartphone und Tablet optimiert.\n- Für umfangreiche CSV- und Excel-Arbeiten ist ein Windows-PC komfortabler.\n", "05-entnahme.md": "# Entnahme\n\n## Manuelle Entnahme\n\n- Datum, Techniker, Kunde und Maschine eintragen.\n- Artikel und Menge hinzufügen.\n- Entnahme bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Servicebericht mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: ENTNAHME` und enthält pro Material `Datum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine`.\n\nUnbekannte Artikel können als neues Material angelegt oder ignoriert werden. Bei einer Entnahme muss ein neu angelegter Artikel genügend Anfangsbestand besitzen. Ein Einbuchungs-Prompt wird im Entnahmebereich blockiert.\n"};
+const helpData={"07-csv-center.md": "# CSV-Center\n\n## Exporte\n\n- Lagerbestand\n- Einbuchungen\n- Entnahmen\n\nDie CSV-Dateien werden direkt im Browser heruntergeladen. Das vorgegebene Tabellenlayout, Semikolon als Trennzeichen und UTF-8 mit BOM bleiben erhalten.\n\n## SAP-Excel oder CSV importieren\n\nUnterstützte Spalten sind unter anderem:\n\n- Material\n- Bezeichnung zum Material\n- Lagerort\n- Bezeichnung des Lagerorts\n- Frei verwendbar\n\nVor dem Buchen wird eine Vorschau angezeigt. Fehlende Artikel können direkt angelegt werden.\n", "02-neues-material.md": "# Neues Material\n\nBeim Anlegen eines Materials können Lagerort und Maschinen direkt ausgewählt werden.\n\n- **Lagerort:** vorhandenen Lagerort auswählen oder unmittelbar einen neuen Lagerort anlegen. Während der Eingabe werden ähnlich benannte Lagerorte vorgeschlagen, damit Dubletten vermieden werden.\n- **Maschinen:** ein Ersatzteil kann mehreren Maschinen gleichzeitig zugeordnet werden. Die Liste unterstützt Mehrfachauswahl. Neue Maschinen können direkt aus dem Materialformular angelegt werden.\n- Vor dem Anlegen ähnlich benannter Lagerorte oder Maschinen weist die App auf vorhandene Einträge hin.\n\nArtikelnummer, Bezeichnung, Anfangsbestand, Sollbestand, Mindestbestand, Einheit und weitere Stammdaten bleiben wie bisher verfügbar.\n", "17-abschluss-und-tests.md": "# Abschluss Phase 1–7\n\nVersion 17.0 schließt das ursprünglich geplante Projekt ab.\n\nAbnahmetest:\n- Artikel anlegen\n- Ein- und Ausbuchung\n- CSV-Export\n- Inventurkorrektur\n- Materialanforderung in Excel öffnen\n- Historienfilter testen\n- Passwortverwaltung prüfen\n", "08-historie.md": "# Historie\n\nDie Historie enthält alle Einbuchungen und Entnahmen.\n\nSie kann gefiltert werden nach:\n\n- Alle Buchungen\n- Nur Einbuchungen\n- Nur Entnahmen\n\nDas unter **Stammdaten** gewählte Datumsformat wird auch auf bereits vorhandene Einträge angewendet.\n", "01-dashboard.md": "# Dashboard\n\nDas Dashboard zeigt die wichtigsten Kennzahlen:\n\n- **Aktive Artikel:** Anzahl aller verwendbaren Artikel.\n- **Unterbestand:** Artikel unterhalb ihres Mindestbestands.\n- **Heute:** Anzahl der heutigen Buchungen.\n- **Buchungen:** Gesamtzahl aller Ein- und Ausbuchungen.\n\nDie Werte werden aus der lokalen Datenbank `lager.db` berechnet.\n", "04-einbuchung.md": "# Einbuchung\n\n## Manuelle Einbuchung\n\n- Datum und Techniker auswählen.\n- Artikel und Menge hinzufügen.\n- Einbuchung bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Lieferschein mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: EINBUCHUNG` und enthält pro Material `Artikelnummer[TAB]Bezeichnung[TAB]Anzahl`.\n\nUnbekannte Artikel können direkt als neues Material angelegt oder bewusst ignoriert werden. Artikelnummer und erkannte Bezeichnung werden beim Anlegen vorausgefüllt. Ein Entnahme-Prompt wird im Einbuchungsbereich blockiert.\n", "09-stammdaten.md": "# Stammdaten\n\n## Lagerorte\nLagerorte können weiterhin zentral angelegt werden. Zusätzlich lassen sie sich direkt beim Anlegen eines neuen Materials erstellen. Ähnliche vorhandene Namen werden vorher vorgeschlagen.\n\n## Maschinen und alternative Bezeichnungen\nEine Maschine besitzt einen Hauptnamen und kann beliebig viele alternative Ticket-Bezeichnungen erhalten.\n\n- **Alternative Bezeichnung zuordnen:** z. B. `Compas 4` → `Compas 4.0`.\n- **Trennen:** eine falsche Alias-Zuordnung kann jederzeit wieder entfernt werden.\n- **Maschinen zusammenführen:** zwei bereits getrennt angelegte Maschinen können zu einer Hauptmaschine zusammengeführt werden. Der frühere Name bleibt als Alias erhalten.\n- **Zusammenführung rückgängig:** die vorherige Maschine wird wiederhergestellt und ihre Ersatzteil-Zuordnungen werden soweit möglich auf den Stand vor der Zusammenführung zurückgesetzt.\n\n## Mehrfachzuordnung von Ersatzteilen\nEin Artikel kann mehreren Maschinen gleichzeitig zugeordnet werden. Diese Zuordnung ist beim neuen Material sowie in der vollständigen Artikelliste bearbeitbar.\n", "15-historienfilter.md": "# Historienfilter und Export\n\nFilter:\n- Buchungsart\n- Zeitraum\n- Techniker\n- Artikelnummer oder Bezeichnung\n\nDer CSV-Export übernimmt die aktuell eingestellten Filter.\n", "03-lagerbestand.md": "# Lagerbestand\n\nIm Lagerbestand können Artikel über Artikelnummer, Bezeichnung, Lagerort oder Maschine gesucht werden.\n\n## Spalten\n\n- Sollbestand\n- Mindestbestand\n- Istbestand\n- Differenz zum Sollbestand\n- Lagerort\n- Maschine\n\nEin Artikel wird als Unterbestand hervorgehoben, wenn sein Istbestand unter dem Mindestbestand liegt.\n", "14-inventur.md": "# Inventur\n\n- Inventurliste im CSV-Center exportieren.\n- Gezählten Bestand eintragen.\n- CSV, TXT oder XLSX einlesen.\n- Differenzen prüfen.\n- Bestandskorrekturen mit Administratorpasswort buchen.\n\nNur Differenzen werden als Buchungen mit der Quelle **Inventur** gespeichert.\n", "06-materialanforderung.md": "# Materialanforderung\n\n- Techniker auswählen.\n- **Unterbestand laden** anklicken.\n- Gewünschte Positionen markieren.\n- Bestellmenge prüfen oder ändern.\n- **Materialanforderung exportieren** anklicken.\n\nDie Excel-Datei wird anhand der hinterlegten Vorlage erzeugt. Der Dateiname enthält Datum und Technikername.\n", "13-fehlerbehebung.md": "# Fehlerbehebung\n\n## Lagerbestand bleibt nach dem Start leer\n\nSeit Version 56 kann die Audit-Nachtragung den Datenbankstart nicht mehr blockieren. Falls künftig ein anderer Startfehler auftritt, erscheint eine rote Meldung statt eines stillen leeren Dashboards.\n\nBei Cloud-Betrieb prüfen, ob oben **Cloud** angezeigt wird und ob der verbundene Ordner zugreifbar ist.\n\n## M365-Ergebnis wird nicht erkannt\n\n- Aktuellen Prompt unter **Hilfe → M365-Prompts** verwenden.\n- Auf `IMPORTTYP: EINBUCHUNG` bzw. `IMPORTTYP: ENTNAHME` achten.\n- Artikelnummern und Mengen dürfen nicht leer sein.\n", "16-materialanforderung-export.md": "# Materialanforderung\n\nDie Originalvorlage `materialanforderung_vorlage.xlsx` bleibt unverändert erhalten.\n\nPrüfungen:\n- maximal 25 Positionen\n- nur positive Mengen\n- doppelte Artikel werden zusammengefasst\n- Vorschau vor Export\n- Sortierung nach Artikelnummer\n\nDateiname: `Bestellung_Datum_Techniker.xlsx`\n", "10-reset.md": "# Vollständiges Zurücksetzen\n\nDer vollständige Reset löscht:\n\n- Artikel\n- Bestände\n- Buchungen\n- Historie\n- Audit-Protokoll\n- Lagerorte\n- Maschinen\n- Techniker\n- Administratorpasswort\n- Einstellungen\n\nProgrammdateien, Excel-Vorlage und Hilfedateien bleiben erhalten.\n\nNach dem Reset erscheint wieder automatisch die vollständige Ersteinrichtung.\n", "11-m365-prompts.md": "# Microsoft 365 / Copilot – aktuelle Prompts\n\n## Lieferschein – Einbuchung\n\n```text\nIMPORTTYP: EINBUCHUNG\n\nExtrahiere aus diesem Lieferschein ausschließlich das tatsächlich gelieferte Material.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nArtikelnummer[TAB]Bezeichnung[TAB]Anzahl\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: EINBUCHUNG\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Preise, Summen, Fahrzeit, Arbeitszeit und Kilometer ignorieren.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen den Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Servicebericht – Entnahme\n\n```text\nIMPORTTYP: ENTNAHME\n\nExtrahiere aus dieser Service-PDF ausschließlich die tatsächlich verwendeten oder verbauten Materialien.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nDatum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: ENTNAHME\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Fahrzeit, Arbeitszeit und Kilometer vollständig ignorieren.\n- Nicht verbaute, nur erwähnte oder empfohlene Materialien nicht übernehmen.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen allen Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Vertauschungsschutz\n\n`IMPORTTYP: EINBUCHUNG` gehört nur zur Einbuchung. `IMPORTTYP: ENTNAHME` gehört nur zur Entnahme. Beim falschen Bereich bleibt die Buchung gesperrt.\n", "00-erste-schritte.md": "# Erste Schritte\n\nDie Lagerverwaltung startet nach der Erstinstallation mit einem Einrichtungsassistenten.\n\n## Ersteinrichtung\n\n- Administratorpasswort mit mindestens 8 Zeichen vergeben.\n- Namen des Technikers eingeben.\n- Datumsformat auswählen.\n- Einrichtung abschließen.\n\nLagerorte und Maschinen müssen bei der Ersteinrichtung nicht angelegt werden. Sie können später unter **Stammdaten** ergänzt werden.\n", "12-mobile-bedienung.md": "# Mobile Bedienung\n\nAuf schmalen Bildschirmen wird die Navigation über die Schaltfläche **Menü** geöffnet.\n\n## Hinweise\n\n- Tabellen können seitlich verschoben werden.\n- Eingabefelder werden untereinander dargestellt.\n- Die Ersteinrichtung ist für Smartphone und Tablet optimiert.\n- Für umfangreiche CSV- und Excel-Arbeiten ist ein Windows-PC komfortabler.\n", "05-entnahme.md": "# Entnahme\n\n## Manuelle Entnahme\n\n- Datum, Techniker, Kunde und Maschine eintragen.\n- Artikel und Menge hinzufügen.\n- Entnahme bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Servicebericht mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: ENTNAHME` und enthält pro Material `Datum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine`.\n\nUnbekannte Artikel können als neues Material angelegt oder ignoriert werden. Bei einer Entnahme muss ein neu angelegter Artikel genügend Anfangsbestand besitzen. Ein Einbuchungs-Prompt wird im Entnahmebereich blockiert.\n\n\n## Unterschiedliche Maschinenbezeichnungen\n\nDie App berücksichtigt alternative Bezeichnungen von Maschinen. Beispiel: `Compas 4`, `Compas 4.0` und eine kundenspezifische Ticket-Bezeichnung können derselben Hauptmaschine zugeordnet werden. Bei ähnlichen, aber noch nicht verknüpften Namen werden vorhandene Maschinen vorgeschlagen.\n\nUnter **Stammdaten → Maschinen-Bezeichnungen & Mehrfachzuordnung** können alternative Namen zusammengeführt und später wieder getrennt werden.\n"};
 
 function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open('LagerverwaltungLovrencicV21',1);r.onupgradeneeded=()=>r.result.createObjectStore('data');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function ig(k){const d=await idbOpen();return new Promise((res,rej)=>{const r=d.transaction('data').objectStore('data').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
@@ -135,6 +135,9 @@ CREATE TABLE IF NOT EXISTS articles(id INTEGER PRIMARY KEY AUTOINCREMENT,article
 CREATE TABLE IF NOT EXISTS movements(id INTEGER PRIMARY KEY AUTOINCREMENT,movement_date TEXT NOT NULL,movement_type TEXT NOT NULL,article_id INTEGER NOT NULL,quantity REAL NOT NULL,customer TEXT NOT NULL DEFAULT '',technician TEXT NOT NULL DEFAULT '',note TEXT NOT NULL DEFAULT '',source TEXT NOT NULL DEFAULT 'App',created_at TEXT NOT NULL,vehicle TEXT NOT NULL DEFAULT '',machine TEXT NOT NULL DEFAULT '',delivery_note TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS locations(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,description TEXT NOT NULL DEFAULT '',active INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS machines(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,description TEXT NOT NULL DEFAULT '',active INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS machine_aliases(id INTEGER PRIMARY KEY AUTOINCREMENT,alias TEXT UNIQUE NOT NULL,machine_id INTEGER NOT NULL,active INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL DEFAULT '',FOREIGN KEY(machine_id) REFERENCES machines(id));
+CREATE TABLE IF NOT EXISTS article_machines(article_id INTEGER NOT NULL,machine_id INTEGER NOT NULL,PRIMARY KEY(article_id,machine_id),FOREIGN KEY(article_id) REFERENCES articles(id) ON DELETE CASCADE,FOREIGN KEY(machine_id) REFERENCES machines(id));
+CREATE TABLE IF NOT EXISTS machine_merge_history(id INTEGER PRIMARY KEY AUTOINCREMENT,source_machine_id INTEGER NOT NULL,target_machine_id INTEGER NOT NULL,source_name TEXT NOT NULL,snapshot_json TEXT NOT NULL DEFAULT '{}',merged_at TEXT NOT NULL,active INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS technicians(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,email TEXT NOT NULL DEFAULT '',default_vehicle TEXT NOT NULL DEFAULT '',active INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS vehicles(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,description TEXT NOT NULL DEFAULT '',active INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT,event_time TEXT NOT NULL,user_name TEXT NOT NULL,action TEXT NOT NULL,entity TEXT NOT NULL,entity_id TEXT NOT NULL DEFAULT '',details TEXT NOT NULL DEFAULT '');`);
@@ -146,6 +149,91 @@ if(!setting('storage_mode'))setSetting('storage_mode','browser_local');
 function tableExists(name){
  try{return Number(scalar("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",[name]))>0}catch{return false}
 }
+function machineRelationRows(articleId){
+ return rows(`SELECT m.id,m.name FROM article_machines am JOIN machines m ON m.id=am.machine_id
+  WHERE am.article_id=? AND m.active=1 ORDER BY m.name`,[Number(articleId)]);
+}
+function syncLegacyArticleMachine(articleId){
+ const names=machineRelationRows(articleId).map(x=>x.name);
+ run('UPDATE articles SET machine=? WHERE id=?',[names.join(', '),Number(articleId)]);
+ return names;
+}
+function exactMachineResolution(value){
+ const wanted=normalizeLoose(value);if(!wanted)return null;
+ const canonical=rows('SELECT id,name FROM machines WHERE active=1').find(x=>normalizeLoose(x.name)===wanted);
+ if(canonical)return {machine_id:Number(canonical.id),name:canonical.name,input:String(value||''),via_alias:false,exact:true};
+ const aliases=rows(`SELECT ma.id alias_id,ma.alias,m.id,m.name FROM machine_aliases ma JOIN machines m ON m.id=ma.machine_id
+  WHERE ma.active=1 AND m.active=1`);
+ const alias=aliases.find(x=>normalizeLoose(x.alias)===wanted);
+ return alias?{machine_id:Number(alias.id),name:alias.name,input:String(value||''),via_alias:true,alias:alias.alias,exact:true}:null;
+}
+function setArticleMachineIds(articleId,values){
+ const aid=Number(articleId);const ids=[];
+ for(const value of (Array.isArray(values)?values:[])){
+  let id=Number(value);
+  if(!id&&String(value||'').trim())id=Number(exactMachineResolution(value)?.machine_id||0);
+  if(id&&Number(scalar('SELECT COUNT(*) FROM machines WHERE id=? AND active=1',[id])||0)>0&&!ids.includes(id))ids.push(id);
+ }
+ run('DELETE FROM article_machines WHERE article_id=?',[aid]);
+ for(const id of ids)run('INSERT OR IGNORE INTO article_machines(article_id,machine_id) VALUES(?,?)',[aid,id]);
+ return syncLegacyArticleMachine(aid);
+}
+function migrateMachineRelationsV57(){
+ if(setting('machine_relations_v57','')==='1')return;
+ try{
+  const list=rows('SELECT id,machine FROM articles WHERE TRIM(machine)<>\'\'');
+  for(const a of list){
+   if(Number(scalar('SELECT COUNT(*) FROM article_machines WHERE article_id=?',[a.id])||0)>0)continue;
+   const raw=String(a.machine||'').trim();
+   let exact=exactMachineResolution(raw);
+   if(exact){run('INSERT OR IGNORE INTO article_machines(article_id,machine_id) VALUES(?,?)',[a.id,exact.machine_id]);continue}
+   const parts=raw.split(/\s*[;,|]\s*/).filter(Boolean);
+   for(const part of parts){const r=exactMachineResolution(part);if(r)run('INSERT OR IGNORE INTO article_machines(article_id,machine_id) VALUES(?,?)',[a.id,r.machine_id])}
+   if(Number(scalar('SELECT COUNT(*) FROM article_machines WHERE article_id=?',[a.id])||0)>0)syncLegacyArticleMachine(a.id);
+  }
+  setSetting('machine_relations_v57','1');
+ }catch(e){console.warn('Maschinen-Mehrfachzuordnung konnte nicht vollständig migriert werden:',e)}
+}
+function levenshtein(a,b){
+ a=normalizeLoose(a);b=normalizeLoose(b);if(a===b)return 0;if(!a)return b.length;if(!b)return a.length;
+ const v=Array.from({length:b.length+1},(_,i)=>i);
+ for(let i=1;i<=a.length;i++){
+  let prev=v[0];v[0]=i;
+  for(let j=1;j<=b.length;j++){
+   const old=v[j];v[j]=Math.min(v[j]+1,v[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));prev=old;
+  }
+ }
+ return v[b.length];
+}
+function nameSimilarity(a,b){
+ const na=normalizeLoose(a),nb=normalizeLoose(b);if(!na||!nb)return 0;if(na===nb)return 1;
+ const max=Math.max(na.length,nb.length);let score=1-levenshtein(na,nb)/max;
+ if(na.includes(nb)||nb.includes(na))score=Math.max(score,0.88+0.1*Math.min(na.length,nb.length)/max);
+ const ta=new Set(na.split(' ')),tb=new Set(nb.split(' '));const common=[...ta].filter(x=>tb.has(x)).length;
+ if(common)score=Math.max(score,0.55+0.4*(2*common/(ta.size+tb.size)));
+ return Math.max(0,Math.min(1,score));
+}
+function similarMasterNames(type,value,limit=5){
+ const table=type==='location'?'locations':'machines';
+ return rows(`SELECT id,name FROM ${table} WHERE active=1`).map(x=>({...x,score:nameSimilarity(value,x.name)}))
+  .filter(x=>x.score>=0.48).sort((a,b)=>b.score-a.score||String(a.name).localeCompare(String(b.name))).slice(0,limit);
+}
+function machineSuggestions(value,limit=5){
+ const direct=similarMasterNames('machine',value,limit);
+ const aliases=rows(`SELECT ma.alias,m.id,m.name FROM machine_aliases ma JOIN machines m ON m.id=ma.machine_id WHERE ma.active=1 AND m.active=1`)
+  .map(x=>({id:Number(x.id),name:x.name,alias:x.alias,score:nameSimilarity(value,x.alias)})).filter(x=>x.score>=0.48);
+ const all=[...direct.map(x=>({id:Number(x.id),name:x.name,alias:'',score:x.score})),...aliases].sort((a,b)=>b.score-a.score);
+ const seen=new Set();return all.filter(x=>{if(seen.has(x.id))return false;seen.add(x.id);return true}).slice(0,limit);
+}
+function resolveMachineName(value){
+ const input=String(value||'').trim();if(!input)return {machine_id:0,name:'',input,suggestions:[]};
+ const exact=exactMachineResolution(input);if(exact)return {...exact,suggestions:[]};
+ const suggestions=machineSuggestions(input,5);
+ const top=suggestions[0],second=suggestions[1];
+ const auto=top&&top.score>=0.94&&(!second||top.score-second.score>=0.07);
+ return auto?{machine_id:top.id,name:top.name,input,via_alias:false,auto_similar:true,score:top.score,suggestions}:{machine_id:0,name:input,input,suggestions};
+}
+
 function existingDatabaseHasContent(){
  try{
   if(!tableExists('articles'))return false;
@@ -161,7 +249,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','56');
+  setSetting('database_version','57');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -172,7 +260,7 @@ function setupIsRequired(){
 async function initialize(){
  SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
  const b=await ig(DBKEY);db=b?new SQL.Database(new Uint8Array(b)):new SQL.Database();
- initSchema();adoptExistingDatabase();
+ initSchema();adoptExistingDatabase();migrateMachineRelationsV57();
  try{backfillMovementAuditV55()}
  catch(e){console.warn('Audit-Nachtragung V55 konnte nicht vollständig ausgeführt werden. Die Datenbank wird trotzdem geladen.',e)}
  handle=await ig(HANDLEKEY)||null;if(!setting('storage_mode'))setSetting('storage_mode',handle?'local_folder':'browser_local');
@@ -185,7 +273,23 @@ function response(data,status=200,headers={}){return new Response(typeof data===
 function body(opt){try{return JSON.parse(opt?.body||'{}')}catch{return {}}}
 function query(url){const u=new URL(url,location.href);return Object.fromEntries(u.searchParams.entries())}
 function fmtDate(d){const f=setting('date_format','DD.MM.YYYY');if(!d)return '';const x=String(d).slice(0,10).split('-');return f==='YYYY-MM-DD'?x.join('-'):f==='MM/DD/YYYY'?`${x[1]}/${x[2]}/${x[0]}`:`${x[2]}.${x[1]}.${x[0]}`}
-function articles(q=''){let sql=`SELECT a.*,${stockExpr()} stock FROM articles a LEFT JOIN movements m ON m.article_id=a.id WHERE 1=1`,p=[];if(q){sql+=' AND (a.article_no LIKE ? OR a.description LIKE ? OR a.location LIKE ? OR a.machine LIKE ?)';p=Array(4).fill('%'+q+'%')}sql+=' GROUP BY a.id ORDER BY a.article_no';return rows(sql,p)}
+function articles(q=''){
+ let sql=`SELECT a.*,${stockExpr()} stock FROM articles a LEFT JOIN movements m ON m.article_id=a.id WHERE 1=1`,p=[];
+ if(q){
+  sql+=` AND (a.article_no LIKE ? OR a.description LIKE ? OR a.location LIKE ? OR a.machine LIKE ? OR EXISTS(
+   SELECT 1 FROM article_machines am JOIN machines mm ON mm.id=am.machine_id
+   LEFT JOIN machine_aliases ma ON ma.machine_id=mm.id AND ma.active=1
+   WHERE am.article_id=a.id AND (mm.name LIKE ? OR ma.alias LIKE ?)))`;
+  p=Array(6).fill('%'+q+'%');
+ }
+ sql+=' GROUP BY a.id ORDER BY a.article_no';
+ const list=rows(sql,p);
+ for(const a of list){
+  const rel=machineRelationRows(a.id);a.machine_ids=rel.map(x=>Number(x.id));a.machines=rel.map(x=>x.name);
+  if(rel.length)a.machine=a.machines.join(', ');
+ }
+ return list;
+}
 
 function detectDeclaredImportType(text){
  const first=String(text||'').replace(/\r/g,'').split('\n').map(x=>x.trim()).find(Boolean)||'';
@@ -671,7 +775,7 @@ function parseServiceTsv(text){
  const items=[];
  const errors=[];
  const rows=[];
- let firstMetadata={movement_date:'',display_date:'',customer:'',machine:''};
+ let firstMetadata={movement_date:'',display_date:'',customer:'',machine:'',machine_input:'',machine_id:0,machine_suggestions:[]};
  const toQty=v=>Number(String(v||'').replace(',','.'));
 
  for(let i=0;i<lines.length;i++){
@@ -750,35 +854,38 @@ function parseServiceTsv(text){
 
 
 function machineCandidates(){
- return rows('SELECT name FROM machines WHERE active=1 ORDER BY LENGTH(name) DESC').map(x=>String(x.name||'').trim()).filter(Boolean);
+ const canonical=rows('SELECT id,name FROM machines WHERE active=1').map(x=>({match_name:x.name,canonical_name:x.name,machine_id:Number(x.id),alias:false}));
+ const aliases=rows(`SELECT ma.alias,m.id,m.name FROM machine_aliases ma JOIN machines m ON m.id=ma.machine_id WHERE ma.active=1 AND m.active=1`)
+  .map(x=>({match_name:x.alias,canonical_name:x.name,machine_id:Number(x.id),alias:true}));
+ return [...canonical,...aliases].sort((a,b)=>b.match_name.length-a.match_name.length);
 }
 function normalizeLoose(value){
  return String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9.]+/g,' ').replace(/\s+/g,' ').trim();
 }
 function splitCustomerAndMachine(remainder){
  const source=String(remainder||'').trim();
- if(!source)return {customer:'',machine:''};
+ if(!source)return {customer:'',machine:'',machine_input:''};
  const normalized=normalizeLoose(source);
  for(const candidate of machineCandidates()){
-  const nc=normalizeLoose(candidate);
-  if(!nc)continue;
-  if(normalized===nc)return {customer:'',machine:candidate};
+  const nc=normalizeLoose(candidate.match_name);if(!nc)continue;
+  if(normalized===nc)return {customer:'',machine:candidate.canonical_name,machine_input:candidate.match_name,machine_id:candidate.machine_id,via_alias:candidate.alias};
   if(normalized.endsWith(' '+nc)){
-   const words=source.split(/\s+/);
-   const count=candidate.split(/\s+/).length;
-   return {customer:words.slice(0,-count).join(' '),machine:words.slice(-count).join(' ')};
+   const words=source.split(/\s+/),count=candidate.match_name.split(/\s+/).length;
+   return {customer:words.slice(0,-count).join(' '),machine:candidate.canonical_name,machine_input:words.slice(-count).join(' '),machine_id:candidate.machine_id,via_alias:candidate.alias};
   }
  }
  const keywords=/\b(compas|croissomat|rondostar|rondinette|ecostar|brotstar|polyline|kombi|smc|sko|croissantwickler|teigteiler)\b/i;
- const words=source.split(/\s+/);
- const index=words.findIndex(word=>keywords.test(word));
- if(index>=0)return {customer:words.slice(0,index).join(' '),machine:words.slice(index).join(' ')};
- return {customer:source,machine:''};
+ const words=source.split(/\s+/),index=words.findIndex(word=>keywords.test(word));
+ if(index>=0){
+  const rawMachine=words.slice(index).join(' '),resolved=resolveMachineName(rawMachine);
+  return {customer:words.slice(0,index).join(' '),machine:resolved.machine_id?resolved.name:rawMachine,machine_input:rawMachine,machine_id:resolved.machine_id||0,via_alias:!!resolved.via_alias,suggestions:resolved.suggestions||[]};
+ }
+ return {customer:source,machine:'',machine_input:''};
 }
 function parseFlexibleServiceRows(text){
  const lines=importContentLines(text).split('\n');
  const items=[],rowsOut=[],errors=[];
- let firstMetadata={movement_date:'',display_date:'',customer:'',machine:''};
+ let firstMetadata={movement_date:'',display_date:'',customer:'',machine:'',machine_input:'',machine_id:0,machine_suggestions:[]};
  for(let i=0;i<lines.length;i++){
   const line=lines[i].trim();
   if(!line)continue;
@@ -793,13 +900,13 @@ function parseFlexibleServiceRows(text){
    errors.push({line:i+1,article_no:article,error:'Anzahl fehlt oder ist ungültig.'});
    continue;
   }
-  const metadata={movement_date:parsedDate.iso,display_date:parsedDate.display,customer:rest.customer,machine:rest.machine};
+  const metadata={movement_date:parsedDate.iso,display_date:parsedDate.display,customer:rest.customer,machine:rest.machine,machine_input:rest.machine_input||rest.machine,machine_id:rest.machine_id||0,machine_suggestions:rest.suggestions||[]};
   items.push({article_no:article,quantity:qty,line:i+1});
   rowsOut.push({article_no:article,quantity:qty,line:i+1,metadata});
   if(!firstMetadata.movement_date)firstMetadata.movement_date=metadata.movement_date;
   if(!firstMetadata.display_date)firstMetadata.display_date=metadata.display_date;
   if(!firstMetadata.customer)firstMetadata.customer=metadata.customer;
-  if(!firstMetadata.machine)firstMetadata.machine=metadata.machine;
+  if(!firstMetadata.machine)firstMetadata.machine=metadata.machine;if(!firstMetadata.machine_input)firstMetadata.machine_input=metadata.machine_input;if(!firstMetadata.machine_id)firstMetadata.machine_id=metadata.machine_id;if(!firstMetadata.machine_suggestions.length&&metadata.machine_suggestions?.length)firstMetadata.machine_suggestions=metadata.machine_suggestions;
  }
  return {matched:rowsOut.length>0,items,rows:rowsOut,metadata:firstMetadata,errors};
 }
@@ -891,11 +998,14 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'56.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'57.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
-  if(p==='/api/masterdata')return response({locations:rows('SELECT * FROM locations WHERE active=1 ORDER BY name'),machines:rows('SELECT * FROM machines WHERE active=1 ORDER BY name'),technicians:rows('SELECT * FROM technicians WHERE active=1 ORDER BY name'),vehicles:rows('SELECT * FROM vehicles WHERE active=1 ORDER BY name')});
+  if(p==='/api/masterdata/similar'){
+   const type=q.type==='location'?'location':'machine';return response({suggestions:type==='machine'?machineSuggestions(q.q||'',5):similarMasterNames(type,q.q||'',5)});
+  }
+  if(p==='/api/masterdata')return response({locations:rows('SELECT * FROM locations WHERE active=1 ORDER BY name'),machines:rows('SELECT * FROM machines WHERE active=1 ORDER BY name'),machine_aliases:rows(`SELECT ma.id,ma.alias,ma.machine_id,m.name machine_name FROM machine_aliases ma JOIN machines m ON m.id=ma.machine_id WHERE ma.active=1 ORDER BY m.name,ma.alias`),machine_merges:rows(`SELECT h.id,h.source_machine_id,h.target_machine_id,h.source_name,h.merged_at,t.name target_name FROM machine_merge_history h JOIN machines t ON t.id=h.target_machine_id WHERE h.active=1 ORDER BY h.id DESC`),technicians:rows('SELECT * FROM technicians WHERE active=1 ORDER BY name'),vehicles:rows('SELECT * FROM vehicles WHERE active=1 ORDER BY name')});
   if(p==='/api/articles')return response(articles(q.q||''));
   if(p==='/api/dashboard'){const a=articles().filter(x=>x.active);const low=a.filter(x=>x.stock<x.minimum_stock).sort((x,y)=>(y.minimum_stock-y.stock)-(x.minimum_stock-x.stock)).slice(0,8);const recent=rows('SELECT m.id,m.movement_date,m.movement_type,a.article_no,a.description,m.quantity,m.technician,m.customer,m.machine FROM movements m JOIN articles a ON a.id=m.article_id ORDER BY m.id DESC LIMIT 20');const top=rows("SELECT a.article_no,a.description,SUM(m.quantity) quantity FROM movements m JOIN articles a ON a.id=m.article_id WHERE m.movement_type='OUT' GROUP BY a.id ORDER BY quantity DESC LIMIT 8");return response({articles:a.length,low_stock:low.length,today:scalar('SELECT COUNT(*) FROM movements WHERE movement_date=?',[today()]),movements:scalar('SELECT COUNT(*) FROM movements'),stock_value:a.reduce((s,x)=>s+x.stock*x.purchase_price,0),low_stock_items:low,recent,top_out:top})}
   if(p==='/api/material-request')return response(articles().filter(x=>x.active&&x.stock<x.target_stock).map(x=>({...x,suggested_quantity:Math.max(0,x.target_stock-x.stock)})));
@@ -1001,19 +1111,27 @@ async function route(url,opt={}){
    return response({wrong_import_type:true,error:'Einbuchungs-Daten erkannt. Bitte diese Ausgabe im Bereich „Einbuchung – Lieferschein M365“ einfügen.',items:[],unknown:[],errors:[],metadata:{}});
   }
   const parsed=parseServiceReport(d.text);
+  if(parsed.metadata?.machine){
+   const original=parsed.metadata.machine_input||parsed.metadata.machine;
+   const resolved=resolveMachineName(original);
+   parsed.metadata.machine_input=original;
+   parsed.metadata.machine_suggestions=resolved.suggestions||[];
+   parsed.metadata.machine_match=resolved;
+   if(resolved.machine_id){parsed.metadata.machine=resolved.name;parsed.metadata.machine_id=resolved.machine_id}
+  }
   const matched=matchItems(parsed.items);
   return response({...matched,metadata:parsed.metadata,rows:parsed.rows,errors:[...(matched.errors||[]),...(parsed.errors||[])]})
  }
  if(p==='/api/delivery-note/commit'){await createBackup('Sicherheitsbackup','Vor Lieferschein-Einbuchung');bookItems(d.items,'IN',{...d,source:'Lieferschein'});await persist();return response({ok:true,count:d.items.length})}
  if(p==='/api/service-report/commit'){
-  const machine=String(d.machine||'').trim();
+  let machine=String(d.machine||'').trim();
   let machineCreated=false;
-  if(machine&&d.create_machine_if_missing){
-   const exists=Number(scalar('SELECT COUNT(*) FROM machines WHERE LOWER(name)=LOWER(?)',[machine])||0)>0;
-   if(!exists){
+  if(machine){
+   const resolved=resolveMachineName(machine);
+   if(resolved.machine_id)machine=resolved.name;
+   else if(d.create_machine_if_missing){
     run('INSERT INTO machines(name,description,active) VALUES(?,?,1)',[machine,'Automatisch aus Servicebericht angelegt']);
-    machineCreated=true;
-    audit(d.technician||'Techniker','ANLAGE','machine','',machine+' – aus Servicebericht');
+    machineCreated=true;audit(d.technician||'Techniker','ANLAGE','machine','',machine+' – aus Servicebericht');
    }
   }
   bookItems(d.items,'OUT',{...d,machine,source:'Servicebericht'});
@@ -1027,6 +1145,62 @@ async function route(url,opt={}){
  if(p==='/api/inventory/commit'){await createBackup('Sicherheitsbackup','Vor Inventur');if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');let changed=0,unchanged=0;for(const x of d.items){const a=articles().find(z=>z.id===Number(x.article_id));const diff=Number(x.counted_stock)-a.stock;if(Math.abs(diff)<1e-8){unchanged++;continue}bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{...d,source:'Inventur',note:'Inventurkorrektur'});changed++}audit(d.technician,'INVENTUR','Bestand','',`${changed} Korrekturen`);await persist();return response({ok:true,changed,unchanged})}
  if(p==='/api/material-request/preview'){const x=await materialXlsx(d);return response({count:x.count,items:x.items,template_type:x.template_type})}
  if(p==='/api/export/material-request'){const x=await materialXlsx(d);const tech=(d.technician||'Techniker').replace(/[^\wÄÖÜäöüß-]+/g,'_');return response(x.blob,200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':`attachment; filename="Bestellung_${fmtDate(today())}_${tech}.xlsx"`})}
+ if(p==='/api/machine/alias'){
+  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  const machineId=Number(d.machine_id),alias=String(d.alias||'').trim();if(!machineId||!alias)throw Error('Maschine und Bezeichnung fehlen.');
+  const machine=rows('SELECT id,name FROM machines WHERE id=? AND active=1',[machineId])[0];if(!machine)throw Error('Maschine nicht gefunden.');
+  if(normalizeLoose(machine.name)===normalizeLoose(alias))throw Error('Diese Bezeichnung entspricht bereits dem Hauptnamen.');
+  const canonical=rows('SELECT id,name FROM machines WHERE active=1').find(x=>normalizeLoose(x.name)===normalizeLoose(alias));
+  if(canonical)throw Error(`„${alias}“ ist bereits als eigene Maschine „${canonical.name}“ angelegt. Bitte bei Bedarf die Funktion „Maschinen zusammenführen“ verwenden.`);
+  const existing=rows('SELECT id,alias,machine_id FROM machine_aliases WHERE active=1').find(x=>normalizeLoose(x.alias)===normalizeLoose(alias));
+  if(existing)throw Error('Diese alternative Bezeichnung ist bereits zugeordnet.');
+  run('INSERT INTO machine_aliases(alias,machine_id,active,created_at) VALUES(?,?,1,?)',[alias,machineId,stamp()]);
+  audit('Administrator','ALIAS','Maschine',String(machineId),`Alternative Bezeichnung „${alias}“ → ${machine.name}`);await persist();return response({ok:true,alias,machine_id:machineId},201)
+ }
+ if(p==='/api/machine/alias/delete'){
+  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  const alias=rows(`SELECT ma.id,ma.alias,ma.machine_id,m.name machine_name FROM machine_aliases ma JOIN machines m ON m.id=ma.machine_id WHERE ma.id=?`,[Number(d.id)])[0];
+  if(!alias)throw Error('Alternative Bezeichnung wurde nicht gefunden.');
+  run('DELETE FROM machine_aliases WHERE id=?',[alias.id]);audit('Administrator','TRENNUNG','Maschine',String(alias.machine_id),`Alternative Bezeichnung „${alias.alias}“ von ${alias.machine_name} getrennt.`);await persist();return response({ok:true})
+ }
+ if(p==='/api/machine/merge'){
+  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  const sourceId=Number(d.source_id),targetId=Number(d.target_id);if(!sourceId||!targetId||sourceId===targetId)throw Error('Bitte zwei unterschiedliche Maschinen auswählen.');
+  const source=rows('SELECT * FROM machines WHERE id=? AND active=1',[sourceId])[0],target=rows('SELECT * FROM machines WHERE id=? AND active=1',[targetId])[0];
+  if(!source||!target)throw Error('Eine der Maschinen ist nicht mehr aktiv.');
+  const snap={sourceArticleIds:rows('SELECT article_id FROM article_machines WHERE machine_id=?',[sourceId]).map(x=>Number(x.article_id)),targetArticleIds:rows('SELECT article_id FROM article_machines WHERE machine_id=?',[targetId]).map(x=>Number(x.article_id)),sourceAliases:rows('SELECT id,alias FROM machine_aliases WHERE machine_id=?',[sourceId]).map(x=>({id:Number(x.id),alias:x.alias}))};
+  run('BEGIN TRANSACTION');
+  try{
+   run('INSERT INTO machine_merge_history(source_machine_id,target_machine_id,source_name,snapshot_json,merged_at,active) VALUES(?,?,?,?,?,1)',[sourceId,targetId,source.name,JSON.stringify(snap),stamp()]);
+   for(const aid of snap.sourceArticleIds)run('INSERT OR IGNORE INTO article_machines(article_id,machine_id) VALUES(?,?)',[aid,targetId]);
+   run('DELETE FROM article_machines WHERE machine_id=?',[sourceId]);
+   run('UPDATE machine_aliases SET machine_id=? WHERE machine_id=?',[targetId,sourceId]);
+   if(!exactMachineResolution(source.name)?.via_alias)run('INSERT OR IGNORE INTO machine_aliases(alias,machine_id,active,created_at) VALUES(?,?,1,?)',[source.name,targetId,stamp()]);
+   run('UPDATE machines SET active=0 WHERE id=?',[sourceId]);
+   for(const aid of [...new Set([...snap.sourceArticleIds,...snap.targetArticleIds])])syncLegacyArticleMachine(aid);
+   run('COMMIT');
+  }catch(e){try{run('ROLLBACK')}catch{};throw e}
+  audit('Administrator','ZUSAMMENFÜHRUNG','Maschine',String(targetId),`„${source.name}“ wurde unter „${target.name}“ zusammengeführt. Der bisherige Name bleibt als Alias erhalten.`);await persist();return response({ok:true})
+ }
+ if(p==='/api/machine/merge/undo'){
+  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  const h=rows('SELECT * FROM machine_merge_history WHERE id=? AND active=1',[Number(d.id)])[0];if(!h)throw Error('Aktive Zusammenführung nicht gefunden.');
+  const snap=JSON.parse(h.snapshot_json||'{}'),sourceId=Number(h.source_machine_id),targetId=Number(h.target_machine_id);
+  run('BEGIN TRANSACTION');
+  try{
+   run('UPDATE machines SET active=1 WHERE id=?',[sourceId]);
+   run('DELETE FROM machine_aliases WHERE machine_id=? AND LOWER(alias)=LOWER(?)',[targetId,h.source_name]);
+   for(const a of (snap.sourceAliases||[]))run('UPDATE machine_aliases SET machine_id=? WHERE id=?',[sourceId,Number(a.id)]);
+   const targetBefore=new Set((snap.targetArticleIds||[]).map(Number));
+   for(const aid of (snap.sourceArticleIds||[]).map(Number)){
+    run('INSERT OR IGNORE INTO article_machines(article_id,machine_id) VALUES(?,?)',[aid,sourceId]);
+    if(!targetBefore.has(aid))run('DELETE FROM article_machines WHERE article_id=? AND machine_id=?',[aid,targetId]);
+    syncLegacyArticleMachine(aid);
+   }
+   run('UPDATE machine_merge_history SET active=0 WHERE id=?',[h.id]);run('COMMIT');
+  }catch(e){try{run('ROLLBACK')}catch{};throw e}
+  audit('Administrator','TRENNUNG','Maschine',String(sourceId),`Zusammenführung von „${h.source_name}“ wurde rückgängig gemacht.`);await persist();return response({ok:true})
+ }
  if(p==='/api/masterdata'){
   const type=String(d.type||'');
   if(type!=='technician'&&!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet. Bitte das Passwort erneut eingeben.');
@@ -1055,6 +1229,7 @@ async function route(url,opt={}){
   run(`INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at,manufacturer,supplier,supplier_article_no,barcode,purchase_price,notes,image_url,datasheet_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
    [d.article_no,d.description,Number(d.target_stock||0),Number(d.minimum_stock||0),Number(d.initial_stock||0),d.unit||'Stk.',d.location||'',d.machine||'',d.active===false?0:1,stamp(),d.manufacturer||'',d.supplier||'',d.supplier_article_no||'',d.barcode||'',Number(d.purchase_price||0),d.notes||'',d.image_url||'',d.datasheet_url||'']);
   const id=Number(scalar('SELECT last_insert_rowid()')||0);
+  const selectedMachines=setArticleMachineIds(id,Array.isArray(d.machine_ids)?d.machine_ids:(d.machine?[d.machine]:[]));
   audit(d.technician||setting('primary_technician','Techniker'),'ANLAGE','Artikel',String(id),[
    `Artikelnummer: ${auditValue(d.article_no)}`,
    `Bezeichnung: ${auditValue(d.description)}`,
@@ -1063,7 +1238,7 @@ async function route(url,opt={}){
    `Mindestbestand: ${auditValue(Number(d.minimum_stock||0))}`,
    `Einheit: ${auditValue(d.unit||'Stk.')}`,
    `Lagerort: ${auditValue(d.location)}`,
-   `Maschine: ${auditValue(d.machine)}`,
+   `Maschinen: ${auditValue(selectedMachines.join(', '))}`,
    `Hersteller: ${auditValue(d.manufacturer)}`,
    `Lieferant: ${auditValue(d.supplier)}`,
    `Lieferanten-Artikelnummer: ${auditValue(d.supplier_article_no)}`,
@@ -1085,9 +1260,10 @@ async function route(url,opt={}){
    for(const x of items){
     const a=articles().find(z=>z.id===Number(x.id));
     if(!a)continue;
-    run('UPDATE articles SET article_no=?,description=?,target_stock=?,minimum_stock=?,unit=?,location=?,machine=?,active=? WHERE id=?',[
-      String(x.article_no||'').trim(),String(x.description||'').trim(),normalizeQuantityForUnit(x.target_stock,x.unit),normalizeQuantityForUnit(x.minimum_stock,x.unit),String(x.unit||'Stk.').trim()||'Stk.',String(x.location||''),String(x.machine||''),x.active?1:0,Number(x.id)
+    run('UPDATE articles SET article_no=?,description=?,target_stock=?,minimum_stock=?,unit=?,location=?,active=? WHERE id=?',[
+      String(x.article_no||'').trim(),String(x.description||'').trim(),normalizeQuantityForUnit(x.target_stock,x.unit),normalizeQuantityForUnit(x.minimum_stock,x.unit),String(x.unit||'Stk.').trim()||'Stk.',String(x.location||''),x.active?1:0,Number(x.id)
     ]);
+    setArticleMachineIds(Number(x.id),Array.isArray(x.machine_ids)?x.machine_ids:(x.machine?[x.machine]:[]));
     const diff=normalizeQuantityForUnit(x.current_stock,x.unit)-Number(a.stock);
     if(Math.abs(diff)>1e-8){bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{source:'Bestandskorrektur Stammdaten',note:'Istbestand über Sammelspeicherung geändert'});corrected++}
     updated++;
@@ -1117,9 +1293,16 @@ async function route(url,opt={}){
   return response({ok:true,id,movement_count:movementCount});
  }
 
- if(p==='/api/article/update'){if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');const a=articles().find(x=>x.id===Number(d.id));run('UPDATE articles SET article_no=?,description=?,target_stock=?,minimum_stock=?,unit=?,location=?,machine=?,active=?,manufacturer=?,supplier=?,supplier_article_no=?,barcode=?,purchase_price=?,notes=?,image_url=?,datasheet_url=? WHERE id=?',[d.article_no,d.description,Number(d.target_stock||0),Number(d.minimum_stock||0),d.unit||'Stk.',d.location||'',d.machine||'',d.active?1:0,d.manufacturer||a.manufacturer,d.supplier||a.supplier,d.supplier_article_no||a.supplier_article_no,d.barcode||a.barcode,Number(d.purchase_price??a.purchase_price),d.notes||a.notes,d.image_url||a.image_url,d.datasheet_url||a.datasheet_url,Number(d.id)]);const diff=Number(d.current_stock)-a.stock;if(Math.abs(diff)>1e-8)bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{source:'Bestandskorrektur Stammdaten',note:'Istbestand geändert'});audit('Techniker','ÄNDERUNG','Artikel',a.id,d.article_no);await persist();return response({ok:true})}
+ if(p==='/api/article/update'){
+  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  const a=articles().find(x=>x.id===Number(d.id));if(!a)throw Error('Artikel wurde nicht gefunden.');
+  run('UPDATE articles SET article_no=?,description=?,target_stock=?,minimum_stock=?,unit=?,location=?,active=?,manufacturer=?,supplier=?,supplier_article_no=?,barcode=?,purchase_price=?,notes=?,image_url=?,datasheet_url=? WHERE id=?',[d.article_no,d.description,Number(d.target_stock||0),Number(d.minimum_stock||0),d.unit||'Stk.',d.location||'',d.active?1:0,d.manufacturer||a.manufacturer,d.supplier||a.supplier,d.supplier_article_no||a.supplier_article_no,d.barcode||a.barcode,Number(d.purchase_price??a.purchase_price),d.notes||a.notes,d.image_url||a.image_url,d.datasheet_url||a.datasheet_url,Number(d.id)]);
+  const machines=setArticleMachineIds(Number(d.id),Array.isArray(d.machine_ids)?d.machine_ids:(d.machine?[d.machine]:[]));
+  const diff=Number(d.current_stock)-a.stock;if(Math.abs(diff)>1e-8)bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{source:'Bestandskorrektur Stammdaten',note:'Istbestand geändert'});
+  audit('Techniker','ÄNDERUNG','Artikel',a.id,`Artikel ${d.article_no}; Lagerort ${d.location||'—'}; Maschinen ${machines.join(', ')||'—'}`);await persist();return response({ok:true})
+ }
  if(p==='/api/articles/stock-to-levels'){if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');for(const a of articles().filter(x=>x.active)){if(d.mode==='target'||d.mode==='both')run('UPDATE articles SET target_stock=? WHERE id=?',[a.stock,a.id]);if(d.mode==='minimum'||d.mode==='both')run('UPDATE articles SET minimum_stock=? WHERE id=?',[a.stock,a.id])}await persist();return response({ok:true,count:articles().length})}
- if(p==='/api/articles/create-import'||p==='/api/import/create-and-book'){if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');let created=0,booked=0,skipped=[];for(const x of d.items||[]){let a=rows('SELECT id FROM articles WHERE article_no=?',[x.article_no])[0];if(!a&&x.description){run('INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at) VALUES(?,?,?,?,?,?,?,?,1,?)',[x.article_no,x.description,Number(x.target_stock||0),Number(x.minimum_stock||0),0,x.unit||'Stk.',x.location||'',x.machine||'',stamp()]);a={id:scalar('SELECT last_insert_rowid()')};created++}else if(!a){skipped.push({article_no:x.article_no,reason:'Bezeichnung fehlt'});continue}if(p==='/api/import/create-and-book'&&Number(x.quantity)>0){bookItems([{article_id:a.id,quantity:Number(x.quantity)}],'IN',{...d,source:'SAP-XLSX/CSV-Import'});booked++}}await persist();return response({ok:true,created,booked,skipped},201)}
+ if(p==='/api/articles/create-import'||p==='/api/import/create-and-book'){if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');let created=0,booked=0,skipped=[];for(const x of d.items||[]){let a=rows('SELECT id FROM articles WHERE article_no=?',[x.article_no])[0];if(!a&&x.description){run('INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at) VALUES(?,?,?,?,?,?,?,?,1,?)',[x.article_no,x.description,Number(x.target_stock||0),Number(x.minimum_stock||0),0,x.unit||'Stk.',x.location||'',x.machine||'',stamp()]);a={id:scalar('SELECT last_insert_rowid()')};setArticleMachineIds(Number(a.id),Array.isArray(x.machine_ids)?x.machine_ids:(x.machine?[x.machine]:[]));created++}else if(!a){skipped.push({article_no:x.article_no,reason:'Bezeichnung fehlt'});continue}if(p==='/api/import/create-and-book'&&Number(x.quantity)>0){bookItems([{article_id:a.id,quantity:Number(x.quantity)}],'IN',{...d,source:'SAP-XLSX/CSV-Import'});booked++}}await persist();return response({ok:true,created,booked,skipped},201)}
  throw Error('Funktion noch nicht zugeordnet: '+p);
  }catch(e){return response({error:e.message||String(e)},400)}
 }
@@ -1735,7 +1918,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','56');
+  setSetting('database_version','57');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();

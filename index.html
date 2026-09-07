@@ -272,7 +272,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">56.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">57.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -301,8 +301,8 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </select></label>
 <label>Sollbestand *<input id="nm_target" type="number" min="0" step="0.01" value="0"></label>
 <label>Mindestbestand *<input id="nm_min" type="number" min="0" step="0.01" value="0"></label>
-<label>Lagerort *<select id="nm_location"></select></label>
-<label>Maschine<select id="nm_machine"></select></label>
+<label>Lagerort *<select id="nm_location"></select><input id="nm_location_new" placeholder="Neuen Lagerort eingeben" oninput="showSimilarMaster('location','nm')"><div id="nm_location_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('location','nm')">+ Lagerort anlegen</button></label>
+<label>Maschinen <span class="small">(Mehrfachauswahl möglich)</span><select id="nm_machine" multiple size="4"></select><input id="nm_machine_new" placeholder="Neue Maschinenbezeichnung" oninput="showSimilarMaster('machine','nm')"><div id="nm_machine_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('machine','nm')">+ Maschine anlegen</button></label>
 <label>Hersteller<input id="nm_manufacturer"></label>
 <label>Lieferant<input id="nm_supplier"></label>
 <label>Lieferanten-Artikelnummer<input id="nm_supplier_no"></label>
@@ -465,7 +465,25 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <section id="master" class="view"><h2>Stammdaten</h2><div id="lockbox" class="adminlocked"><h3>🔒 Stammdaten gesperrt</h3>
 <div id="normalUnlockArea"><p>Zur Bearbeitung von Lagerorten, Maschinen, Technikern und der vollständigen Lagerliste ist das Passwort erforderlich.</p><div class="toolbar"><input id="adminpw" type="password" placeholder="Passwort"><button class="primary" onclick="unlockAdmin()">Stammdaten freischalten</button></div></div>
 <div id="firstPasswordArea" style="display:none"><div class="message error">Für diese Datenbank wurde noch kein Administratorpasswort eingerichtet. Bitte lege jetzt ein Passwort fest.</div><div class="formgrid"><label>Neues Passwort<input id="firstPwNew" type="password" minlength="6"></label><label>Passwort wiederholen<input id="firstPwRepeat" type="password" minlength="6"></label></div><button class="primary" onclick="createFirstAdminPassword()">Passwort speichern und Stammdaten öffnen</button></div>
-<div id="unlockmsg" class="message"></div></div><div id="adminarea" style="display:none"><div class="split"><div class="card"><h3>Lagerort anlegen</h3><input id="locname" placeholder="z. B. Regal A1"><input id="locdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('location')">Speichern</button></div><div class="card"><h3>Maschine anlegen</h3><input id="machname" placeholder="z. B. Rondostar 3000"><input id="machdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('machine')">Speichern</button></div><div class="card"><h3>Techniker anlegen</h3><input id="techname" placeholder="Name"><button class="primary" onclick="addMaster('technician')">Speichern</button></div></div><div id="mastermsg" class="message"></div><div class="card">
+<div id="unlockmsg" class="message"></div></div><div id="adminarea" style="display:none"><div class="split"><div class="card"><h3>Lagerort anlegen</h3><input id="locname" placeholder="z. B. Regal A1"><input id="locdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('location')">Speichern</button></div><div class="card"><h3>Maschine anlegen</h3><input id="machname" placeholder="z. B. Rondostar 3000"><input id="machdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('machine')">Speichern</button></div><div class="card"><h3>Techniker anlegen</h3><input id="techname" placeholder="Name"><button class="primary" onclick="addMaster('technician')">Speichern</button></div></div><div id="mastermsg" class="message"></div>
+<div class="card">
+<h3>🔗 Maschinen-Bezeichnungen & Mehrfachzuordnung</h3>
+<p>Unterschiedliche Ticket-Bezeichnungen können einer vorhandenen Maschine als <b>alternative Bezeichnung (Alias)</b> zugeordnet werden. Die Zuordnung kann jederzeit wieder getrennt werden.</p>
+<div class="formgrid">
+<label>Hauptmaschine<select id="machineAliasTarget"></select></label>
+<label>Alternative Bezeichnung<input id="machineAliasName" placeholder="z. B. Compas 4 statt Compas 4.0" oninput="showMachineAliasSimilarity()"><span id="machineAliasSimilarity" class="small"></span></label>
+</div>
+<button class="primary" onclick="addMachineAlias()">Alternative Bezeichnung zuordnen</button>
+<div id="machineAliasMsg" class="message"></div>
+<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Alternative Bezeichnung</th><th>Hauptmaschine</th><th>Aktion</th></tr></thead><tbody id="machineAliasRows"></tbody></table></div>
+<hr>
+<h4>Bereits getrennt angelegte Maschinen zusammenführen</h4>
+<p class="small">Die Quellmaschine wird deaktiviert und ihr bisheriger Name bleibt als Alias der Zielmaschine erhalten. Ersatzteil-Zuordnungen werden übernommen. Die Zusammenführung kann rückgängig gemacht werden.</p>
+<div class="formgrid"><label>Quellmaschine<select id="machineMergeSource"></select></label><label>Ziel-/Hauptmaschine<select id="machineMergeTarget"></select></label></div>
+<button class="primary" onclick="mergeMachines()">Maschinen zusammenführen</button>
+<div id="machineMergeMsg" class="message"></div>
+<div id="machineMergeHistory"></div>
+</div><div class="card">
 <h3>📅 Datumsformat</h3>
 <p>Das Datumsformat gilt sofort für vorhandene und neue Daten in Ansichten und Exporten. Die Datenbank speichert Datumswerte intern weiterhin sicher im ISO-Format.</p>
 <div class="formgrid"><label>Datumsformat<select id="masterDateFormat">
@@ -630,8 +648,8 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
    <label>Einheit<select id="ur_unit" onchange="adjustUnknownRegistrationUnit()">
     <option>Stk.</option><option>Liter</option><option>ml</option><option>kg</option><option>g</option><option>m</option><option>cm</option><option>mm</option><option>Satz</option><option>Rolle</option><option>Packung</option><option>Karton</option>
    </select></label>
-   <label>Lagerort<select id="ur_location"></select></label>
-   <label>Maschine<select id="ur_machine"></select></label>
+   <label>Lagerort<select id="ur_location"></select><input id="ur_location_new" placeholder="Neuen Lagerort eingeben" oninput="showSimilarMaster('location','ur')"><div id="ur_location_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('location','ur')">+ Lagerort anlegen</button></label>
+   <label>Maschinen <span class="small">(Mehrfachauswahl möglich)</span><select id="ur_machine" multiple size="4"></select><input id="ur_machine_new" placeholder="Neue Maschinenbezeichnung" oninput="showSimilarMaster('machine','ur')"><div id="ur_machine_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('machine','ur')">+ Maschine anlegen</button></label>
    <label>Hersteller<input id="ur_manufacturer"></label>
    <label>Lieferant<input id="ur_supplier"></label>
    <label>Lieferanten-Artikelnummer<input id="ur_supplier_no"></label>
@@ -726,7 +744,7 @@ async function master(){
  let mo='<option></option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');
  ['itech','otech','dtech','stech','rtech'].forEach(id=>{let e=document.getElementById(id);if(e)e.innerHTML=to});
  omachine.innerHTML=mo;smachine.innerHTML=mo;
- if(document.getElementById('nm_location'))fillNewMaterialLists()
+ if(document.getElementById('nm_location'))fillNewMaterialLists();if(document.getElementById('machineAliasRows'))loadMachineRelations()
 }
 async function loadAppInfo(){
  try{
@@ -958,11 +976,10 @@ async function openUnknownRegistration(source,index){
  ur_no.value=item.article_no||'';ur_desc.value=item.description||'';ur_initial.value='0';ur_target.value='0';ur_min.value='0';ur_unit.value='Stk.';
  ur_manufacturer.value='';ur_supplier.value='';ur_supplier_no.value='';ur_barcode.value='';ur_purchase.value='0';ur_notes.value='';ur_active.value='true';
  ur_location.innerHTML='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
- ur_machine.innerHTML='<option value="">Keine Zuordnung</option>'+(md.machines||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+ ur_machine.innerHTML=machineMultiOptions([]);ur_location_new.value='';ur_machine_new.value='';ur_location_suggestions.innerHTML='';ur_machine_suggestions.innerHTML='';
  if(source==='service'&&currentServiceMachine()){
-  const serviceMachine=currentServiceMachine();
-  if(![...ur_machine.options].some(o=>o.value===serviceMachine))ur_machine.insertAdjacentHTML('beforeend',`<option value="${esc(serviceMachine)}">${esc(serviceMachine)} (aus Servicebericht)</option>`);
-  ur_machine.value=serviceMachine;
+  const serviceMachine=currentServiceMachine();const found=(md.machines||[]).find(x=>normLabel(x.name)===normLabel(serviceMachine));
+  if(found){const opt=[...ur_machine.options].find(o=>Number(o.value)===Number(found.id));if(opt)opt.selected=true}
  }
  unknownArticleContext.innerHTML=`<b>Quelle:</b> ${source==='delivery'?'Lieferschein / Einbuchung':'Servicebericht / Entnahme'}<br><b>Erkannte Buchungsmenge:</b> ${n(item.quantity)}${source==='service'?'<br><span class="small">Für eine anschließende Entnahme muss der Anfangsbestand mindestens der Entnahmemenge entsprechen.</span>':''}`;
  adjustUnknownRegistrationUnit();ur_msg.className='message';ur_msg.textContent='';unknownArticleOverlay.style.display='block';setTimeout(()=>ur_desc.focus(),0);
@@ -978,7 +995,7 @@ async function saveUnknownRegistration(){
  if(st.source==='service'&&initial<st.quantity)return msg(ur_msg,`Für die Entnahme von ${n(st.quantity)} muss der Anfangsbestand mindestens ${n(st.quantity)} betragen. Alternativ kann die Position ignoriert werden.`,false);
  let password=sessionStorage.adminPassword||'';
  if(!window.LVAdminSession?.unlocked&&!password){password=prompt('Passwort für Stammdaten:')||'';if(!password)return}
- const body={password,article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,location:ur_location.value,machine:ur_machine.value,manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),purchase_price:Number(ur_purchase.value||0),notes:ur_notes.value.trim(),active:ur_active.value==='true'};
+ const body={password,article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),purchase_price:Number(ur_purchase.value||0),notes:ur_notes.value.trim(),active:ur_active.value==='true'};
  try{
   await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});
   if(password){sessionStorage.adminPassword=password;sessionStorage.admin='1';window.LVAdminSession?.unlock()}
@@ -1112,23 +1129,20 @@ IMPORTTYP: ENTNAHME
 29.07.2026[TAB]7079[TAB]Abstreiferhalter[TAB]2[TAB]Van Hamme[TAB]Compas 4.0 Pro`;
  alert(prompt);
 }
-function selectOrPrepareExtractedMachine(machine){
- const value=String(machine||'').trim();
- smachineNew.value='';smachineHint.textContent='';
- if(!value)return;
- const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
- const wanted=norm(value);
- const options=[...smachine.options].filter(o=>o.value);
- let existing=options.find(o=>norm(o.value)===wanted);
- if(!existing)existing=options.find(o=>norm(o.value).includes(wanted)||wanted.includes(norm(o.value)));
- if(existing){
-  smachine.value=existing.value;
-  smachineHint.textContent='Vorhandene Maschine erkannt.';
- }else{
-  smachine.value='';
-  smachineNew.value=value;
-  smachineHint.textContent='Neue Maschine – wird erst beim Bestätigen der Entnahme angelegt.';
- }
+function selectOrPrepareExtractedMachine(machine,inputName='',suggestions=[]){
+ const value=String(machine||'').trim(),raw=String(inputName||value).trim();smachineNew.value='';smachineHint.innerHTML='';if(!value)return;
+ const options=[...smachine.options].filter(o=>o.value);let existing=options.find(o=>normLabel(o.value)===normLabel(value));
+ if(existing){smachine.value=existing.value;smachineHint.innerHTML=raw&&normLabel(raw)!==normLabel(existing.value)?`Erkannt: <b>${esc(raw)}</b> → <b>${esc(existing.value)}</b>`:'Vorhandene Maschine erkannt.';return}
+ smachine.value='';smachineNew.value=raw||value;
+ if(suggestions?.length){
+  smachineHint.innerHTML='Ähnliche vorhandene Maschinen: '+suggestions.slice(0,3).map(x=>`<button type="button" class="secondary" style="margin:2px" onclick='useServiceMachineSuggestion(${Number(x.id)},${JSON.stringify(x.name)},${JSON.stringify(raw)})'>${esc(x.name)} (${Math.round(Number(x.score||0)*100)} %)</button>`).join('');
+ }else smachineHint.textContent='Neue Maschine – kann beim Bestätigen der Entnahme angelegt werden.';
+}
+function useServiceMachineSuggestion(id,name,raw){
+ smachine.value=name;smachineNew.value='';smachineHint.innerHTML=`Vorhandene Maschine <b>${esc(name)}</b> ausgewählt.`+(raw&&normLabel(raw)!==normLabel(name)?` <button type="button" class="secondary" onclick='rememberServiceMachineAlias(${Number(id)},${JSON.stringify(raw)})'>„${esc(raw)}“ als gleiche Maschine merken</button>`:'');
+}
+async function rememberServiceMachineAlias(machine_id,alias){
+ if(!alias)return;try{await api('/api/machine/alias',{method:'POST',body:JSON.stringify({machine_id,alias,password:sessionStorage.adminPassword||''})});await master();smachineHint.innerHTML=`Alternative Bezeichnung <b>${esc(alias)}</b> wurde dauerhaft der Maschine zugeordnet.`}catch(e){alert(e.message)}
 }
 function currentServiceMachine(){
  return smachineNew.value.trim()||smachine.value.trim();
@@ -1145,7 +1159,7 @@ async function servicePreview(silent=false){
   servicep=d.items||[];serviceUnknown=(d.unknown||[]).filter(x=>!ignoredUnknown.service.has(String(x.article_no)));
   if(d.metadata?.movement_date)sdate.value=d.metadata.movement_date;
   if(d.metadata?.customer)scustomer.value=d.metadata.customer;
-  if(d.metadata?.machine)selectOrPrepareExtractedMachine(d.metadata.machine);
+  if(d.metadata?.machine)selectOrPrepareExtractedMachine(d.metadata.machine,d.metadata.machine_input||d.metadata.machine,d.metadata.machine_suggestions||[]);
   renderServicePreviewRows();
   serrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
   sunknown.innerHTML=unknownBlock(serviceUnknown,'service');
@@ -1436,13 +1450,78 @@ function exportHistory(){downloadCsv('/api/export/history.csv?'+historyQuery(),'
 
 
 async function unlockNewMaterial(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:newpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(newunlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(newunlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=newpw.value;window.LVAdminSession?.unlock();newlock.style.display='none';newform.style.display='block';fillNewMaterialLists()}
-function fillNewMaterialLists(){let loc='<option value="">Bitte auswählen</option>'+md.locations.map(x=>`<option>${esc(x.name)}</option>`).join('');let mach='<option value="">Keine Zuordnung</option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');nm_location.innerHTML=loc;nm_machine.innerHTML=mach}
+function machineMultiOptions(selected=[]){
+ const set=new Set((selected||[]).map(Number));return (md.machines||[]).map(x=>`<option value="${Number(x.id)}" ${set.has(Number(x.id))?'selected':''}>${esc(x.name)}</option>`).join('');
+}
+function selectedMachineIds(select){return [...select.selectedOptions].map(o=>Number(o.value)).filter(Boolean)}
+function fillNewMaterialLists(){
+ let loc='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+ nm_location.innerHTML=loc;nm_machine.innerHTML=machineMultiOptions([]);
+}
 async function createMaterial(){
  let whole=isWholeNumberUnit(nm_unit.value),num=v=>whole?Math.round(Number(v||0)):Number(v||0);
- let body={password:sessionStorage.adminPassword||'',article_no:nm_no.value,description:nm_desc.value,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:nm_location.value,machine:nm_machine.value,manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true'};
- try{await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});msg(nm_msg,'Material wurde erfolgreich angelegt.',true);clearMaterialForm();arts=[];dash()}catch(e){msg(nm_msg,e.message,false)}
+ let body={password:sessionStorage.adminPassword||'',article_no:nm_no.value,description:nm_desc.value,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:nm_location.value,machine_ids:selectedMachineIds(nm_machine),manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true'};
+ try{await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});msg(nm_msg,'Material wurde erfolgreich angelegt.',true);clearMaterialForm();arts=[];await master();await dash();await loadArticles()}catch(e){msg(nm_msg,e.message,false)}
 }
-function clearMaterialForm(){['nm_no','nm_desc','nm_manufacturer','nm_supplier','nm_supplier_no','nm_barcode','nm_notes'].forEach(id=>document.getElementById(id).value='');nm_initial.value=0;nm_target.value=0;nm_min.value=0;nm_active.value='true'}
+function clearMaterialForm(){
+ ['nm_no','nm_desc','nm_manufacturer','nm_supplier','nm_supplier_no','nm_barcode','nm_notes','nm_location_new','nm_machine_new'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+ nm_initial.value=0;nm_target.value=0;nm_min.value=0;nm_active.value='true';if(nm_location)nm_location.value='';[...nm_machine.options].forEach(o=>o.selected=false);if(nm_location_suggestions)nm_location_suggestions.innerHTML='';if(nm_machine_suggestions)nm_machine_suggestions.innerHTML='';
+}
+
+function normLabel(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9.]+/g,' ').replace(/\s+/g,' ').trim()}
+async function showSimilarMaster(type,prefix){
+ const input=document.getElementById(`${prefix}_${type}_new`),box=document.getElementById(`${prefix}_${type}_suggestions`);if(!input||!box)return;
+ const q=input.value.trim();if(q.length<2){box.innerHTML='';return}
+ try{
+  const d=await api('/api/masterdata/similar?type='+encodeURIComponent(type)+'&q='+encodeURIComponent(q));
+  box.innerHTML=(d.suggestions||[]).map(x=>`<button type="button" class="secondary" style="margin:3px" onclick="selectExistingMaster('${type}','${prefix}',${Number(x.id)})">${esc(x.name)} (${Math.round(Number(x.score||0)*100)} %)</button>`).join('')||'Keine ähnliche bestehende Bezeichnung gefunden.';
+ }catch{box.innerHTML=''}
+}
+function selectExistingMaster(type,prefix,id){
+ const item=(type==='location'?md.locations:md.machines).find(x=>Number(x.id)===Number(id));if(!item)return;
+ const select=document.getElementById(`${prefix}_${type==='location'?'location':'machine'}`);
+ if(type==='location')select.value=item.name;
+ else{const opt=[...select.options].find(o=>Number(o.value)===Number(id));if(opt)opt.selected=true}
+ const input=document.getElementById(`${prefix}_${type}_new`),box=document.getElementById(`${prefix}_${type}_suggestions`);if(input)input.value='';if(box)box.innerHTML=`Bestehender Eintrag gewählt: <b>${esc(item.name)}</b>`;
+}
+async function createInlineMaster(type,prefix){
+ const input=document.getElementById(`${prefix}_${type}_new`),name=input?.value.trim();if(!name)return alert(type==='location'?'Bitte neuen Lagerort eingeben.':'Bitte neue Maschinenbezeichnung eingeben.');
+ try{
+  const sim=await api('/api/masterdata/similar?type='+encodeURIComponent(type)+'&q='+encodeURIComponent(name));const top=sim.suggestions?.[0];
+  if(top&&Number(top.score)>=0.82){
+   if(confirm(`Sehr ähnlicher Eintrag bereits vorhanden:\n\n${top.name}\n\nSoll der vorhandene Eintrag verwendet werden?`)){selectExistingMaster(type,prefix,top.id);return}
+   if(!confirm(`„${name}“ trotzdem als neuen ${type==='location'?'Lagerort':'Maschine'} anlegen?`))return;
+  }
+  let password=sessionStorage.adminPassword||'';
+  if(!window.LVAdminSession?.unlocked&&!password){password=prompt('Passwort für Stammdaten:')||'';if(!password)return}
+  await api('/api/masterdata',{method:'POST',body:JSON.stringify({type,name,password})});
+  if(password){sessionStorage.adminPassword=password;sessionStorage.admin='1';window.LVAdminSession?.unlock()}
+  await master();
+  const created=(type==='location'?md.locations:md.machines).find(x=>normLabel(x.name)===normLabel(name));if(created)selectExistingMaster(type,prefix,created.id);
+ }catch(e){alert(e.message)}
+}
+function loadMachineRelations(){
+ if(!window.machineAliasTarget)return;
+ const opts='<option value="">Bitte auswählen</option>'+(md.machines||[]).map(x=>`<option value="${Number(x.id)}">${esc(x.name)}</option>`).join('');
+ machineAliasTarget.innerHTML=opts;machineMergeSource.innerHTML=opts;machineMergeTarget.innerHTML=opts;
+ machineAliasRows.innerHTML=(md.machine_aliases||[]).map(x=>`<tr><td>${esc(x.alias)}</td><td>${esc(x.machine_name)}</td><td><button class="danger" onclick="deleteMachineAlias(${Number(x.id)})">Trennen</button></td></tr>`).join('')||'<tr><td colspan="3" class="small">Noch keine alternativen Bezeichnungen hinterlegt.</td></tr>';
+ machineMergeHistory.innerHTML=(md.machine_merges||[]).length?`<h4>Rückgängig machbare Zusammenführungen</h4><div class="tablewrap"><table><thead><tr><th>Frühere Maschine</th><th>Jetzt unter</th><th>Aktion</th></tr></thead><tbody>${md.machine_merges.map(x=>`<tr><td>${esc(x.source_name)}</td><td>${esc(x.target_name)}</td><td><button class="secondary" onclick="undoMachineMerge(${Number(x.id)})">Wieder trennen</button></td></tr>`).join('')}</tbody></table></div>`:'';
+}
+async function showMachineAliasSimilarity(){
+ const q=machineAliasName.value.trim();if(q.length<2){machineAliasSimilarity.textContent='';return}
+ try{const d=await api('/api/masterdata/similar?type=machine&q='+encodeURIComponent(q));machineAliasSimilarity.textContent=(d.suggestions||[]).slice(0,3).map(x=>`${x.name} (${Math.round(x.score*100)} %)`).join(' · ')}catch{}
+}
+async function addMachineAlias(){
+ const machine_id=Number(machineAliasTarget.value),alias=machineAliasName.value.trim();if(!machine_id||!alias)return msg(machineAliasMsg,'Bitte Hauptmaschine und alternative Bezeichnung angeben.',false);
+ try{await api('/api/machine/alias',{method:'POST',body:JSON.stringify({machine_id,alias,password:sessionStorage.adminPassword||''})});machineAliasName.value='';msg(machineAliasMsg,'Alternative Bezeichnung wurde zugeordnet.',true);await master()}catch(e){msg(machineAliasMsg,e.message,false)}
+}
+async function deleteMachineAlias(id){if(!confirm('Diese alternative Maschinenbezeichnung wirklich wieder trennen?'))return;try{await api('/api/machine/alias/delete',{method:'POST',body:JSON.stringify({id,password:sessionStorage.adminPassword||''})});await master();msg(machineAliasMsg,'Bezeichnung wurde getrennt.',true)}catch(e){msg(machineAliasMsg,e.message,false)}}
+async function mergeMachines(){
+ const source_id=Number(machineMergeSource.value),target_id=Number(machineMergeTarget.value);if(!source_id||!target_id||source_id===target_id)return msg(machineMergeMsg,'Bitte zwei unterschiedliche Maschinen auswählen.',false);
+ const s=md.machines.find(x=>Number(x.id)===source_id),t=md.machines.find(x=>Number(x.id)===target_id);if(!confirm(`„${s?.name||''}“ unter „${t?.name||''}“ zusammenführen?\n\nErsatzteil-Zuordnungen werden übernommen. Der alte Name bleibt als Alias erhalten.`))return;
+ try{await api('/api/machine/merge',{method:'POST',body:JSON.stringify({source_id,target_id,password:sessionStorage.adminPassword||''})});msg(machineMergeMsg,'Maschinen wurden zusammengeführt.',true);arts=[];await master();await loadEditTable();await loadArticles()}catch(e){msg(machineMergeMsg,e.message,false)}
+}
+async function undoMachineMerge(id){if(!confirm('Diese Zusammenführung rückgängig machen und die frühere Maschine wieder trennen?'))return;try{await api('/api/machine/merge/undo',{method:'POST',body:JSON.stringify({id,password:sessionStorage.adminPassword||''})});await master();await loadEditTable();await loadArticles();msg(machineMergeMsg,'Zusammenführung wurde rückgängig gemacht.',true)}catch(e){msg(machineMergeMsg,e.message,false)}}
 
 async function unlockAdmin(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:adminpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(unlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(unlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=adminpw.value;window.LVAdminSession?.unlock();lockbox.style.display='none';adminarea.style.display='block';loadEditTable()}
 async function addMaster(type){
@@ -1501,7 +1580,7 @@ function scheduleLiveStockSearch(){
 async function loadEditTable(){
  arts=await api('/api/articles');
  let locs='<option></option>'+md.locations.map(x=>`<option>${esc(x.name)}</option>`).join('');
- let machs='<option></option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');
+ let machs='';
 
  editrows.innerHTML=arts.map(a=>`<tr data-id="${a.id}" data-search="${esc((a.article_no+' '+a.description+' '+(a.location||'')+' '+(a.machine||'')).toLowerCase())}">
   <td><input value="${esc(a.article_no)}" oninput="markMasterRowChanged(this)"></td>
@@ -1511,14 +1590,13 @@ async function loadEditTable(){
   <td><input type="number" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" min="0" value="${displayStockValue(a.minimum_stock,a.unit)}" oninput="markMasterRowChanged(this)"></td>
   <td><select onchange="adjustStockInputsForRow(this)">${unitOptions(a.unit||'Stk.')}</select></td>
   <td><select onchange="markMasterRowChanged(this)">${locs}</select></td>
-  <td><select onchange="markMasterRowChanged(this)">${machs}</select></td>
+  <td><select multiple size="3" onchange="markMasterRowChanged(this)">${machineMultiOptions(a.machine_ids||[])}</select></td>
   <td><input type="checkbox" ${a.active?'checked':''} onchange="markMasterRowChanged(this)"></td>
   <td><button class="danger icon-button" title="Artikel löschen" aria-label="Artikel löschen" onclick='deleteArticleEntry(${a.id},${JSON.stringify(a.article_no)},${JSON.stringify(a.description)})'>🗑️</button></td>
  </tr>`).join('');
 
  [...editrows.children].forEach((row,index)=>{
   row.children[6].firstChild.value=arts[index].location||'';
-  row.children[7].firstChild.value=arts[index].machine||'';
  });
  filterMasterArticles();
 }
@@ -1555,7 +1633,7 @@ async function deleteArticleEntry(id,articleNo,description){
 async function saveAllArticles(){
  let rows=[...editrows.children].filter(r=>r.dataset.changed==='1');
  if(!rows.length)return msg(saveAllArticlesMsg,'Es wurden keine Änderungen vorgenommen.',true);
- let items=rows.map(row=>{let c=row.children,unit=c[5].firstChild.value,whole=isWholeNumberUnit(unit),num=v=>whole?Math.round(Number(v||0)):Number(v||0);return {id:+row.dataset.id,article_no:c[0].firstChild.value,description:c[1].firstChild.value,current_stock:num(c[2].firstChild.value),target_stock:num(c[3].firstChild.value),minimum_stock:num(c[4].firstChild.value),unit,location:c[6].firstChild.value,machine:c[7].firstChild.value,active:c[8].firstChild.checked}});
+ let items=rows.map(row=>{let c=row.children,unit=c[5].firstChild.value,whole=isWholeNumberUnit(unit),num=v=>whole?Math.round(Number(v||0)):Number(v||0);return {id:+row.dataset.id,article_no:c[0].firstChild.value,description:c[1].firstChild.value,current_stock:num(c[2].firstChild.value),target_stock:num(c[3].firstChild.value),minimum_stock:num(c[4].firstChild.value),unit,location:c[6].firstChild.value,machine_ids:selectedMachineIds(c[7].firstChild),active:c[8].firstChild.checked}});
  saveAllArticlesButton.disabled=true;saveAllArticlesButton.textContent='Speichert …';
  try{let d=await api('/api/articles/batch-update',{method:'POST',body:JSON.stringify({password:sessionStorage.adminPassword||'',items})});rows.forEach(r=>delete r.dataset.changed);msg(saveAllArticlesMsg,`${d.updated} Artikel gespeichert. ${d.corrected||0} Bestandskorrektur(en) gebucht.`,true);saveAllArticlesButton.textContent='Alle Änderungen speichern';arts=[];await loadArticles();await dash();await loadRecentMovements('IN');await loadRecentMovements('OUT');await loadAppInfo();await loadEditTable();}
  catch(e){msg(saveAllArticlesMsg,e.message,false);saveAllArticlesButton.textContent='Änderungen speichern';}
@@ -1574,7 +1652,7 @@ async function saveArticle(button){
   minimum_stock:+cells[4].firstChild.value,
   unit:cells[5].firstChild.value,
   location:cells[6].firstChild.value,
-  machine:cells[7].firstChild.value,
+  machine_ids:selectedMachineIds(cells[7].firstChild),
   active:cells[8].firstChild.checked
  };
 
