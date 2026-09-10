@@ -59,6 +59,8 @@ function currentDbState(){
   revision:Number(syncValue('revision','0')),
   revision_id:syncValue('revision_id'),
   parent_revision_id:syncValue('parent_revision_id',''),
+  cloud_base_revision_id:syncValue('cloud_base_revision_id',''),
+  cloud_base_revision:Number(syncValue('cloud_base_revision','0')),
   changed_at:Number(syncValue('changed_at','0')),
   articles:Number(scalar('SELECT COUNT(*) FROM articles')||0),
   movements:tableExists('movements')?Number(scalar('SELECT COUNT(*) FROM movements')||0):0
@@ -93,6 +95,8 @@ function stateFromDatabase(test){
   revision:Number(get('revision','0')),
   revision_id:get('revision_id','legacy-'+count('articles')+'-'+count('movements')),
   parent_revision_id:get('parent_revision_id',''),
+  cloud_base_revision_id:get('cloud_base_revision_id',''),
+  cloud_base_revision:Number(get('cloud_base_revision','0')),
   changed_at:Number(get('changed_at','0')),
   articles:count('articles'),
   movements:count('movements')
@@ -249,7 +253,7 @@ function adoptExistingDatabase(){
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
   setSetting('setup_complete','1');
   setSetting('database_adopted','1');
-  setSetting('database_version','58');
+  setSetting('database_version','59');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
  }
 }
@@ -1012,7 +1016,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'58.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'59.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -1471,14 +1475,21 @@ async function saveToFolder(makeBackup=true,force=false){
  }
  if(makeBackup)await createBackup('Automatisch','Vor Synchronisierung');
 
+ // Der aktuelle lokale Stand wird nach erfolgreichem Schreiben selbst zur neuen Cloud-Basis.
+ setSyncValue('cloud_base_revision_id',local.revision_id);
+ setSyncValue('cloud_base_revision',String(local.revision));
+ const bytes=db.export();
  const fh=await handle.getFileHandle('lager.db',{create:true}),w=await fh.createWritable();
- await w.write(db.export());await w.close();
+ await w.write(bytes);await w.close();
  const f=await fh.getFile();
+ await ip(DBKEY,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
  m.dirty=false;
  m.lastSync=Date.now();
  m.fileModified=f.lastModified;
  m.expectedCloudRevisionId=local.revision_id;
  m.expectedCloudDatabaseId=local.database_id;
+ m.lastCloudRevision=local.revision;
+ m.lastCloudRevisionId=local.revision_id;
  m.writeBlocked=false;
  m.restorePending=false;
  await ip(METAKEY,m);
@@ -1492,6 +1503,8 @@ async function loadFromFolder(){
  await createBackup('Sicherheitsbackup','Vor Laden aus Synchronisation');
  const test=new SQL.Database(cloud.bytes);
  db.close();db=test;initSchema();adoptExistingDatabase();
+ setSyncValue('cloud_base_revision_id',cloud.state.revision_id);
+ setSyncValue('cloud_base_revision',String(cloud.state.revision));
  await ip(DBKEY,db.export().buffer);
  const m=await ig(METAKEY)||{};
  m.dirty=false;
@@ -1500,6 +1513,8 @@ async function loadFromFolder(){
  m.localModified=cloud.state.changed_at||cloud.modified;
  m.expectedCloudRevisionId=cloud.state.revision_id;
  m.expectedCloudDatabaseId=cloud.state.database_id;
+ m.lastCloudRevision=cloud.state.revision;
+ m.lastCloudRevisionId=cloud.state.revision_id;
  m.writeBlocked=false;
  m.restorePending=false;
  await ip(METAKEY,m);
@@ -1757,6 +1772,18 @@ window.LVSync={
    const cloud=await inspectCloudDatabase();
    if(!cloud.accessible)throw Error('Cloud-Datenbank kann nicht gelesen werden.');
    if(m.dirty){
+    const local=currentDbState();
+    const safeBase=cloud.accessible&&local.database_id===cloud.state.database_id&&(
+     m.expectedCloudRevisionId===cloud.state.revision_id||
+     local.cloud_base_revision_id===cloud.state.revision_id||
+     (local.parent_revision_id===cloud.state.revision_id&&local.revision===Number(cloud.state.revision||0)+1)
+    );
+    if(safeBase&&m.expectedCloudRevisionId!==cloud.state.revision_id){
+     m.expectedCloudRevisionId=cloud.state.revision_id;
+     m.expectedCloudDatabaseId=cloud.state.database_id;
+     m.writeBlocked=false;
+     await ip(METAKEY,m);
+    }
     await saveToFolder(!silent,false);
     if(!silent)msg(syncMsg,'Synchronisierung erfolgreich.',true);
    }else if(m.expectedCloudRevisionId!==cloud.state.revision_id){
@@ -1787,7 +1814,18 @@ window.LVStorageModeState={
   await ready;
   const m=await ig(METAKEY)||{};
   const mode=setting('storage_mode',handle?'local_folder':'browser_local');
-  const local=currentDbState();return {mode,configuredMode:mode,connected:!!handle,folder:handle?.name||'',dirty:!!m.dirty,lastSync:Number(m.lastSync||0),localRevision:Number(local.revision||0),cloudRevision:m.lastCloudRevision===undefined?null:Number(m.lastCloudRevision),autoSync:mode==='cloud'&&!!handle};
+  const local=currentDbState();
+  let cloudRevision=m.lastCloudRevision===undefined?null:Number(m.lastCloudRevision);
+  if(mode==='cloud'&&handle){
+   const c=await inspectCloudDatabase();
+   if(c.accessible){
+    cloudRevision=Number(c.state.revision||0);
+    m.lastCloudRevision=cloudRevision;
+    m.lastCloudRevisionId=c.state.revision_id;
+    await ip(METAKEY,m);
+   }
+  }
+  return {mode,configuredMode:mode,connected:!!handle,folder:handle?.name||'',dirty:!!m.dirty,lastSync:Number(m.lastSync||0),localRevision:Number(local.revision||0),cloudRevision,autoSync:mode==='cloud'&&!!handle};
  },
  async chooseLocalFolder(){
   await ready;
@@ -1871,14 +1909,38 @@ window.LVStartupState={
   const local=currentDbState();
   let comparison='none';
   if(c.accessible&&c.state){
-   if(local.database_id===c.state.database_id&&local.revision_id===c.state.revision_id){
+   const sameDatabase=local.database_id===c.state.database_id;
+   const expectedMatches=m.expectedCloudRevisionId===c.state.revision_id;
+   const storedBaseMatches=local.cloud_base_revision_id===c.state.revision_id;
+   const directParentMatches=local.parent_revision_id===c.state.revision_id&&local.revision===Number(c.state.revision||0)+1;
+
+   if(sameDatabase&&local.revision_id===c.state.revision_id){
     comparison='identical';
-   }else if(local.database_id!==c.state.database_id){
+
+    // Selbstheilung: Nach einem Browser-/Gerätestart können IndexedDB-Metadaten
+    // fehlen, obwohl lokale DB und Cloud exakt dieselbe Revision besitzen.
+    if(m.expectedCloudRevisionId!==c.state.revision_id ||
+       m.expectedCloudDatabaseId!==c.state.database_id ||
+       m.dirty || m.writeBlocked){
+     m.expectedCloudRevisionId=c.state.revision_id;
+     m.expectedCloudDatabaseId=c.state.database_id;
+     m.lastCloudRevision=Number(c.state.revision||0);
+     m.lastCloudRevisionId=c.state.revision_id;
+     m.dirty=false;
+     m.writeBlocked=false;
+     setSyncValue('cloud_base_revision_id',c.state.revision_id);
+     setSyncValue('cloud_base_revision',String(c.state.revision||0));
+     await ip(DBKEY,db.export().buffer);
+     await ip(METAKEY,m);
+    }
+   }else if(!sameDatabase){
     comparison='conflict';
    }else if(c.state.revision>local.revision){
-    comparison='cloud_newer';
+    comparison=m.dirty?'conflict':'cloud_newer';
    }else if(local.revision>c.state.revision){
-    comparison=m.expectedCloudRevisionId===c.state.revision_id?'local_newer_safe':'local_newer_unverified';
+    comparison=(expectedMatches||storedBaseMatches||directParentMatches)
+      ?'local_newer_safe'
+      :'local_newer_unverified';
    }else{
     comparison='conflict';
    }
@@ -1895,8 +1957,11 @@ window.LVStartupState={
    cloudAccessible:!!c.accessible,
    cloudModified:Number(c.modified||0),
    cloudFile:c.file||'',
+   localRevisionId:local.revision_id,
+   localDatabaseId:local.database_id,
    cloudRevisionLabel:c.state?`${c.state.revision} · ${c.state.revision_id.slice(0,8)}`:'–',
    cloudRevision:c.state?Number(c.state.revision||0):null,
+   cloudRevisionId:c.state?c.state.revision_id:'',
    comparison
   };
  },
@@ -1908,7 +1973,11 @@ window.LVStartupState={
   m.startupConfirmedAt=Date.now();
   m.startupConfirmedMode=mode;
   if(mode==='local'&&c.accessible){
-   const safe=m.expectedCloudRevisionId===c.state.revision_id&&local.database_id===c.state.database_id;
+   const safe=local.database_id===c.state.database_id&&(
+    m.expectedCloudRevisionId===c.state.revision_id||
+    local.cloud_base_revision_id===c.state.revision_id||
+    (local.parent_revision_id===c.state.revision_id&&local.revision===Number(c.state.revision||0)+1)
+   );
    m.writeBlocked=!safe&&local.revision_id!==c.state.revision_id;
   }
   await ip(SESSIONKEY,db.export().buffer);
@@ -1937,7 +2006,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','58');
+  setSetting('database_version','59');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
