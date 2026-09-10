@@ -272,7 +272,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">57.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">58.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -551,6 +551,9 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div><span class="small">Synchronisationsordner</span><br><b id="syncFile">Keiner</b></div>
 <div><span class="small">Lokale Änderungen</span><br><b id="syncDirty">Nein</b></div>
 <div><span class="small">Letzte Synchronisierung</span><br><b id="syncLast">Noch nie</b></div>
+<div><span class="small">Fortlaufende Nummer lokal</span><br><b id="syncLocalRevision">–</b></div>
+<div><span class="small">Fortlaufende Nummer Cloud</span><br><b id="syncCloudRevision">–</b></div>
+<div><span class="small">Automatische Synchronisierung</span><br><b id="syncAutoState">–</b></div>
 </div>
 <div id="storageModeExplanation" class="message" style="display:block;margin-top:14px"></div>
 </div>
@@ -565,7 +568,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <div id="cloudModeActions" class="card" style="display:none">
 <h3>☁ Cloud-Modus</h3>
-<p>Vor dem Gerätewechsel immer <b>Synchronisieren und schließen</b> verwenden.</p>
+<p>Im Cloud-Modus werden sichere lokale Änderungen nach jeder Buchung automatisch in die Cloud geschrieben. Nur bei einem echten Konflikt zwischen zwei Geräten ist eine manuelle Entscheidung erforderlich.</p>
 <div class="toolbar">
 <button class="primary" onclick="LVSync.sync()">Jetzt synchronisieren</button>
 <button class="secondary" onclick="LVSync.load()">Stand aus Cloud laden</button>
@@ -726,6 +729,17 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&
 const n=x=>Number(x||0).toLocaleString('de-DE',{maximumFractionDigits:2});
 function formatAppDate(value,withTime=false){
  let s=String(value||'').trim();if(!s)return '';
+ if(withTime&&/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(s)){
+  let normalized=s;
+  if(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(?::\d{2})?$/.test(normalized))normalized=normalized.replace(' ','T')+'Z';
+  const dt=new Date(normalized);
+  if(!Number.isNaN(dt.getTime())){
+   const y=dt.getFullYear(),mo=String(dt.getMonth()+1).padStart(2,'0'),da=String(dt.getDate()).padStart(2,'0');
+   const hh=String(dt.getHours()).padStart(2,'0'),mi=String(dt.getMinutes()).padStart(2,'0'),ss=String(dt.getSeconds()).padStart(2,'0');
+   const date=appDateFormat==='YYYY-MM-DD'?`${y}-${mo}-${da}`:appDateFormat==='MM/DD/YYYY'?`${mo}/${da}/${y}`:`${da}.${mo}.${y}`;
+   return `${date} ${hh}:${mi}:${ss}`;
+  }
+ }
  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
  if(!m)return s;
  let date=appDateFormat==='YYYY-MM-DD'?`${m[1]}-${m[2]}-${m[3]}`:
@@ -999,7 +1013,7 @@ async function saveUnknownRegistration(){
  try{
   await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});
   if(password){sessionStorage.adminPassword=password;sessionStorage.admin='1';window.LVAdminSession?.unlock()}
-  const source=st.source;closeUnknownRegistration();arts=[];await master();
+  const source=st.source;closeUnknownRegistration();arts=[];await master();await dash();await loadRecentMovements('IN');
   if(source==='delivery')await deliveryPreview(true);else await servicePreview(true);
   const target=source==='delivery'?dmsg:smsg;msg(target,'Neues Material wurde registriert und in die Buchung übernommen.',true);
  }catch(e){msg(ur_msg,e.message,false)}
@@ -1011,7 +1025,7 @@ async function createUnknown(source){
  let rows=[...table.tBodies[0].rows];
  let items=list.map((x,i)=>({...x,description:rows[i].querySelector('[data-field="description"]').value,location:rows[i].querySelector('[data-field="location"]').value,minimum_stock:+rows[i].querySelector('[data-field="minimum_stock"]').value,target_stock:+rows[i].querySelector('[data-field="target_stock"]').value}));
  let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');if(!password)return;
- try{let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({password,items})});sessionStorage.adminPassword=password;sessionStorage.admin='1';window.LVAdminSession?.unlock();alert((d.created||0)+' Artikel wurden angelegt. Bitte den Import erneut prüfen.');arts=[];await master();if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()}catch(e){alert(e.message)}
+ try{let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({password,items})});sessionStorage.adminPassword=password;sessionStorage.admin='1';window.LVAdminSession?.unlock();alert((d.created||0)+' Artikel wurden angelegt. Bitte den Import erneut prüfen.');arts=[];await master();await dash();await loadRecentMovements('IN');if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()}catch(e){alert(e.message)}
 }
 
 async function loadImportFile(input){
@@ -1461,7 +1475,7 @@ function fillNewMaterialLists(){
 async function createMaterial(){
  let whole=isWholeNumberUnit(nm_unit.value),num=v=>whole?Math.round(Number(v||0)):Number(v||0);
  let body={password:sessionStorage.adminPassword||'',article_no:nm_no.value,description:nm_desc.value,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:nm_location.value,machine_ids:selectedMachineIds(nm_machine),manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true'};
- try{await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});msg(nm_msg,'Material wurde erfolgreich angelegt.',true);clearMaterialForm();arts=[];await master();await dash();await loadArticles()}catch(e){msg(nm_msg,e.message,false)}
+ try{await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});msg(nm_msg,'Material wurde erfolgreich angelegt.',true);clearMaterialForm();arts=[];await master();await dash();await loadArticles();await loadRecentMovements('IN');if(document.getElementById('hist')?.classList.contains('active'))await hist()}catch(e){msg(nm_msg,e.message,false)}
 }
 function clearMaterialForm(){
  ['nm_no','nm_desc','nm_manufacturer','nm_supplier','nm_supplier_no','nm_barcode','nm_notes','nm_location_new','nm_machine_new'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
@@ -1845,6 +1859,9 @@ window.LVStorageMode={
    const s=await LVStorageModeState.get();
    const isCloud=s.mode==='cloud'&&s.connected;
    const hasLocalFolder=s.mode==='local_folder'&&s.connected;
+   if(window.syncLocalRevision)syncLocalRevision.textContent='#'+Number(s.localRevision||0);
+   if(window.syncCloudRevision)syncCloudRevision.textContent=s.cloudRevision===null||s.cloudRevision===undefined?'Noch nicht bekannt':'#'+Number(s.cloudRevision);
+   if(window.syncAutoState)syncAutoState.textContent=s.autoSync?'Aktiv – nach Änderungen automatisch':'Nicht aktiv';
    if(window.storageModeBadge){
     storageModeBadge.textContent=isCloud?'☁ Cloud-Modus':hasLocalFolder?'🏠 Lokaler Ordner':'🏠 Browser lokal';
     storageModeBadge.className='mode-badge '+(isCloud?'cloud':'local');
@@ -2200,7 +2217,18 @@ async function lvForceStartupCheck(reason='resume',forceDialog=false){
  lvStartupCheckRunning=true;
  try{
   const state=await LVStartupState.get();
-  const cloudChanged=state.cloudConnected&&state.cloudAccessible&&state.comparison!=='identical';
+  if(state.cloudConnected&&state.cloudAccessible&&state.comparison==='local_newer_safe'){
+   await LVSync.sync(true);
+   await LVStorageMode.refresh();
+   return;
+  }
+  if(state.cloudConnected&&state.cloudAccessible&&state.comparison==='cloud_newer'&&!state.localDirty){
+   await LVStartupState.loadCloud();
+   await LVStartupState.confirm('cloud');
+   sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
+   lvMarkControlledReload();location.reload();return;
+  }
+  const cloudChanged=state.cloudConnected&&state.cloudAccessible&&!['identical','local_newer_safe'].includes(state.comparison);
   const cloudUnreadable=state.cloudConnected&&!state.cloudAccessible;
   if(forceDialog||cloudChanged||cloudUnreadable){
    sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
@@ -2242,6 +2270,26 @@ window.LVStartup={
  async check(){
   try{
    this.data=await LVStartupState.get();
+   if(this.data.cloudConnected&&this.data.cloudAccessible&&this.data.comparison==='identical'){
+    await LVStartupState.confirm('cloud');
+    sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
+    return true;
+   }
+   if(this.data.cloudConnected&&this.data.cloudAccessible&&this.data.comparison==='local_newer_safe'){
+    await LVSync.sync(true);
+    this.data=await LVStartupState.get();
+    if(this.data.comparison==='identical'){
+     await LVStartupState.confirm('cloud');
+     sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
+     return true;
+    }
+   }
+   if(this.data.cloudConnected&&this.data.cloudAccessible&&this.data.comparison==='cloud_newer'&&!this.data.localDirty){
+    await LVStartupState.loadCloud();
+    await LVStartupState.confirm('cloud');
+    sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
+    lvMarkControlledReload();location.reload();return false;
+   }
    if(!this.data.needsConfirmation)return true;
 
    startupLocalModified.textContent=this.data.localModified
