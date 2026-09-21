@@ -3,13 +3,36 @@
 (function(){
 const nativeFetch=window.fetch.bind(window);
 const DBKEY='lv22-db', METAKEY='lv22-meta', HANDLEKEY='lv22-directory', BACKUPKEY='lv22-backups', SESSIONKEY='lv34-session-start';
-let SQL,db,handle=null,autoTimer=null,isSyncing=false;
-const helpData={"07-csv-center.md": "# CSV-Center\n\n## Exporte\n\n- Lagerbestand\n- Einbuchungen\n- Entnahmen\n\nDie CSV-Dateien werden direkt im Browser heruntergeladen. Das vorgegebene Tabellenlayout, Semikolon als Trennzeichen und UTF-8 mit BOM bleiben erhalten.\n\n## SAP-Excel oder CSV importieren\n\nUnterstützte Spalten sind unter anderem:\n\n- Material\n- Bezeichnung zum Material\n- Lagerort\n- Bezeichnung des Lagerorts\n- Frei verwendbar\n\nVor dem Buchen wird eine Vorschau angezeigt. Fehlende Artikel können direkt angelegt werden.\n", "02-neues-material.md": "# Neues Material\n\nBeim Anlegen eines Materials können Lagerort und Maschinen direkt ausgewählt werden.\n\n- **Lagerort:** vorhandenen Lagerort auswählen oder unmittelbar einen neuen Lagerort anlegen. Während der Eingabe werden ähnlich benannte Lagerorte vorgeschlagen, damit Dubletten vermieden werden.\n- **Maschinen:** ein Ersatzteil kann mehreren Maschinen gleichzeitig zugeordnet werden. Die Liste unterstützt Mehrfachauswahl. Neue Maschinen können direkt aus dem Materialformular angelegt werden.\n- Vor dem Anlegen ähnlich benannter Lagerorte oder Maschinen weist die App auf vorhandene Einträge hin.\n\nArtikelnummer, Bezeichnung, Anfangsbestand, Sollbestand, Mindestbestand, Einheit und weitere Stammdaten bleiben wie bisher verfügbar.\n\n\n## Buchung bei Materialanlage\n\nSeit Version 58 wird jede neue Materialanlage zusätzlich unter **Buchungen** protokolliert. Der eingegebene Anfangsbestand wird als Einbuchung mit der Quelle **Materialanlage** gespeichert. Auch ein Anfangsbestand von 0 erhält einen nachvollziehbaren Buchungseintrag, ohne den Bestand zu verändern.\n", "17-abschluss-und-tests.md": "# Abschluss Phase 1–7\n\nVersion 17.0 schließt das ursprünglich geplante Projekt ab.\n\nAbnahmetest:\n- Artikel anlegen\n- Ein- und Ausbuchung\n- CSV-Export\n- Inventurkorrektur\n- Materialanforderung in Excel öffnen\n- Historienfilter testen\n- Passwortverwaltung prüfen\n", "08-historie.md": "# Historie\n\nDie Historie enthält alle Einbuchungen und Entnahmen.\n\nSie kann gefiltert werden nach:\n\n- Alle Buchungen\n- Nur Einbuchungen\n- Nur Entnahmen\n\nDas unter **Stammdaten** gewählte Datumsformat wird auch auf bereits vorhandene Einträge angewendet.\n", "01-dashboard.md": "# Dashboard\n\nDas Dashboard zeigt die wichtigsten Kennzahlen:\n\n- **Aktive Artikel:** Anzahl aller verwendbaren Artikel.\n- **Unterbestand:** Artikel unterhalb ihres Mindestbestands.\n- **Heute:** Anzahl der heutigen Buchungen.\n- **Buchungen:** Gesamtzahl aller Ein- und Ausbuchungen.\n\nDie Werte werden aus der lokalen Datenbank `lager.db` berechnet.\n", "04-einbuchung.md": "# Einbuchung\n\n## Manuelle Einbuchung\n\n- Datum und Techniker auswählen.\n- Artikel und Menge hinzufügen.\n- Einbuchung bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Lieferschein mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: EINBUCHUNG` und enthält pro Material `Artikelnummer[TAB]Bezeichnung[TAB]Anzahl`.\n\nUnbekannte Artikel können direkt als neues Material angelegt oder bewusst ignoriert werden. Artikelnummer und erkannte Bezeichnung werden beim Anlegen vorausgefüllt. Ein Entnahme-Prompt wird im Einbuchungsbereich blockiert.\n", "09-stammdaten.md": "# Stammdaten\n\n## Lagerorte\nLagerorte können weiterhin zentral angelegt werden. Zusätzlich lassen sie sich direkt beim Anlegen eines neuen Materials erstellen. Ähnliche vorhandene Namen werden vorher vorgeschlagen.\n\n## Maschinen und alternative Bezeichnungen\nEine Maschine besitzt einen Hauptnamen und kann beliebig viele alternative Ticket-Bezeichnungen erhalten.\n\n- **Alternative Bezeichnung zuordnen:** z. B. `Compas 4` → `Compas 4.0`.\n- **Trennen:** eine falsche Alias-Zuordnung kann jederzeit wieder entfernt werden.\n- **Maschinen zusammenführen:** zwei bereits getrennt angelegte Maschinen können zu einer Hauptmaschine zusammengeführt werden. Der frühere Name bleibt als Alias erhalten.\n- **Zusammenführung rückgängig:** die vorherige Maschine wird wiederhergestellt und ihre Ersatzteil-Zuordnungen werden soweit möglich auf den Stand vor der Zusammenführung zurückgesetzt.\n\n## Mehrfachzuordnung von Ersatzteilen\nEin Artikel kann mehreren Maschinen gleichzeitig zugeordnet werden. Diese Zuordnung ist beim neuen Material sowie in der vollständigen Artikelliste bearbeitbar.\n", "15-historienfilter.md": "# Historienfilter und Export\n\nFilter:\n- Buchungsart\n- Zeitraum\n- Techniker\n- Artikelnummer oder Bezeichnung\n\nDer CSV-Export übernimmt die aktuell eingestellten Filter.\n", "03-lagerbestand.md": "# Lagerbestand\n\nIm Lagerbestand können Artikel über Artikelnummer, Bezeichnung, Lagerort oder Maschine gesucht werden.\n\n## Spalten\n\n- Sollbestand\n- Mindestbestand\n- Istbestand\n- Differenz zum Sollbestand\n- Lagerort\n- Maschine\n\nEin Artikel wird als Unterbestand hervorgehoben, wenn sein Istbestand unter dem Mindestbestand liegt.\n", "14-inventur.md": "# Inventur\n\n- Inventurliste im CSV-Center exportieren.\n- Gezählten Bestand eintragen.\n- CSV, TXT oder XLSX einlesen.\n- Differenzen prüfen.\n- Bestandskorrekturen mit Administratorpasswort buchen.\n\nNur Differenzen werden als Buchungen mit der Quelle **Inventur** gespeichert.\n", "06-materialanforderung.md": "# Materialanforderung\n\n- Techniker auswählen.\n- **Unterbestand laden** anklicken.\n- Gewünschte Positionen markieren.\n- Bestellmenge prüfen oder ändern.\n- **Materialanforderung exportieren** anklicken.\n\nDie Excel-Datei wird anhand der hinterlegten Vorlage erzeugt. Der Dateiname enthält Datum und Technikername.\n", "13-fehlerbehebung.md": "# Fehlerbehebung\n\n## Lagerbestand bleibt nach dem Start leer\n\nSeit Version 56 kann die Audit-Nachtragung den Datenbankstart nicht mehr blockieren. Falls künftig ein anderer Startfehler auftritt, erscheint eine rote Meldung statt eines stillen leeren Dashboards.\n\nBei Cloud-Betrieb prüfen, ob oben **Cloud** angezeigt wird und ob der verbundene Ordner zugreifbar ist.\n\n## M365-Ergebnis wird nicht erkannt\n\n- Aktuellen Prompt unter **Hilfe → M365-Prompts** verwenden.\n- Auf `IMPORTTYP: EINBUCHUNG` bzw. `IMPORTTYP: ENTNAHME` achten.\n- Artikelnummern und Mengen dürfen nicht leer sein.\n\n\n## Lokaler/Cloud-Dialog erscheint ständig\n\nSeit Version 58 wird ein **lokal neuer, aber sicher auf dem letzten Cloud-Stand basierender** Datenstand automatisch hochgeladen. Nur echte Konflikte zwischen verschiedenen Geräten müssen manuell entschieden werden.\n\nUnter **Dateisynchronisierung** werden die fortlaufende lokale und die zuletzt bekannte Cloud-Revisionsnummer angezeigt.\n", "16-materialanforderung-export.md": "# Materialanforderung\n\nDie Originalvorlage `materialanforderung_vorlage.xlsx` bleibt unverändert erhalten.\n\nPrüfungen:\n- maximal 25 Positionen\n- nur positive Mengen\n- doppelte Artikel werden zusammengefasst\n- Vorschau vor Export\n- Sortierung nach Artikelnummer\n\nDateiname: `Bestellung_Datum_Techniker.xlsx`\n", "10-reset.md": "# Vollständiges Zurücksetzen\n\nDer vollständige Reset löscht:\n\n- Artikel\n- Bestände\n- Buchungen\n- Historie\n- Audit-Protokoll\n- Lagerorte\n- Maschinen\n- Techniker\n- Administratorpasswort\n- Einstellungen\n\nProgrammdateien, Excel-Vorlage und Hilfedateien bleiben erhalten.\n\nNach dem Reset erscheint wieder automatisch die vollständige Ersteinrichtung.\n", "11-m365-prompts.md": "# Microsoft 365 / Copilot – aktuelle Prompts\n\n## Lieferschein – Einbuchung\n\n```text\nIMPORTTYP: EINBUCHUNG\n\nExtrahiere aus diesem Lieferschein ausschließlich das tatsächlich gelieferte Material.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nArtikelnummer[TAB]Bezeichnung[TAB]Anzahl\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: EINBUCHUNG\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Preise, Summen, Fahrzeit, Arbeitszeit und Kilometer ignorieren.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen den Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Servicebericht – Entnahme\n\n```text\nIMPORTTYP: ENTNAHME\n\nExtrahiere aus dieser Service-PDF ausschließlich die tatsächlich verwendeten oder verbauten Materialien.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nDatum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: ENTNAHME\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Fahrzeit, Arbeitszeit und Kilometer vollständig ignorieren.\n- Nicht verbaute, nur erwähnte oder empfohlene Materialien nicht übernehmen.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen allen Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Vertauschungsschutz\n\n`IMPORTTYP: EINBUCHUNG` gehört nur zur Einbuchung. `IMPORTTYP: ENTNAHME` gehört nur zur Entnahme. Beim falschen Bereich bleibt die Buchung gesperrt.\n", "00-erste-schritte.md": "# Erste Schritte\n\nDie Lagerverwaltung startet nach der Erstinstallation mit einem Einrichtungsassistenten.\n\n## Ersteinrichtung\n\n- Administratorpasswort mit mindestens 8 Zeichen vergeben.\n- Namen des Technikers eingeben.\n- Datumsformat auswählen.\n- Einrichtung abschließen.\n\nLagerorte und Maschinen müssen bei der Ersteinrichtung nicht angelegt werden. Sie können später unter **Stammdaten** ergänzt werden.\n", "12-mobile-bedienung.md": "# Mobile Bedienung\n\nAuf schmalen Bildschirmen wird die Navigation über die Schaltfläche **Menü** geöffnet.\n\n## Hinweise\n\n- Tabellen können seitlich verschoben werden.\n- Eingabefelder werden untereinander dargestellt.\n- Die Ersteinrichtung ist für Smartphone und Tablet optimiert.\n- Für umfangreiche CSV- und Excel-Arbeiten ist ein Windows-PC komfortabler.\n\n\n## Cloud-Synchronisierung am Smartphone\n\nIm Cloud-Modus werden eigene, eindeutig auf dem aktuellen Cloud-Stand basierende Änderungen automatisch synchronisiert. Die Auswahl zwischen lokalem und Cloud-Stand erscheint nicht mehr nach jeder normalen Buchung. Eine Entscheidung wird nur noch bei einem echten Konflikt, einer nicht lesbaren Cloud-Datei oder einem nicht eindeutig zuordenbaren Datenstand verlangt.\n", "05-entnahme.md": "# Entnahme\n\n## Manuelle Entnahme\n\n- Datum, Techniker, Kunde und Maschine eintragen.\n- Artikel und Menge hinzufügen.\n- Entnahme bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Servicebericht mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: ENTNAHME` und enthält pro Material `Datum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine`.\n\nUnbekannte Artikel können als neues Material angelegt oder ignoriert werden. Bei einer Entnahme muss ein neu angelegter Artikel genügend Anfangsbestand besitzen. Ein Einbuchungs-Prompt wird im Entnahmebereich blockiert.\n\n\n## Unterschiedliche Maschinenbezeichnungen\n\nDie App berücksichtigt alternative Bezeichnungen von Maschinen. Beispiel: `Compas 4`, `Compas 4.0` und eine kundenspezifische Ticket-Bezeichnung können derselben Hauptmaschine zugeordnet werden. Bei ähnlichen, aber noch nicht verknüpften Namen werden vorhandene Maschinen vorgeschlagen.\n\nUnter **Stammdaten → Maschinen-Bezeichnungen & Mehrfachzuordnung** können alternative Namen zusammengeführt und später wieder getrennt werden.\n"};
+let SQL,db,handle=null,autoTimer=null,deviceStorageModeCache='browser_local';
+const SyncCore=window.LVSyncCore;
+if(!SyncCore)throw new Error('sync_core.js wurde nicht geladen.');
+const helpData={"07-csv-center.md": "# CSV-Center\n\n## Exporte\n\n- Lagerbestand\n- Einbuchungen\n- Entnahmen\n\nDie CSV-Dateien werden direkt im Browser heruntergeladen. Das vorgegebene Tabellenlayout, Semikolon als Trennzeichen und UTF-8 mit BOM bleiben erhalten.\n\n## SAP-Excel oder CSV importieren\n\nUnterstützte Spalten sind unter anderem:\n\n- Material\n- Bezeichnung zum Material\n- Lagerort\n- Bezeichnung des Lagerorts\n- Frei verwendbar\n\nVor dem Buchen wird eine Vorschau angezeigt. Fehlende Artikel können direkt angelegt werden.\n", "02-neues-material.md": "# Neues Material\n\nBeim Anlegen eines Materials können Lagerort und Maschinen direkt ausgewählt werden.\n\n- **Lagerort:** vorhandenen Lagerort auswählen oder unmittelbar einen neuen Lagerort anlegen. Während der Eingabe werden ähnlich benannte Lagerorte vorgeschlagen, damit Dubletten vermieden werden.\n- **Maschinen:** ein Ersatzteil kann mehreren Maschinen gleichzeitig zugeordnet werden. Die Liste unterstützt Mehrfachauswahl. Neue Maschinen können direkt aus dem Materialformular angelegt werden.\n- Vor dem Anlegen ähnlich benannter Lagerorte oder Maschinen weist die App auf vorhandene Einträge hin.\n\nArtikelnummer, Bezeichnung, Anfangsbestand, Sollbestand, Mindestbestand, Einheit und weitere Stammdaten bleiben wie bisher verfügbar.\n\n\n## Buchung bei Materialanlage\n\nSeit Version 58 wird jede neue Materialanlage zusätzlich unter **Buchungen** protokolliert. Der eingegebene Anfangsbestand wird als Einbuchung mit der Quelle **Materialanlage** gespeichert. Auch ein Anfangsbestand von 0 erhält einen nachvollziehbaren Buchungseintrag, ohne den Bestand zu verändern.\n", "17-abschluss-und-tests.md": "# Abschluss Phase 1–7\n\nVersion 17.0 schließt das ursprünglich geplante Projekt ab.\n\nAbnahmetest:\n- Artikel anlegen\n- Ein- und Ausbuchung\n- CSV-Export\n- Inventurkorrektur\n- Materialanforderung in Excel öffnen\n- Historienfilter testen\n- Passwortverwaltung prüfen\n", "08-historie.md": "# Historie\n\nDie Historie enthält alle Einbuchungen und Entnahmen.\n\nSie kann gefiltert werden nach:\n\n- Alle Buchungen\n- Nur Einbuchungen\n- Nur Entnahmen\n\nDas unter **Stammdaten** gewählte Datumsformat wird auch auf bereits vorhandene Einträge angewendet.\n", "01-dashboard.md": "# Dashboard\n\nDas Dashboard zeigt die wichtigsten Kennzahlen:\n\n- **Aktive Artikel:** Anzahl aller verwendbaren Artikel.\n- **Unterbestand:** Artikel unterhalb ihres Mindestbestands.\n- **Heute:** Anzahl der heutigen Buchungen.\n- **Buchungen:** Gesamtzahl aller Ein- und Ausbuchungen.\n\nDie Werte werden aus der lokalen Datenbank `lager.db` berechnet.\n", "04-einbuchung.md": "# Einbuchung\n\n## Manuelle Einbuchung\n\n- Datum und Techniker auswählen.\n- Artikel und Menge hinzufügen.\n- Einbuchung bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Lieferschein mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: EINBUCHUNG` und enthält pro Material `Artikelnummer[TAB]Bezeichnung[TAB]Anzahl`.\n\nUnbekannte Artikel können direkt als neues Material angelegt oder bewusst ignoriert werden. Artikelnummer und erkannte Bezeichnung werden beim Anlegen vorausgefüllt. Ein Entnahme-Prompt wird im Einbuchungsbereich blockiert.\n", "09-stammdaten.md": "# Stammdaten\n\n## Lagerorte\nLagerorte können weiterhin zentral angelegt werden. Zusätzlich lassen sie sich direkt beim Anlegen eines neuen Materials erstellen. Ähnliche vorhandene Namen werden vorher vorgeschlagen.\n\n## Maschinen und alternative Bezeichnungen\nEine Maschine besitzt einen Hauptnamen und kann beliebig viele alternative Ticket-Bezeichnungen erhalten.\n\n- **Alternative Bezeichnung zuordnen:** z. B. `Compas 4` → `Compas 4.0`.\n- **Trennen:** eine falsche Alias-Zuordnung kann jederzeit wieder entfernt werden.\n- **Maschinen zusammenführen:** zwei bereits getrennt angelegte Maschinen können zu einer Hauptmaschine zusammengeführt werden. Der frühere Name bleibt als Alias erhalten.\n- **Zusammenführung rückgängig:** die vorherige Maschine wird wiederhergestellt und ihre Ersatzteil-Zuordnungen werden soweit möglich auf den Stand vor der Zusammenführung zurückgesetzt.\n\n## Mehrfachzuordnung von Ersatzteilen\nEin Artikel kann mehreren Maschinen gleichzeitig zugeordnet werden. Diese Zuordnung ist beim neuen Material sowie in der vollständigen Artikelliste bearbeitbar.\n", "15-historienfilter.md": "# Historienfilter und Export\n\nFilter:\n- Buchungsart\n- Zeitraum\n- Techniker\n- Artikelnummer oder Bezeichnung\n\nDer CSV-Export übernimmt die aktuell eingestellten Filter.\n", "03-lagerbestand.md": "# Lagerbestand\n\nIm Lagerbestand können Artikel über Artikelnummer, Bezeichnung, Lagerort oder Maschine gesucht werden.\n\n## Spalten\n\n- Sollbestand\n- Mindestbestand\n- Istbestand\n- Differenz zum Sollbestand\n- Lagerort\n- Maschine\n\nEin Artikel wird als Unterbestand hervorgehoben, wenn sein Istbestand unter dem Mindestbestand liegt.\n", "14-inventur.md": "# Inventur\n\n- Inventurliste im CSV-Center exportieren.\n- Gezählten Bestand eintragen.\n- CSV, TXT oder XLSX einlesen.\n- Differenzen prüfen.\n- Bestandskorrekturen mit Administratorpasswort buchen.\n\nNur Differenzen werden als Buchungen mit der Quelle **Inventur** gespeichert.\n", "06-materialanforderung.md": "# Materialanforderung\n\n- Techniker auswählen.\n- **Unterbestand laden** anklicken.\n- Gewünschte Positionen markieren.\n- Bestellmenge prüfen oder ändern.\n- **Materialanforderung exportieren** anklicken.\n\nDie Excel-Datei wird anhand der hinterlegten Vorlage erzeugt. Der Dateiname enthält Datum und Technikername.\n", "13-fehlerbehebung.md": "# Fehlerbehebung\n\n## Lagerbestand bleibt nach dem Start leer\n\nSeit Version 56 kann die Audit-Nachtragung den Datenbankstart nicht mehr blockieren. Falls künftig ein anderer Startfehler auftritt, erscheint eine rote Meldung statt eines stillen leeren Dashboards.\n\nBei Cloud-Betrieb prüfen, ob oben **Cloud** angezeigt wird und ob der verbundene Ordner zugreifbar ist.\n\n## M365-Ergebnis wird nicht erkannt\n\n- Aktuellen Prompt unter **Hilfe → M365-Prompts** verwenden.\n- Auf `IMPORTTYP: EINBUCHUNG` bzw. `IMPORTTYP: ENTNAHME` achten.\n- Artikelnummern und Mengen dürfen nicht leer sein.\n\n\n## Lokaler/Cloud-Dialog erscheint ständig\n\nSeit Version 58 wird ein **lokal neuer, aber sicher auf dem letzten Cloud-Stand basierender** Datenstand automatisch hochgeladen. Nur echte Konflikte zwischen verschiedenen Geräten müssen manuell entschieden werden.\n\nUnter **Dateisynchronisierung** werden die fortlaufende lokale und die zuletzt bekannte Cloud-Revisionsnummer angezeigt.\n\n\n## V60: Ordnerzugriff fehlt\nHintergrundprüfungen öffnen keine Berechtigungsabfrage mehr. Unter Dateisynchronisierung erscheint bei Bedarf **Ordnerzugriff erneut freigeben**. Bis zur ausdrücklichen Freigabe arbeitet die App lokal weiter und überschreibt keine Cloud-Datei.\n\n## V60: beschädigte Cloud-Datei\nEine beschädigte oder nicht vollständig lesbare `lager.db` wird nicht automatisch überschrieben. Zuerst Datei/OneDrive-Konflikt klären oder eine geprüfte Sicherung bewusst wiederherstellen.\n", "16-materialanforderung-export.md": "# Materialanforderung\n\nDie Originalvorlage `materialanforderung_vorlage.xlsx` bleibt unverändert erhalten.\n\nPrüfungen:\n- maximal 25 Positionen\n- nur positive Mengen\n- doppelte Artikel werden zusammengefasst\n- Vorschau vor Export\n- Sortierung nach Artikelnummer\n\nDateiname: `Bestellung_Datum_Techniker.xlsx`\n", "10-reset.md": "# Vollständiges Zurücksetzen\n\nDer vollständige Reset löscht:\n\n- Artikel\n- Bestände\n- Buchungen\n- Historie\n- Audit-Protokoll\n- Lagerorte\n- Maschinen\n- Techniker\n- Administratorpasswort\n- Einstellungen\n\nProgrammdateien, Excel-Vorlage und Hilfedateien bleiben erhalten.\n\nNach dem Reset erscheint wieder automatisch die vollständige Ersteinrichtung.\n", "11-m365-prompts.md": "# Microsoft 365 / Copilot – aktuelle Prompts\n\n## Lieferschein – Einbuchung\n\n```text\nIMPORTTYP: EINBUCHUNG\n\nExtrahiere aus diesem Lieferschein ausschließlich das tatsächlich gelieferte Material.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nArtikelnummer[TAB]Bezeichnung[TAB]Anzahl\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: EINBUCHUNG\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Preise, Summen, Fahrzeit, Arbeitszeit und Kilometer ignorieren.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen den Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Servicebericht – Entnahme\n\n```text\nIMPORTTYP: ENTNAHME\n\nExtrahiere aus dieser Service-PDF ausschließlich die tatsächlich verwendeten oder verbauten Materialien.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nDatum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: ENTNAHME\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Fahrzeit, Arbeitszeit und Kilometer vollständig ignorieren.\n- Nicht verbaute, nur erwähnte oder empfohlene Materialien nicht übernehmen.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen allen Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Vertauschungsschutz\n\n`IMPORTTYP: EINBUCHUNG` gehört nur zur Einbuchung. `IMPORTTYP: ENTNAHME` gehört nur zur Entnahme. Beim falschen Bereich bleibt die Buchung gesperrt.\n", "00-erste-schritte.md": "# Erste Schritte\n\nDie Lagerverwaltung startet nach der Erstinstallation mit einem Einrichtungsassistenten.\n\n## Ersteinrichtung\n\n- Administratorpasswort mit mindestens 8 Zeichen vergeben.\n- Namen des Technikers eingeben.\n- Datumsformat auswählen.\n- Einrichtung abschließen.\n\nLagerorte und Maschinen müssen bei der Ersteinrichtung nicht angelegt werden. Sie können später unter **Stammdaten** ergänzt werden.\n", "12-mobile-bedienung.md": "# Mobile Bedienung\n\nAuf schmalen Bildschirmen wird die Navigation über die Schaltfläche **Menü** geöffnet.\n\n## Hinweise\n\n- Tabellen können seitlich verschoben werden.\n- Eingabefelder werden untereinander dargestellt.\n- Die Ersteinrichtung ist für Smartphone und Tablet optimiert.\n- Für umfangreiche CSV- und Excel-Arbeiten ist ein Windows-PC komfortabler.\n\n\n## Cloud-Synchronisierung am Smartphone\n\nIm Cloud-Modus werden eigene, eindeutig auf dem aktuellen Cloud-Stand basierende Änderungen automatisch synchronisiert. Die Auswahl zwischen lokalem und Cloud-Stand erscheint nicht mehr nach jeder normalen Buchung. Eine Entscheidung wird nur noch bei einem echten Konflikt, einer nicht lesbaren Cloud-Datei oder einem nicht eindeutig zuordenbaren Datenstand verlangt.\n", "05-entnahme.md": "# Entnahme\n\n## Manuelle Entnahme\n\n- Datum, Techniker, Kunde und Maschine eintragen.\n- Artikel und Menge hinzufügen.\n- Entnahme bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Servicebericht mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: ENTNAHME` und enthält pro Material `Datum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine`.\n\nUnbekannte Artikel können als neues Material angelegt oder ignoriert werden. Bei einer Entnahme muss ein neu angelegter Artikel genügend Anfangsbestand besitzen. Ein Einbuchungs-Prompt wird im Entnahmebereich blockiert.\n\n\n## Unterschiedliche Maschinenbezeichnungen\n\nDie App berücksichtigt alternative Bezeichnungen von Maschinen. Beispiel: `Compas 4`, `Compas 4.0` und eine kundenspezifische Ticket-Bezeichnung können derselben Hauptmaschine zugeordnet werden. Bei ähnlichen, aber noch nicht verknüpften Namen werden vorhandene Maschinen vorgeschlagen.\n\nUnter **Stammdaten → Maschinen-Bezeichnungen & Mehrfachzuordnung** können alternative Namen zusammengeführt und später wieder getrennt werden.\n", "12-backup-und-synchronisierung.md": "\n\n## Synchronisationsgrenze in V60\nVor und nach jedem Schreiben wird `lager.db` geprüft. Ein lokaler OneDrive-Sync bietet jedoch keine atomare serverseitige Compare-and-Swap-Garantie. Exakt gleichzeitige Writes verschiedener Geräte können nicht vollständig ausgeschlossen werden.\n"};
 
 function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open('LagerverwaltungLovrencicV21',1);r.onupgradeneeded=()=>r.result.createObjectStore('data');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function ig(k){const d=await idbOpen();return new Promise((res,rej)=>{const r=d.transaction('data').objectStore('data').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function ip(k,v){const d=await idbOpen();return new Promise((res,rej)=>{const r=d.transaction('data','readwrite').objectStore('data').put(v,k);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
 async function idel(k){const d=await idbOpen();return new Promise((res,rej)=>{const r=d.transaction('data','readwrite').objectStore('data').delete(k);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+async function initDeviceStorageMode(){
+ const m=await ig(METAKEY)||{};
+ deviceStorageModeCache=m.deviceStorageMode||storageMode()||'browser_local';
+ if(m.deviceStorageMode!==deviceStorageModeCache){m.deviceStorageMode=deviceStorageModeCache;await ip(METAKEY,m)}
+}
+function storageMode(){return deviceStorageModeCache||'browser_local'}
+async function setDeviceStorageMode(mode){
+ deviceStorageModeCache=mode||'browser_local';
+ const m=await ig(METAKEY)||{};m.deviceStorageMode=deviceStorageModeCache;await ip(METAKEY,m);
+}
+async function queryHandlePermission(h,mode='read'){
+ if(!h)return 'denied';
+ try{return typeof h.queryPermission==='function'?await h.queryPermission({mode}):'granted'}catch{return 'denied'}
+}
+async function requestHandlePermissionExplicit(h,mode='readwrite'){
+ if(!h)return false;
+ try{
+  const q=await queryHandlePermission(h,mode);if(q==='granted')return true;
+  return typeof h.requestPermission==='function'&&(await h.requestPermission({mode}))==='granted';
+ }catch{return false}
+}
 function rows(sql,p=[]){const s=db.prepare(sql);s.bind(p);const a=[];while(s.step())a.push(s.getAsObject());s.free();return a}
 function scalar(sql,p=[]){const x=rows(sql,p);return x.length?Object.values(x[0])[0]:0}
 function run(sql,p=[]){db.run(sql,p)}
@@ -120,15 +143,11 @@ async function persist(dirty=true){
 }
 function scheduleAutoSync(){
  clearTimeout(autoTimer);
- autoTimer=setTimeout(async()=>{
-  if(!handle||isSyncing)return;
-  const mode=setting('storage_mode','browser_local');
-  if(mode==='cloud')LVSync.sync(true);
-  else if(mode==='local_folder'){
-   try{isSyncing=true;await saveToFolder(false,true)}
-   catch(e){console.warn('Lokaler Ordner konnte nicht aktualisiert werden:',e)}
-   finally{isSyncing=false}
-  }
+ autoTimer=setTimeout(()=>{
+  if(!handle)return;
+  const mode=storageMode();
+  if(mode==='cloud')requestSync({mode:'auto',silent:true,makeBackup:false}).catch(e=>console.warn('Automatische Synchronisierung wartet:',e.message||e));
+  else if(mode==='local_folder')requestSync({mode:'save',silent:true,makeBackup:false,force:true,localFolder:true}).catch(e=>console.warn('Lokaler Ordner konnte nicht aktualisiert werden:',e));
  },250)
 }
 function initSchema(){
@@ -146,8 +165,6 @@ CREATE TABLE IF NOT EXISTS technicians(id INTEGER PRIMARY KEY AUTOINCREMENT,name
 CREATE TABLE IF NOT EXISTS vehicles(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,description TEXT NOT NULL DEFAULT '',active INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT,event_time TEXT NOT NULL,user_name TEXT NOT NULL,action TEXT NOT NULL,entity TEXT NOT NULL,entity_id TEXT NOT NULL DEFAULT '',details TEXT NOT NULL DEFAULT '');`);
 ensureSyncState();
-if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
-if(!setting('storage_mode'))setSetting('storage_mode','browser_local');
 }
 
 function tableExists(name){
@@ -183,20 +200,22 @@ function setArticleMachineIds(articleId,values){
  return syncLegacyArticleMachine(aid);
 }
 function migrateMachineRelationsV57(){
- if(setting('machine_relations_v57','')==='1')return;
+ if(setting('machine_relations_v57','')==='1')return false;
+ let changed=false;
  try{
   const list=rows('SELECT id,machine FROM articles WHERE TRIM(machine)<>\'\'');
   for(const a of list){
    if(Number(scalar('SELECT COUNT(*) FROM article_machines WHERE article_id=?',[a.id])||0)>0)continue;
    const raw=String(a.machine||'').trim();
    let exact=exactMachineResolution(raw);
-   if(exact){run('INSERT OR IGNORE INTO article_machines(article_id,machine_id) VALUES(?,?)',[a.id,exact.machine_id]);continue}
+   if(exact){run('INSERT OR IGNORE INTO article_machines(article_id,machine_id) VALUES(?,?)',[a.id,exact.machine_id]);changed=true;continue}
    const parts=raw.split(/\s*[;,|]\s*/).filter(Boolean);
-   for(const part of parts){const r=exactMachineResolution(part);if(r)run('INSERT OR IGNORE INTO article_machines(article_id,machine_id) VALUES(?,?)',[a.id,r.machine_id])}
+   for(const part of parts){const r=exactMachineResolution(part);if(r){run('INSERT OR IGNORE INTO article_machines(article_id,machine_id) VALUES(?,?)',[a.id,r.machine_id]);changed=true}}
    if(Number(scalar('SELECT COUNT(*) FROM article_machines WHERE article_id=?',[a.id])||0)>0)syncLegacyArticleMachine(a.id);
   }
-  setSetting('machine_relations_v57','1');
+  setSetting('machine_relations_v57','1');changed=true;
  }catch(e){console.warn('Maschinen-Mehrfachzuordnung konnte nicht vollständig migriert werden:',e)}
+ return changed;
 }
 function levenshtein(a,b){
  a=normalizeLoose(a);b=normalizeLoose(b);if(a===b)return 0;if(!a)return b.length;if(!b)return a.length;
@@ -250,12 +269,12 @@ function existingDatabaseHasContent(){
  }catch{return false}
 }
 function adoptExistingDatabase(){
+ let changed=false;
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
-  setSetting('setup_complete','1');
-  setSetting('database_adopted','1');
-  setSetting('database_version','59');
-  if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');
+  setSetting('setup_complete','1');setSetting('database_adopted','1');setSetting('database_version','60');
+  if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');changed=true;
  }
+ return changed;
 }
 function setupIsRequired(){
  return setting('setup_complete','0')!=='1'&&!existingDatabaseHasContent();
@@ -264,14 +283,19 @@ function setupIsRequired(){
 async function initialize(){
  SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
  const b=await ig(DBKEY);db=b?new SQL.Database(new Uint8Array(b)):new SQL.Database();
- initSchema();adoptExistingDatabase();migrateMachineRelationsV57();
- try{backfillMovementAuditV55()}
+ initSchema();const adopted=adoptExistingDatabase();
+ handle=await ig(HANDLEKEY)||null;
+ await initDeviceStorageMode();
+ let migrated=adopted;
+ migrated=migrateMachineRelationsV57()||migrated;
+ try{migrated=backfillMovementAuditV55()||migrated}
  catch(e){console.warn('Audit-Nachtragung V55 konnte nicht vollständig ausgeführt werden. Die Datenbank wird trotzdem geladen.',e)}
- handle=await ig(HANDLEKEY)||null;if(!setting('storage_mode'))setSetting('storage_mode',handle?'local_folder':'browser_local');
+ if(setting('database_version','')!=='60'){setSetting('database_version','60');migrated=true}
+ if(!setting('date_format')){setSetting('date_format','DD.MM.YYYY');migrated=true}
  const m=await ig(METAKEY)||{};
  if(!m.localModified)m.localModified=currentDbState().changed_at;
  await ip(METAKEY,m);
- await persist(false);
+ await persist(migrated);
 }
 function response(data,status=200,headers={}){return new Response(typeof data==='string'||data instanceof Blob||data instanceof ArrayBuffer?data:JSON.stringify(data),{status,headers:{...(typeof data==='object'&&!(data instanceof Blob)&&!(data instanceof ArrayBuffer)?{'Content-Type':'application/json'}:{}),...headers}})}
 function body(opt){try{return JSON.parse(opt?.body||'{}')}catch{return {}}}
@@ -457,7 +481,8 @@ function createdMovementDetails(snapshot){
 }
 
 function backfillMovementAuditV55(){
- if(setting('audit_movement_backfill_v55','')==='1')return;
+ if(setting('audit_movement_backfill_v55','')==='1')return false;
+ let changed=false;
  try{
   let added=0;
   const movements=rows('SELECT * FROM movements ORDER BY id');
@@ -467,11 +492,12 @@ function backfillMovementAuditV55(){
    if(exists)continue;
    const snapshot=movementAuditSnapshot(movement);
    audit(snapshot.technician||'Techniker','BUCHUNG','Buchung',id,createdMovementDetails(snapshot));
-   added++;
+   added++;changed=true;
   }
-  setSetting('audit_movement_backfill_v55','1');
+  setSetting('audit_movement_backfill_v55','1');changed=true;
   if(added)audit('System','MIGRATION','Audit','',`${added} bestehende Buchung(en) mit vollständigen Buchungsdetails nachgetragen.`);
  }catch(e){console.warn('Audit-Migration übersprungen, Anwendung bleibt betriebsbereit:',e)}
+ return changed;
 }
 
 function detailedMovementChanges(before,after){
@@ -1016,7 +1042,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'59.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'60.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -1049,7 +1075,7 @@ async function route(url,opt={}){
   if(p==='/api/export/stock.csv'){const a=articles();return csvResp(`Lagerbestand_${fmtDate(today())}.csv`,['Artikelnummer','Bezeichnung','Sollbestand','Mindestbestand','Istbestand','Einheit','Lagerort','Maschine','Hersteller','Lieferant','Einkaufspreis'],a.map(x=>[x.article_no,x.description,x.target_stock,x.minimum_stock,x.stock,x.unit,x.location,x.machine,x.manufacturer,x.supplier,x.purchase_price]))}
   if(p==='/api/export/inventory.csv'){const a=articles();return csvResp(`Inventur_${fmtDate(today())}.csv`,['Artikelnummer','Bezeichnung','Systembestand','Gezählter Bestand','Lagerort','Maschine'],a.map(x=>[x.article_no,x.description,x.stock,'',x.location,x.machine]))}
  }
- if(p==='/api/setup/complete'){if(!d.password||d.password.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');setSetting('admin_password_hash',hash(d.password));setSetting('primary_technician',d.technician||'Techniker');setSetting('date_format',d.date_format||'DD.MM.YYYY');setSetting('storage_mode',handle&&['cloud','local_folder'].includes(d.storage_mode)?d.storage_mode:'browser_local');setSetting('setup_complete','1');run('INSERT OR IGNORE INTO technicians(name) VALUES(?)',[d.technician||'Techniker']);audit(d.technician,'EINRICHTUNG','System','','Ersteinrichtung');await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY'),storage_mode:setting('storage_mode','browser_local')})}
+ if(p==='/api/setup/complete'){if(!d.password||d.password.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');setSetting('admin_password_hash',hash(d.password));setSetting('primary_technician',d.technician||'Techniker');setSetting('date_format',d.date_format||'DD.MM.YYYY');await setDeviceStorageMode(handle&&['cloud','local_folder'].includes(d.storage_mode)?d.storage_mode:'browser_local');setSetting('setup_complete','1');run('INSERT OR IGNORE INTO technicians(name) VALUES(?)',[d.technician||'Techniker']);audit(d.technician,'EINRICHTUNG','System','','Ersteinrichtung');await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY'),storage_mode:storageMode()})}
  if(p==='/api/settings/date-format'){setSetting('date_format',d.date_format);await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY')})}
  if(p==='/api/admin/unlock')return response({ok:validPw(d.password),has_password:!!setting('admin_password_hash')});
  if(p==='/api/admin/lock')return response({ok:true});
@@ -1336,7 +1362,7 @@ async function backupDir(create=true){if(!handle)return null;try{return await ha
 async function cloudBackupEntries(){
  const result=[];
  const d=await backupDir(false);
- if(!d||!await permission(handle,'read'))return result;
+ if(!d||(await queryHandlePermission(handle,'read'))!=='granted')return result;
  try{
   for await(const [name,entry] of d.entries()){
    if(entry.kind!=='file'||!name.toLowerCase().endsWith('.db'))continue;
@@ -1360,8 +1386,9 @@ async function writeBackupBytes(bytes,kind='Automatisch',comment='',preferCloud=
  const created=Date.now();
  const name=`Backup_${backupStamp()}${comment?'_'+safeName(comment):''}.db`;
  let storage='local';
- const bd=preferCloud?await backupDir(true):null;
- if(bd&&await permission(handle,'readwrite')){
+ const canCloudBackup=preferCloud&&handle&&(await queryHandlePermission(handle,'readwrite'))==='granted';
+ const bd=canCloudBackup?await backupDir(true):null;
+ if(bd){
   const fh=await bd.getFileHandle(name,{create:true}),w=await fh.createWritable();
   await w.write(bytes);await w.close();storage='folder';
  }else{
@@ -1441,83 +1468,120 @@ async function deleteBackup(name){
  const stored=(await storedBackupIndex()).filter(z=>z.name!==name);
  await setBackupIndex(stored);
 }
-async function inspectCloudDatabase(){
- if(!handle)return {connected:false};
- if(!await permission(handle,'read'))return {connected:true,accessible:false,error:'Leseberechtigung fehlt.'};
- try{
-  const fh=await handle.getFileHandle('lager.db'),f=await fh.getFile();
-  const bytes=new Uint8Array(await f.arrayBuffer());
-  const test=new SQL.Database(bytes);
-  if(test.exec('PRAGMA quick_check')[0]?.values[0][0]!=='ok')throw Error('Cloud-Datenbank ist beschädigt.');
-  const state=stateFromDatabase(test);
-  test.close();
-  return {connected:true,accessible:true,file:'lager.db',modified:f.lastModified,size:f.size,bytes,state};
- }catch(e){
-  return {connected:true,accessible:false,file:'lager.db',error:e.message};
+class FileSystemCloudStorageAdapter extends SyncCore.CloudStorageAdapter{
+ constructor(getHandle){super();this.getHandle=getHandle}
+ async inspect(){
+  const h=this.getHandle();
+  if(!h)return {connected:false,status:SyncCore.CloudStatus.MISSING,accessible:false,file:'lager.db',error:'Kein Synchronisationsordner verbunden.'};
+  let permissionState;
+  try{permissionState=await queryHandlePermission(h,'read')}catch(e){return {connected:true,status:SyncCore.CloudStatus.PERMISSION_DENIED,accessible:false,file:'lager.db',error:e.message||'Berechtigungsprüfung fehlgeschlagen.'}}
+  if(permissionState!=='granted')return {connected:true,status:SyncCore.CloudStatus.PERMISSION_DENIED,accessible:false,file:'lager.db',error:'Ordnerzugriff erneut freigeben.'};
+  let fh;
+  try{fh=await h.getFileHandle('lager.db',{create:false})}
+  catch(e){
+   if(e?.name==='NotFoundError')return {connected:true,status:SyncCore.CloudStatus.MISSING,accessible:false,file:'lager.db',error:'lager.db wurde im verbundenen Ordner nicht gefunden.'};
+   return {connected:true,status:SyncCore.CloudStatus.IO_ERROR,accessible:false,file:'lager.db',error:e?.message||'Cloud-Datei konnte nicht geöffnet werden.'};
+  }
+  let f,bytes;
+  try{f=await fh.getFile();bytes=new Uint8Array(await f.arrayBuffer())}
+  catch(e){return {connected:true,status:SyncCore.CloudStatus.IO_ERROR,accessible:false,file:'lager.db',error:e?.message||'Cloud-Datei konnte nicht vollständig gelesen werden.'}}
+  let test;
+  try{
+   test=new SQL.Database(bytes);
+   const check=test.exec('PRAGMA quick_check')[0]?.values?.[0]?.[0];
+   if(check!=='ok')return {connected:true,status:SyncCore.CloudStatus.INVALID_DATABASE,accessible:false,file:'lager.db',modified:f.lastModified,size:f.size,bytes,error:'PRAGMA quick_check ist fehlgeschlagen.'};
+   if(!test.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='articles'").length)return {connected:true,status:SyncCore.CloudStatus.INVALID_DATABASE,accessible:false,file:'lager.db',modified:f.lastModified,size:f.size,bytes,error:'Die Datei enthält keine gültige Lagerdatenbank.'};
+   const state=stateFromDatabase(test);
+   return {connected:true,status:SyncCore.CloudStatus.OK,accessible:true,file:'lager.db',modified:f.lastModified,size:f.size,bytes,state,quick_check:'ok'};
+  }catch(e){
+   return {connected:true,status:SyncCore.CloudStatus.INVALID_DATABASE,accessible:false,file:'lager.db',modified:f?.lastModified||0,size:f?.size||bytes?.byteLength||0,bytes,error:e?.message||'Cloud-Datei ist keine lesbare SQLite-Datenbank.'};
+  }finally{try{test?.close()}catch{}}
+ }
+ async write(bytes,{create=false}={}){
+  const h=this.getHandle();if(!h)throw new SyncCore.SyncError('cloud_missing','Kein Synchronisationsordner verbunden.');
+  if((await queryHandlePermission(h,'readwrite'))!=='granted')throw new SyncCore.SyncError('permission_required','Ordnerzugriff erneut freigeben.');
+  let fh;
+  try{fh=await h.getFileHandle('lager.db',{create:!!create})}
+  catch(e){throw new SyncCore.SyncError(e?.name==='NotFoundError'?'cloud_missing':'io_error',e?.message||'lager.db konnte nicht zum Schreiben geöffnet werden.')}
+  const w=await fh.createWritable();
+  try{await w.write(bytes);await w.close()}
+  catch(e){try{await w.abort?.()}catch{}throw new SyncCore.SyncError('write_failed',e?.message||'Schreiben der Cloud-Datei ist fehlgeschlagen.')}
  }
 }
-async function saveToFolder(makeBackup=true,force=false){
- if(!handle)throw Error('Kein Synchronisationsordner verbunden.');
- if(!await permission(handle,'readwrite'))throw Error('Schreibberechtigung fehlt.');
+const cloudAdapter=new FileSystemCloudStorageAdapter(()=>handle);
+async function inspectCloudDatabase(){return cloudAdapter.inspect()}
+
+function makeSyncCandidate(){
+ const sourceState=currentDbState();
+ const sourceBytes=db.export();
+ const candidateDb=new SQL.Database(sourceBytes);
+ try{
+  const stmt=candidateDb.prepare("INSERT INTO sync_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
+  stmt.run(['cloud_base_revision_id',sourceState.revision_id]);stmt.reset();
+  stmt.run(['cloud_base_revision',String(sourceState.revision)]);stmt.free();
+  const bytes=candidateDb.export();
+  const state=stateFromDatabase(candidateDb);
+  return {bytes,state,sourceState};
+ }finally{candidateDb.close()}
+}
+async function saveToFolder(makeBackup=true,force=false,{allowCreateMissing=false}={}){
+ if(!handle)throw new Error('Kein Synchronisationsordner verbunden.');
  const m=await ig(METAKEY)||{};
  const local=currentDbState();
- const cloud=await inspectCloudDatabase();
+ try{
+  return await SyncCore.performVerifiedWrite({
+   adapter:cloudAdapter,local,meta:m,force,allowCreateMissing,
+   makeCandidate:async()=>makeSyncCandidate(),
+   backupCloud:async cloud=>{
+    // Erzwungenes Überschreiben nur nach Sicherheitskopie der tatsächlich lesbaren Cloud-Datei.
+    await writeBackupBytes(cloud.bytes,'Sicherheitsbackup','Cloud_vor_ausdrücklichem_Überschreiben',false);
+   },
+   onSuccess:async({candidate,verified})=>{
+    if(makeBackup)await createBackup('Automatisch','Vor Synchronisierung');
+    const meta=await ig(METAKEY)||{};
+    meta.lastSync=Date.now();meta.fileModified=verified.modified||0;
+    meta.expectedCloudRevisionId=candidate.state.revision_id;meta.expectedCloudDatabaseId=candidate.state.database_id;
+    meta.lastCloudRevision=Number(candidate.state.revision||0);meta.lastCloudRevisionId=candidate.state.revision_id;
+    meta.writeBlocked=false;meta.restorePending=false;delete meta.syncErrorCode;delete meta.syncErrorMessage;
 
- if(cloud.accessible&&!force){
-  if(m.writeBlocked)throw Error('Cloud-Schreiben ist gesperrt, weil der Datenstand nicht eindeutig auf der aktuellen Cloud-Revision basiert.');
-  if(!m.expectedCloudRevisionId)
-   throw Error('Die erwartete Cloud-Revision ist nicht bekannt. Lade zuerst den Cloud-Stand oder verwende die ausdrückliche Überschreibfunktion.');
-  if(cloud.state.revision_id!==m.expectedCloudRevisionId)
-   throw Error('Konflikt: Die Cloud-Datenbank wurde auf einem anderen Gerät verändert. Cloud-Stand neu laden.');
+    let changedDuringWrite=currentDbState().revision_id!==candidate.state.revision_id;
+    if(!changedDuringWrite){
+     // Kandidatenbytes zuerst persistent sichern, ohne die Live-DB zu ersetzen.
+     await ip(DBKEY,candidate.bytes.buffer.slice(candidate.bytes.byteOffset,candidate.bytes.byteOffset+candidate.bytes.byteLength));
+     // Eine Buchung kann während des IndexedDB-Writes erfolgt sein; deshalb direkt vor der Live-Übernahme nochmals prüfen.
+     changedDuringWrite=currentDbState().revision_id!==candidate.state.revision_id;
+    }
+    if(!changedDuringWrite){
+     try{db.close()}catch{}
+     db=new SQL.Database(candidate.bytes);initSchema();meta.dirty=false;
+    }else{
+     // Neuere lokale Änderungen behalten. Die eben verifizierte Cloud-Revision wird ihre neue Basis.
+     setSyncValue('cloud_base_revision_id',candidate.state.revision_id);setSyncValue('cloud_base_revision',String(candidate.state.revision));
+     await ip(DBKEY,db.export().buffer);meta.dirty=true;
+     queueMicrotask(()=>requestSync({mode:'auto',silent:true,makeBackup:false}).catch(e=>console.warn('Sync-Nachlauf fehlgeschlagen:',e.message||e)));
+    }
+    await ip(METAKEY,meta);await syncStatus();
+   }
+  });
+ }catch(e){
+  const meta=await ig(METAKEY)||{};meta.dirty=true;meta.syncErrorCode=e.code||'sync_error';meta.syncErrorMessage=e.message||String(e);await ip(METAKEY,meta);await syncStatus();throw e;
  }
- if(cloud.accessible&&force){
-  await writeBackupBytes(cloud.bytes,'Sicherheitsbackup','Cloud_vor_ausdrücklichem_Überschreiben',true);
- }
- if(makeBackup)await createBackup('Automatisch','Vor Synchronisierung');
-
- // Der aktuelle lokale Stand wird nach erfolgreichem Schreiben selbst zur neuen Cloud-Basis.
- setSyncValue('cloud_base_revision_id',local.revision_id);
- setSyncValue('cloud_base_revision',String(local.revision));
- const bytes=db.export();
- const fh=await handle.getFileHandle('lager.db',{create:true}),w=await fh.createWritable();
- await w.write(bytes);await w.close();
- const f=await fh.getFile();
- await ip(DBKEY,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
- m.dirty=false;
- m.lastSync=Date.now();
- m.fileModified=f.lastModified;
- m.expectedCloudRevisionId=local.revision_id;
- m.expectedCloudDatabaseId=local.database_id;
- m.lastCloudRevision=local.revision;
- m.lastCloudRevisionId=local.revision_id;
- m.writeBlocked=false;
- m.restorePending=false;
- await ip(METAKEY,m);
- await syncStatus();
- return {ok:true,state:local};
 }
 async function loadFromFolder(){
  if(!handle)throw Error('Kein Synchronisationsordner verbunden.');
  const cloud=await inspectCloudDatabase();
- if(!cloud.accessible)throw Error('Cloud-Datenbank konnte nicht gelesen werden: '+(cloud.error||''));
+ if(cloud.status===SyncCore.CloudStatus.PERMISSION_DENIED)throw new SyncCore.SyncError('permission_required','Ordnerzugriff erneut freigeben.');
+ if(cloud.status!==SyncCore.CloudStatus.OK)throw Error('Cloud-Datenbank konnte nicht sicher gelesen werden: '+(cloud.error||cloud.status));
  await createBackup('Sicherheitsbackup','Vor Laden aus Synchronisation');
  const test=new SQL.Database(cloud.bytes);
  db.close();db=test;initSchema();adoptExistingDatabase();
- setSyncValue('cloud_base_revision_id',cloud.state.revision_id);
- setSyncValue('cloud_base_revision',String(cloud.state.revision));
+ setSyncValue('cloud_base_revision_id',cloud.state.revision_id);setSyncValue('cloud_base_revision',String(cloud.state.revision));
  await ip(DBKEY,db.export().buffer);
  const m=await ig(METAKEY)||{};
- m.dirty=false;
- m.lastSync=Date.now();
- m.fileModified=cloud.modified;
- m.localModified=cloud.state.changed_at||cloud.modified;
- m.expectedCloudRevisionId=cloud.state.revision_id;
- m.expectedCloudDatabaseId=cloud.state.database_id;
- m.lastCloudRevision=cloud.state.revision;
- m.lastCloudRevisionId=cloud.state.revision_id;
- m.writeBlocked=false;
- m.restorePending=false;
- await ip(METAKEY,m);
+ m.dirty=false;m.lastSync=Date.now();m.fileModified=cloud.modified;m.localModified=cloud.state.changed_at||cloud.modified;
+ m.expectedCloudRevisionId=cloud.state.revision_id;m.expectedCloudDatabaseId=cloud.state.database_id;
+ m.lastCloudRevision=cloud.state.revision;m.lastCloudRevisionId=cloud.state.revision_id;m.writeBlocked=false;m.restorePending=false;
+ delete m.syncErrorCode;delete m.syncErrorMessage;await ip(METAKEY,m);
  return {ok:true,state:cloud.state};
 }
 window.LVStorage={
@@ -1525,44 +1589,35 @@ window.LVStorage={
   if(mode==='local_folder'||mode==='cloud'){
    if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine Ordnerauswahl. Nutzen Sie „Ohne Ordner nur im Browser speichern“.');
    const selected=await showDirectoryPicker({mode:'readwrite'});
-   if(!await permission(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
-   handle=selected;
-   await ip(HANDLEKEY,handle);
-   setSetting('storage_mode',mode);
-   const m=await ig(METAKEY)||{};
-   m.writeBlocked=false;
-   delete m.expectedCloudRevisionId;
-   delete m.expectedCloudDatabaseId;
-   await ip(METAKEY,m);
-   await saveToFolder(false,true);
-   await persist(false);
+   if(!await requestHandlePermissionExplicit(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
+   const previous=handle;handle=selected;
+   const inspection=await inspectCloudDatabase();
+   if(inspection.status!==SyncCore.CloudStatus.MISSING){handle=previous;throw Error(inspection.status===SyncCore.CloudStatus.OK?'Im ausgewählten Ordner befindet sich bereits eine lager.db.':'Der ausgewählte Ordner kann nicht sicher als leer bestätigt werden: '+(inspection.error||inspection.status));}
+   await ip(HANDLEKEY,handle);await setDeviceStorageMode(mode);
+   const m=await ig(METAKEY)||{};m.writeBlocked=false;delete m.expectedCloudRevisionId;delete m.expectedCloudDatabaseId;await ip(METAKEY,m);
+   await requestSync({mode:'initialize',silent:true,force:true,allowCreateMissing:true,makeBackup:false});
    return {ok:true,mode,folder:handle.name};
   }
-  handle=null;
-  await idel(HANDLEKEY);
-  setSetting('storage_mode','browser_local');
-  const m=await ig(METAKEY)||{};
-  m.writeBlocked=false;
-  delete m.expectedCloudRevisionId;
-  delete m.expectedCloudDatabaseId;
-  await ip(METAKEY,m);
-  await persist(false);
-  await syncStatus();
+  handle=null;await idel(HANDLEKEY);await setDeviceStorageMode('browser_local');
+  const m=await ig(METAKEY)||{};m.writeBlocked=false;delete m.expectedCloudRevisionId;delete m.expectedCloudDatabaseId;await ip(METAKEY,m);await syncStatus();
   return {ok:true,mode:'browser_local',folder:'Nur Browser-Speicher'};
  },
- async openExistingFolder(){if(!('showDirectoryPicker'in window))throw Error('Ordnerauswahl wird von diesem Browser nicht unterstützt.');handle=await showDirectoryPicker({mode:'readwrite'});await ip(HANDLEKEY,handle);await loadFromFolder();setSetting('storage_mode','cloud');await persist(false)},
+ async openExistingFolder(){
+  if(!('showDirectoryPicker'in window))throw Error('Ordnerauswahl wird von diesem Browser nicht unterstützt.');
+  const selected=await showDirectoryPicker({mode:'readwrite'});if(!await requestHandlePermissionExplicit(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
+  const previous=handle;handle=selected;const cloud=await inspectCloudDatabase();
+  if(cloud.status!==SyncCore.CloudStatus.OK){handle=previous;throw Error('Vorhandene lager.db konnte nicht sicher geöffnet werden: '+(cloud.error||cloud.status));}
+  await ip(HANDLEKEY,handle);await loadFromFolder();await setDeviceStorageMode('cloud');return {ok:true};
+ },
  async openExistingFile(input){
   const f=input.files?.[0];if(!f)throw Error('Keine Datei ausgewählt.');
   const bytes=new Uint8Array(await f.arrayBuffer());if(bytes.length<100)throw Error('Die ausgewählte Datei ist leer oder zu klein.');
   let test;try{test=new SQL.Database(bytes)}catch{throw Error('Die ausgewählte Datei ist keine lesbare SQLite-Datenbank.')}
   const check=test.exec('PRAGMA quick_check');if(check[0]?.values[0][0]!=='ok')throw Error('Die Datenbankprüfung ist fehlgeschlagen.');
   if(!test.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='articles'").length)throw Error('In dieser Datei wurde keine Lagerdatenbank mit einer Artikeltabelle gefunden.');
-  db.close();db=test;initSchema();adoptExistingDatabase();setSetting('storage_mode',handle?setting('storage_mode','local_folder'):'browser_local');
-  if(existingDatabaseHasContent())setSetting('setup_complete','1');
-  const articleCount=Number(scalar('SELECT COUNT(*) FROM articles')||0);
-  const movementCount=tableExists('movements')?Number(scalar('SELECT COUNT(*) FROM movements')||0):0;
-  await ip(DBKEY,db.export().buffer);
-  const state=currentDbState(),meta=await ig(METAKEY)||{};
+  db.close();db=test;initSchema();adoptExistingDatabase();if(existingDatabaseHasContent())setSetting('setup_complete','1');
+  const articleCount=Number(scalar('SELECT COUNT(*) FROM articles')||0),movementCount=tableExists('movements')?Number(scalar('SELECT COUNT(*) FROM movements')||0):0;
+  await persist(true);const state=currentDbState(),meta=await ig(METAKEY)||{};
   meta.dirty=true;meta.localModified=state.changed_at;meta.writeBlocked=!!handle;meta.restorePending=false;await ip(METAKEY,meta);
   return {ok:true,articles:articleCount,movements:movementCount,file:f.name};
  }
@@ -1570,12 +1625,13 @@ window.LVStorage={
 
 
 async function cloudState(){
- if(setting('storage_mode','browser_local')!=='cloud')return {connected:false};
+ if(storageMode()!=='cloud')return {connected:false,status:'missing'};
  const c=await inspectCloudDatabase();
  if(!c.connected)return {connected:false};
  return {
   connected:true,
-  accessible:!!c.accessible,
+  accessible:c.status===SyncCore.CloudStatus.OK,
+  status:c.status,
   file:'lager.db',
   folder:handle?.name||'',
   modified:Number(c.modified||0),
@@ -1598,7 +1654,7 @@ window.LVDatabaseStatus={
   return {
    lastModified:currentDbState().changed_at||Number(m.localModified||0),
    lastAutomaticBackup:Number(m.lastAutomaticBackup||0),
-   cloudConnected:setting('storage_mode','browser_local')==='cloud'&&!!handle,
+   cloudConnected:storageMode()==='cloud'&&!!handle,
    dirty:!!m.dirty,
    lastSync:Number(m.lastSync||0)
   };
@@ -1642,10 +1698,10 @@ window.LVBackupFile={
   db.close();db=test;initSchema();adoptExistingDatabase();
   audit('Administrator','WIEDERHERSTELLUNG','Backup',meta.file_name||'',
    `Backup manuell geladen\nDatei: ${meta.file_name||'Unbekannt'}\nRevision: ${info.revision||'—'}\nDatum: ${meta.file_date||new Date().toLocaleString('de-DE')}`);
-  await ip(DBKEY,db.export().buffer);
+  await persist(true);
   const m=await ig(METAKEY)||{};
   m.dirty=true;
-  m.localModified=restoredState.changed_at||Date.now();
+  m.localModified=currentDbState().changed_at||Date.now();
   m.restorePending=true;
   m.writeBlocked=true;
   m.restoreBackupName=meta.file_name||'Manuell geladene Datei';
@@ -1665,11 +1721,11 @@ window.LVMaterialRequestFolder={
   if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine direkte Ordnerauswahl.');
   const old=await ig(MATERIAL_REQUEST_FOLDER_KEY)||null;
   const selected=await showDirectoryPicker({mode:'readwrite'});
-  if(!await permission(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
+  if(!await requestHandlePermissionExplicit(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
   await ip(MATERIAL_REQUEST_FOLDER_KEY,selected);
   audit('Administrator','EINSTELLUNG','Materialanforderung Exportordner','',
    `Exportordner Materialanforderung geändert\nAlt: ${old?.name||'Downloads'}\nNeu: ${selected.name}`);
-  await persist(false);
+  await persist(true);
   return {ok:true,folder:selected.name};
  },
  async reset(){
@@ -1678,14 +1734,14 @@ window.LVMaterialRequestFolder={
   await idel(MATERIAL_REQUEST_FOLDER_KEY);
   audit('Administrator','EINSTELLUNG','Materialanforderung Exportordner','',
    `Exportordner Materialanforderung geändert\nAlt: ${old?.name||'Downloads'}\nNeu: Downloads`);
-  await persist(false);
+  await persist(true);
   return {ok:true};
  },
  async save(bytes,fileName,mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
   await ready;
   const h=await ig(MATERIAL_REQUEST_FOLDER_KEY)||null;
   if(!h)return {saved:false};
-  if(!await permission(h,'readwrite'))throw Error('Zugriff auf den Exportordner wurde nicht erteilt.');
+  if((await queryHandlePermission(h,'readwrite'))!=='granted')throw Error('Zugriff auf den Exportordner fehlt. Bitte den Ordner ausdrücklich erneut auswählen/freigeben.');
   const fh=await h.getFileHandle(fileName,{create:true});
   const writable=await fh.createWritable();
   await writable.write(new Blob([bytes],{type:mime}));
@@ -1705,7 +1761,7 @@ window.LVBackup={
    const result=await restoreBackup(name);
    audit('Administrator','WIEDERHERSTELLUNG','Backup',name,
     `Automatisches Backup geladen\nBackup: ${name}\nRevision: ${result.state?.revision??'—'}`);
-   await persist(false);
+   await persist(true);
    sessionStorage.removeItem('lv_startup_confirmed');
    alert('Backup wurde lokal wiederhergestellt. Die Cloud-Datei bleibt unverändert. Prüfe den Bestand und veröffentliche ihn nur bewusst als neuen Cloud-Stand.');
    location.reload();
@@ -1738,231 +1794,105 @@ window.LVBackup={
 const ready=initialize().then(async()=>{setTimeout(ensureDailyBackup,2500)});
 window.fetch=route;
 async function syncStatus(){const m=await ig(METAKEY)||{};if(window.syncFile)syncFile.textContent=handle?.name||'Keiner';if(window.syncDirty)syncDirty.textContent=m.dirty?'Ja':'Nein';if(window.syncLast)syncLast.textContent=m.lastSync?new Date(m.lastSync).toLocaleString('de-DE'):'Noch nie';if(window.syncAuto)syncAuto.textContent=handle?'Aktiv':'Wartet auf Ordner'}
-async function permission(h,m){if((await h.queryPermission({mode:m}))==='granted')return true;return (await h.requestPermission({mode:m}))==='granted'}
+async function permission(h,m){return (await queryHandlePermission(h,m))==='granted'}
+async function performSyncRequest(req={}){
+ const mode=req.mode||'sync',silent=!!req.silent;
+ if(!handle)throw new SyncCore.SyncError('cloud_missing','Kein Synchronisationsordner verbunden.');
+ if(mode==='force'||mode==='initialize'||mode==='save'){
+  return saveToFolder(req.makeBackup!==false,!!req.force,{allowCreateMissing:!!req.allowCreateMissing});
+ }
+ if(storageMode()!=='cloud'){if(!silent)throw Error('Cloud-Modus ist nicht aktiviert.');return {skipped:true}}
+ let m=await ig(METAKEY)||{};
+ let cloud=await inspectCloudDatabase();
+ if(cloud.status===SyncCore.CloudStatus.PERMISSION_DENIED){m.dirty=!!m.dirty; m.syncErrorCode='permission_required';m.syncErrorMessage='Ordnerzugriff erneut freigeben.';await ip(METAKEY,m);throw new SyncCore.SyncError('permission_required','Ordnerzugriff erneut freigeben.')}
+ const local=currentDbState();
+ let decision=SyncCore.classifySyncState({local,cloud,meta:m});
+ if(decision==='identical'){
+  // Metadaten dürfen sich selbst reparieren, ohne die SQLite-Inhalte zu ändern.
+  m.expectedCloudDatabaseId=cloud.state.database_id;m.expectedCloudRevisionId=cloud.state.revision_id;m.writeBlocked=false;m.dirty=false;
+  m.lastCloudRevision=Number(cloud.state.revision||0);m.lastCloudRevisionId=cloud.state.revision_id;await ip(METAKEY,m);return {ok:true,decision};
+ }
+ if(decision==='local_newer_safe'){
+  // Strikter Guard verlangt exakte expected-Werte. Nur aus einer bereits als sicher klassifizierten Basis reparieren.
+  m.expectedCloudDatabaseId=cloud.state.database_id;m.expectedCloudRevisionId=cloud.state.revision_id;m.writeBlocked=false;await ip(METAKEY,m);
+  return saveToFolder(req.makeBackup!==false,false);
+ }
+ if(decision==='cloud_newer'&&!m.dirty){await loadFromFolder();return {ok:true,decision,reloaded:true}}
+ if(decision==='cloud_missing')throw new SyncCore.SyncError('cloud_missing','lager.db fehlt im Cloud-Ordner. Außerhalb der Ersteinrichtung wird sie nicht automatisch neu erstellt.');
+ if(decision==='permission_required')throw new SyncCore.SyncError('permission_required','Ordnerzugriff erneut freigeben.');
+ if(decision==='cloud_unreadable')throw new SyncCore.SyncError('cloud_unreadable','Cloud-Datei ist beschädigt oder nicht vollständig lesbar und wird nicht überschrieben.');
+ throw new SyncCore.SyncError('conflict','Parallelkonflikt: Lokaler und Cloud-Stand stammen nicht eindeutig voneinander ab. Die Cloud-Datei wurde nicht überschrieben.');
+}
+const syncQueue=new SyncCore.SyncQueue(performSyncRequest);
+function requestSync(req={}){return syncQueue.request(req)}
+
 window.LVSync={
- async chooseFolder(){return LVStorageModeState.enableCloud();
+ async chooseFolder(){return LVStorageModeState.enableCloud()},
+ async reauthorize(){
+  if(!handle)throw Error('Kein Synchronisationsordner verbunden.');
+  const ok=await requestHandlePermissionExplicit(handle,'readwrite');
+  if(!ok)throw Error('Ordnerzugriff wurde nicht freigegeben.');
+  const m=await ig(METAKEY)||{};delete m.syncErrorCode;delete m.syncErrorMessage;await ip(METAKEY,m);await syncStatus();return {ok:true};
  },
- async load(reloadAfter=true){
-  try{
-   await loadFromFolder();
-   if(reloadAfter)location.reload();
-   return {ok:true};
-  }catch(e){
-   if(window.syncMsg)msg(syncMsg,e.message,false);
-   throw e;
-  }
- },
- async save(){
-  try{isSyncing=true;await saveToFolder(true,false);msg(syncMsg,'Datenbank und Backup sicher gespeichert.',true)}
-  catch(e){msg(syncMsg,e.message,false)}
-  finally{isSyncing=false}
- },
+ async load(reloadAfter=true){try{await loadFromFolder();if(reloadAfter)location.reload();return {ok:true}}catch(e){if(window.syncMsg)msg(syncMsg,e.message,false);throw e}},
+ async save(){try{await requestSync({mode:'save',makeBackup:true,force:false});msg(syncMsg,'Datenbank und Backup sicher gespeichert.',true)}catch(e){msg(syncMsg,e.message,false);throw e}},
  async forceSave(){
-  if(!confirm('ACHTUNG: Der lokale Datenstand überschreibt die aktuelle Cloud-Datei. Die bisherige Cloud-Datei wird vorher als Sicherheitsbackup gespeichert. Wirklich fortfahren?'))return;
-  try{isSyncing=true;await saveToFolder(true,true);msg(syncMsg,'Cloud-Datei wurde ausdrücklich überschrieben und vorher gesichert.',true)}
-  catch(e){msg(syncMsg,e.message,false)}
-  finally{isSyncing=false}
+  if(!confirm('ACHTUNG: Der lokale Datenstand überschreibt die aktuelle, lesbare Cloud-Datei. Vorher wird eine Sicherheitskopie angelegt. Wirklich fortfahren?'))return;
+  try{await requestSync({mode:'force',makeBackup:true,force:true});msg(syncMsg,'Cloud-Datei wurde ausdrücklich überschrieben und vorher gesichert.',true)}catch(e){msg(syncMsg,e.message,false);throw e}
  },
  async sync(silent=false){
-  try{
-   if(setting('storage_mode','browser_local')!=='cloud'){if(!silent)throw Error('Cloud-Modus ist nicht aktiviert.');return}
-   if(!handle){if(!silent)throw Error('Kein Synchronisationsordner verbunden.');return}
-   isSyncing=true;
-   const m=await ig(METAKEY)||{};
-   const cloud=await inspectCloudDatabase();
-   if(!cloud.accessible)throw Error('Cloud-Datenbank kann nicht gelesen werden.');
-   if(m.dirty){
-    const local=currentDbState();
-    const safeBase=cloud.accessible&&local.database_id===cloud.state.database_id&&(
-     m.expectedCloudRevisionId===cloud.state.revision_id||
-     local.cloud_base_revision_id===cloud.state.revision_id||
-     (local.parent_revision_id===cloud.state.revision_id&&local.revision===Number(cloud.state.revision||0)+1)
-    );
-    if(safeBase&&m.expectedCloudRevisionId!==cloud.state.revision_id){
-     m.expectedCloudRevisionId=cloud.state.revision_id;
-     m.expectedCloudDatabaseId=cloud.state.database_id;
-     m.writeBlocked=false;
-     await ip(METAKEY,m);
-    }
-    await saveToFolder(!silent,false);
-    if(!silent)msg(syncMsg,'Synchronisierung erfolgreich.',true);
-   }else if(m.expectedCloudRevisionId!==cloud.state.revision_id){
-    await loadFromFolder();
-    if(!silent)location.reload();
-   }else if(!silent){
-    msg(syncMsg,'Lokaler und Cloud-Stand sind bereits identisch.',true);
-   }
-  }catch(e){
-   if(!silent&&window.syncMsg)msg(syncMsg,e.message,false);else console.warn(e);
-  }finally{isSyncing=false}
+  try{const r=await requestSync({mode:'sync',silent,makeBackup:!silent});if(!silent)msg(syncMsg,r?.reloaded?'Neuer Cloud-Stand wurde geladen.':'Synchronisierung erfolgreich.',true);return r}
+  catch(e){if(!silent&&window.syncMsg)msg(syncMsg,e.message,false);else console.warn(e);throw e}
  },
- async disconnect(){handle=null;await idel(HANDLEKEY);setSetting('storage_mode','browser_local');await persist(false);await syncStatus();msg(syncMsg,'Lokaler Modus aktiviert. Die Cloud-Datei wurde nicht gelöscht.',true)},
+ async disconnect(){handle=null;await idel(HANDLEKEY);await setDeviceStorageMode('browser_local');const m=await ig(METAKEY)||{};m.writeBlocked=false;await ip(METAKEY,m);await syncStatus();msg(syncMsg,'Lokaler Modus aktiviert. Die Cloud-Datei wurde nicht gelöscht.',true)},
  exportDb(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([db.export()],{type:'application/octet-stream'}));a.download='lager.db';a.click()},
  async importDb(input){try{await LVStorage.openExistingFile(input);location.reload()}catch(e){alert(e.message)}},
- flush(){
- if(!handle)return;
- clearTimeout(autoTimer);
- if(setting('storage_mode','browser_local')==='cloud')this.sync(true);
- else if(setting('storage_mode','browser_local')==='local_folder')saveToFolder(false,true).catch(console.warn);
-}
+ flush(){if(!handle)return;clearTimeout(autoTimer);if(storageMode()==='cloud')requestSync({mode:'sync',silent:true,makeBackup:false}).catch(console.warn);else if(storageMode()==='local_folder')requestSync({mode:'save',silent:true,force:true,makeBackup:false,localFolder:true}).catch(console.warn)}
 };
-
 
 
 window.LVStorageModeState={
  async get(){
-  await ready;
-  const m=await ig(METAKEY)||{};
-  const mode=setting('storage_mode',handle?'local_folder':'browser_local');
-  const local=currentDbState();
-  let cloudRevision=m.lastCloudRevision===undefined?null:Number(m.lastCloudRevision);
-  if(mode==='cloud'&&handle){
-   const c=await inspectCloudDatabase();
-   if(c.accessible){
-    cloudRevision=Number(c.state.revision||0);
-    m.lastCloudRevision=cloudRevision;
-    m.lastCloudRevisionId=c.state.revision_id;
-    await ip(METAKEY,m);
-   }
-  }
-  return {mode,configuredMode:mode,connected:!!handle,folder:handle?.name||'',dirty:!!m.dirty,lastSync:Number(m.lastSync||0),localRevision:Number(local.revision||0),cloudRevision,autoSync:mode==='cloud'&&!!handle};
+  await ready;const m=await ig(METAKEY)||{},mode=storageMode(),local=currentDbState();
+  let cloudRevision=m.lastCloudRevision===undefined?null:Number(m.lastCloudRevision),cloudStatus='missing',permissionRequired=false;
+  if(mode==='cloud'&&handle){const c=await inspectCloudDatabase();cloudStatus=c.status;permissionRequired=c.status===SyncCore.CloudStatus.PERMISSION_DENIED;if(c.status===SyncCore.CloudStatus.OK){cloudRevision=Number(c.state.revision||0);m.lastCloudRevision=cloudRevision;m.lastCloudRevisionId=c.state.revision_id;await ip(METAKEY,m)}}
+  return {mode,configuredMode:mode,connected:!!handle,folder:handle?.name||'',dirty:!!m.dirty,lastSync:Number(m.lastSync||0),localRevision:Number(local.revision||0),cloudRevision,cloudStatus,permissionRequired,syncErrorCode:m.syncErrorCode||'',syncErrorMessage:m.syncErrorMessage||'',autoSync:mode==='cloud'&&!!handle&&!permissionRequired};
  },
  async chooseLocalFolder(){
-  await ready;
-  if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine dauerhafte Ordnerauswahl.');
-  const selected=await showDirectoryPicker({mode:'readwrite'});
-  if(!await permission(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
-  const previousHandle=handle;
-  handle=selected;
-  try{
-   const file=await selected.getFileHandle('lager.db',{create:false}).catch(()=>null);
-   if(file)throw Error('Im ausgewählten Ordner befindet sich bereits eine lager.db. Wählen Sie einen leeren Ordner oder importieren Sie die Datei bewusst.');
-   await ip(HANDLEKEY,handle);
-   setSetting('storage_mode','local_folder');
-   const m=await ig(METAKEY)||{};
-   m.writeBlocked=false;
-   delete m.expectedCloudRevisionId;
-   delete m.expectedCloudDatabaseId;
-   await ip(METAKEY,m);
-   await createBackup('Sicherheitsbackup','Vor Wechsel des lokalen Speicherordners');
-   await saveToFolder(false,true);
-   await persist(false);
-   return {ok:true,mode:'local_folder',folder:handle.name};
-  }catch(e){
-   handle=previousHandle;
-   if(previousHandle)await ip(HANDLEKEY,previousHandle);else await idel(HANDLEKEY);
-   throw e;
-  }
+  await ready;if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine dauerhafte Ordnerauswahl.');
+  const selected=await showDirectoryPicker({mode:'readwrite'});if(!await requestHandlePermissionExplicit(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
+  const previous=handle;handle=selected;const inspection=await inspectCloudDatabase();
+  if(inspection.status!==SyncCore.CloudStatus.MISSING){handle=previous;throw Error(inspection.status===SyncCore.CloudStatus.OK?'Im ausgewählten Ordner befindet sich bereits eine lager.db.':'Der Ordner kann nicht sicher als leer bestätigt werden: '+(inspection.error||inspection.status))}
+  await ip(HANDLEKEY,handle);await setDeviceStorageMode('local_folder');const m=await ig(METAKEY)||{};m.writeBlocked=false;delete m.expectedCloudRevisionId;delete m.expectedCloudDatabaseId;await ip(METAKEY,m);
+  await createBackup('Sicherheitsbackup','Vor Wechsel des lokalen Speicherordners');await requestSync({mode:'initialize',silent:true,force:true,allowCreateMissing:true,makeBackup:false});return {ok:true,mode:'local_folder',folder:handle.name};
  },
  async enableCloud(){
-  await ready;
-  if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine dauerhafte Ordnerverknüpfung.');
-  const selected=await showDirectoryPicker({mode:'readwrite'});
-  if(!await permission(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
-  const previousHandle=handle;
-  handle=selected;
-  const cloud=await inspectCloudDatabase();
-  if(cloud.accessible){
-   handle=previousHandle;
-   throw Error('Im ausgewählten Ordner befindet sich bereits eine lager.db. Wählen Sie für die Übernahme einen leeren Ordner.');
-  }
-  await ip(HANDLEKEY,handle);
-  setSetting('storage_mode','cloud');
-  const m=await ig(METAKEY)||{};
-  m.writeBlocked=false;
-  delete m.expectedCloudRevisionId;
-  delete m.expectedCloudDatabaseId;
-  await ip(METAKEY,m);
-  await createBackup('Sicherheitsbackup','Vor Umstellung auf Cloud');
-  await saveToFolder(false,true);
-  await persist(false);
-  return {ok:true,mode:'cloud',folder:handle.name};
+  await ready;if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine dauerhafte Ordnerverknüpfung.');
+  const selected=await showDirectoryPicker({mode:'readwrite'});if(!await requestHandlePermissionExplicit(selected,'readwrite'))throw Error('Schreibberechtigung wurde nicht erteilt.');
+  const previous=handle;handle=selected;const inspection=await inspectCloudDatabase();
+  if(inspection.status!==SyncCore.CloudStatus.MISSING){handle=previous;throw Error(inspection.status===SyncCore.CloudStatus.OK?'Im ausgewählten Ordner befindet sich bereits eine lager.db. Wählen Sie für die Übernahme einen leeren Ordner.':'Der Ordner kann nicht sicher als leer bestätigt werden: '+(inspection.error||inspection.status))}
+  await ip(HANDLEKEY,handle);await setDeviceStorageMode('cloud');const m=await ig(METAKEY)||{};m.writeBlocked=false;delete m.expectedCloudRevisionId;delete m.expectedCloudDatabaseId;await ip(METAKEY,m);
+  await createBackup('Sicherheitsbackup','Vor Umstellung auf Cloud');await requestSync({mode:'initialize',silent:true,force:true,allowCreateMissing:true,makeBackup:false});return {ok:true,mode:'cloud',folder:handle.name};
  },
- async enableLocal(){
-  await ready;
-  handle=null;
-  await idel(HANDLEKEY);
-  setSetting('storage_mode','browser_local');
-  const m=await ig(METAKEY)||{};
-  m.writeBlocked=false;
-  delete m.expectedCloudRevisionId;
-  delete m.expectedCloudDatabaseId;
-  await ip(METAKEY,m);
-  await persist(false);
-  await syncStatus();
-  return {ok:true,mode:'browser_local'};
- },
- async changeFolder(){
-  await ready;
-  const previousHandle=handle;
-  handle=null;
-  try{return await this.enableCloud()}
-  catch(e){handle=previousHandle;if(previousHandle)await ip(HANDLEKEY,previousHandle);throw e}
- }
+ async enableLocal(){handle=null;await idel(HANDLEKEY);await setDeviceStorageMode('browser_local');const m=await ig(METAKEY)||{};m.writeBlocked=false;delete m.expectedCloudRevisionId;delete m.expectedCloudDatabaseId;await ip(METAKEY,m);await syncStatus();return {ok:true,mode:'browser_local'}},
+ async changeFolder(){const previous=handle;handle=null;try{return await this.enableCloud()}catch(e){handle=previous;if(previous)await ip(HANDLEKEY,previous);throw e}}
 };
 
 window.LVStartupState={
  async get(){
-  await ready;
-  const m=await ig(METAKEY)||{};
-  const c=await cloudState();
-  const local=currentDbState();
-  let comparison='none';
-  if(c.accessible&&c.state){
-   const sameDatabase=local.database_id===c.state.database_id;
-   const expectedMatches=m.expectedCloudRevisionId===c.state.revision_id;
-   const storedBaseMatches=local.cloud_base_revision_id===c.state.revision_id;
-   const directParentMatches=local.parent_revision_id===c.state.revision_id&&local.revision===Number(c.state.revision||0)+1;
-
-   if(sameDatabase&&local.revision_id===c.state.revision_id){
-    comparison='identical';
-
-    // Selbstheilung: Nach einem Browser-/Gerätestart können IndexedDB-Metadaten
-    // fehlen, obwohl lokale DB und Cloud exakt dieselbe Revision besitzen.
-    if(m.expectedCloudRevisionId!==c.state.revision_id ||
-       m.expectedCloudDatabaseId!==c.state.database_id ||
-       m.dirty || m.writeBlocked){
-     m.expectedCloudRevisionId=c.state.revision_id;
-     m.expectedCloudDatabaseId=c.state.database_id;
-     m.lastCloudRevision=Number(c.state.revision||0);
-     m.lastCloudRevisionId=c.state.revision_id;
-     m.dirty=false;
-     m.writeBlocked=false;
-     setSyncValue('cloud_base_revision_id',c.state.revision_id);
-     setSyncValue('cloud_base_revision',String(c.state.revision||0));
-     await ip(DBKEY,db.export().buffer);
-     await ip(METAKEY,m);
-    }
-   }else if(!sameDatabase){
-    comparison='conflict';
-   }else if(c.state.revision>local.revision){
-    comparison=m.dirty?'conflict':'cloud_newer';
-   }else if(local.revision>c.state.revision){
-    comparison=(expectedMatches||storedBaseMatches||directParentMatches)
-      ?'local_newer_safe'
-      :'local_newer_unverified';
-   }else{
-    comparison='conflict';
-   }
+  await ready;const m=await ig(METAKEY)||{},c=await cloudState(),local=currentDbState();
+  const cloudForClassify=c.connected?{connected:true,status:c.status||((c.accessible&&c.state)?'ok':'io_error'),state:c.state||null}:{connected:false,status:'missing'};
+  let comparison=SyncCore.classifySyncState({local,cloud:cloudForClassify,meta:m});
+  if(comparison==='identical'&&c.state){
+   // Nur gerätespezifische Metadaten reparieren; keine SQLite-Inhaltsänderung.
+   if(m.expectedCloudRevisionId!==c.state.revision_id||m.expectedCloudDatabaseId!==c.state.database_id||m.dirty||m.writeBlocked){m.expectedCloudRevisionId=c.state.revision_id;m.expectedCloudDatabaseId=c.state.database_id;m.lastCloudRevision=Number(c.state.revision||0);m.lastCloudRevisionId=c.state.revision_id;m.dirty=false;m.writeBlocked=false;await ip(METAKEY,m)}
   }
   return {
-   needsConfirmation:sessionStorage.getItem('lv_startup_confirmed')!=='1',
-   localModified:local.changed_at||Number(m.localModified||0),
-   localArticles:local.articles,
-   localMovements:local.movements,
-   localRevisionLabel:`${local.revision} · ${local.revision_id.slice(0,8)}`,
-   localRevision:Number(local.revision||0),
-   localDirty:!!m.dirty,
-   cloudConnected:!!c.connected,
-   cloudAccessible:!!c.accessible,
-   cloudModified:Number(c.modified||0),
-   cloudFile:c.file||'',
-   localRevisionId:local.revision_id,
-   localDatabaseId:local.database_id,
-   cloudRevisionLabel:c.state?`${c.state.revision} · ${c.state.revision_id.slice(0,8)}`:'–',
-   cloudRevision:c.state?Number(c.state.revision||0):null,
-   cloudRevisionId:c.state?c.state.revision_id:'',
-   comparison
+   needsConfirmation:sessionStorage.getItem('lv_startup_confirmed')!=='1',localModified:local.changed_at||Number(m.localModified||0),localArticles:local.articles,localMovements:local.movements,
+   localRevisionLabel:`${local.revision} · ${local.revision_id.slice(0,8)}`,localRevision:Number(local.revision||0),localDirty:!!m.dirty,
+   cloudConnected:!!c.connected,cloudAccessible:!!c.accessible,cloudStatus:c.status||'missing',permissionRequired:c.status===SyncCore.CloudStatus.PERMISSION_DENIED,
+   cloudModified:Number(c.modified||0),cloudFile:c.file||'',cloudError:c.error||'',localRevisionId:local.revision_id,localDatabaseId:local.database_id,
+   cloudRevisionLabel:c.state?`${c.state.revision} · ${c.state.revision_id.slice(0,8)}`:'–',cloudRevision:c.state?Number(c.state.revision||0):null,cloudRevisionId:c.state?c.state.revision_id:'',comparison
   };
  },
  async confirm(mode){
@@ -1972,7 +1902,7 @@ window.LVStartupState={
   const local=currentDbState();
   m.startupConfirmedAt=Date.now();
   m.startupConfirmedMode=mode;
-  if(mode==='local'&&c.accessible){
+  if(mode==='local'&&c.status===SyncCore.CloudStatus.OK){
    const safe=local.database_id===c.state.database_id&&(
     m.expectedCloudRevisionId===c.state.revision_id||
     local.cloud_base_revision_id===c.state.revision_id||
@@ -2006,7 +1936,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','59');
+  setSetting('database_version','60');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
@@ -2027,7 +1957,7 @@ window.LVBackupState={
   const m=await ig(METAKEY)||{};
   if(!m.restorePending)throw Error('Es ist kein wiederhergestellter Datenstand vorgemerkt.');
   if(!handle)throw Error('Kein Synchronisationsordner verbunden.');
-  await saveToFolder(true,true);
+  await requestSync({mode:'force',force:true,makeBackup:true});
   return {ok:true};
  },
  async discardRestore(){
@@ -2051,7 +1981,7 @@ window.LVSession={
   clearTimeout(automaticBackupTimer);
   if(mode==='sync'){
    if(!handle)throw Error('Es ist kein Synchronisationsordner verbunden. Nutze „Nur lokal schließen“ oder richte zuerst unter Dateisynchronisierung einen Ordner ein.');
-   await saveToFolder(true,false);
+   await requestSync({mode:'sync',silent:false,makeBackup:true});
    await createBackup('Abschluss','Nach Synchronisierung beim Abmelden');
   }else if(mode==='local'){
    await createBackup('Abschluss','Lokales Abmelden ohne Synchronisierung');

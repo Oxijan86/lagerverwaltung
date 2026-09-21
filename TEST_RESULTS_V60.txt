@@ -1,0 +1,278 @@
+V60 – tatsächliche Testergebnisse
+=================================
+
+Ausgeführt: node --test tests/*.spec.js
+Ergebnis: 41 Tests bestanden, 0 fehlgeschlagen, 0 übersprungen.
+
+Zusätzliche Prüfungen:
+- node --check sync_core.js: OK
+- node --check local_backend.js: OK
+- node --check service-worker.js: OK
+- Inline-JavaScript aus index.html: OK
+- manifest.webmanifest JSON-Parsing: OK
+- beide Excel-Vorlagen byte-identisch zu V59: OK
+- V59 API-Routen-Baseline vollständig in V60 vorhanden: OK (automatisierter Test)
+- keine destruktive DROP-TABLE-Migration: OK (automatisierter Test)
+
+Vollständige Node-Testausgabe:
+
+
+> lagerverwaltung-lovrencic-v60@60.0.0 test
+> node --test tests/*.spec.js
+
+TAP version 13
+# Subtest: Audit-Änderungen am Materialanforderungs-Exportordner revisionieren
+ok 1 - Audit-Änderungen am Materialanforderungs-Exportordner revisionieren
+  ---
+  duration_ms: 0.762143
+  type: 'test'
+  ...
+# Subtest: V60 nutzt gerätespezifischen Speichermodus in IndexedDB
+ok 2 - V60 nutzt gerätespezifischen Speichermodus in IndexedDB
+  ---
+  duration_ms: 0.280932
+  type: 'test'
+  ...
+# Subtest: Sync-Queue statt isSyncing-Flag
+ok 3 - Sync-Queue statt isSyncing-Flag
+  ---
+  duration_ms: 0.350847
+  type: 'test'
+  ...
+# Subtest: Buchung während laufendem Write überschreibt keinen neueren lokalen Stand
+ok 4 - Buchung während laufendem Write überschreibt keinen neueren lokalen Stand
+  ---
+  duration_ms: 0.233661
+  type: 'test'
+  ...
+# Subtest: persist(false) wird nicht direkt nach Audit-Inhaltsänderungen verwendet
+ok 5 - persist(false) wird nicht direkt nach Audit-Inhaltsänderungen verwendet
+  ---
+  duration_ms: 0.228032
+  type: 'test'
+  ...
+# Subtest: V60 Cache-Name
+ok 6 - V60 Cache-Name
+  ---
+  duration_ms: 0.905017
+  type: 'test'
+  ...
+# Subtest: skipWaiting aktiv
+ok 7 - skipWaiting aktiv
+  ---
+  duration_ms: 0.151417
+  type: 'test'
+  ...
+# Subtest: clients.claim aktiv
+ok 8 - clients.claim aktiv
+  ---
+  duration_ms: 0.170907
+  type: 'test'
+  ...
+# Subtest: kritische App-Dateien network-first/no-store
+ok 9 - kritische App-Dateien network-first/no-store
+  ---
+  duration_ms: 0.347641
+  type: 'test'
+  ...
+# Subtest: 1 Cloud 87, lokale Kindrevision 88 ist sicher
+ok 10 - 1 Cloud 87, lokale Kindrevision 88 ist sicher
+  ---
+  duration_ms: 0.851437
+  type: 'test'
+  ...
+# Subtest: 2 mehrere lokale Revisionen 90 auf Basis 87 sind sicher
+ok 11 - 2 mehrere lokale Revisionen 90 auf Basis 87 sind sicher
+  ---
+  duration_ms: 0.153821
+  type: 'test'
+  ...
+# Subtest: 3 identisch trotz fehlender Metadaten
+ok 12 - 3 identisch trotz fehlender Metadaten
+  ---
+  duration_ms: 0.099439
+  type: 'test'
+  ...
+# Subtest: 4 direkte Kindrevision via parent_revision_id
+ok 13 - 4 direkte Kindrevision via parent_revision_id
+  ---
+  duration_ms: 0.180311
+  type: 'test'
+  ...
+# Subtest: 9 gleiche Revisionsnummer mit anderer revision_id ist Konflikt
+ok 14 - 9 gleiche Revisionsnummer mit anderer revision_id ist Konflikt
+  ---
+  duration_ms: 0.158838
+  type: 'test'
+  ...
+# Subtest: 10 veralteter Zweig bleibt blockiert
+ok 15 - 10 veralteter Zweig bleibt blockiert
+  ---
+  duration_ms: 0.092449
+  type: 'test'
+  ...
+# Subtest: cloud permission required
+ok 16 - cloud permission required
+  ---
+  duration_ms: 1.69964
+  type: 'test'
+  ...
+# Subtest: cloud missing
+ok 17 - cloud missing
+  ---
+  duration_ms: 0.107551
+  type: 'test'
+  ...
+# Subtest: cloud unreadable
+ok 18 - cloud unreadable
+  ---
+  duration_ms: 0.653721
+  type: 'test'
+  ...
+# Subtest: 19 nach Schreiben wird erneut gelesen und geprüft
+ok 19 - 19 nach Schreiben wird erneut gelesen und geprüft
+  ---
+  duration_ms: 1.087191
+  type: 'test'
+  ...
+# Subtest: 16 write-Fehler übernimmt Kandidat nicht
+ok 20 - 16 write-Fehler übernimmt Kandidat nicht
+  ---
+  duration_ms: 0.843225
+  type: 'test'
+  ...
+# Subtest: post-write falsche revision_id ist Fehler
+ok 21 - post-write falsche revision_id ist Fehler
+  ---
+  duration_ms: 0.776576
+  type: 'test'
+  ...
+# Subtest: force legt zuerst Backup der lesbaren Cloud-Datei an
+ok 22 - force legt zuerst Backup der lesbaren Cloud-Datei an
+  ---
+  duration_ms: 0.294221
+  type: 'test'
+  ...
+# Subtest: 17 Buchung während Sync löst Nachlauf aus
+ok 23 - 17 Buchung während Sync löst Nachlauf aus
+  ---
+  duration_ms: 71.33765
+  type: 'test'
+  ...
+# Subtest: 18 zwei manuelle Syncs schreiben nie parallel
+ok 24 - 18 zwei manuelle Syncs schreiben nie parallel
+  ---
+  duration_ms: 41.352555
+  type: 'test'
+  ...
+# Subtest: 5 beide Geräte starten identisch 87
+ok 25 - 5 beide Geräte starten identisch 87
+  ---
+  duration_ms: 0.947061
+  type: 'test'
+  ...
+# Subtest: 6/7/8 PC 88-A in Cloud, Smartphone 88-B darf nicht überschreiben
+ok 26 - 6/7/8 PC 88-A in Cloud, Smartphone 88-B darf nicht überschreiben
+  ---
+  duration_ms: 0.121171
+  type: 'test'
+  ...
+# Subtest: 12 Cloud ändert sich nach bewusster lokaler Fortsetzung erneut => neuer Konflikt
+ok 27 - 12 Cloud ändert sich nach bewusster lokaler Fortsetzung erneut => neuer Konflikt
+  ---
+  duration_ms: 0.112519
+  type: 'test'
+  ...
+# Subtest: 11 nach lokal weiterarbeiten wird derselbe Cloud-Konflikt nicht erneut gezeigt
+ok 28 - 11 nach lokal weiterarbeiten wird derselbe Cloud-Konflikt nicht erneut gezeigt
+  ---
+  duration_ms: 0.130746
+  type: 'test'
+  ...
+# Subtest: 12 neue Cloud-Revision hebt die Bestätigung auf
+ok 29 - 12 neue Cloud-Revision hebt die Bestätigung auf
+  ---
+  duration_ms: 0.129544
+  type: 'test'
+  ...
+# Subtest: strikter Guard erlaubt bestätigte Basis
+ok 30 - strikter Guard erlaubt bestätigte Basis
+  ---
+  duration_ms: 0.974943
+  type: 'test'
+  ...
+# Subtest: 13 beschädigte DB wird blockiert
+ok 31 - 13 beschädigte DB wird blockiert
+  ---
+  duration_ms: 0.454622
+  type: 'test'
+  ...
+# Subtest: 14 missing wird normal nicht erzeugt
+ok 32 - 14 missing wird normal nicht erzeugt
+  ---
+  duration_ms: 0.163095
+  type: 'test'
+  ...
+# Subtest: missing nur bei ausdrücklicher Initialisierung erlaubt
+ok 33 - missing nur bei ausdrücklicher Initialisierung erlaubt
+  ---
+  duration_ms: 0.10001
+  type: 'test'
+  ...
+# Subtest: 15 permission denied blockiert
+ok 34 - 15 permission denied blockiert
+  ---
+  duration_ms: 0.156815
+  type: 'test'
+  ...
+# Subtest: 20 unterschiedliche database_id blockiert
+ok 35 - 20 unterschiedliche database_id blockiert
+  ---
+  duration_ms: 0.118508
+  type: 'test'
+  ...
+# Subtest: expectedCloudDatabaseId muss exakt passen
+ok 36 - expectedCloudDatabaseId muss exakt passen
+  ---
+  duration_ms: 0.152699
+  type: 'test'
+  ...
+# Subtest: expectedCloudRevisionId muss exakt passen
+ok 37 - expectedCloudRevisionId muss exakt passen
+  ---
+  duration_ms: 0.105127
+  type: 'test'
+  ...
+# Subtest: writeBlocked blockiert
+ok 38 - writeBlocked blockiert
+  ---
+  duration_ms: 0.283115
+  type: 'test'
+  ...
+# Subtest: V59 API-Routen bleiben in V60 erhalten
+ok 39 - V59 API-Routen bleiben in V60 erhalten
+  ---
+  duration_ms: 3.380902
+  type: 'test'
+  ...
+# Subtest: V60 enthält keine destruktive Schema-Migration beim Start
+ok 40 - V60 enthält keine destruktive Schema-Migration beim Start
+  ---
+  duration_ms: 0.63317
+  type: 'test'
+  ...
+# Subtest: zentrale Ansichten bleiben erhalten
+ok 41 - zentrale Ansichten bleiben erhalten
+  ---
+  duration_ms: 0.96001
+  type: 'test'
+  ...
+1..41
+# tests 41
+# suites 0
+# pass 41
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 237.701979

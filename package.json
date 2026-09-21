@@ -1,0 +1,8 @@
+{
+  "name": "lagerverwaltung-lovrencic-v60",
+  "private": true,
+  "version": "60.0.0",
+  "scripts": {
+    "test": "node --test tests/*.spec.js"
+  }
+}

@@ -272,7 +272,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">59.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">60.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -568,9 +568,10 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <div id="cloudModeActions" class="card" style="display:none">
 <h3>☁ Cloud-Modus</h3>
-<p>Im Cloud-Modus werden sichere lokale Änderungen nach jeder Buchung automatisch in die Cloud geschrieben. Nur bei einem echten Konflikt zwischen zwei Geräten ist eine manuelle Entscheidung erforderlich.</p>
+<p>Im Cloud-Modus werden sichere lokale Änderungen automatisch in die verbundene lager.db geschrieben. Vor jedem Schreiben und danach wird die Datei geprüft. Der lokale OneDrive-/Ordnerzugriff bietet jedoch keine serverseitige Compare-and-Swap-Garantie; echte Paralleländerungen werden soweit sichtbar blockiert, können bei exakt gleichzeitigem Schreiben aber technisch nicht vollständig ausgeschlossen werden.</p>
 <div class="toolbar">
 <button class="primary" onclick="LVSync.sync()">Jetzt synchronisieren</button>
+<button class="secondary" id="syncReauthorizeButton" onclick="LVStorageMode.reauthorize()" style="display:none">🔐 Ordnerzugriff erneut freigeben</button>
 <button class="secondary" onclick="LVSync.load()">Stand aus Cloud laden</button>
 <button class="secondary" onclick="LVSync.save()">Lokalen Stand in Cloud speichern</button>
 <button class="danger" onclick="LVSync.forceSave()">Cloud-Stand ausdrücklich überschreiben</button>
@@ -717,6 +718,7 @@ window.LVAdminSession = window.LVAdminSession || {
 };
 </script>
 
+<script src="sync_core.js"></script>
 <script src="local_backend.js"></script>
 <script>
 let arts=[],deliveryp=[],servicep=[],csvp=[],deliveryUnknown=[],serviceUnknown=[],csvUnknown=[],historyData=[],inventoryData=[],md={},lastImportFilename='',appDateFormat='DD.MM.YYYY',helpFiles=[];
@@ -1861,7 +1863,8 @@ window.LVStorageMode={
    const hasLocalFolder=s.mode==='local_folder'&&s.connected;
    if(window.syncLocalRevision)syncLocalRevision.textContent='#'+Number(s.localRevision||0);
    if(window.syncCloudRevision)syncCloudRevision.textContent=s.cloudRevision===null||s.cloudRevision===undefined?'Noch nicht bekannt':'#'+Number(s.cloudRevision);
-   if(window.syncAutoState)syncAutoState.textContent=s.autoSync?'Aktiv – nach Änderungen automatisch':'Nicht aktiv';
+   if(window.syncAutoState)syncAutoState.textContent=s.permissionRequired?'Wartet – Ordnerzugriff fehlt':(s.autoSync?'Aktiv – nach Änderungen automatisch':'Nicht aktiv');
+   if(window.syncReauthorizeButton)syncReauthorizeButton.style.display=s.permissionRequired?'inline-flex':'none';
    if(window.storageModeBadge){
     storageModeBadge.textContent=isCloud?'☁ Cloud-Modus':hasLocalFolder?'🏠 Lokaler Ordner':'🏠 Browser lokal';
     storageModeBadge.className='mode-badge '+(isCloud?'cloud':'local');
@@ -1874,7 +1877,7 @@ window.LVStorageMode={
    if(window.cloudModeActions)cloudModeActions.style.display=isCloud?'block':'none';
    if(window.storageModeExplanation){
     storageModeExplanation.textContent=isCloud
-     ?'Cloud-Modus aktiv: Der lokale Bestand ist mit dem eigenen Synchronisationsordner verbunden.'
+     ?(s.permissionRequired?'Cloud-Modus aktiv, aber der Browserzugriff auf den Ordner muss erneut freigegeben werden. Lokale Arbeit bleibt möglich; es wird nichts in die Cloud geschrieben.':'Cloud-Modus aktiv: Der lokale Bestand ist mit dem eigenen Synchronisationsordner verbunden.')
      :hasLocalFolder
       ?'Lokaler Ordner aktiv: lager.db wird im ausgewählten lokalen Ordner gespeichert und zusätzlich im Browser abgesichert.'
       :'Browser-lokaler Modus: Die Datenbank liegt nur im Browser. Wählen Sie einen lokalen Ordner für eine sichtbare lager.db-Datei.';
@@ -1899,6 +1902,10 @@ window.LVStorageMode={
    await this.refresh();
    setTimeout(()=>location.reload(),650);
   }catch(e){if(e.name!=='AbortError')msg(storageModeMsg,e.message,false)}
+ },
+ async reauthorize(){
+  try{await LVSync.reauthorize();msg(syncMsg,'Ordnerzugriff wurde erneut freigegeben.',true);await this.refresh();await LVSync.sync(true)}
+  catch(e){msg(syncMsg,e.message,false)}
  },
  async enableLocal(){
   try{
@@ -2193,14 +2200,14 @@ let lvLastForegroundCheck=0;
 const LV_FOREGROUND_CHECK_THROTTLE_MS=3000;
 const LV_SYNC_ACK_CLOUD_KEY='lv_sync_acknowledged_cloud_revision';
 function lvAcknowledgeCurrentCloud(state){
- if(state?.cloudRevisionId)sessionStorage.setItem(LV_SYNC_ACK_CLOUD_KEY,state.cloudRevisionId);
+ sessionStorage.setItem(LV_SYNC_ACK_CLOUD_KEY,SyncCore.conflictFingerprint(state||{}));
 }
 function lvClearCloudAcknowledgement(){
  sessionStorage.removeItem(LV_SYNC_ACK_CLOUD_KEY);
 }
 function lvSameAcknowledgedCloud(state){
  const ack=sessionStorage.getItem(LV_SYNC_ACK_CLOUD_KEY)||'';
- return !!ack&&!!state?.cloudRevisionId&&ack===state.cloudRevisionId;
+ return SyncCore.shouldSuppressRepeatedConflict(state||{},ack,false);
 }
 
 
@@ -2247,7 +2254,7 @@ async function lvForceStartupCheck(reason='resume',forceDialog=false){
 
   // Hat der Benutzer bei einem echten Konflikt bewusst "lokal weiterarbeiten" gewählt,
   // denselben unveränderten Cloud-Stand nicht alle 15 Sekunden erneut als Modal anzeigen.
-  if(!forceDialog&&cloudChanged&&lvSameAcknowledgedCloud(state))return;
+  if(!forceDialog&&(cloudChanged||cloudUnreadable)&&lvSameAcknowledgedCloud(state))return;
 
   if(forceDialog||cloudChanged||cloudUnreadable){
    sessionStorage.removeItem(LV_STARTUP_SESSION_KEY);
@@ -2339,8 +2346,10 @@ window.LVStartup={
    let text='Lokaler Stand kann verwendet werden.';
    let warning='';
    if(this.data.cloudConnected&&!this.data.cloudAccessible){
-    text='Cloud-Datei nicht lesbar';
-    warning='⚠ Der Synchronisationsordner ist verbunden, aber lager.db konnte nicht gelesen werden. Prüfe die Berechtigung und ob die Datei vorhanden ist.';
+    if(this.data.cloudStatus==='permission_denied'){text='Ordnerzugriff erforderlich';warning='⚠ Der Browser darf den verbundenen Ordner momentan nicht lesen. Du kannst lokal weiterarbeiten und den Zugriff unter Dateisynchronisierung ausdrücklich erneut freigeben.'}
+    else if(this.data.cloudStatus==='missing'){text='Cloud-Datei fehlt';warning='⚠ lager.db fehlt im verbundenen Ordner. Sie wird außerhalb der ausdrücklichen Ersteinrichtung nicht automatisch neu erstellt.'}
+    else if(this.data.cloudStatus==='invalid_database'){text='Cloud-Datei beschädigt oder ungültig';warning='⚠ Die vorhandene lager.db hat die Integritätsprüfung nicht bestanden und wird nicht überschrieben.'}
+    else{text='Cloud-Datei nicht lesbar';warning='⚠ Der Synchronisationsordner ist verbunden, aber lager.db konnte nicht vollständig gelesen werden. Die Datei wird nicht überschrieben.'}
    }else if(this.data.comparison==='identical'){
     text='Beide Datenstände sind identisch';
     warning='Die internen Revisionskennungen stimmen überein.';
