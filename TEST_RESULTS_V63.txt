@@ -1,0 +1,344 @@
+
+> lagerverwaltung-lovrencic-v63@63.0.0 test
+> node --test tests/*.spec.js
+
+TAP version 13
+# Subtest: bestehende gültige lager.db kann als Cloud-Ordner verbunden werden
+ok 1 - bestehende gültige lager.db kann als Cloud-Ordner verbunden werden
+  ---
+  duration_ms: 0.843716
+  type: 'test'
+  ...
+# Subtest: bestehende Cloud-Datei wird beim bloßen Verbinden nicht initialisiert oder überschrieben
+ok 2 - bestehende Cloud-Datei wird beim bloßen Verbinden nicht initialisiert oder überschrieben
+  ---
+  duration_ms: 0.130738
+  type: 'test'
+  ...
+# Subtest: nur fehlende lager.db wird als neue Cloud-Ablage initialisiert
+ok 3 - nur fehlende lager.db wird als neue Cloud-Ablage initialisiert
+  ---
+  duration_ms: 0.137158
+  type: 'test'
+  ...
+# Subtest: ungültige oder nicht lesbare Cloud-Datei bleibt geschützt
+ok 4 - ungültige oder nicht lesbare Cloud-Datei bleibt geschützt
+  ---
+  duration_ms: 0.091999
+  type: 'test'
+  ...
+# Subtest: Smartphone-UI benennt den richtigen Verbindungsweg eindeutig
+ok 5 - Smartphone-UI benennt den richtigen Verbindungsweg eindeutig
+  ---
+  duration_ms: 0.125871
+  type: 'test'
+  ...
+# Subtest: Logout-Dialog besitzt expliziten Reauthorize-&-Sync-Button
+ok 6 - Logout-Dialog besitzt expliziten Reauthorize-&-Sync-Button
+  ---
+  duration_ms: 1.006321
+  type: 'test'
+  ...
+# Subtest: Logout prüft Permission ohne requestPermission im Hintergrund
+ok 7 - Logout prüft Permission ohne requestPermission im Hintergrund
+  ---
+  duration_ms: 0.281957
+  type: 'test'
+  ...
+# Subtest: Reauthorize wird nur im Button-Handler ausgelöst und danach normaler Close-Sync verwendet
+ok 8 - Reauthorize wird nur im Button-Handler ausgelöst und danach normaler Close-Sync verwendet
+  ---
+  duration_ms: 0.342308
+  type: 'test'
+  ...
+# Subtest: Permission-Fehler im normalen Close blendet Retry-Aktion ein
+ok 9 - Permission-Fehler im normalen Close blendet Retry-Aktion ein
+  ---
+  duration_ms: 0.223528
+  type: 'test'
+  ...
+# Subtest: Audit-Änderungen am Materialanforderungs-Exportordner revisionieren
+ok 10 - Audit-Änderungen am Materialanforderungs-Exportordner revisionieren
+  ---
+  duration_ms: 1.082897
+  type: 'test'
+  ...
+# Subtest: V61 nutzt gerätespezifischen Speichermodus in IndexedDB
+ok 11 - V61 nutzt gerätespezifischen Speichermodus in IndexedDB
+  ---
+  duration_ms: 0.163768
+  type: 'test'
+  ...
+# Subtest: Sync-Queue statt isSyncing-Flag
+ok 12 - Sync-Queue statt isSyncing-Flag
+  ---
+  duration_ms: 0.299493
+  type: 'test'
+  ...
+# Subtest: Buchung während laufendem Write überschreibt keinen neueren lokalen Stand
+ok 13 - Buchung während laufendem Write überschreibt keinen neueren lokalen Stand
+  ---
+  duration_ms: 0.273183
+  type: 'test'
+  ...
+# Subtest: persist(false) wird nicht direkt nach Audit-Inhaltsänderungen verwendet
+ok 14 - persist(false) wird nicht direkt nach Audit-Inhaltsänderungen verwendet
+  ---
+  duration_ms: 0.35063
+  type: 'test'
+  ...
+# Subtest: V63 Cache-Name
+ok 15 - V63 Cache-Name
+  ---
+  duration_ms: 0.925039
+  type: 'test'
+  ...
+# Subtest: skipWaiting aktiv
+ok 16 - skipWaiting aktiv
+  ---
+  duration_ms: 0.208045
+  type: 'test'
+  ...
+# Subtest: clients.claim aktiv
+ok 17 - clients.claim aktiv
+  ---
+  duration_ms: 0.144839
+  type: 'test'
+  ...
+# Subtest: kritische App-Dateien network-first/no-store
+ok 18 - kritische App-Dateien network-first/no-store
+  ---
+  duration_ms: 0.153262
+  type: 'test'
+  ...
+# Subtest: Startdialog besitzt direkte erneute Ordnerfreigabe
+ok 19 - Startdialog besitzt direkte erneute Ordnerfreigabe
+  ---
+  duration_ms: 1.009397
+  type: 'test'
+  ...
+# Subtest: Berechtigungsbutton erscheint nur bei permission_denied
+ok 20 - Berechtigungsbutton erscheint nur bei permission_denied
+  ---
+  duration_ms: 0.272832
+  type: 'test'
+  ...
+# Subtest: Freigabe läuft aus Benutzeraktion über bestehende sichere Reauthorize-Funktion
+ok 21 - Freigabe läuft aus Benutzeraktion über bestehende sichere Reauthorize-Funktion
+  ---
+  duration_ms: 0.361436
+  type: 'test'
+  ...
+# Subtest: Hintergrundprüfung fordert weiterhin nicht automatisch Berechtigung an
+ok 22 - Hintergrundprüfung fordert weiterhin nicht automatisch Berechtigung an
+  ---
+  duration_ms: 0.25114
+  type: 'test'
+  ...
+# Subtest: useCloud leitet permission_denied zur ausdrücklichen Freigabe um
+ok 23 - useCloud leitet permission_denied zur ausdrücklichen Freigabe um
+  ---
+  duration_ms: 0.339143
+  type: 'test'
+  ...
+# Subtest: 1 Cloud 87, lokale Kindrevision 88 ist sicher
+ok 24 - 1 Cloud 87, lokale Kindrevision 88 ist sicher
+  ---
+  duration_ms: 0.949656
+  type: 'test'
+  ...
+# Subtest: 2 mehrere lokale Revisionen 90 auf Basis 87 sind sicher
+ok 25 - 2 mehrere lokale Revisionen 90 auf Basis 87 sind sicher
+  ---
+  duration_ms: 0.157208
+  type: 'test'
+  ...
+# Subtest: 3 identisch trotz fehlender Metadaten
+ok 26 - 3 identisch trotz fehlender Metadaten
+  ---
+  duration_ms: 0.102085
+  type: 'test'
+  ...
+# Subtest: 4 direkte Kindrevision via parent_revision_id
+ok 27 - 4 direkte Kindrevision via parent_revision_id
+  ---
+  duration_ms: 0.093211
+  type: 'test'
+  ...
+# Subtest: 9 gleiche Revisionsnummer mit anderer revision_id ist Konflikt
+ok 28 - 9 gleiche Revisionsnummer mit anderer revision_id ist Konflikt
+  ---
+  duration_ms: 0.142745
+  type: 'test'
+  ...
+# Subtest: 10 veralteter Zweig bleibt blockiert
+ok 29 - 10 veralteter Zweig bleibt blockiert
+  ---
+  duration_ms: 0.137438
+  type: 'test'
+  ...
+# Subtest: cloud permission required
+ok 30 - cloud permission required
+  ---
+  duration_ms: 1.099703
+  type: 'test'
+  ...
+# Subtest: cloud missing
+ok 31 - cloud missing
+  ---
+  duration_ms: 0.106421
+  type: 'test'
+  ...
+# Subtest: cloud unreadable
+ok 32 - cloud unreadable
+  ---
+  duration_ms: 0.245511
+  type: 'test'
+  ...
+# Subtest: 19 nach Schreiben wird erneut gelesen und geprüft
+ok 33 - 19 nach Schreiben wird erneut gelesen und geprüft
+  ---
+  duration_ms: 0.865649
+  type: 'test'
+  ...
+# Subtest: 16 write-Fehler übernimmt Kandidat nicht
+ok 34 - 16 write-Fehler übernimmt Kandidat nicht
+  ---
+  duration_ms: 0.564944
+  type: 'test'
+  ...
+# Subtest: post-write falsche revision_id ist Fehler
+ok 35 - post-write falsche revision_id ist Fehler
+  ---
+  duration_ms: 0.232391
+  type: 'test'
+  ...
+# Subtest: force legt zuerst Backup der lesbaren Cloud-Datei an
+ok 36 - force legt zuerst Backup der lesbaren Cloud-Datei an
+  ---
+  duration_ms: 0.187834
+  type: 'test'
+  ...
+# Subtest: 17 Buchung während Sync löst Nachlauf aus
+ok 37 - 17 Buchung während Sync löst Nachlauf aus
+  ---
+  duration_ms: 72.061144
+  type: 'test'
+  ...
+# Subtest: 18 zwei manuelle Syncs schreiben nie parallel
+ok 38 - 18 zwei manuelle Syncs schreiben nie parallel
+  ---
+  duration_ms: 40.256189
+  type: 'test'
+  ...
+# Subtest: 5 beide Geräte starten identisch 87
+ok 39 - 5 beide Geräte starten identisch 87
+  ---
+  duration_ms: 1.564305
+  type: 'test'
+  ...
+# Subtest: 6/7/8 PC 88-A in Cloud, Smartphone 88-B darf nicht überschreiben
+ok 40 - 6/7/8 PC 88-A in Cloud, Smartphone 88-B darf nicht überschreiben
+  ---
+  duration_ms: 0.155475
+  type: 'test'
+  ...
+# Subtest: 12 Cloud ändert sich nach bewusster lokaler Fortsetzung erneut => neuer Konflikt
+ok 41 - 12 Cloud ändert sich nach bewusster lokaler Fortsetzung erneut => neuer Konflikt
+  ---
+  duration_ms: 0.165881
+  type: 'test'
+  ...
+# Subtest: 11 nach lokal weiterarbeiten wird derselbe Cloud-Konflikt nicht erneut gezeigt
+ok 42 - 11 nach lokal weiterarbeiten wird derselbe Cloud-Konflikt nicht erneut gezeigt
+  ---
+  duration_ms: 0.169576
+  type: 'test'
+  ...
+# Subtest: 12 neue Cloud-Revision hebt die Bestätigung auf
+ok 43 - 12 neue Cloud-Revision hebt die Bestätigung auf
+  ---
+  duration_ms: 0.18467
+  type: 'test'
+  ...
+# Subtest: strikter Guard erlaubt bestätigte Basis
+ok 44 - strikter Guard erlaubt bestätigte Basis
+  ---
+  duration_ms: 1.146383
+  type: 'test'
+  ...
+# Subtest: 13 beschädigte DB wird blockiert
+ok 45 - 13 beschädigte DB wird blockiert
+  ---
+  duration_ms: 0.533517
+  type: 'test'
+  ...
+# Subtest: 14 missing wird normal nicht erzeugt
+ok 46 - 14 missing wird normal nicht erzeugt
+  ---
+  duration_ms: 0.269368
+  type: 'test'
+  ...
+# Subtest: missing nur bei ausdrücklicher Initialisierung erlaubt
+ok 47 - missing nur bei ausdrücklicher Initialisierung erlaubt
+  ---
+  duration_ms: 0.162716
+  type: 'test'
+  ...
+# Subtest: 15 permission denied blockiert
+ok 48 - 15 permission denied blockiert
+  ---
+  duration_ms: 0.173332
+  type: 'test'
+  ...
+# Subtest: 20 unterschiedliche database_id blockiert
+ok 49 - 20 unterschiedliche database_id blockiert
+  ---
+  duration_ms: 0.221054
+  type: 'test'
+  ...
+# Subtest: expectedCloudDatabaseId muss exakt passen
+ok 50 - expectedCloudDatabaseId muss exakt passen
+  ---
+  duration_ms: 0.22472
+  type: 'test'
+  ...
+# Subtest: expectedCloudRevisionId muss exakt passen
+ok 51 - expectedCloudRevisionId muss exakt passen
+  ---
+  duration_ms: 0.175656
+  type: 'test'
+  ...
+# Subtest: writeBlocked blockiert
+ok 52 - writeBlocked blockiert
+  ---
+  duration_ms: 0.422249
+  type: 'test'
+  ...
+# Subtest: V59 API-Routen bleiben in V61 erhalten
+ok 53 - V59 API-Routen bleiben in V61 erhalten
+  ---
+  duration_ms: 1.707012
+  type: 'test'
+  ...
+# Subtest: V61 enthält keine destruktive Schema-Migration beim Start
+ok 54 - V61 enthält keine destruktive Schema-Migration beim Start
+  ---
+  duration_ms: 0.600488
+  type: 'test'
+  ...
+# Subtest: zentrale Ansichten bleiben erhalten
+ok 55 - zentrale Ansichten bleiben erhalten
+  ---
+  duration_ms: 0.743825
+  type: 'test'
+  ...
+1..55
+# tests 55
+# suites 0
+# pass 55
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 286.868936
