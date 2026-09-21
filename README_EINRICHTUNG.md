@@ -29,3 +29,7 @@ Die Ordnerauswahl funktioniert nur in Browsern, die die File System Access API u
 ## Cloud-Modus
 
 Der Cloud-Modus ist für einen synchronisierten Ordner vorgesehen. Jeder Kollege sollte eine eigene Datenbank und einen eigenen Ordner verwenden. Vor einem Gerätewechsel immer synchronisieren und schließen.
+
+
+## Version 61 – bestehende Cloud-Verknüpfung auf einem weiteren Gerät
+Ein bereits verwendeter Synchronisationsordner muss **nicht leer** sein. Unter **Speicher & Synchronisation → Cloud-Synchronisationsordner verbinden** kann derselbe Ordner ausgewählt werden. Eine vorhandene gültige `lager.db` wird nur verbunden und geprüft. Sie wird durch das bloße Verbinden nicht überschrieben.
