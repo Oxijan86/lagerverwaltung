@@ -1,4 +1,4 @@
-# Lagerverwaltung Lovrencic V41
+# Lagerverwaltung Lovrencic V64
 
 ## Neuer Einrichtungsassistent
 
@@ -33,3 +33,10 @@ Der Cloud-Modus ist für einen synchronisierten Ordner vorgesehen. Jeder Kollege
 
 ## Version 61 – bestehende Cloud-Verknüpfung auf einem weiteren Gerät
 Ein bereits verwendeter Synchronisationsordner muss **nicht leer** sein. Unter **Speicher & Synchronisation → Cloud-Synchronisationsordner verbinden** kann derselbe Ordner ausgewählt werden. Eine vorhandene gültige `lager.db` wird nur verbunden und geprüft. Sie wird durch das bloße Verbinden nicht überschrieben.
+
+## Version 64
+
+- Bestehende Cloud-/Ordner-Modi werden beim Update aus älteren Versionen übernommen.
+- Neue Materialien können ohne Administratorpasswort angelegt werden; Änderungen bestehender Stammdaten bleiben geschützt.
+- Soll- und Mindestbestand können direkt im Lagerbestand und Dashboard bearbeitet werden.
+- M365-Prompts sind markier- und kopierbar.

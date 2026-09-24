@@ -14,6 +14,23 @@
   async inspect(){throw new Error('inspect() not implemented')}
   async write(_bytes,_options){throw new Error('write() not implemented')}
  }
+ function resolveDeviceStorageMode({indexedMode='',legacyMode='',hasHandle=false}={}){
+  const valid=new Set(['cloud','local_folder','browser_local']);
+  if(valid.has(indexedMode))return indexedMode;
+  if(valid.has(legacyMode))return legacyMode;
+  if(hasHandle)return 'cloud';
+  return 'browser_local';
+ }
+ async function initializeDeviceStorageMode({indexedMode='',legacyMode='',hasHandle=false,persistMode}={}){
+  const mode=resolveDeviceStorageMode({indexedMode,legacyMode,hasHandle});
+  if(typeof persistMode==='function'&&indexedMode!==mode)await persistMode(mode);
+  return mode;
+ }
+ function closeSyncRequestForMode(mode){
+  if(mode==='cloud')return {mode:'sync',silent:false,makeBackup:true};
+  if(mode==='local_folder')return {mode:'save',silent:false,makeBackup:true,force:false,localFolder:true};
+  return null;
+ }
  function classifySyncState({local,cloud,meta={}}){
   if(!cloud||cloud.connected===false||cloud.status===CloudStatus.MISSING)return 'cloud_missing';
   if(cloud.status===CloudStatus.PERMISSION_DENIED)return 'permission_required';
@@ -123,5 +140,5 @@
    }
   }
  }
- return {CloudStatus,SyncError,CloudStorageAdapter,classifySyncState,validateWriteGuard,verifyWrittenState,performVerifiedWrite,SyncQueue,defaultMerge,conflictFingerprint,shouldSuppressRepeatedConflict};
+ return {CloudStatus,SyncError,CloudStorageAdapter,resolveDeviceStorageMode,initializeDeviceStorageMode,closeSyncRequestForMode,classifySyncState,validateWriteGuard,verifyWrittenState,performVerifiedWrite,SyncQueue,defaultMerge,conflictFingerprint,shouldSuppressRepeatedConflict};
 });

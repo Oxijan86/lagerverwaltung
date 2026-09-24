@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V21 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V64 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -61,6 +61,9 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 .movement-badge.out{background:#fdeaea;color:#991b1b;border:1px solid #efb4b4}
 .icon-button{width:34px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:16px;border-radius:8px}
 .audit-details{white-space:pre-wrap;line-height:1.45}
+
+.prompt-code,.prompt-pre{user-select:text;-webkit-user-select:text}.prompt-code{white-space:pre-wrap;word-break:normal}.prompt-box{margin:12px 0}.prompt-actions{align-items:center}.prompt-copy-status{font-weight:700;color:#12613d}
+.level-input{min-width:82px;max-width:110px}.level-save{white-space:nowrap}.inline-level-message{font-size:12px;margin-top:4px}.dashboard-low-actions{margin-top:10px}
 </style></head><body>
 
 
@@ -274,10 +277,10 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">63.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">64.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
-<section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div><div class="card kpi">Lagerwert<b id="kv">–</b></div></div>
-<div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Mindest.</th></tr></thead><tbody id="dashLow"></tbody></table></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
+<section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
+<div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
 <div class="card"><h3>Letzte 20 Buchungen</h3><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th></tr></thead><tbody id="dashRecent"></tbody></table></div></div>
 <div class="card" style="margin-top:14px"><h3>Systeminformation</h3><div class="formgrid">
 <div><span class="small">Programmversion</span><br><b id="infoVersion">–</b></div>
@@ -287,11 +290,8 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div></div></section>
 
 <section id="newmaterial" class="view"><h2>Neues Material anlegen</h2>
-<div id="newlock" class="adminlocked"><h3>🔒 Materialanlage gesperrt</h3>
-<p>Die Materialanlage gehört zu den Stammdaten. Bitte zuerst mit dem Stammdaten-Passwort freischalten.</p>
-<div class="toolbar"><input id="newpw" type="password" placeholder="Passwort"><button class="primary" onclick="unlockNewMaterial()">Freischalten</button></div>
-<div id="newunlockmsg" class="message"></div></div>
-<div id="newform" style="display:none"><div class="card">
+<p class="small">Neue Materialien können ohne Administratorpasswort angelegt werden. Bestehende Artikel und zentrale Stammdaten bleiben geschützt.</p>
+<div id="newform"><div class="card">
 <div class="formgrid">
 <label>Artikelnummer *<input id="nm_no"></label>
 <label>Bezeichnung *<input id="nm_desc"></label>
@@ -301,8 +301,8 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <option>m</option><option>cm</option><option>mm</option><option>Satz</option><option>Rolle</option>
 <option>Packung</option><option>Karton</option>
 </select></label>
-<label>Sollbestand *<input id="nm_target" type="number" min="0" step="0.01" value="0"></label>
-<label>Mindestbestand *<input id="nm_min" type="number" min="0" step="0.01" value="0"></label>
+<label>Sollbestand *<input id="nm_target" type="number" min="0" step="0.01" value="0" onchange="normalizeMaterialLevelFields('nm')"></label>
+<label>Mindestbestand *<input id="nm_min" type="number" min="0" step="0.01" value="0" onchange="normalizeMaterialLevelFields('nm')"><span class="small">Mindestbestand ≥ Sollbestand</span></label>
 <label>Lagerort *<select id="nm_location"></select><input id="nm_location_new" placeholder="Neuen Lagerort eingeben" oninput="showSimilarMaster('location','nm')"><div id="nm_location_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('location','nm')">+ Lagerort anlegen</button></label>
 <label>Maschinen <span class="small">(Mehrfachauswahl möglich)</span><select id="nm_machine" multiple size="4"></select><input id="nm_machine_new" placeholder="Neue Maschinenbezeichnung" oninput="showSimilarMaster('machine','nm')"><div id="nm_machine_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('machine','nm')">+ Maschine anlegen</button></label>
 <label>Hersteller<input id="nm_manufacturer"></label>
@@ -319,7 +319,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <button class="secondary" onclick="clearMaterialForm()">Formular leeren</button>
 <div id="nm_msg" class="message"></div></div></div></section>
 
-<section id="articles" class="view"><h2>Lagerbestand</h2><div class="toolbar"><input id="search" placeholder="Artikelnummer, Bezeichnung, Lagerort oder Maschine" oninput="scheduleLiveStockSearch()"><div class="small">Die Suche startet automatisch während der Eingabe – auch auf dem Smartphone.</div><button class="primary" onclick="loadArticles()">Suchen</button></div><div class="tablewrap"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Soll</th><th>Mindest.</th><th>Ist</th><th>Differenz</th><th>Lagerort</th><th>Maschine</th></tr></thead><tbody id="arows"></tbody></table></div></section>
+<section id="articles" class="view"><h2>Lagerbestand</h2><div class="toolbar"><input id="search" placeholder="Artikelnummer, Bezeichnung, Lagerort oder Maschine" oninput="scheduleLiveStockSearch()"><div class="small">Die Suche startet automatisch während der Eingabe – auch auf dem Smartphone.</div><button class="primary" onclick="loadArticles()">Suchen</button></div><p class="small">Soll- und Mindestbestand können hier ohne Passwort geändert werden. Istbestand und übrige Stammdaten bleiben unveränderbar.</p><div id="articleLevelsMsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Soll</th><th>Mindest.</th><th>Ist</th><th>Differenz</th><th>Lagerort</th><th>Maschine</th><th>Aktion</th></tr></thead><tbody id="arows"></tbody></table></div></section>
 <section id="in" class="view"><h2>Einbuchung</h2>
 <div class="card"><h3>Manuelle Einbuchung</h3>
 <div class="formgrid"><label>Datum<input type="date" id="idate"></label>
@@ -394,7 +394,7 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <div class="tablewrap"><table><thead><tr><th>ID</th><th>Datum</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Kunde</th><th>Maschine</th><th>Techniker</th><th>Aktionen</th></tr></thead>
 <tbody id="recentOutRows"></tbody></table></div></div></section>
 
-<section id="req" class="view"><h2>Materialanforderung</h2><div class="card"><div class="toolbar"><select id="rtech"></select><button class="secondary" onclick="loadReq()">Unterbestand laden</button><button class="secondary" onclick="previewReq()">Vorschau prüfen</button><button class="primary" onclick="exportReq()">Materialanforderung exportieren</button></div><p class="small">Bis 25 Positionen wird die Standardvorlage verwendet. Ab 26 Positionen wird automatisch die große Vorlage verwendet. Doppelte Artikel werden zusammengefasst.</p><div class="tablewrap"><table><thead><tr><th>Export</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Menge</th></tr></thead><tbody id="rrows"></tbody></table></div><div id="reqPreview"></div><div id="rmsg" class="message"></div></div>
+<section id="req" class="view"><h2>Materialanforderung</h2><div class="card"><div class="toolbar"><select id="rtech"></select><button class="secondary" onclick="loadReq()">Unterbestand laden</button><button class="secondary" onclick="previewReq()">Vorschau prüfen</button><button class="primary" onclick="exportReq()">Materialanforderung exportieren</button></div><p class="small">Bis 25 Positionen wird die Standardvorlage verwendet. Ab 26 Positionen wird automatisch die große Vorlage verwendet. Doppelte Artikel werden zusammengefasst.</p><div class="tablewrap"><table><thead><tr><th>Export</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Ist</th><th>Bestellziel</th><th>Menge</th></tr></thead><tbody id="rrows"></tbody></table></div><div id="reqPreview"></div><div id="rmsg" class="message"></div></div>
 <div class="card">
 <h3>📁 Exportordner Materialanforderung</h3>
 <p>Ohne ausgewählten Ordner wird die Datei wie bisher über den normalen Browser-Download gespeichert.</p>
@@ -641,6 +641,19 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </section>
 <section id="audit" class="view"><h2>Audit-Protokoll</h2><p class="small">Jede neue Buchung wird positionsgenau mit Kunde, Artikel, Menge, Maschine, Techniker, Quelle und weiteren Angaben protokolliert.</p><div class="tablewrap"><table><thead><tr><th>Zeit</th><th>Benutzer</th><th>Aktion</th><th>Objekt</th><th>ID</th><th>Buchungsart</th><th>Artikel</th><th>Menge</th><th>Kunde</th><th>Maschine</th><th>Details (vollständig)</th></tr></thead><tbody id="auditrows"></tbody></table></div></section>
 </main>
+<div id="promptOverlay" class="modal-overlay">
+ <div class="modal-card">
+  <h2 id="promptDialogTitle">M365/Copilot-Prompt</h2>
+  <p class="small">Der Prompt kann mit Maus oder Langdruck markiert werden.</p>
+  <pre class="prompt-pre"><code id="promptDialogCode" class="prompt-code"></code></pre>
+  <div class="toolbar">
+   <button class="secondary" type="button" onclick="markPromptElement(promptDialogCode,promptDialogStatus)">Prompt markieren</button>
+   <button class="primary" type="button" onclick="copyPromptElement(promptDialogCode,promptDialogStatus)">Prompt kopieren</button>
+   <button class="secondary" type="button" onclick="promptOverlay.style.display='none'">Schließen</button>
+  </div>
+  <div id="promptDialogStatus" class="message"></div>
+ </div>
+</div>
 <div id="unknownArticleOverlay" class="modal-overlay">
  <div class="modal-card">
   <h2>Neues Material registrieren</h2>
@@ -649,8 +662,8 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
    <label>Artikelnummer *<input id="ur_no" readonly></label>
    <label>Bezeichnung / Beschreibung *<input id="ur_desc"></label>
    <label>Anfangsbestand / Istbestand<input id="ur_initial" type="number" min="0" step="1" value="0"></label>
-   <label>Sollbestand<input id="ur_target" type="number" min="0" step="1" value="0"></label>
-   <label>Mindestbestand<input id="ur_min" type="number" min="0" step="1" value="0"></label>
+   <label>Sollbestand<input id="ur_target" type="number" min="0" step="1" value="0" onchange="normalizeMaterialLevelFields('ur')"></label>
+   <label>Mindestbestand<input id="ur_min" type="number" min="0" step="1" value="0" onchange="normalizeMaterialLevelFields('ur')"><span class="small">Mindestbestand ≥ Sollbestand</span></label>
    <label>Einheit<select id="ur_unit" onchange="adjustUnknownRegistrationUnit()">
     <option>Stk.</option><option>Liter</option><option>ml</option><option>kg</option><option>g</option><option>m</option><option>cm</option><option>mm</option><option>Satz</option><option>Rolle</option><option>Packung</option><option>Karton</option>
    </select></label>
@@ -660,7 +673,6 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
    <label>Lieferant<input id="ur_supplier"></label>
    <label>Lieferanten-Artikelnummer<input id="ur_supplier_no"></label>
    <label>EAN / Barcode<input id="ur_barcode"></label>
-   <label>Einkaufspreis<input id="ur_purchase" type="number" min="0" step="0.01" value="0"></label>
    <label>Aktiv<select id="ur_active"><option value="true">Ja</option><option value="false">Nein</option></select></label>
    <label style="grid-column:1/-1">Bemerkung<textarea id="ur_notes"></textarea></label>
   </div>
@@ -720,6 +732,8 @@ window.LVAdminSession = window.LVAdminSession || {
 };
 </script>
 
+<script src="app_rules.js"></script>
+<script src="help_core.js"></script>
 <script src="sync_core.js"></script>
 <script src="local_backend.js"></script>
 <script>
@@ -773,12 +787,43 @@ async function loadAppInfo(){
   infoMovements.textContent=d.movements;
   document.title='Lagerverwaltung Lovrencic – Version '+d.version;
  }catch(e){
-  appVersion.textContent='11.0';
-  infoVersion.textContent='11.0';
+  appVersion.textContent='64.0';
+  infoVersion.textContent='64.0';
  }
 }
-async function dash(){let d=await api('/api/dashboard');ka.textContent=d.articles;kl.textContent=d.low_stock;kt.textContent=d.today;km.textContent=d.movements;kv.textContent=Number(d.stock_value||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});dashLow.innerHTML=(d.low_stock_items||[]).map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.minimum_stock)}</td></tr>`).join('')||'<tr><td colspan="4">Kein Unterbestand</td></tr>';dashTop.innerHTML=(d.top_out||[]).map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('')||'<tr><td colspan="3">Noch keine Entnahmen</td></tr>';dashRecent.innerHTML=(d.recent||[]).map(x=>`<tr><td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.technician)}</td></tr>`).join('')||'<tr><td colspan="6">Noch keine Buchungen</td></tr>'}
-async function loadArticles(){arts=await api('/api/articles?q='+encodeURIComponent(search.value||''));arows.innerHTML=arts.filter(a=>a.active).map(a=>`<tr class="${a.stock<a.minimum_stock?'low':''}"><td>${esc(a.article_no)}</td><td>${esc(a.description)}</td><td>${n(a.target_stock)}</td><td>${n(a.minimum_stock)}</td><td><b>${n(a.stock)}</b></td><td>${n(a.stock-a.target_stock)}</td><td>${esc(a.location)}</td><td>${esc(a.machine)}</td></tr>`).join('')}
+let dashboardLowItems=[];
+function renderDashboardLow(showAll=false){
+ const list=showAll?dashboardLowItems:dashboardLowItems.slice(0,8);
+ dashLow.innerHTML=list.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td><input class="level-input" id="dash-target-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.target_stock,x.unit)}" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><input class="level-input" id="dash-min-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.minimum_stock,x.unit)}" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><button class="secondary level-save" onclick="saveArticleLevels(${x.id},'dash')">Speichern</button></td></tr>`).join('')||'<tr><td colspan="6">Kein Unterbestand</td></tr>';
+ dashLowMore.style.display=!showAll&&dashboardLowItems.length>8?'inline-flex':'none';
+}
+async function dash(){
+ let d=await api('/api/dashboard');ka.textContent=d.articles;kl.textContent=d.low_stock;kt.textContent=d.today;km.textContent=d.movements;
+ dashboardLowItems=d.low_stock_all||d.low_stock_items||[];renderDashboardLow(false);
+ dashTop.innerHTML=(d.top_out||[]).map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('')||'<tr><td colspan="3">Noch keine Entnahmen</td></tr>';
+ dashRecent.innerHTML=(d.recent||[]).map(x=>`<tr><td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.technician)}</td></tr>`).join('')||'<tr><td colspan="6">Noch keine Buchungen</td></tr>'
+}
+async function loadArticles(){
+ arts=await api('/api/articles?q='+encodeURIComponent(search.value||''));
+ arows.innerHTML=arts.filter(a=>a.active).map(a=>`<tr class="${a.stock<a.minimum_stock?'low':''}"><td>${esc(a.article_no)}</td><td>${esc(a.description)}</td><td><input class="level-input" id="stock-target-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.target_stock,a.unit)}" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td><td><input class="level-input" id="stock-min-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.minimum_stock,a.unit)}" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td><td><b>${n(a.stock)}</b></td><td>${n(a.stock-a.target_stock)}</td><td>${esc(a.location)}</td><td>${esc(a.machine)}</td><td><button class="secondary level-save" onclick="saveArticleLevels(${a.id},'stock')">Speichern</button></td></tr>`).join('')
+}
+function normalizeRowLevels(prefix,id,unit){
+ const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`);if(!target||!minimum)return false;
+ const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,unit);target.value=levels.target_stock;minimum.value=levels.minimum_stock;return levels.adjusted;
+}
+function normalizeMaterialLevelFields(prefix){
+ const target=document.getElementById(`${prefix}_target`),minimum=document.getElementById(`${prefix}_min`),unit=document.getElementById(`${prefix}_unit`);if(!target||!minimum)return false;
+ const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,unit?.value||'Stk.');target.value=levels.target_stock;minimum.value=levels.minimum_stock;return levels.adjusted;
+}
+async function saveArticleLevels(id,prefix){
+ const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`);if(!target||!minimum)return;
+ try{
+  const d=await api('/api/articles/levels',{method:'POST',body:JSON.stringify({id,target_stock:Number(target.value||0),minimum_stock:Number(minimum.value||0)})});
+  const message=d.adjusted?'Gespeichert. Mindestbestand wurde automatisch auf den Sollbestand angehoben.':'Soll- und Mindestbestand wurden gespeichert.';
+  msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,message,true);
+  await dash();await loadArticles();await loadReq();if(window.LVStorageMode)await LVStorageMode.refresh();
+ }catch(e){msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,e.message,false)}
+}
 
 async function addRow(t){
  if(!arts.length)arts=await api('/api/articles');
@@ -992,7 +1037,7 @@ async function openUnknownRegistration(source,index){
  if(!md.locations)await master();
  unknownRegistrationState={source,index,article_no:item.article_no,quantity:Number(item.quantity)||0};
  ur_no.value=item.article_no||'';ur_desc.value=item.description||'';ur_initial.value='0';ur_target.value='0';ur_min.value='0';ur_unit.value='Stk.';
- ur_manufacturer.value='';ur_supplier.value='';ur_supplier_no.value='';ur_barcode.value='';ur_purchase.value='0';ur_notes.value='';ur_active.value='true';
+ ur_manufacturer.value='';ur_supplier.value='';ur_supplier_no.value='';ur_barcode.value='';ur_notes.value='';ur_active.value='true';
  ur_location.innerHTML='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
  ur_machine.innerHTML=machineMultiOptions([]);ur_location_new.value='';ur_machine_new.value='';ur_location_suggestions.innerHTML='';ur_machine_suggestions.innerHTML='';
  if(source==='service'&&currentServiceMachine()){
@@ -1011,15 +1056,13 @@ async function saveUnknownRegistration(){
  const description=ur_desc.value.trim();if(!description)return msg(ur_msg,'Bitte eine Bezeichnung eingeben.',false);
  const initial=Number(ur_initial.value||0);
  if(st.source==='service'&&initial<st.quantity)return msg(ur_msg,`Für die Entnahme von ${n(st.quantity)} muss der Anfangsbestand mindestens ${n(st.quantity)} betragen. Alternativ kann die Position ignoriert werden.`,false);
- let password=sessionStorage.adminPassword||'';
- if(!window.LVAdminSession?.unlocked&&!password){password=prompt('Passwort für Stammdaten:')||'';if(!password)return}
- const body={password,article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),purchase_price:Number(ur_purchase.value||0),notes:ur_notes.value.trim(),active:ur_active.value==='true'};
+ const adjusted=normalizeMaterialLevelFields('ur');
+ const body={article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),notes:ur_notes.value.trim(),active:ur_active.value==='true',creation_source:st.source==='delivery'?'Lieferschein / M365':'Servicebericht / M365'};
  try{
-  await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});
-  if(password){sessionStorage.adminPassword=password;sessionStorage.admin='1';window.LVAdminSession?.unlock()}
+  const created=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});
   const source=st.source;closeUnknownRegistration();arts=[];await master();await dash();await loadRecentMovements('IN');
   if(source==='delivery')await deliveryPreview(true);else await servicePreview(true);
-  const target=source==='delivery'?dmsg:smsg;msg(target,'Neues Material wurde registriert und in die Buchung übernommen.',true);
+  const target=source==='delivery'?dmsg:smsg;msg(target,(created.levels_adjusted||adjusted)?'Neues Material wurde registriert. Mindestbestand wurde automatisch auf den Sollbestand angehoben.':'Neues Material wurde registriert und in die Buchung übernommen.',true);
  }catch(e){msg(ur_msg,e.message,false)}
 }
 async function createUnknown(source){
@@ -1028,8 +1071,7 @@ async function createUnknown(source){
  if(!table)return;
  let rows=[...table.tBodies[0].rows];
  let items=list.map((x,i)=>({...x,description:rows[i].querySelector('[data-field="description"]').value,location:rows[i].querySelector('[data-field="location"]').value,minimum_stock:+rows[i].querySelector('[data-field="minimum_stock"]').value,target_stock:+rows[i].querySelector('[data-field="target_stock"]').value}));
- let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');if(!password)return;
- try{let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({password,items})});sessionStorage.adminPassword=password;sessionStorage.admin='1';window.LVAdminSession?.unlock();alert((d.created||0)+' Artikel wurden angelegt. Bitte den Import erneut prüfen.');arts=[];await master();await dash();await loadRecentMovements('IN');if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()}catch(e){alert(e.message)}
+ try{let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({items,technician:'Lovrencic'})});alert((d.created||0)+' Artikel wurden angelegt.'+(d.levels_adjusted?' Soll-/Mindestbestand wurde bei '+d.levels_adjusted+' Artikel(n) automatisch angeglichen.':'')+' Bitte den Import erneut prüfen.');arts=[];await master();await dash();await loadRecentMovements('IN');if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()}catch(e){alert(e.message)}
 }
 
 async function loadImportFile(input){
@@ -1076,15 +1118,12 @@ async function createAndBookAll(){
    target_stock:+row.querySelector('[data-field="target_stock"]').value
   }
  });
- let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');
- if(!password)return;
  try{
   let d=await api('/api/import/create-and-book',{method:'POST',body:JSON.stringify({
-   password,known_items:csvp,new_items:newItems,technician:'Lovrencic',
+   known_items:csvp,new_items:newItems,technician:'Lovrencic',
    movement_date:td(),note:'SAP-Import '+(lastImportFilename||'')
   })});
-  sessionStorage.adminPassword=password;sessionStorage.admin='1';
-  msg(cmsg,`${d.created} neue Artikel angelegt und ${d.booked} Position(en) eingebucht.`,true);
+  msg(cmsg,`${d.created} neue Artikel angelegt und ${d.booked} Position(en) eingebucht.${d.levels_adjusted?' '+d.levels_adjusted+' Mindestbestand/Mindestbestände automatisch angeglichen.':''}`,true);
   csvp=[];csvUnknown=[];crows.innerHTML='';cunknown.innerHTML='';cerr.innerHTML='';
   ccommit.disabled=true;callcommit.disabled=true;arts=[];await loadArticles();await master();dash()
  }catch(e){msg(cmsg,e.message,false)}
@@ -1123,7 +1162,7 @@ Beispiel:
 IMPORTTYP: EINBUCHUNG
 7079[TAB]Abstreiferhalter[TAB]2
 126084[TAB]Sensor[TAB]4`;
- alert(prompt);
+ showPromptDialog(prompt,'Lieferschein-Prompt – Einbuchung');
 }
 function insertServicePrompt(){
  const prompt=`IMPORTTYP: ENTNAHME
@@ -1145,7 +1184,7 @@ Wichtige Regeln:
 Beispiel:
 IMPORTTYP: ENTNAHME
 29.07.2026[TAB]7079[TAB]Abstreiferhalter[TAB]2[TAB]Van Hamme[TAB]Compas 4.0 Pro`;
- alert(prompt);
+ showPromptDialog(prompt,'Servicebericht-Prompt – Entnahme');
 }
 function selectOrPrepareExtractedMachine(machine,inputName='',suggestions=[]){
  const value=String(machine||'').trim(),raw=String(inputName||value).trim();smachineNew.value='';smachineHint.innerHTML='';if(!value)return;
@@ -1209,7 +1248,7 @@ async function serviceCommit(){
  }catch(e){msg(smsg,e.message,false)}
 }
 
-async function loadReq(){let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.target_stock)}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}
+async function loadReq(){let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.order_target??Math.max(Number(x.target_stock||0),Number(x.minimum_stock||0)))}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}
 function reqItems(){return [...rrows.children].filter(r=>r.children[0].firstChild.checked).map(r=>({article_id:+r.dataset.id,quantity:+r.children[5].firstChild.value}))}
 async function previewReq(){
  try{
@@ -1467,7 +1506,7 @@ async function downloadCsv(url,messageTarget){
 function exportHistory(){downloadCsv('/api/export/history.csv?'+historyQuery(),'historyMsg')}
 
 
-async function unlockNewMaterial(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:newpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(newunlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(newunlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=newpw.value;window.LVAdminSession?.unlock();newlock.style.display='none';newform.style.display='block';fillNewMaterialLists()}
+async function unlockNewMaterial(){if(window.newform)newform.style.display='block';fillNewMaterialLists()}
 function machineMultiOptions(selected=[]){
  const set=new Set((selected||[]).map(Number));return (md.machines||[]).map(x=>`<option value="${Number(x.id)}" ${set.has(Number(x.id))?'selected':''}>${esc(x.name)}</option>`).join('');
 }
@@ -1477,9 +1516,9 @@ function fillNewMaterialLists(){
  nm_location.innerHTML=loc;nm_machine.innerHTML=machineMultiOptions([]);
 }
 async function createMaterial(){
- let whole=isWholeNumberUnit(nm_unit.value),num=v=>whole?Math.round(Number(v||0)):Number(v||0);
- let body={password:sessionStorage.adminPassword||'',article_no:nm_no.value,description:nm_desc.value,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:nm_location.value,machine_ids:selectedMachineIds(nm_machine),manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true'};
- try{await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});msg(nm_msg,'Material wurde erfolgreich angelegt.',true);clearMaterialForm();arts=[];await master();await dash();await loadArticles();await loadRecentMovements('IN');if(document.getElementById('hist')?.classList.contains('active'))await hist()}catch(e){msg(nm_msg,e.message,false)}
+ let whole=isWholeNumberUnit(nm_unit.value),num=v=>whole?Math.round(Number(v||0)):Number(v||0);const adjusted=normalizeMaterialLevelFields('nm');
+ let body={article_no:nm_no.value,description:nm_desc.value,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:nm_location.value,machine_ids:selectedMachineIds(nm_machine),manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true',creation_source:'Manuelle Materialanlage'};
+ try{const d=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});msg(nm_msg,(d.levels_adjusted||adjusted)?'Material wurde angelegt. Mindestbestand wurde automatisch auf den Sollbestand angehoben.':'Material wurde erfolgreich angelegt.',true);clearMaterialForm();arts=[];await master();await dash();await loadArticles();await loadRecentMovements('IN');if(document.getElementById('hist')?.classList.contains('active'))await hist()}catch(e){msg(nm_msg,e.message,false)}
 }
 function clearMaterialForm(){
  ['nm_no','nm_desc','nm_manufacturer','nm_supplier','nm_supplier_no','nm_barcode','nm_notes','nm_location_new','nm_machine_new'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
@@ -1510,10 +1549,7 @@ async function createInlineMaster(type,prefix){
    if(confirm(`Sehr ähnlicher Eintrag bereits vorhanden:\n\n${top.name}\n\nSoll der vorhandene Eintrag verwendet werden?`)){selectExistingMaster(type,prefix,top.id);return}
    if(!confirm(`„${name}“ trotzdem als neuen ${type==='location'?'Lagerort':'Maschine'} anlegen?`))return;
   }
-  let password=sessionStorage.adminPassword||'';
-  if(!window.LVAdminSession?.unlocked&&!password){password=prompt('Passwort für Stammdaten:')||'';if(!password)return}
-  await api('/api/masterdata',{method:'POST',body:JSON.stringify({type,name,password})});
-  if(password){sessionStorage.adminPassword=password;sessionStorage.admin='1';window.LVAdminSession?.unlock()}
+  await api('/api/material/master-create',{method:'POST',body:JSON.stringify({type,name})});
   await master();
   const created=(type==='location'?md.locations:md.machines).find(x=>normLabel(x.name)===normLabel(name));if(created)selectExistingMaster(type,prefix,created.id);
  }catch(e){alert(e.message)}
@@ -1956,54 +1992,21 @@ async function saveDateFormat(){
  }catch(e){msg(dateFormatMsg,e.message,false)}
 }
 
-function renderMarkdown(md){
- let text=esc(md);
- text=text.replace(/^### (.*)$/gm,'<h3>$1</h3>')
-          .replace(/^## (.*)$/gm,'<h2>$1</h2>')
-          .replace(/^# (.*)$/gm,'<h1>$1</h1>')
-          .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-          .replace(/`([^`\n]+)`/g,'<code>$1</code>')
-          .replace(/```([\s\S]*?)```/g,(m,p)=>`<pre><code>${p.trim()}</code></pre><button class="secondary copy-prompt" onclick="copyPreviousPrompt(this)">Prompt kopieren</button>`)
-          .replace(/^- (.*)$/gm,'<li>$1</li>')
-          .replace(/\n\n/g,'</p><p>')
-          .replace(/\n/g,'<br>');
- text=text.replace(/(<li>.*?<\/li>(?:<br>)?)+/g,m=>'<ul>'+m.replace(/<br>/g,'')+'</ul>');
- return `<div class="help-content"><p>${text}</p></div>`;
+function renderMarkdown(md){return LVHelpCore.renderMarkdown(md)}
+function promptCodeFromButton(button){return button.closest('.prompt-box')?.querySelector('.prompt-code')||null}
+function markPromptElement(code,status){
+ try{const range=document.createRange();range.selectNodeContents(code);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);if(status){status.className='message ok';status.textContent='Prompt markiert ✓'}}catch(e){if(status){status.className='message error';status.textContent='Prompt konnte nicht markiert werden.'}}
 }
-async function loadHelpList(){
- if(helpFiles.length)return;
- try{
-  let files=await api('/api/help/list');
-  helpFiles=[];
-  for(let f of files){
-   try{
-    let d=await api('/api/help/content?file='+encodeURIComponent(f.file));
-    helpFiles.push({...f,content:d.content||''});
-   }catch(e){
-    helpFiles.push({...f,content:''});
-   }
-  }
-  renderHelpTopics(helpFiles);
-  if(helpFiles.length)openHelp(helpFiles[0].file);
- }catch(e){helpContent.innerHTML='<p>Hilfe konnte nicht geladen werden.</p>'}
+function markPromptCode(button){const code=promptCodeFromButton(button),status=button.closest('.prompt-box')?.querySelector('.prompt-copy-status');if(code)markPromptElement(code,status)}
+async function copyTextReliable(text){
+ if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);return true}catch{}}
+ const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,ta.value.length);let ok=false;try{ok=document.execCommand('copy')}catch{}ta.remove();return ok;
 }
-function renderHelpTopics(files){
- helpTopics.innerHTML=files.map(x=>`<button class="help-topic" onclick="openHelp('${x.file}')">${esc(x.title)}</button>`).join('');
+async function copyPromptElement(code,status){
+ try{const ok=await copyTextReliable(code.textContent);if(!ok)throw Error('Kopieren wurde vom Browser blockiert.');if(status){status.className='message ok';status.textContent='Prompt kopiert ✓'}}catch(e){if(status){status.className='message error';status.textContent=e.message||'Prompt konnte nicht kopiert werden.'}}
 }
-function filterHelpTopics(){
- let q=helpSearch.value.toLowerCase();
- renderHelpTopics(helpFiles.filter(x=>(x.title+' '+x.content).toLowerCase().includes(q)));
-}
-async function openHelp(file){
- let d=await api('/api/help/content?file='+encodeURIComponent(file));
- helpContent.innerHTML=renderMarkdown(d.content);
-}
-async function copyPreviousPrompt(button){
- let pre=button.previousElementSibling;
- await navigator.clipboard.writeText(pre.innerText);
- button.textContent='Kopiert ✓';
- setTimeout(()=>button.textContent='Prompt kopieren',1500);
-}
+async function copyPromptCode(button){const code=promptCodeFromButton(button),status=button.closest('.prompt-box')?.querySelector('.prompt-copy-status');if(code)await copyPromptElement(code,status)}
+function showPromptDialog(prompt,title){promptDialogTitle.textContent=title||'M365/Copilot-Prompt';promptDialogCode.textContent=String(prompt||'');promptDialogStatus.className='message';promptDialogStatus.textContent='';promptOverlay.style.display='block'}
 
 async function refreshPasswordStatus(){
  try{
@@ -2023,8 +2026,7 @@ async function refreshPasswordStatus(){
    window.LVAdminSession?.lock();
    lockbox.style.display='block';
    adminarea.style.display='none';
-   if(window.newlock)newlock.style.display='block';
-   if(window.newform)newform.style.display='none';
+   if(window.newform)newform.style.display='block';
   }
  }catch(e){
   console.error(e);
@@ -2164,6 +2166,7 @@ function auditField(details,label){
  const line=String(details||'').split('\n').find(x=>x.startsWith(prefix));
  return line?line.slice(prefix.length):'';
 }
+function visibleAuditDetails(details){return String(details||'').split('\n').filter(line=>!/^Einkaufspreis\s*:/i.test(line.trim())).join('\n')}
 async function auditLoad(){
  let d=await api('/api/audit');
  auditrows.innerHTML=d.map(x=>{
@@ -2173,7 +2176,7 @@ async function auditLoad(){
   const qty=booking?auditField(x.details,'Menge'):'';
   const customer=booking?auditField(x.details,'Kunde'):'';
   const machine=booking?auditField(x.details,'Maschine'):'';
-  return `<tr><td>${esc(formatAppDate(x.event_time,true))}</td><td>${esc(x.user_name)}</td><td>${esc(x.action)}</td><td>${esc(x.entity)}</td><td>${esc(x.entity_id)}</td><td>${esc(type)}</td><td>${esc(article)}</td><td>${esc(qty)}</td><td>${esc(customer)}</td><td>${esc(machine)}</td><td class="audit-details">${esc(x.details)}</td></tr>`;
+  return `<tr><td>${esc(formatAppDate(x.event_time,true))}</td><td>${esc(x.user_name)}</td><td>${esc(x.action)}</td><td>${esc(x.entity)}</td><td>${esc(x.entity_id)}</td><td>${esc(type)}</td><td>${esc(article)}</td><td>${esc(qty)}</td><td>${esc(customer)}</td><td>${esc(machine)}</td><td class="audit-details">${esc(visibleAuditDetails(x.details))}</td></tr>`;
  }).join('');
 }
 
@@ -2557,10 +2560,10 @@ window.LVLogout={
    // Expliziter Benutzer-Klick: erst hier darf requestPermission() ausgelöst werden.
    await LVSync.reauthorize();
 
-   // Nach der Freigabe zunächst nur Zustand/Cloud-Datei prüfen.
-   const state=await LVStartupState.get();
-   if(!state.cloudAccessible){
-    throw Error(state.cloudError||'Die lager.db im Synchronisationsordner ist weiterhin nicht lesbar.');
+   // Nach der Freigabe die verbundene lager.db direkt lesend prüfen – unabhängig vom Modus cloud/local_folder.
+   const inspection=await LVSync.inspect();
+   if(inspection.status!=='ok'){
+    throw Error(inspection.error||('Die lager.db im Synchronisationsordner ist weiterhin nicht sicher lesbar: '+inspection.status));
    }
 
    logoutMsg.textContent='Ordnerzugriff freigegeben. Synchronisierung wird sicher geprüft und abgeschlossen …';
@@ -2625,8 +2628,7 @@ async function restoreAdminSession(){
   window.LVAdminSession?.lock();
   lockbox.style.display='block';
   adminarea.style.display='none';
-  newlock.style.display='block';
-  newform.style.display='none';
+  if(window.newform)newform.style.display='block';
   return false;
  }
  try{
@@ -2636,8 +2638,7 @@ async function restoreAdminSession(){
   window.LVAdminSession?.unlock();
   lockbox.style.display='none';
   adminarea.style.display='block';
-  newlock.style.display='none';
-  newform.style.display='block';
+  if(window.newform)newform.style.display='block';
   return true;
  }catch{
   sessionStorage.removeItem('admin');
@@ -2645,8 +2646,7 @@ async function restoreAdminSession(){
   window.LVAdminSession?.lock();
   lockbox.style.display='block';
   adminarea.style.display='none';
-  newlock.style.display='block';
-  newform.style.display='none';
+  if(window.newform)newform.style.display='block';
   return false;
  }
 }
