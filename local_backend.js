@@ -6,9 +6,14 @@ const DBKEY='lv22-db', METAKEY='lv22-meta', HANDLEKEY='lv22-directory', BACKUPKE
 let SQL,db,handle=null,autoTimer=null,deviceStorageModeCache='';
 const SyncCore=window.LVSyncCore;
 const AppRules=window.LVAppRules;
+const AuthCore=window.LVAuthCore;
+const TxCore=window.LVTransactionCore;
+if(!AuthCore)throw new Error('auth_core.js wurde nicht geladen.');
+if(!TxCore)throw new Error('transaction_core.js wurde nicht geladen.');
+const adminSessions=AuthCore.createSessionManager();
 if(!SyncCore)throw new Error('sync_core.js wurde nicht geladen.');
 if(!AppRules)throw new Error('app_rules.js wurde nicht geladen.');
-const helpData={"07-csv-center.md": "# CSV-Center\n\n## Exporte\n\n- Lagerbestand\n- Einbuchungen\n- Entnahmen\n\nDie CSV-Dateien werden direkt im Browser heruntergeladen. Das vorgegebene Tabellenlayout, Semikolon als Trennzeichen und UTF-8 mit BOM bleiben erhalten.\n\n## SAP-Excel oder CSV importieren\n\nUnterstützte Spalten sind unter anderem:\n\n- Material\n- Bezeichnung zum Material\n- Lagerort\n- Bezeichnung des Lagerorts\n- Frei verwendbar\n\nVor dem Buchen wird eine Vorschau angezeigt. Fehlende Artikel können direkt angelegt werden.\n\n\nNeue Artikel aus CSV/SAP können ohne Administratorpasswort angelegt werden. Soll-/Mindestwerte werden dabei nach der V64-Regel normalisiert.\n", "02-neues-material.md": "# Neues Material\n\nNeue Materialien können in Version 64 **ohne Administratorpasswort** angelegt werden. Das gilt für die normale Materialanlage sowie für unbekannte Artikel aus M365-, CSV- und SAP-Importen.\n\n- Artikelnummer und Bezeichnung eingeben bzw. aus der Auswertung übernehmen.\n- Lagerort und mehrere Maschinen können ausgewählt werden.\n- Neue Lagerorte oder Maschinen können direkt innerhalb der Materialanlage passwortfrei ergänzt werden; die zentrale Stammdatenverwaltung bleibt geschützt.\n- Soll- und Mindestbestand werden ohne Passwort gepflegt.\n- Regel: **Mindestbestand darf nicht kleiner als Sollbestand sein.** Ist der eingegebene Mindestbestand kleiner, wird er automatisch auf den Sollbestand angehoben.\n- Die Materialanlage bleibt im Audit nachvollziehbar und der Anfangsbestand wird als Einbuchung protokolliert.\n", "17-abschluss-und-tests.md": "# Abschluss Phase 1–7\n\nVersion 17.0 schließt das ursprünglich geplante Projekt ab.\n\nAbnahmetest:\n- Artikel anlegen\n- Ein- und Ausbuchung\n- CSV-Export\n- Inventurkorrektur\n- Materialanforderung in Excel öffnen\n- Historienfilter testen\n- Passwortverwaltung prüfen\n", "08-historie.md": "# Historie\n\nDie Historie enthält alle Einbuchungen und Entnahmen.\n\nSie kann gefiltert werden nach:\n\n- Alle Buchungen\n- Nur Einbuchungen\n- Nur Entnahmen\n\nDas unter **Stammdaten** gewählte Datumsformat wird auch auf bereits vorhandene Einträge angewendet.\n", "01-dashboard.md": "# Dashboard\n\nDas Dashboard zeigt:\n\n- aktive Artikel,\n- die **gesamte Anzahl** der Artikel unter Mindestbestand,\n- heutige Buchungen,\n- Buchungen insgesamt,\n- eine Vorschau der Unterbestandsartikel und die häufigsten Entnahmen.\n\nSoll- und Mindestbestand können direkt in der Unterbestandsliste ohne Administratorpasswort geändert werden. Bei mehr als acht Unterbestandsartikeln kann die vollständige Liste eingeblendet werden.\n\nEin Unterbestand liegt ausschließlich vor, wenn `Istbestand < Mindestbestand`.\n", "04-einbuchung.md": "# Einbuchung\n\n## Manuelle Einbuchung\n\n- Datum und Techniker auswählen.\n- Artikel und Menge hinzufügen.\n- Einbuchung bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Lieferschein mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: EINBUCHUNG` und enthält pro Material `Artikelnummer[TAB]Bezeichnung[TAB]Anzahl`.\n\nUnbekannte Artikel können direkt als neues Material angelegt oder bewusst ignoriert werden. Artikelnummer und erkannte Bezeichnung werden beim Anlegen vorausgefüllt. Ein Entnahme-Prompt wird im Einbuchungsbereich blockiert.\n", "09-stammdaten.md": "# Stammdaten\n\n## Lagerorte\nLagerorte können weiterhin zentral angelegt werden. Zusätzlich lassen sie sich direkt beim Anlegen eines neuen Materials erstellen. Ähnliche vorhandene Namen werden vorher vorgeschlagen.\n\n## Maschinen und alternative Bezeichnungen\nEine Maschine besitzt einen Hauptnamen und kann beliebig viele alternative Ticket-Bezeichnungen erhalten.\n\n- **Alternative Bezeichnung zuordnen:** z. B. `Compas 4` → `Compas 4.0`.\n- **Trennen:** eine falsche Alias-Zuordnung kann jederzeit wieder entfernt werden.\n- **Maschinen zusammenführen:** zwei bereits getrennt angelegte Maschinen können zu einer Hauptmaschine zusammengeführt werden. Der frühere Name bleibt als Alias erhalten.\n- **Zusammenführung rückgängig:** die vorherige Maschine wird wiederhergestellt und ihre Ersatzteil-Zuordnungen werden soweit möglich auf den Stand vor der Zusammenführung zurückgesetzt.\n\n## Mehrfachzuordnung von Ersatzteilen\nEin Artikel kann mehreren Maschinen gleichzeitig zugeordnet werden. Diese Zuordnung ist beim neuen Material sowie in der vollständigen Artikelliste bearbeitbar.\n\n\n## Passwortregel V64\nNeue Lagerorte und Maschinen dürfen **nur innerhalb der Materialanlage** über den eng begrenzten Materialformular-Weg ohne Passwort angelegt werden. Die zentrale Stammdatenverwaltung, Änderungen, Zusammenführen und Trennen bleiben administrativ geschützt.\n", "15-historienfilter.md": "# Historienfilter und Export\n\nFilter:\n- Buchungsart\n- Zeitraum\n- Techniker\n- Artikelnummer oder Bezeichnung\n\nDer CSV-Export übernimmt die aktuell eingestellten Filter.\n", "03-lagerbestand.md": "# Lagerbestand\n\nIm Lagerbestand können Artikel über Artikelnummer, Bezeichnung, Lagerort oder Maschine gesucht werden.\n\n## Soll- und Mindestbestand\nSollbestand und Mindestbestand sind direkt in jeder Zeile bearbeitbar und benötigen kein Administratorpasswort. Der Istbestand und die übrigen Stammdaten bleiben hier unveränderbar.\n\nEs gilt verbindlich: `Mindestbestand >= Sollbestand`. Falls Mindest kleiner eingegeben wird, passt die Anwendung den Mindestbestand automatisch an.\n\nEin Artikel wird nur dann als Unterbestand angezeigt, wenn `Istbestand < Mindestbestand`. Bei Gleichstand verschwindet er aus der Unterbestandsliste.\n", "14-inventur.md": "# Inventur\n\n- Inventurliste im CSV-Center exportieren.\n- Gezählten Bestand eintragen.\n- CSV, TXT oder XLSX einlesen.\n- Differenzen prüfen.\n- Bestandskorrekturen mit Administratorpasswort buchen.\n\nNur Differenzen werden als Buchungen mit der Quelle **Inventur** gespeichert.\n", "06-materialanforderung.md": "# Materialanforderung\n\n- Techniker auswählen.\n- **Unterbestand laden** anklicken.\n- Gewünschte Positionen markieren.\n- Bestellmenge prüfen oder ändern.\n- **Materialanforderung exportieren** anklicken.\n\nDie Excel-Datei wird anhand der hinterlegten Vorlage erzeugt. Der Dateiname enthält Datum und Technikername.\n", "13-fehlerbehebung.md": "# Fehlerbehebung\n\n## Lagerbestand bleibt nach dem Start leer\n\nSeit Version 56 kann die Audit-Nachtragung den Datenbankstart nicht mehr blockieren. Falls künftig ein anderer Startfehler auftritt, erscheint eine rote Meldung statt eines stillen leeren Dashboards.\n\nBei Cloud-Betrieb prüfen, ob oben **Cloud** angezeigt wird und ob der verbundene Ordner zugreifbar ist.\n\n## M365-Ergebnis wird nicht erkannt\n\n- Aktuellen Prompt unter **Hilfe → M365-Prompts** verwenden.\n- Auf `IMPORTTYP: EINBUCHUNG` bzw. `IMPORTTYP: ENTNAHME` achten.\n- Artikelnummern und Mengen dürfen nicht leer sein.\n\n\n## Lokaler/Cloud-Dialog erscheint ständig\n\nSeit Version 58 wird ein **lokal neuer, aber sicher auf dem letzten Cloud-Stand basierender** Datenstand automatisch hochgeladen. Nur echte Konflikte zwischen verschiedenen Geräten müssen manuell entschieden werden.\n\nUnter **Dateisynchronisierung** werden die fortlaufende lokale und die zuletzt bekannte Cloud-Revisionsnummer angezeigt.\n\n\n## V60: Ordnerzugriff fehlt\nHintergrundprüfungen öffnen keine Berechtigungsabfrage mehr. Unter Dateisynchronisierung erscheint bei Bedarf **Ordnerzugriff erneut freigeben**. Bis zur ausdrücklichen Freigabe arbeitet die App lokal weiter und überschreibt keine Cloud-Datei.\n\n## V60: beschädigte Cloud-Datei\nEine beschädigte oder nicht vollständig lesbare `lager.db` wird nicht automatisch überschrieben. Zuerst Datei/OneDrive-Konflikt klären oder eine geprüfte Sicherung bewusst wiederherstellen.\n\n\n## V61: Synchronisationsordner enthält bereits lager.db\nDas ist bei einem bereits eingerichteten Smartphone-/PC-Synchronisationsordner normal. Verwenden Sie **Cloud-Synchronisationsordner verbinden**. Die vorhandene Datei wird zuerst vollständig geprüft und nur verbunden. Eine beschädigte oder unlesbare Datei wird weiterhin niemals automatisch überschrieben.\n\n\n## V62: Ordnerzugriff erforderlich\nDer Ordner-Handle ist gespeichert, die Browserberechtigung aber noch nicht aktiv. Im Startdialog **Ordnerzugriff erneut freigeben** antippen. Bis dahin bleibt Cloud-Schreiben gesperrt.\n\n\n## V63 – Schließen bei fehlendem Ordnerzugriff\nIm Schließen-Dialog erscheint bei fehlender Browserberechtigung **Ordnerzugriff freigeben & synchronisieren**. Die Freigabe allein überschreibt keine Cloud-Datei; anschließend wird derselbe geschützte Sync-Pfad verwendet.\n\n\n## V64 – Speichermodus nach Update\nBeim Update werden zuerst der gerätespezifische IndexedDB-Modus, danach der ältere `storage_mode`, danach ein vorhandener Ordner-Handle ausgewertet. Eine bestehende Cloud-Installation fällt dadurch nicht still auf Browser-Lokal zurück.\n\n## V64 – Schließen im lokalen Ordner-Modus\nNach erneuter Ordnerfreigabe wird die verbundene `lager.db` direkt lesend geprüft. Das funktioniert unabhängig davon, ob der Modus `cloud` oder `local_folder` ist. Beschädigte/fremde Dateien und Parallelkonflikte bleiben gesperrt.\n", "16-materialanforderung-export.md": "# Materialanforderung\n\nDie Originalvorlage `materialanforderung_vorlage.xlsx` bleibt unverändert erhalten.\n\nPrüfungen:\n- maximal 25 Positionen\n- nur positive Mengen\n- doppelte Artikel werden zusammengefasst\n- Vorschau vor Export\n- Sortierung nach Artikelnummer\n\nDateiname: `Bestellung_Datum_Techniker.xlsx`\n", "10-reset.md": "# Vollständiges Zurücksetzen\n\nDer vollständige Reset löscht:\n\n- Artikel\n- Bestände\n- Buchungen\n- Historie\n- Audit-Protokoll\n- Lagerorte\n- Maschinen\n- Techniker\n- Administratorpasswort\n- Einstellungen\n\nProgrammdateien, Excel-Vorlage und Hilfedateien bleiben erhalten.\n\nNach dem Reset erscheint wieder automatisch die vollständige Ersteinrichtung.\n", "11-m365-prompts.md": "# Microsoft 365 / Copilot – aktuelle Prompts\n\n## Lieferschein – Einbuchung\n\n```text\nIMPORTTYP: EINBUCHUNG\n\nExtrahiere aus diesem Lieferschein ausschließlich das tatsächlich gelieferte Material.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nArtikelnummer[TAB]Bezeichnung[TAB]Anzahl\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: EINBUCHUNG\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Preise, Summen, Fahrzeit, Arbeitszeit und Kilometer ignorieren.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen den Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Servicebericht – Entnahme\n\n```text\nIMPORTTYP: ENTNAHME\n\nExtrahiere aus dieser Service-PDF ausschließlich die tatsächlich verwendeten oder verbauten Materialien.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nDatum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: ENTNAHME\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Fahrzeit, Arbeitszeit und Kilometer vollständig ignorieren.\n- Nicht verbaute, nur erwähnte oder empfohlene Materialien nicht übernehmen.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen allen Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Vertauschungsschutz\n\n`IMPORTTYP: EINBUCHUNG` gehört nur zur Einbuchung. `IMPORTTYP: ENTNAHME` gehört nur zur Entnahme. Beim falschen Bereich bleibt die Buchung gesperrt.\n", "00-erste-schritte.md": "# Erste Schritte\n\nDie Lagerverwaltung startet nach der Erstinstallation mit einem Einrichtungsassistenten.\n\n## Ersteinrichtung\n\n- Administratorpasswort mit mindestens 8 Zeichen vergeben.\n- Namen des Technikers eingeben.\n- Datumsformat auswählen.\n- Einrichtung abschließen.\n\nLagerorte und Maschinen müssen bei der Ersteinrichtung nicht angelegt werden. Sie können später unter **Stammdaten** ergänzt werden.\n", "12-mobile-bedienung.md": "# Mobile Bedienung\n\nAuf schmalen Bildschirmen wird die Navigation über die Schaltfläche **Menü** geöffnet.\n\n## Hinweise\n\n- Tabellen können seitlich verschoben werden.\n- Eingabefelder werden untereinander dargestellt.\n- Die Ersteinrichtung ist für Smartphone und Tablet optimiert.\n- Für umfangreiche CSV- und Excel-Arbeiten ist ein Windows-PC komfortabler.\n\n\n## Cloud-Synchronisierung am Smartphone\n\nIm Cloud-Modus werden eigene, eindeutig auf dem aktuellen Cloud-Stand basierende Änderungen automatisch synchronisiert. Die Auswahl zwischen lokalem und Cloud-Stand erscheint nicht mehr nach jeder normalen Buchung. Eine Entscheidung wird nur noch bei einem echten Konflikt, einer nicht lesbaren Cloud-Datei oder einem nicht eindeutig zuordenbaren Datenstand verlangt.\n\n\n## Version 61 – vorhandenen Synchronisationsordner auf dem Smartphone verbinden\nUnter **Speicher & Synchronisation** wählen Sie **Cloud-Synchronisationsordner verbinden**. Ein Ordner darf bereits eine gültige `lager.db` enthalten. Die Datei wird beim Verbinden nicht überschrieben. Lokal- und Cloud-Stand werden anschließend anhand von `database_id`, Revision und `revision_id` verglichen. Nur ein leerer Ordner wird als neue Cloud-Ablage initialisiert.\n\nDer Button **Lokalen Speicherordner auswählen / ändern** ist dagegen für einen neuen lokalen Ablageordner bestimmt und akzeptiert absichtlich keinen Ordner, der bereits eine `lager.db` enthält.\n\n\n## Version 62 – Ordnerzugriff nach Browserneustart\nWenn **Ordnerzugriff erforderlich** erscheint, direkt im Startdialog **🔐 Ordnerzugriff erneut freigeben** antippen. Erst dieser Benutzer-Klick darf die Browser-Berechtigungsabfrage auslösen. Die vorhandene `lager.db` wird danach zuerst gelesen und geprüft und nicht durch die bloße Freigabe überschrieben.\n\n\n## V63 – Schließen bei fehlendem Ordnerzugriff\nIm Schließen-Dialog erscheint bei fehlender Browserberechtigung **Ordnerzugriff freigeben & synchronisieren**. Die Freigabe allein überschreibt keine Cloud-Datei; anschließend wird derselbe geschützte Sync-Pfad verwendet.\n", "05-entnahme.md": "# Entnahme\n\n## Manuelle Entnahme\n\n- Datum, Techniker, Kunde und Maschine eintragen.\n- Artikel und Menge hinzufügen.\n- Entnahme bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Servicebericht mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: ENTNAHME` und enthält pro Material `Datum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine`.\n\nUnbekannte Artikel können als neues Material angelegt oder ignoriert werden. Bei einer Entnahme muss ein neu angelegter Artikel genügend Anfangsbestand besitzen. Ein Einbuchungs-Prompt wird im Entnahmebereich blockiert.\n\n\n## Unterschiedliche Maschinenbezeichnungen\n\nDie App berücksichtigt alternative Bezeichnungen von Maschinen. Beispiel: `Compas 4`, `Compas 4.0` und eine kundenspezifische Ticket-Bezeichnung können derselben Hauptmaschine zugeordnet werden. Bei ähnlichen, aber noch nicht verknüpften Namen werden vorhandene Maschinen vorgeschlagen.\n\nUnter **Stammdaten → Maschinen-Bezeichnungen & Mehrfachzuordnung** können alternative Namen zusammengeführt und später wieder getrennt werden.\n", "12-backup-und-synchronisierung.md": "\n\n## Synchronisationsgrenze in V60\nVor und nach jedem Schreiben wird `lager.db` geprüft. Ein lokaler OneDrive-Sync bietet jedoch keine atomare serverseitige Compare-and-Swap-Garantie. Exakt gleichzeitige Writes verschiedener Geräte können nicht vollständig ausgeschlossen werden.\n"};
+const helpData={"07-csv-center.md": "# CSV-Center\n\n## Exporte\n\n- Lagerbestand\n- Einbuchungen\n- Entnahmen\n\nDie CSV-Dateien werden direkt im Browser heruntergeladen. Das vorgegebene Tabellenlayout, Semikolon als Trennzeichen und UTF-8 mit BOM bleiben erhalten.\n\n## SAP-Excel oder CSV importieren\n\nUnterstützte Spalten sind unter anderem:\n\n- Material\n- Bezeichnung zum Material\n- Lagerort\n- Bezeichnung des Lagerorts\n- Frei verwendbar\n\nVor dem Buchen wird eine Vorschau angezeigt. Fehlende Artikel können direkt angelegt werden.\n\n\nNeue Artikel aus CSV/SAP können ohne Administratorpasswort angelegt werden. Soll-/Mindestwerte werden dabei nach der V65-Regel normalisiert.\n", "02-neues-material.md": "# Neues Material\n\nNeue Materialien können ohne Administratorpasswort angelegt werden.\n\n- **Mindestbestand** ist die Warn- und Bestellschwelle.\n- **Sollbestand** ist der gewünschte Bestand nach der Nachbestellung.\n- Regel: `0 <= Mindestbestand <= Sollbestand`.\n- Wird Mindestbestand größer als Sollbestand eingegeben, wird der **Sollbestand** automatisch auf den Mindestbestand angehoben.\n- Lagerort ist bei der direkten Materialanlage erforderlich.\n- Anfangsbestand, Maschinenzuordnung und Audit werden atomar zusammen angelegt.\n", "17-abschluss-und-tests.md": "# Abschluss Phase 1–7\n\nVersion 17.0 schließt das ursprünglich geplante Projekt ab.\n\nAbnahmetest:\n- Artikel anlegen\n- Ein- und Ausbuchung\n- CSV-Export\n- Inventurkorrektur\n- Materialanforderung in Excel öffnen\n- Historienfilter testen\n- Passwortverwaltung prüfen\n", "08-historie.md": "# Historie\n\nDie Historie enthält alle Einbuchungen und Entnahmen.\n\nSie kann gefiltert werden nach:\n\n- Alle Buchungen\n- Nur Einbuchungen\n- Nur Entnahmen\n\nDas unter **Stammdaten** gewählte Datumsformat wird auch auf bereits vorhandene Einträge angewendet.\n", "01-dashboard.md": "# Dashboard\n\nDas Dashboard zeigt:\n\n- aktive Artikel,\n- die **gesamte Anzahl** der Artikel unter Mindestbestand,\n- heutige Buchungen,\n- Buchungen insgesamt,\n- eine Vorschau der Unterbestandsartikel und die häufigsten Entnahmen.\n\nSoll- und Mindestbestand können direkt in der Unterbestandsliste ohne Administratorpasswort geändert werden. Bei mehr als acht Unterbestandsartikeln kann die vollständige Liste eingeblendet werden.\n\nEin Unterbestand liegt ausschließlich vor, wenn `Istbestand < Mindestbestand`.\n", "04-einbuchung.md": "# Einbuchung\n\n## Manuelle Einbuchung\n\n- Datum und Techniker auswählen.\n- Artikel und Menge hinzufügen.\n- Einbuchung bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Lieferschein mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: EINBUCHUNG` und enthält pro Material `Artikelnummer[TAB]Bezeichnung[TAB]Anzahl`.\n\nUnbekannte Artikel können direkt als neues Material angelegt oder bewusst ignoriert werden. Artikelnummer und erkannte Bezeichnung werden beim Anlegen vorausgefüllt. Ein Entnahme-Prompt wird im Einbuchungsbereich blockiert.\n", "09-stammdaten.md": "# Stammdaten\n\n## Lagerorte\nLagerorte können weiterhin zentral angelegt werden. Zusätzlich lassen sie sich direkt beim Anlegen eines neuen Materials erstellen. Ähnliche vorhandene Namen werden vorher vorgeschlagen.\n\n## Maschinen und alternative Bezeichnungen\nEine Maschine besitzt einen Hauptnamen und kann beliebig viele alternative Ticket-Bezeichnungen erhalten.\n\n- **Alternative Bezeichnung zuordnen:** z. B. `Compas 4` → `Compas 4.0`.\n- **Trennen:** eine falsche Alias-Zuordnung kann jederzeit wieder entfernt werden.\n- **Maschinen zusammenführen:** zwei bereits getrennt angelegte Maschinen können zu einer Hauptmaschine zusammengeführt werden. Der frühere Name bleibt als Alias erhalten.\n- **Zusammenführung rückgängig:** die vorherige Maschine wird wiederhergestellt und ihre Ersatzteil-Zuordnungen werden soweit möglich auf den Stand vor der Zusammenführung zurückgesetzt.\n\n## Mehrfachzuordnung von Ersatzteilen\nEin Artikel kann mehreren Maschinen gleichzeitig zugeordnet werden. Diese Zuordnung ist beim neuen Material sowie in der vollständigen Artikelliste bearbeitbar.\n\n\n## Passwortregel V65\nNeue Lagerorte und Maschinen dürfen **nur innerhalb der Materialanlage** über den eng begrenzten Materialformular-Weg ohne Passwort angelegt werden. Die zentrale Stammdatenverwaltung, Änderungen, Zusammenführen und Trennen bleiben administrativ geschützt.\n", "15-historienfilter.md": "# Historienfilter und Export\n\nFilter:\n- Buchungsart\n- Zeitraum\n- Techniker\n- Artikelnummer oder Bezeichnung\n\nDer CSV-Export übernimmt die aktuell eingestellten Filter.\n", "03-lagerbestand.md": "# Lagerbestand\n\nSoll- und Mindestbestand können ohne Administratorpasswort bearbeitet werden.\n\nEin Artikel ist nur Unterbestand bei `Istbestand < Mindestbestand`. Bei `Istbestand == Mindestbestand` besteht keine Warnung.\n\nMindestbestand darf unter Sollbestand liegen. Falls Mindestbestand über Sollbestand eingegeben wird, wird Sollbestand automatisch angehoben. Ungespeicherte Änderungen werden markiert und beim Ansichtswechsel gewarnt.\n", "14-inventur.md": "# Inventur\n\n- Inventurliste im CSV-Center exportieren.\n- Gezählten Bestand eintragen.\n- CSV, TXT oder XLSX einlesen.\n- Differenzen prüfen.\n- Bestandskorrekturen mit Administratorpasswort buchen.\n\nNur Differenzen werden als Buchungen mit der Quelle **Inventur** gespeichert.\n", "06-materialanforderung.md": "# Materialanforderung\n\nEine Materialanforderung wird nur vorgeschlagen, wenn `Istbestand < Mindestbestand`. Die Bestellmenge lautet `max(0, Sollbestand - Istbestand)`. Liegt der Bestand unter Soll, aber noch nicht unter Mindest, wird noch nichts vorgeschlagen.\n", "13-fehlerbehebung.md": "# Fehlerbehebung\n\n## Lagerbestand bleibt nach dem Start leer\n\nSeit Version 56 kann die Audit-Nachtragung den Datenbankstart nicht mehr blockieren. Falls künftig ein anderer Startfehler auftritt, erscheint eine rote Meldung statt eines stillen leeren Dashboards.\n\nBei Cloud-Betrieb prüfen, ob oben **Cloud** angezeigt wird und ob der verbundene Ordner zugreifbar ist.\n\n## M365-Ergebnis wird nicht erkannt\n\n- Aktuellen Prompt unter **Hilfe → M365-Prompts** verwenden.\n- Auf `IMPORTTYP: EINBUCHUNG` bzw. `IMPORTTYP: ENTNAHME` achten.\n- Artikelnummern und Mengen dürfen nicht leer sein.\n\n\n## Lokaler/Cloud-Dialog erscheint ständig\n\nSeit Version 58 wird ein **lokal neuer, aber sicher auf dem letzten Cloud-Stand basierender** Datenstand automatisch hochgeladen. Nur echte Konflikte zwischen verschiedenen Geräten müssen manuell entschieden werden.\n\nUnter **Dateisynchronisierung** werden die fortlaufende lokale und die zuletzt bekannte Cloud-Revisionsnummer angezeigt.\n\n\n## V60: Ordnerzugriff fehlt\nHintergrundprüfungen öffnen keine Berechtigungsabfrage mehr. Unter Dateisynchronisierung erscheint bei Bedarf **Ordnerzugriff erneut freigeben**. Bis zur ausdrücklichen Freigabe arbeitet die App lokal weiter und überschreibt keine Cloud-Datei.\n\n## V60: beschädigte Cloud-Datei\nEine beschädigte oder nicht vollständig lesbare `lager.db` wird nicht automatisch überschrieben. Zuerst Datei/OneDrive-Konflikt klären oder eine geprüfte Sicherung bewusst wiederherstellen.\n\n\n## V61: Synchronisationsordner enthält bereits lager.db\nDas ist bei einem bereits eingerichteten Smartphone-/PC-Synchronisationsordner normal. Verwenden Sie **Cloud-Synchronisationsordner verbinden**. Die vorhandene Datei wird zuerst vollständig geprüft und nur verbunden. Eine beschädigte oder unlesbare Datei wird weiterhin niemals automatisch überschrieben.\n\n\n## V62: Ordnerzugriff erforderlich\nDer Ordner-Handle ist gespeichert, die Browserberechtigung aber noch nicht aktiv. Im Startdialog **Ordnerzugriff erneut freigeben** antippen. Bis dahin bleibt Cloud-Schreiben gesperrt.\n\n\n## V63 – Schließen bei fehlendem Ordnerzugriff\nIm Schließen-Dialog erscheint bei fehlender Browserberechtigung **Ordnerzugriff freigeben & synchronisieren**. Die Freigabe allein überschreibt keine Cloud-Datei; anschließend wird derselbe geschützte Sync-Pfad verwendet.\n\n\n## V64 – Speichermodus nach Update\nBeim Update werden zuerst der gerätespezifische IndexedDB-Modus, danach der ältere `storage_mode`, danach ein vorhandener Ordner-Handle ausgewertet. Eine bestehende Cloud-Installation fällt dadurch nicht still auf Browser-Lokal zurück.\n\n## V64 – Schließen im lokalen Ordner-Modus\nNach erneuter Ordnerfreigabe wird die verbundene `lager.db` direkt lesend geprüft. Das funktioniert unabhängig davon, ob der Modus `cloud` oder `local_folder` ist. Beschädigte/fremde Dateien und Parallelkonflikte bleiben gesperrt.\n\n\n## V65 – Bestandslogik\nMindestbestand ist die Warnschwelle und darf unter Sollbestand liegen. Bestellungen werden nur ausgelöst, wenn Ist unter Mindest liegt.\n", "16-materialanforderung-export.md": "# Materialanforderung\n\nDie Originalvorlage `materialanforderung_vorlage.xlsx` bleibt unverändert erhalten.\n\nPrüfungen:\n- maximal 25 Positionen\n- nur positive Mengen\n- doppelte Artikel werden zusammengefasst\n- Vorschau vor Export\n- Sortierung nach Artikelnummer\n\nDateiname: `Bestellung_Datum_Techniker.xlsx`\n", "10-reset.md": "# Vollständiges Zurücksetzen\n\nDer vollständige Reset löscht:\n\n- Artikel\n- Bestände\n- Buchungen\n- Historie\n- Audit-Protokoll\n- Lagerorte\n- Maschinen\n- Techniker\n- Administratorpasswort\n- Einstellungen\n\nProgrammdateien, Excel-Vorlage und Hilfedateien bleiben erhalten.\n\nNach dem Reset erscheint wieder automatisch die vollständige Ersteinrichtung.\n", "11-m365-prompts.md": "# Microsoft 365 / Copilot – aktuelle Prompts\n\n## Lieferschein – Einbuchung\n\n```text\nIMPORTTYP: EINBUCHUNG\n\nExtrahiere aus diesem Lieferschein ausschließlich das tatsächlich gelieferte Material.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nArtikelnummer[TAB]Bezeichnung[TAB]Anzahl\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: EINBUCHUNG\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Preise, Summen, Fahrzeit, Arbeitszeit und Kilometer ignorieren.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen den Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Servicebericht – Entnahme\n\n```text\nIMPORTTYP: ENTNAHME\n\nExtrahiere aus dieser Service-PDF ausschließlich die tatsächlich verwendeten oder verbauten Materialien.\n\nGib pro Material genau eine neue Zeile in dieser Reihenfolge aus:\nDatum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine\n\nWichtige Regeln:\n- Die erste Ausgabezeile muss exakt lauten: IMPORTTYP: ENTNAHME\n- Danach nur Materialpositionen ausgeben.\n- Keine Überschrift, keine Erklärung und keinen Fließtext ergänzen.\n- Fahrzeit, Arbeitszeit und Kilometer vollständig ignorieren.\n- Nicht verbaute, nur erwähnte oder empfohlene Materialien nicht übernehmen.\n- Für jedes Material eine neue Zeile erstellen.\n- Zwischen allen Feldern ein echtes Tabulatorzeichen verwenden.\n- Artikelnummer und Bezeichnung exakt übernehmen.\n- Mengen als reine Zahl ausgeben.\n```\n\n## Vertauschungsschutz\n\n`IMPORTTYP: EINBUCHUNG` gehört nur zur Einbuchung. `IMPORTTYP: ENTNAHME` gehört nur zur Entnahme. Beim falschen Bereich bleibt die Buchung gesperrt.\n", "00-erste-schritte.md": "# Erste Schritte\n\nDie Lagerverwaltung startet nach der Erstinstallation mit einem Einrichtungsassistenten.\n\n## Ersteinrichtung\n\n- Administratorpasswort mit mindestens 8 Zeichen vergeben.\n- Namen des Technikers eingeben.\n- Datumsformat auswählen.\n- Einrichtung abschließen.\n\nLagerorte und Maschinen müssen bei der Ersteinrichtung nicht angelegt werden. Sie können später unter **Stammdaten** ergänzt werden.\n\n\n## Sicherheit V65\nAdministratorpasswörter werden mit PBKDF2 und zufälligem Salt gespeichert. Geschützte Funktionen verwenden nach erfolgreicher Anmeldung ein zufälliges Sitzungstoken.\n", "12-mobile-bedienung.md": "# Mobile Bedienung\n\nAuf schmalen Bildschirmen wird die Navigation über die Schaltfläche **Menü** geöffnet.\n\n## Hinweise\n\n- Tabellen können seitlich verschoben werden.\n- Eingabefelder werden untereinander dargestellt.\n- Die Ersteinrichtung ist für Smartphone und Tablet optimiert.\n- Für umfangreiche CSV- und Excel-Arbeiten ist ein Windows-PC komfortabler.\n\n\n## Cloud-Synchronisierung am Smartphone\n\nIm Cloud-Modus werden eigene, eindeutig auf dem aktuellen Cloud-Stand basierende Änderungen automatisch synchronisiert. Die Auswahl zwischen lokalem und Cloud-Stand erscheint nicht mehr nach jeder normalen Buchung. Eine Entscheidung wird nur noch bei einem echten Konflikt, einer nicht lesbaren Cloud-Datei oder einem nicht eindeutig zuordenbaren Datenstand verlangt.\n\n\n## Version 61 – vorhandenen Synchronisationsordner auf dem Smartphone verbinden\nUnter **Speicher & Synchronisation** wählen Sie **Cloud-Synchronisationsordner verbinden**. Ein Ordner darf bereits eine gültige `lager.db` enthalten. Die Datei wird beim Verbinden nicht überschrieben. Lokal- und Cloud-Stand werden anschließend anhand von `database_id`, Revision und `revision_id` verglichen. Nur ein leerer Ordner wird als neue Cloud-Ablage initialisiert.\n\nDer Button **Lokalen Speicherordner auswählen / ändern** ist dagegen für einen neuen lokalen Ablageordner bestimmt und akzeptiert absichtlich keinen Ordner, der bereits eine `lager.db` enthält.\n\n\n## Version 62 – Ordnerzugriff nach Browserneustart\nWenn **Ordnerzugriff erforderlich** erscheint, direkt im Startdialog **🔐 Ordnerzugriff erneut freigeben** antippen. Erst dieser Benutzer-Klick darf die Browser-Berechtigungsabfrage auslösen. Die vorhandene `lager.db` wird danach zuerst gelesen und geprüft und nicht durch die bloße Freigabe überschrieben.\n\n\n## V63 – Schließen bei fehlendem Ordnerzugriff\nIm Schließen-Dialog erscheint bei fehlender Browserberechtigung **Ordnerzugriff freigeben & synchronisieren**. Die Freigabe allein überschreibt keine Cloud-Datei; anschließend wird derselbe geschützte Sync-Pfad verwendet.\n", "05-entnahme.md": "# Entnahme\n\n## Manuelle Entnahme\n\n- Datum, Techniker, Kunde und Maschine eintragen.\n- Artikel und Menge hinzufügen.\n- Entnahme bestätigen.\n- Die letzten Buchungen werden anschließend sofort aktualisiert.\n\n## Servicebericht mit Microsoft 365/Copilot auswerten\n\nDer aktuelle Prompt steht unter **Hilfe → M365-Prompts**. Die Ausgabe beginnt mit `IMPORTTYP: ENTNAHME` und enthält pro Material `Datum[TAB]Artikelnummer[TAB]Bezeichnung[TAB]Anzahl[TAB]Kunde[TAB]Maschine`.\n\nUnbekannte Artikel können als neues Material angelegt oder ignoriert werden. Bei einer Entnahme muss ein neu angelegter Artikel genügend Anfangsbestand besitzen. Ein Einbuchungs-Prompt wird im Entnahmebereich blockiert.\n\n\n## Unterschiedliche Maschinenbezeichnungen\n\nDie App berücksichtigt alternative Bezeichnungen von Maschinen. Beispiel: `Compas 4`, `Compas 4.0` und eine kundenspezifische Ticket-Bezeichnung können derselben Hauptmaschine zugeordnet werden. Bei ähnlichen, aber noch nicht verknüpften Namen werden vorhandene Maschinen vorgeschlagen.\n\nUnter **Stammdaten → Maschinen-Bezeichnungen & Mehrfachzuordnung** können alternative Namen zusammengeführt und später wieder getrennt werden.\n", "12-backup-und-synchronisierung.md": "\n\n## Synchronisationsgrenze in V60\nVor und nach jedem Schreiben wird `lager.db` geprüft. Ein lokaler OneDrive-Sync bietet jedoch keine atomare serverseitige Compare-and-Swap-Garantie. Exakt gleichzeitige Writes verschiedener Geräte können nicht vollständig ausgeschlossen werden.\n"};
 
 function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open('LagerverwaltungLovrencicV21',1);r.onupgradeneeded=()=>r.result.createObjectStore('data');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function ig(k){const d=await idbOpen();return new Promise((res,rej)=>{const r=d.transaction('data').objectStore('data').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
@@ -42,18 +47,37 @@ async function requestHandlePermissionExplicit(h,mode='readwrite'){
 function rows(sql,p=[]){const s=db.prepare(sql);s.bind(p);const a=[];while(s.step())a.push(s.getAsObject());s.free();return a}
 function scalar(sql,p=[]){const x=rows(sql,p);return x.length?Object.values(x[0])[0]:0}
 function run(sql,p=[]){db.run(sql,p)}
+function runTransaction(work){return TxCore.runTransaction(run,work)}
 function today(){return new Date().toISOString().slice(0,10)}
 function stamp(){return new Date().toISOString()}
 function setting(k,d=''){const r=rows('SELECT setting_value FROM app_settings WHERE setting_key=?',[k]);return r.length?r[0].setting_value:d}
 function setSetting(k,v){run('INSERT OR REPLACE INTO app_settings(setting_key,setting_value) VALUES(?,?)',[k,String(v)])}
-function hash(s){let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return (h>>>0).toString(16)}
-function validPw(p){return !!p&&setting('admin_password_hash','')===hash(p)}
-function adminAuthorized(d,opt){
+function legacyHash(s){let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return (h>>>0).toString(16)}
+async function validPw(p){
+ const stored=setting('admin_password_hash','');
+ if(!p||!stored)return false;
+ return AuthCore.verifyPassword(String(p),stored,(password,encoded)=>legacyHash(password)===encoded);
+}
+async function migrateLegacyPasswordIfNeeded(password){
+ const stored=setting('admin_password_hash','');
+ if(stored&& !stored.startsWith('pbkdf2$') && legacyHash(password)===stored){
+  setSetting('admin_password_hash',await AuthCore.hashPassword(password));
+  audit('System','PASSWORT-MIGRATION','System','','Bestehender Passwort-Hash auf PBKDF2 migriert');
+  await persist();
+  return true;
+ }
+ return false;
+}
+async function setAdminPassword(password){setSetting('admin_password_hash',await AuthCore.hashPassword(password))}
+function adminTokenFromHeaders(opt){
+ const h=opt?.headers;if(!h)return '';
+ return typeof h.get==='function'?(h.get('X-LV-Admin-Token')||''):(h['X-LV-Admin-Token']||'');
+}
+async function adminAuthorized(d,opt){
  try{
-  const h=opt?.headers;
-  const unlocked=h&&((typeof h.get==='function'&&h.get('X-LV-Admin-Unlocked')==='1')||h['X-LV-Admin-Unlocked']==='1');
-  return unlocked||validPw(d?.password)||validPw(d?.admin_password);
- }catch{return validPw(d?.password)||validPw(d?.admin_password)}
+  if(adminSessions.verify(adminTokenFromHeaders(opt)))return true;
+  return await validPw(d?.password)||await validPw(d?.admin_password);
+ }catch{return false}
 }
 function normalizeQuantityForUnit(value,unit){
  const n=Number(value||0);
@@ -277,7 +301,7 @@ function existingDatabaseHasContent(){
 function adoptExistingDatabase(){
  let changed=false;
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
-  setSetting('setup_complete','1');setSetting('database_adopted','1');setSetting('database_version','64');
+  setSetting('setup_complete','1');setSetting('database_adopted','1');setSetting('database_version','65');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');changed=true;
  }
  return changed;
@@ -296,7 +320,7 @@ async function initialize(){
  migrated=migrateMachineRelationsV57()||migrated;
  try{migrated=backfillMovementAuditV55()||migrated}
  catch(e){console.warn('Audit-Nachtragung V55 konnte nicht vollständig ausgeführt werden. Die Datenbank wird trotzdem geladen.',e)}
- if(setting('database_version','')!=='64'){setSetting('database_version','64');migrated=true}
+ if(setting('database_version','')!=='65'){setSetting('database_version','65');migrated=true}
  if(!setting('date_format')){setSetting('date_format','DD.MM.YYYY');migrated=true}
  const m=await ig(METAKEY)||{};
  if(!m.localModified)m.localModified=currentDbState().changed_at;
@@ -1053,7 +1077,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'64.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'65.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -1091,19 +1115,19 @@ async function route(url,opt={}){
   if(p==='/api/export/stock.csv'){const a=articles();return csvResp(`Lagerbestand_${fmtDate(today())}.csv`,['Artikelnummer','Bezeichnung','Sollbestand','Mindestbestand','Istbestand','Einheit','Lagerort','Maschine','Hersteller','Lieferant'],a.map(x=>[x.article_no,x.description,x.target_stock,x.minimum_stock,x.stock,x.unit,x.location,x.machine,x.manufacturer,x.supplier]))}
   if(p==='/api/export/inventory.csv'){const a=articles();return csvResp(`Inventur_${fmtDate(today())}.csv`,['Artikelnummer','Bezeichnung','Systembestand','Gezählter Bestand','Lagerort','Maschine'],a.map(x=>[x.article_no,x.description,x.stock,'',x.location,x.machine]))}
  }
- if(p==='/api/setup/complete'){if(!d.password||d.password.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');setSetting('admin_password_hash',hash(d.password));setSetting('primary_technician',d.technician||'Techniker');setSetting('date_format',d.date_format||'DD.MM.YYYY');await setDeviceStorageMode(handle&&['cloud','local_folder'].includes(d.storage_mode)?d.storage_mode:'browser_local');setSetting('setup_complete','1');run('INSERT OR IGNORE INTO technicians(name) VALUES(?)',[d.technician||'Techniker']);audit(d.technician,'EINRICHTUNG','System','','Ersteinrichtung');await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY'),storage_mode:storageMode()})}
+ if(p==='/api/setup/complete'){if(!setupIsRequired())throw Error('Die Ersteinrichtung ist bereits abgeschlossen.');if(!d.password||d.password.length<8)throw Error('Passwort muss mindestens 8 Zeichen haben.');await setAdminPassword(d.password);setSetting('primary_technician',d.technician||'Techniker');setSetting('date_format',d.date_format||'DD.MM.YYYY');await setDeviceStorageMode(handle&&['cloud','local_folder'].includes(d.storage_mode)?d.storage_mode:'browser_local');setSetting('setup_complete','1');run('INSERT OR IGNORE INTO technicians(name) VALUES(?)',[d.technician||'Techniker']);audit(d.technician,'EINRICHTUNG','System','','Ersteinrichtung');await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY'),storage_mode:storageMode(),token:adminSessions.issue()})}
  if(p==='/api/settings/date-format'){setSetting('date_format',d.date_format);await persist();return response({ok:true,date_format:setting('date_format','DD.MM.YYYY')})}
- if(p==='/api/admin/unlock')return response({ok:validPw(d.password),has_password:!!setting('admin_password_hash')});
- if(p==='/api/admin/lock')return response({ok:true});
- if(p==='/api/admin/setup-password'){const np=d.password||d.new_password||d.newPassword||'';const rp=d.repeat_password||d.repeatPassword||np;if(!np||np.length<6)throw Error('Passwort muss mindestens 6 Zeichen haben.');if(np!==rp)throw Error('Die Passwörter stimmen nicht überein.');setSetting('admin_password_hash',hash(np));setSetting('setup_complete','1');setSetting('database_adopted','1');audit('Administrator','PASSWORT','System','','Administratorpasswort erstmalig eingerichtet');await persist();return response({ok:true,has_password:true})}
- if(p==='/api/admin/change-password'){const oldpw=d.old_password||d.current_password||'';const newpw=d.new_password||'';const repeat=d.repeat_password??newpw;if(!validPw(oldpw))throw Error('Bisheriges Passwort ist falsch.');if(!newpw||newpw.length<6)throw Error('Neues Passwort muss mindestens 6 Zeichen haben.');if(newpw!==repeat)throw Error('Die neuen Passwörter stimmen nicht überein.');setSetting('admin_password_hash',hash(newpw));audit('Administrator','PASSWORT','System','','Administratorpasswort geändert');await persist();return response({ok:true})}
- if(p==='/api/admin/reset'){if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');db.close();db=new SQL.Database();initSchema();await persist();return response({ok:true})}
+ if(p==='/api/admin/unlock'){const ok=await validPw(d.password);if(ok){await migrateLegacyPasswordIfNeeded(d.password);return response({ok:true,token:adminSessions.issue(),has_password:true})}return response({ok:false,has_password:!!setting('admin_password_hash')})}
+ if(p==='/api/admin/lock'){adminSessions.revoke();return response({ok:true})}
+ if(p==='/api/admin/setup-password'){if(setting('admin_password_hash',''))throw Error('Ein Administratorpasswort ist bereits eingerichtet. Verwende „Passwort ändern“.');const np=d.password||d.new_password||d.newPassword||'';const rp=d.repeat_password||d.repeatPassword||np;if(!np||np.length<8)throw Error('Passwort muss mindestens 8 Zeichen haben.');if(np!==rp)throw Error('Die Passwörter stimmen nicht überein.');await setAdminPassword(np);setSetting('setup_complete','1');setSetting('database_adopted','1');audit('Administrator','PASSWORT','System','','Administratorpasswort erstmalig eingerichtet');await persist();return response({ok:true,has_password:true,token:adminSessions.issue()})}
+ if(p==='/api/admin/change-password'){const oldpw=d.old_password||d.current_password||'';const newpw=d.new_password||'';const repeat=d.repeat_password??newpw;if(!await validPw(oldpw))throw Error('Bisheriges Passwort ist falsch.');if(!newpw||newpw.length<8)throw Error('Neues Passwort muss mindestens 8 Zeichen haben.');if(newpw!==repeat)throw Error('Die neuen Passwörter stimmen nicht überein.');await setAdminPassword(newpw);adminSessions.revoke();const token=adminSessions.issue();audit('Administrator','PASSWORT','System','','Administratorpasswort geändert');await persist();return response({ok:true,token})}
+ if(p==='/api/admin/reset'){if(!await adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');db.close();db=new SQL.Database();initSchema();await persist();return response({ok:true})}
  
  if(p==='/api/movements/duplicates'){
   return response({duplicates:possibleDuplicateMovements(d),count:possibleDuplicateMovements(d).length});
  }
  if(p==='/api/movement/update'){
-  if(!adminAuthorized(d,opt)&&!validPw(d.password||''))throw Error('Administratorpasswort ist falsch.');
+  if(!await adminAuthorized(d,opt)&&!await validPw(d.password||''))throw Error('Administratorpasswort ist falsch.');
   const id=Number(d.id);
   const old=rows('SELECT * FROM movements WHERE id=?',[id])[0];
   if(!old)throw Error('Buchung wurde nicht gefunden.');
@@ -1138,7 +1162,7 @@ async function route(url,opt={}){
   return response({ok:true,id});
  }
  if(p==='/api/movement/delete'){
-  if(!adminAuthorized(d,opt)&&!validPw(d.password||''))throw Error('Administratorpasswort ist falsch.');
+  if(!await adminAuthorized(d,opt)&&!await validPw(d.password||''))throw Error('Administratorpasswort ist falsch.');
   const id=Number(d.id);
   const old=rows(`SELECT m.*,a.article_no,a.description FROM movements m
    JOIN articles a ON a.id=m.article_id WHERE m.id=?`,[id])[0];
@@ -1202,11 +1226,11 @@ async function route(url,opt={}){
  if(p==='/api/import/file-preview'){const rr=await xlsxRows(d.filename,d.content_base64);return response(matchItems(rowsToItems(rr)))}
  if(p==='/api/inventory/file-preview'){const rr=await xlsxRows(d.filename,d.content_base64);const parsed=rowsToItems(rr).map(x=>({article_no:x.article_no,counted_stock:x.quantity}));return response(parsed.map(x=>{const a=articles().find(z=>z.article_no===x.article_no);return a?{article_id:a.id,article_no:a.article_no,description:a.description,system_stock:a.stock,counted_stock:x.counted_stock,difference:x.counted_stock-a.stock}:null}).filter(Boolean))}
  if(p==='/api/inventory/preview'){const parsed=parseLines(d.text).map(x=>({article_no:x.article_no,counted_stock:x.quantity}));return response(parsed.map(x=>{const a=articles().find(z=>z.article_no===x.article_no);return a?{article_id:a.id,article_no:a.article_no,description:a.description,system_stock:a.stock,counted_stock:x.counted_stock,difference:x.counted_stock-a.stock}:null}).filter(Boolean))}
- if(p==='/api/inventory/commit'){await createBackup('Sicherheitsbackup','Vor Inventur');if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');let changed=0,unchanged=0;for(const x of d.items){const a=articles().find(z=>z.id===Number(x.article_id));const diff=Number(x.counted_stock)-a.stock;if(Math.abs(diff)<1e-8){unchanged++;continue}bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{...d,source:'Inventur',note:'Inventurkorrektur'});changed++}audit(d.technician,'INVENTUR','Bestand','',`${changed} Korrekturen`);await persist();return response({ok:true,changed,unchanged})}
+ if(p==='/api/inventory/commit'){await createBackup('Sicherheitsbackup','Vor Inventur');if(!await adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');let changed=0,unchanged=0;for(const x of d.items){const a=articles().find(z=>z.id===Number(x.article_id));const diff=Number(x.counted_stock)-a.stock;if(Math.abs(diff)<1e-8){unchanged++;continue}bookItems([{article_id:a.id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{...d,source:'Inventur',note:'Inventurkorrektur'});changed++}audit(d.technician,'INVENTUR','Bestand','',`${changed} Korrekturen`);await persist();return response({ok:true,changed,unchanged})}
  if(p==='/api/material-request/preview'){const x=await materialXlsx(d);return response({count:x.count,items:x.items,template_type:x.template_type})}
  if(p==='/api/export/material-request'){const x=await materialXlsx(d);const tech=(d.technician||'Techniker').replace(/[^\wÄÖÜäöüß-]+/g,'_');return response(x.blob,200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':`attachment; filename="Bestellung_${fmtDate(today())}_${tech}.xlsx"`})}
  if(p==='/api/machine/alias'){
-  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
   const machineId=Number(d.machine_id),alias=String(d.alias||'').trim();if(!machineId||!alias)throw Error('Maschine und Bezeichnung fehlen.');
   const machine=rows('SELECT id,name FROM machines WHERE id=? AND active=1',[machineId])[0];if(!machine)throw Error('Maschine nicht gefunden.');
   if(normalizeLoose(machine.name)===normalizeLoose(alias))throw Error('Diese Bezeichnung entspricht bereits dem Hauptnamen.');
@@ -1218,13 +1242,13 @@ async function route(url,opt={}){
   audit('Administrator','ALIAS','Maschine',String(machineId),`Alternative Bezeichnung „${alias}“ → ${machine.name}`);await persist();return response({ok:true,alias,machine_id:machineId},201)
  }
  if(p==='/api/machine/alias/delete'){
-  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
   const alias=rows(`SELECT ma.id,ma.alias,ma.machine_id,m.name machine_name FROM machine_aliases ma JOIN machines m ON m.id=ma.machine_id WHERE ma.id=?`,[Number(d.id)])[0];
   if(!alias)throw Error('Alternative Bezeichnung wurde nicht gefunden.');
   run('DELETE FROM machine_aliases WHERE id=?',[alias.id]);audit('Administrator','TRENNUNG','Maschine',String(alias.machine_id),`Alternative Bezeichnung „${alias.alias}“ von ${alias.machine_name} getrennt.`);await persist();return response({ok:true})
  }
  if(p==='/api/machine/merge'){
-  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
   const sourceId=Number(d.source_id),targetId=Number(d.target_id);if(!sourceId||!targetId||sourceId===targetId)throw Error('Bitte zwei unterschiedliche Maschinen auswählen.');
   const source=rows('SELECT * FROM machines WHERE id=? AND active=1',[sourceId])[0],target=rows('SELECT * FROM machines WHERE id=? AND active=1',[targetId])[0];
   if(!source||!target)throw Error('Eine der Maschinen ist nicht mehr aktiv.');
@@ -1243,7 +1267,7 @@ async function route(url,opt={}){
   audit('Administrator','ZUSAMMENFÜHRUNG','Maschine',String(targetId),`„${source.name}“ wurde unter „${target.name}“ zusammengeführt. Der bisherige Name bleibt als Alias erhalten.`);await persist();return response({ok:true})
  }
  if(p==='/api/machine/merge/undo'){
-  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
   const h=rows('SELECT * FROM machine_merge_history WHERE id=? AND active=1',[Number(d.id)])[0];if(!h)throw Error('Aktive Zusammenführung nicht gefunden.');
   const snap=JSON.parse(h.snapshot_json||'{}'),sourceId=Number(h.source_machine_id),targetId=Number(h.target_machine_id);
   run('BEGIN TRANSACTION');
@@ -1274,7 +1298,7 @@ async function route(url,opt={}){
  }
  if(p==='/api/masterdata'){
   const type=String(d.type||'');
-  if(type!=='technician'&&!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet. Bitte das Passwort erneut eingeben.');
+  if(type!=='technician'&&!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet. Bitte das Passwort erneut eingeben.');
   const name=String(d.name||'').trim();
   if(!name)throw Error('Bitte einen Namen eingeben.');
   if(type==='technician'){
@@ -1295,38 +1319,33 @@ async function route(url,opt={}){
  if(p==='/api/article/create'){
   if(!String(d.article_no||'').trim())throw Error('Artikelnummer fehlt.');
   if(!String(d.description||'').trim())throw Error('Bezeichnung fehlt.');
+  if(!String(d.location||'').trim())throw Error('Bitte einen Lagerort auswählen.');
   const articleNo=String(d.article_no).trim(),description=String(d.description).trim(),unit=String(d.unit||'Stk.').trim()||'Stk.';
   if(Number(scalar('SELECT COUNT(*) FROM articles WHERE article_no=?',[articleNo])||0)>0)throw Error('Diese Artikelnummer ist bereits registriert.');
   const enteredInitial=AppRules.normalizeQuantity(d.initial_stock,unit);
   const levels=AppRules.normalizeStockLevels(d.target_stock,d.minimum_stock,unit);
-  run(`INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at,manufacturer,supplier,supplier_article_no,barcode,notes,image_url,datasheet_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-   [articleNo,description,levels.target_stock,levels.minimum_stock,0,unit,d.location||'',d.machine||'',d.active===false?0:1,stamp(),d.manufacturer||'',d.supplier||'',d.supplier_article_no||'',d.barcode||'',d.notes||'',d.image_url||'',d.datasheet_url||'']);
-  const id=Number(scalar('SELECT last_insert_rowid()')||0);
-  const selectedMachines=setArticleMachineIds(id,Array.isArray(d.machine_ids)?d.machine_ids:(d.machine?[d.machine]:[]));
-  const creationSource=String(d.creation_source||d.source||'Manuelle Materialanlage').slice(0,120);
-  const creationMovement=recordMaterialCreationMovement(id,enteredInitial,{technician:d.technician||setting('primary_technician','Techniker'),machine:selectedMachines.join(', '),source:creationSource,note:'Neues Material angelegt – Anfangsbestand'});
-  audit(d.technician||setting('primary_technician','Techniker'),'ANLAGE','Artikel',String(id),[
-   `Artikelnummer: ${auditValue(articleNo)}`,
-   `Bezeichnung: ${auditValue(description)}`,
-   `Anfangsbestand: ${auditValue(enteredInitial)}`,
-   `Sollbestand: ${auditValue(levels.target_stock)}`,
-   `Mindestbestand: ${auditValue(levels.minimum_stock)}`,
-   `Einheit: ${auditValue(unit)}`,
-   `Lagerort: ${auditValue(d.location)}`,
-   `Maschinen: ${auditValue(selectedMachines.join(', '))}`,
-   `Hersteller: ${auditValue(d.manufacturer)}`,
-   `Lieferant: ${auditValue(d.supplier)}`,
-   `Lieferanten-Artikelnummer: ${auditValue(d.supplier_article_no)}`,
-   `Barcode: ${auditValue(d.barcode)}`,
-   `Quelle: ${auditValue(creationSource)}`,
-   `Bemerkung: ${auditValue(d.notes)}`,
-   `Aktiv: ${d.active===false?'Nein':'Ja'}`
-  ].join('\n'));
+  let result;
+  result=runTransaction(()=>{
+   run(`INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at,manufacturer,supplier,supplier_article_no,barcode,notes,image_url,datasheet_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [articleNo,description,levels.target_stock,levels.minimum_stock,0,unit,d.location||'',d.machine||'',d.active===false?0:1,stamp(),d.manufacturer||'',d.supplier||'',d.supplier_article_no||'',d.barcode||'',d.notes||'',d.image_url||'',d.datasheet_url||'']);
+   const id=Number(scalar('SELECT last_insert_rowid()')||0);
+   const selectedMachines=setArticleMachineIds(id,Array.isArray(d.machine_ids)?d.machine_ids:(d.machine?[d.machine]:[]));
+   if(d.__test_fail_step==='after_machines')throw Error('TEST_FAIL_AFTER_MACHINES');
+   const creationSource=String(d.creation_source||d.source||'Manuelle Materialanlage').slice(0,120);
+   const creationMovement=recordMaterialCreationMovement(id,enteredInitial,{technician:d.technician||setting('primary_technician','Techniker'),machine:selectedMachines.join(', '),source:creationSource,note:'Neues Material angelegt – Anfangsbestand'});
+   if(d.__test_fail_step==='after_movement')throw Error('TEST_FAIL_AFTER_MOVEMENT');
+   audit(d.technician||setting('primary_technician','Techniker'),'ANLAGE','Artikel',String(id),[
+    `Artikelnummer: ${auditValue(articleNo)}`,`Bezeichnung: ${auditValue(description)}`,`Anfangsbestand: ${auditValue(enteredInitial)}`,
+    `Sollbestand: ${auditValue(levels.target_stock)}`,`Mindestbestand: ${auditValue(levels.minimum_stock)}`,`Einheit: ${auditValue(unit)}`,
+    `Lagerort: ${auditValue(d.location)}`,`Maschinen: ${auditValue(selectedMachines.join(', '))}`,`Quelle: ${auditValue(creationSource)}`
+   ].join('\n'));
+   return {id,selectedMachines,creationMovement};
+  });
   await persist();
-  return response({ok:true,id,article_no:articleNo,movement_id:creationMovement?.id||0,levels_adjusted:levels.adjusted,target_stock:levels.target_stock,minimum_stock:levels.minimum_stock},201)
+  return response({ok:true,id:result.id,article_no:articleNo,movement_id:result.creationMovement?.id||0,levels_adjusted:levels.adjusted,target_stock:levels.target_stock,minimum_stock:levels.minimum_stock},201)
  }
  if(p==='/api/articles/batch-update'){
-  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
   const items=Array.isArray(d.items)?d.items:[];
   if(!items.length)throw Error('Keine Änderungen zum Speichern vorhanden.');
   let updated=0, corrected=0;
@@ -1351,7 +1370,7 @@ async function route(url,opt={}){
  }
  
  if(p==='/api/article/delete'){
-  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
   const id=Number(d.id);
   const article=rows('SELECT * FROM articles WHERE id=?',[id])[0];
   if(!article)throw Error('Artikel wurde nicht gefunden.');
@@ -1370,7 +1389,7 @@ async function route(url,opt={}){
  }
 
  if(p==='/api/article/update'){
-  if(!adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
+  if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
   const a=articles().find(x=>x.id===Number(d.id));if(!a)throw Error('Artikel wurde nicht gefunden.');
   const updateUnit=String(d.unit||a.unit||'Stk.').trim()||'Stk.',updateLevels=AppRules.normalizeStockLevels(d.target_stock,d.minimum_stock,updateUnit);
   run('UPDATE articles SET article_no=?,description=?,target_stock=?,minimum_stock=?,unit=?,location=?,active=?,manufacturer=?,supplier=?,supplier_article_no=?,barcode=?,notes=?,image_url=?,datasheet_url=? WHERE id=?',[d.article_no,d.description,updateLevels.target_stock,updateLevels.minimum_stock,updateUnit,d.location||'',d.active?1:0,d.manufacturer||a.manufacturer,d.supplier||a.supplier,d.supplier_article_no||a.supplier_article_no,d.barcode||a.barcode,d.notes||a.notes,d.image_url||a.image_url,d.datasheet_url||a.datasheet_url,Number(d.id)]);
@@ -1390,37 +1409,39 @@ async function route(url,opt={}){
    `Sollbestand neu: ${auditValue(levels.target_stock)}`,
    `Mindestbestand alt: ${auditValue(oldMinimum)}`,
    `Mindestbestand neu: ${auditValue(levels.minimum_stock)}`,
-   levels.adjusted?'Mindestbestand wurde automatisch auf den Sollbestand angehoben.':''
+   levels.adjusted?'Sollbestand wurde automatisch auf den Mindestbestand angehoben.':''
   ].filter(Boolean).join('\n'));
   await persist();return response({ok:true,...levels})
  }
- if(p==='/api/articles/stock-to-levels'){if(!adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');for(const a of articles().filter(x=>x.active)){let target=d.mode==='target'||d.mode==='both'?a.stock:a.target_stock;let minimum=d.mode==='minimum'||d.mode==='both'?a.stock:a.minimum_stock;const levels=AppRules.normalizeStockLevels(target,minimum,a.unit);run('UPDATE articles SET target_stock=?,minimum_stock=? WHERE id=?',[levels.target_stock,levels.minimum_stock,a.id])}await persist();return response({ok:true,count:articles().length})}
+ if(p==='/api/articles/stock-to-levels'){if(!await adminAuthorized(d,opt))throw Error('Passwort ist falsch oder die Stammdaten sind nicht freigeschaltet.');for(const a of articles().filter(x=>x.active)){let target=d.mode==='target'||d.mode==='both'?a.stock:a.target_stock;let minimum=d.mode==='minimum'||d.mode==='both'?a.stock:a.minimum_stock;const levels=AppRules.normalizeStockLevels(target,minimum,a.unit);run('UPDATE articles SET target_stock=?,minimum_stock=? WHERE id=?',[levels.target_stock,levels.minimum_stock,a.id])}await persist();return response({ok:true,count:articles().length})}
  if(p==='/api/articles/create-import'||p==='/api/import/create-and-book'){
   const isCreateAndBook=p==='/api/import/create-and-book';
   const newItems=Array.isArray(isCreateAndBook?d.new_items:d.items)?(isCreateAndBook?d.new_items:d.items):[];
   const knownItems=Array.isArray(d.known_items)?d.known_items:[];
-  let created=0,booked=0,skipped=[],adjusted=0;const createdByNo=new Map();
-  for(const x of newItems){
-   const articleNo=String(x.article_no||'').trim(),description=String(x.description||'').trim(),unit=String(x.unit||'Stk.').trim()||'Stk.';
-   if(!articleNo){skipped.push({article_no:'',reason:'Artikelnummer fehlt'});continue}
-   let a=rows('SELECT id FROM articles WHERE article_no=?',[articleNo])[0];
-   if(!a&&description){
-    const levels=AppRules.normalizeStockLevels(x.target_stock,x.minimum_stock,unit);if(levels.adjusted)adjusted++;
-    const enteredInitial=AppRules.normalizeQuantity(x.initial_stock,unit);
-    run('INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at) VALUES(?,?,?,?,?,?,?,?,1,?)',[articleNo,description,levels.target_stock,levels.minimum_stock,0,unit,x.location||'',x.machine||'',stamp()]);
-    a={id:Number(scalar('SELECT last_insert_rowid()')||0)};createdByNo.set(articleNo,a.id);
-    const machineNames=setArticleMachineIds(Number(a.id),Array.isArray(x.machine_ids)?x.machine_ids:(x.machine?[x.machine]:[]));
-    recordMaterialCreationMovement(Number(a.id),enteredInitial,{technician:d.technician||setting('primary_technician','Techniker'),machine:machineNames.join(', '),source:'Materialanlage / CSV-SAP-Import',note:'Neues Material über Import angelegt – Anfangsbestand'});
-    audit(d.technician||setting('primary_technician','Techniker'),'ANLAGE','Artikel',String(a.id),`Artikelnummer: ${articleNo}\nBezeichnung: ${description}\nQuelle: CSV/SAP-Import`);created++;
-   }else if(!a){skipped.push({article_no:articleNo,reason:'Bezeichnung fehlt'});continue}
-  }
-  if(isCreateAndBook){
-   const allBook=[...knownItems,...newItems];
-   for(const x of allBook){
-    const articleNo=String(x.article_no||'').trim();const a=rows('SELECT id FROM articles WHERE article_no=?',[articleNo])[0];
-    if(a&&Number(x.quantity)>0){bookItems([{article_id:Number(a.id),quantity:Number(x.quantity)}],'IN',{...d,source:'SAP-XLSX/CSV-Import'});booked++}
+  let created=0,booked=0,skipped=[],adjusted=0;
+  runTransaction(()=>{
+   for(const x of newItems){
+    const articleNo=String(x.article_no||'').trim(),description=String(x.description||'').trim(),unit=String(x.unit||'Stk.').trim()||'Stk.';
+    if(!articleNo){skipped.push({article_no:'',reason:'Artikelnummer fehlt'});continue}
+    let a=rows('SELECT id FROM articles WHERE article_no=?',[articleNo])[0];
+    if(!a&&description){
+     if(!String(x.location||'').trim()){skipped.push({article_no:articleNo,reason:'Lagerort fehlt'});continue}
+     const levels=AppRules.normalizeStockLevels(x.target_stock,x.minimum_stock,unit);if(levels.adjusted)adjusted++;
+     const enteredInitial=AppRules.normalizeQuantity(x.initial_stock,unit);
+     run('INSERT INTO articles(article_no,description,target_stock,minimum_stock,initial_stock,unit,location,machine,active,created_at) VALUES(?,?,?,?,?,?,?,?,1,?)',[articleNo,description,levels.target_stock,levels.minimum_stock,0,unit,x.location||'',x.machine||'',stamp()]);
+     a={id:Number(scalar('SELECT last_insert_rowid()')||0)};
+     const machineNames=setArticleMachineIds(Number(a.id),Array.isArray(x.machine_ids)?x.machine_ids:(x.machine?[x.machine]:[]));
+     if(d.__test_fail_step==='after_article')throw Error('TEST_FAIL_AFTER_ARTICLE');
+     recordMaterialCreationMovement(Number(a.id),enteredInitial,{technician:d.technician||setting('primary_technician','Techniker'),machine:machineNames.join(', '),source:'Materialanlage / CSV-SAP-Import',note:'Neues Material über Import angelegt – Anfangsbestand'});
+     audit(d.technician||setting('primary_technician','Techniker'),'ANLAGE','Artikel',String(a.id),`Artikelnummer: ${articleNo}\nBezeichnung: ${description}\nQuelle: CSV/SAP-Import`);created++;
+    }else if(!a){skipped.push({article_no:articleNo,reason:'Bezeichnung fehlt'});continue}
    }
-  }
+   if(isCreateAndBook){
+    const allBook=[...knownItems,...newItems];
+    for(const x of allBook){const articleNo=String(x.article_no||'').trim();const a=rows('SELECT id FROM articles WHERE article_no=?',[articleNo])[0];if(a&&Number(x.quantity)>0){bookItems([{article_id:Number(a.id),quantity:Number(x.quantity)}],'IN',{...d,source:'SAP-XLSX/CSV-Import'});booked++}}
+   }
+   if(d.__test_fail_step==='before_commit')throw Error('TEST_FAIL_BEFORE_COMMIT');
+  });
   await persist();return response({ok:true,created,booked,skipped,levels_adjusted:adjusted},201)
  }
  throw Error('Funktion noch nicht zugeordnet: '+p);
@@ -1936,7 +1957,7 @@ window.LVStorageModeState={
   await ready;const m=await ig(METAKEY)||{},mode=storageMode(),local=currentDbState();
   let cloudRevision=m.lastCloudRevision===undefined?null:Number(m.lastCloudRevision),cloudStatus='missing',permissionRequired=false;
   if(['cloud','local_folder'].includes(mode)&&handle){const c=await inspectCloudDatabase();cloudStatus=c.status;permissionRequired=c.status===SyncCore.CloudStatus.PERMISSION_DENIED;if(c.status===SyncCore.CloudStatus.OK){cloudRevision=Number(c.state.revision||0);m.lastCloudRevision=cloudRevision;m.lastCloudRevisionId=c.state.revision_id;await ip(METAKEY,m)}}
-  return {mode,configuredMode:mode,connected:!!handle,folder:handle?.name||'',dirty:!!m.dirty,lastSync:Number(m.lastSync||0),localRevision:Number(local.revision||0),cloudRevision,cloudStatus,permissionRequired,syncErrorCode:m.syncErrorCode||'',syncErrorMessage:m.syncErrorMessage||'',autoSync:['cloud','local_folder'].includes(mode)&&!!handle&&!permissionRequired};
+  return {mode,configuredMode:mode,connected:!!handle,folder:handle?.name||'',dirty:!!m.dirty,lastSync:Number(m.lastSync||0),localRevision:Number(local.revision||0),cloudRevision,cloudStatus,permissionRequired,syncing:!!syncQueue.running,conflict:!!m.writeBlocked&&cloudStatus===SyncCore.CloudStatus.OK,syncErrorCode:m.syncErrorCode||'',syncErrorMessage:m.syncErrorMessage||'',autoSync:['cloud','local_folder'].includes(mode)&&!!handle&&!permissionRequired};
  },
  async chooseLocalFolder(){
   await ready;if(!('showDirectoryPicker'in window))throw Error('Dieser Browser unterstützt keine dauerhafte Ordnerauswahl.');
@@ -2040,7 +2061,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','64');
+  setSetting('database_version','65');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
@@ -2121,5 +2142,5 @@ window.LVSession={
  }
 };
 
-window.LVBackend={ready,db:()=>db,persist};ready.then(syncStatus);
+window.LVBackend={ready,db:()=>db,persist,invalidateAdminSession:()=>adminSessions.revoke()};ready.then(syncStatus);
 })();

@@ -13,10 +13,10 @@
   return isWholeNumberUnit(unit)?Math.round(n):Math.round(n*1000000)/1000000;
  }
  function normalizeStockLevels(targetStock,minimumStock,unit='Stk.'){
-  const target=normalizeQuantity(targetStock,unit);
-  let minimum=normalizeQuantity(minimumStock,unit);
-  const adjusted=minimum<target;
-  if(adjusted)minimum=target;
+  let target=normalizeQuantity(targetStock,unit);
+  const minimum=normalizeQuantity(minimumStock,unit);
+  const adjusted=minimum>target;
+  if(adjusted)target=minimum;
   return {target_stock:target,minimum_stock:minimum,adjusted};
  }
  function lowStockItems(items){
@@ -28,10 +28,10 @@
  }
  function materialRequestSuggestion(article){
   const stock=Math.max(0,Number(article?.stock||0));
-  const target=Math.max(0,Number(article?.target_stock||0));
   const minimum=Math.max(0,Number(article?.minimum_stock||0));
-  const goal=Math.max(target,minimum);
-  return {goal,suggested_quantity:Math.max(0,goal-stock),needed:stock<goal};
+  const target=Math.max(minimum,Math.max(0,Number(article?.target_stock||0)));
+  const needed=stock<minimum;
+  return {goal:target,suggested_quantity:needed?Math.max(0,target-stock):0,needed};
  }
  return {isWholeNumberUnit,normalizeQuantity,normalizeStockLevels,lowStockItems,lowStockSummary,materialRequestSuggestion};
 });

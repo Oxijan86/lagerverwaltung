@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V64 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V65 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -64,6 +64,16 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 
 .prompt-code,.prompt-pre{user-select:text;-webkit-user-select:text}.prompt-code{white-space:pre-wrap;word-break:normal}.prompt-box{margin:12px 0}.prompt-actions{align-items:center}.prompt-copy-status{font-weight:700;color:#12613d}
 .level-input{min-width:82px;max-width:110px}.level-save{white-space:nowrap}.inline-level-message{font-size:12px;margin-top:4px}.dashboard-low-actions{margin-top:10px}
+
+/* V65 Responsive & Accessibility */
+:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+button,input,select,textarea{font:inherit}button.primary,button.secondary,button.danger,.icon-button{min-height:44px}
+.dashboard-table table,#dash table{min-width:0}.machine-chip-list{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.machine-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #b9c4ce;border-radius:999px;padding:7px 10px;background:#f8fafc}.machine-chip input{width:auto}.material-save-bar{position:sticky;bottom:0;background:#fff;padding:10px 0;display:flex;gap:10px;z-index:3;border-top:1px solid #d9e0e6}
+.level-dirty{box-shadow:0 0 0 2px #f59e0b inset}.level-saved{color:#12613d;font-weight:700;font-size:12px}.sync-state-badge{max-width:280px;white-space:normal}.advanced-sync{margin-top:12px;border-top:1px solid #d9e0e6;padding-top:12px}
+@media(max-width:600px){header{padding:8px 10px}header h1{font-size:16px;line-height:1.15}.header-db-updated{display:none}.grid{grid-template-columns:1fr 1fr}.card{padding:12px}main{padding:10px}textarea#dtext,textarea#stext{min-height:105px}.cart-row,.search-row{grid-template-columns:1fr!important}.cart-row .qty,.cart-row button{width:100%}#dash .tablewrap table{min-width:620px}#articles .tablewrap table{min-width:760px}.mobile-menu-button{min-width:52px}.material-save-bar{bottom:0}.modal-card,.setup-card{margin:1vh auto;padding:14px}.toolbar>button{flex:1 1 auto}}
+
+.form-section-title{grid-column:1/-1;font-weight:800;font-size:15px;margin-top:6px;padding-top:8px;border-top:1px solid #e4e9ed}.formgrid .form-section-title:first-child{border-top:0;margin-top:0}.nav-group-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;padding:12px 10px 4px}.mode-badge.conflict{background:#fee2e2;color:#991b1b}.mode-badge.pending{background:#fff7ed;color:#9a3412}.mode-badge.syncing{background:#eff6ff;color:#1d4ed8}
+@media(max-width:600px){#mainNav .nav-group-label{display:block}.action-buttons{display:grid;grid-template-columns:1fr 1fr}.action-buttons .icon-button{width:44px;height:44px}.search-row .article-search,.search-row .qty,.search-row button{min-width:0}.prompt-pre{max-height:45vh;overflow:auto}}
 </style></head><body>
 
 
@@ -277,8 +287,8 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">64.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" style="font-size:12px;opacity:.9">Datenbank zuletzt aktualisiert: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
-<button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('articles',this)">📦 Lagerbestand</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('audit',this)">🛡 Audit</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">65.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
 <div class="card"><h3>Letzte 20 Buchungen</h3><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th></tr></thead><tbody id="dashRecent"></tbody></table></div></div>
@@ -292,8 +302,8 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <section id="newmaterial" class="view"><h2>Neues Material anlegen</h2>
 <p class="small">Neue Materialien können ohne Administratorpasswort angelegt werden. Bestehende Artikel und zentrale Stammdaten bleiben geschützt.</p>
 <div id="newform"><div class="card">
-<div class="formgrid">
-<label>Artikelnummer *<input id="nm_no"></label>
+<div class="formgrid"><div class="form-section-title">Hauptangaben</div>
+<label>Artikelnummer *<input id="nm_no" autocomplete="off" oninput="checkNewArticleNumber()"><span id="nm_no_status" class="small"></span></label>
 <label>Bezeichnung *<input id="nm_desc"></label>
 <label>Anfangsbestand / Anzahl *<input id="nm_initial" type="number" min="0" step="0.01" value="0"></label>
 <label>Einheit *<select id="nm_unit" onchange="adjustNewMaterialUnit()">
@@ -302,10 +312,10 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <option>Packung</option><option>Karton</option>
 </select></label>
 <label>Sollbestand *<input id="nm_target" type="number" min="0" step="0.01" value="0" onchange="normalizeMaterialLevelFields('nm')"></label>
-<label>Mindestbestand *<input id="nm_min" type="number" min="0" step="0.01" value="0" onchange="normalizeMaterialLevelFields('nm')"><span class="small">Mindestbestand ≥ Sollbestand</span></label>
+<label>Mindestbestand *<input id="nm_min" type="number" min="0" step="0.01" value="0" onchange="normalizeMaterialLevelFields('nm')"><span class="small">Mindestbestand ≤ Sollbestand</span></label>
 <label>Lagerort *<select id="nm_location"></select><input id="nm_location_new" placeholder="Neuen Lagerort eingeben" oninput="showSimilarMaster('location','nm')"><div id="nm_location_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('location','nm')">+ Lagerort anlegen</button></label>
-<label>Maschinen <span class="small">(Mehrfachauswahl möglich)</span><select id="nm_machine" multiple size="4"></select><input id="nm_machine_new" placeholder="Neue Maschinenbezeichnung" oninput="showSimilarMaster('machine','nm')"><div id="nm_machine_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('machine','nm')">+ Maschine anlegen</button></label>
-<label>Hersteller<input id="nm_manufacturer"></label>
+<label>Maschinen <span class="small">(Mehrfachauswahl möglich)</span><div id="nm_machine_chips" class="machine-chip-list"></div><select id="nm_machine" multiple size="4" style="display:none"></select><input id="nm_machine_new" placeholder="Neue Maschinenbezeichnung" oninput="showSimilarMaster('machine','nm')"><div id="nm_machine_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('machine','nm')">+ Maschine anlegen</button></label>
+<div class="form-section-title">Optionale Zusatzangaben</div><label>Hersteller<input id="nm_manufacturer"></label>
 <label>Lieferant<input id="nm_supplier"></label>
 <label>Lieferanten-Artikelnummer<input id="nm_supplier_no"></label>
 <label>EAN / Barcode<input id="nm_barcode"></label>
@@ -315,11 +325,10 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <label>Aktiv<select id="nm_active"><option value="true">Ja</option><option value="false">Nein</option></select></label>
 <label style="grid-column:1/-1">Bemerkung<textarea id="nm_notes"></textarea></label>
 </div>
-<button class="primary" onclick="createMaterial()">Material speichern</button>
-<button class="secondary" onclick="clearMaterialForm()">Formular leeren</button>
+<div class="material-save-bar"><button class="primary" onclick="createMaterial()">Material speichern</button><button class="secondary" onclick="clearMaterialForm(true)">Formular leeren</button></div>
 <div id="nm_msg" class="message"></div></div></div></section>
 
-<section id="articles" class="view"><h2>Lagerbestand</h2><div class="toolbar"><input id="search" placeholder="Artikelnummer, Bezeichnung, Lagerort oder Maschine" oninput="scheduleLiveStockSearch()"><div class="small">Die Suche startet automatisch während der Eingabe – auch auf dem Smartphone.</div><button class="primary" onclick="loadArticles()">Suchen</button></div><p class="small">Soll- und Mindestbestand können hier ohne Passwort geändert werden. Istbestand und übrige Stammdaten bleiben unveränderbar.</p><div id="articleLevelsMsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Soll</th><th>Mindest.</th><th>Ist</th><th>Differenz</th><th>Lagerort</th><th>Maschine</th><th>Aktion</th></tr></thead><tbody id="arows"></tbody></table></div></section>
+<section id="articles" class="view"><h2>Lagerbestand</h2><div class="toolbar"><input id="search" placeholder="Artikelnummer, Bezeichnung, Lagerort oder Maschine" oninput="scheduleLiveStockSearch()"><div class="small">Die Suche startet automatisch während der Eingabe – auch auf dem Smartphone.</div><button class="primary" onclick="loadArticles()">Suchen</button></div><p class="small">Soll- und Mindestbestand können hier ohne Passwort geändert werden. Istbestand und übrige Stammdaten bleiben unveränderbar.</p><div class="toolbar"><button class="primary" onclick="saveAllLevelChanges()">Alle Änderungen speichern</button></div><div id="articleLevelsMsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Soll</th><th>Mindest.</th><th>Ist</th><th>Differenz</th><th>Lagerort</th><th>Maschine</th><th>Aktion</th></tr></thead><tbody id="arows"></tbody></table></div></section>
 <section id="in" class="view"><h2>Einbuchung</h2>
 <div class="card"><h3>Manuelle Einbuchung</h3>
 <div class="formgrid"><label>Datum<input type="date" id="idate"></label>
@@ -576,15 +585,13 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 <button class="secondary" id="syncReauthorizeButton" onclick="LVStorageMode.reauthorize()" style="display:none">🔐 Ordnerzugriff erneut freigeben</button>
 <button class="secondary" onclick="LVSync.load()">Stand aus Cloud laden</button>
 <button class="secondary" onclick="LVSync.save()">Lokalen Stand in Cloud speichern</button>
-<button class="danger" onclick="LVSync.forceSave()">Cloud-Stand ausdrücklich überschreiben</button>
-<button class="secondary" onclick="LVStorageMode.changeFolder()">Anderen Cloud-Ordner auswählen</button>
-<button class="secondary" onclick="LVStorageMode.enableLocal()">🏠 In lokalen Modus wechseln</button>
+<details class="advanced-sync"><summary><b>Erweiterte Funktionen</b></summary><div class="toolbar" style="margin-top:10px"><button class="danger" onclick="LVSync.forceSave()">Cloud-Stand ausdrücklich überschreiben</button><button class="secondary" onclick="LVStorageMode.changeFolder()">Anderen Cloud-Ordner auswählen</button><button class="secondary" onclick="LVStorageMode.enableLocal()">🏠 In lokalen Modus wechseln</button></div></details>
 </div>
 <div id="syncMsg" class="message"></div>
 </div>
 <div class="card"><h3>Manuelle Rückfalllösung</h3><div class="toolbar">
 <button class="secondary" onclick="LVSync.exportDb()">SQLite-Datei exportieren</button>
-<label class="filebutton">SQLite-Datei importieren<input type="file" accept=".db,.sqlite,.sqlite3" onchange="LVSync.importDb(this)"></label>
+
 </div><p class="small">Export und Import bleiben in beiden Modi verfügbar.</p></div>
 <div class="card low"><h3>Konfliktschutz</h3><p>Jeder Kollege sollte eine eigene Datenbank und einen eigenen Cloud-Ordner verwenden. Dieselbe Datenbank darf auf PC und Smartphone nicht gleichzeitig bearbeitet werden.</p></div>
 </section>
@@ -663,12 +670,12 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
    <label>Bezeichnung / Beschreibung *<input id="ur_desc"></label>
    <label>Anfangsbestand / Istbestand<input id="ur_initial" type="number" min="0" step="1" value="0"></label>
    <label>Sollbestand<input id="ur_target" type="number" min="0" step="1" value="0" onchange="normalizeMaterialLevelFields('ur')"></label>
-   <label>Mindestbestand<input id="ur_min" type="number" min="0" step="1" value="0" onchange="normalizeMaterialLevelFields('ur')"><span class="small">Mindestbestand ≥ Sollbestand</span></label>
+   <label>Mindestbestand<input id="ur_min" type="number" min="0" step="1" value="0" onchange="normalizeMaterialLevelFields('ur')"><span class="small">Mindestbestand ≤ Sollbestand</span></label>
    <label>Einheit<select id="ur_unit" onchange="adjustUnknownRegistrationUnit()">
     <option>Stk.</option><option>Liter</option><option>ml</option><option>kg</option><option>g</option><option>m</option><option>cm</option><option>mm</option><option>Satz</option><option>Rolle</option><option>Packung</option><option>Karton</option>
    </select></label>
    <label>Lagerort<select id="ur_location"></select><input id="ur_location_new" placeholder="Neuen Lagerort eingeben" oninput="showSimilarMaster('location','ur')"><div id="ur_location_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('location','ur')">+ Lagerort anlegen</button></label>
-   <label>Maschinen <span class="small">(Mehrfachauswahl möglich)</span><select id="ur_machine" multiple size="4"></select><input id="ur_machine_new" placeholder="Neue Maschinenbezeichnung" oninput="showSimilarMaster('machine','ur')"><div id="ur_machine_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('machine','ur')">+ Maschine anlegen</button></label>
+   <label>Maschinen <span class="small">(Mehrfachauswahl möglich)</span><div id="ur_machine_chips" class="machine-chip-list"></div><select id="ur_machine" multiple size="4" style="display:none"></select><input id="ur_machine_new" placeholder="Neue Maschinenbezeichnung" oninput="showSimilarMaster('machine','ur')"><div id="ur_machine_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('machine','ur')">+ Maschine anlegen</button></label>
    <label>Hersteller<input id="ur_manufacturer"></label>
    <label>Lieferant<input id="ur_supplier"></label>
    <label>Lieferanten-Artikelnummer<input id="ur_supplier_no"></label>
@@ -720,19 +727,16 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 
 <script>
 window.LVAdminSession = window.LVAdminSession || {
-  unlocked: sessionStorage.getItem('lv_admin_unlocked') === '1',
-  unlock() {
-    this.unlocked = true;
-    sessionStorage.setItem('lv_admin_unlocked','1');
-  },
-  lock() {
-    this.unlocked = false;
-    sessionStorage.removeItem('lv_admin_unlocked');
-  }
+  token: sessionStorage.getItem('lv_admin_token') || '',
+  get unlocked(){return !!this.token},
+  unlock(token){this.token=String(token||'');if(this.token)sessionStorage.setItem('lv_admin_token',this.token);else sessionStorage.removeItem('lv_admin_token')},
+  lock(){this.token='';sessionStorage.removeItem('lv_admin_token');if(window.LVBackend?.invalidateAdminSession)window.LVBackend.invalidateAdminSession()}
 };
 </script>
 
 <script src="app_rules.js"></script>
+<script src="auth_core.js"></script>
+<script src="transaction_core.js"></script>
 <script src="help_core.js"></script>
 <script src="sync_core.js"></script>
 <script src="local_backend.js"></script>
@@ -766,9 +770,9 @@ function formatAppDate(value,withTime=false){
  if(withTime&&m[4])date+=` ${m[4]}:${m[5]}${m[6]?':'+m[6]:''}`;
  return date;
 }
-async function api(u,o={}){await LVBackend.ready;const h={'Content-Type':'application/json',...(o.headers||{})};if(window.LVAdminSession?.unlocked)h['X-LV-Admin-Unlocked']='1';let r=await fetch(u,{...o,headers:h});let d=await r.json();if(!r.ok){const e=Error(d.error||d.message||'Fehler');e.data=d;e.status=r.status;throw e}return d}
+async function api(u,o={}){await LVBackend.ready;const h={'Content-Type':'application/json',...(o.headers||{})};if(window.LVAdminSession?.token)h['X-LV-Admin-Token']=window.LVAdminSession.token;let r=await fetch(u,{...o,headers:h});let d=await r.json();if(!r.ok){const e=Error(d.error||d.message||'Fehler');e.data=d;e.status=r.status;throw e}return d}
 function msg(e,t,ok){e.textContent=t;e.className='message '+(ok?'ok':'error')}
-function show(id,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()}
+function show(id,b){const current=document.querySelector('.view.active')?.id;if(current&&current!==id&&levelDrafts?.size&&!confirm('Es gibt ungespeicherte Soll-/Mindestbestände. Ansicht trotzdem verlassen?'))return;document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()}
 
 async function master(){
  md=await api('/api/masterdata');
@@ -787,14 +791,14 @@ async function loadAppInfo(){
   infoMovements.textContent=d.movements;
   document.title='Lagerverwaltung Lovrencic – Version '+d.version;
  }catch(e){
-  appVersion.textContent='64.0';
-  infoVersion.textContent='64.0';
+  appVersion.textContent='65.0';
+  infoVersion.textContent='65.0';
  }
 }
 let dashboardLowItems=[];
 function renderDashboardLow(showAll=false){
  const list=showAll?dashboardLowItems:dashboardLowItems.slice(0,8);
- dashLow.innerHTML=list.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td><input class="level-input" id="dash-target-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.target_stock,x.unit)}" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><input class="level-input" id="dash-min-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.minimum_stock,x.unit)}" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><button class="secondary level-save" onclick="saveArticleLevels(${x.id},'dash')">Speichern</button></td></tr>`).join('')||'<tr><td colspan="6">Kein Unterbestand</td></tr>';
+ dashLow.innerHTML=list.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td><input class="level-input" id="dash-target-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.target_stock,x.unit)}" oninput="markLevelDraft('dash',${x.id})" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><input class="level-input" id="dash-min-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.minimum_stock,x.unit)}" oninput="markLevelDraft('dash',${x.id})" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><button class="secondary level-save" onclick="saveArticleLevels(${x.id},'dash')">Speichern</button><div id="dash-level-status-${x.id}" class="level-saved"></div></td></tr>`).join('')||'<tr><td colspan="6">Kein Unterbestand</td></tr>';
  dashLowMore.style.display=!showAll&&dashboardLowItems.length>8?'inline-flex':'none';
 }
 async function dash(){
@@ -805,7 +809,7 @@ async function dash(){
 }
 async function loadArticles(){
  arts=await api('/api/articles?q='+encodeURIComponent(search.value||''));
- arows.innerHTML=arts.filter(a=>a.active).map(a=>`<tr class="${a.stock<a.minimum_stock?'low':''}"><td>${esc(a.article_no)}</td><td>${esc(a.description)}</td><td><input class="level-input" id="stock-target-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.target_stock,a.unit)}" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td><td><input class="level-input" id="stock-min-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.minimum_stock,a.unit)}" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td><td><b>${n(a.stock)}</b></td><td>${n(a.stock-a.target_stock)}</td><td>${esc(a.location)}</td><td>${esc(a.machine)}</td><td><button class="secondary level-save" onclick="saveArticleLevels(${a.id},'stock')">Speichern</button></td></tr>`).join('')
+ arows.innerHTML=arts.filter(a=>a.active).map(a=>`<tr class="${a.stock<a.minimum_stock?'low':''}"><td>${esc(a.article_no)}</td><td>${esc(a.description)}</td><td><input class="level-input" id="stock-target-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.target_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td><td><input class="level-input" id="stock-min-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.minimum_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td><td><b>${n(a.stock)}</b></td><td>${n(a.stock-a.target_stock)}</td><td>${esc(a.location)}</td><td>${esc(a.machine)}</td><td><button class="secondary level-save" onclick="saveArticleLevels(${a.id},'stock')">Speichern</button><div id="stock-level-status-${a.id}" class="level-saved"></div></td></tr>`).join('')
 }
 function normalizeRowLevels(prefix,id,unit){
  const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`);if(!target||!minimum)return false;
@@ -815,14 +819,19 @@ function normalizeMaterialLevelFields(prefix){
  const target=document.getElementById(`${prefix}_target`),minimum=document.getElementById(`${prefix}_min`),unit=document.getElementById(`${prefix}_unit`);if(!target||!minimum)return false;
  const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,unit?.value||'Stk.');target.value=levels.target_stock;minimum.value=levels.minimum_stock;return levels.adjusted;
 }
-async function saveArticleLevels(id,prefix){
- const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`);if(!target||!minimum)return;
+async function saveArticleLevels(id,prefix,fromBatch=false){
+ const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`),status=document.getElementById(`${prefix}-level-status-${id}`);if(!target||!minimum)return;
+ const sourceArticle=prefix==='dash'?dashboardLowItems.find(x=>Number(x.id)===Number(id)):arts.find(x=>Number(x.id)===Number(id));const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,sourceArticle?.unit||'Stk.');target.value=levels.target_stock;minimum.value=levels.minimum_stock;
+ let saved=false;
  try{
-  const d=await api('/api/articles/levels',{method:'POST',body:JSON.stringify({id,target_stock:Number(target.value||0),minimum_stock:Number(minimum.value||0)})});
-  const message=d.adjusted?'Gespeichert. Mindestbestand wurde automatisch auf den Sollbestand angehoben.':'Soll- und Mindestbestand wurden gespeichert.';
-  msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,message,true);
-  await dash();await loadArticles();await loadReq();if(window.LVStorageMode)await LVStorageMode.refresh();
- }catch(e){msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,e.message,false)}
+  const d=await api('/api/articles/levels',{method:'POST',body:JSON.stringify({id,target_stock:Number(target.value||0),minimum_stock:Number(minimum.value||0)})});saved=true;
+  levelDrafts.delete(levelKey(prefix,id));target.classList.remove('level-dirty');minimum.classList.remove('level-dirty');if(status)status.textContent='Gespeichert ✓';
+  const text=d.levels_adjusted?'Gespeichert. Sollbestand wurde automatisch auf den Mindestbestand angehoben.':'Bestandsgrenzen gespeichert.';msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,text,true);
+  const drafts=new Map(levelDrafts);
+  const refreshed=await Promise.allSettled([dash(),loadArticles(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]);
+  levelDrafts=drafts;restoreLevelDrafts();
+  if(refreshed.some(x=>x.status==='rejected'))msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,'Gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true);
+ }catch(e){if(!saved)msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,e.message,false)}
 }
 
 async function addRow(t){
@@ -867,13 +876,13 @@ async function confirmPossibleDuplicate(payload){
 }
 async function ensureAdminPassword(){
  if(sessionStorage.admin==='1')return true;
- sessionStorage.removeItem('adminPassword');
+ 
  const password=prompt('Administratorpasswort:');
  if(!password)return false;
  try{
   const result=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password})});
   if(!result.ok){alert('Administratorpasswort ist falsch.');return false}
-  sessionStorage.setItem('adminPassword',password);
+  window.LVAdminSession?.unlock(result.token);sessionStorage.admin='1';
   return true;
  }catch(e){
   alert(e.message||'Administratorpasswort ist falsch.');
@@ -948,7 +957,7 @@ function renderDeliveryPreviewRows(){
   <td title="Artikel im Lagerbestand gefunden">✅</td>
   <td>${esc(x.article_no)}</td><td>${esc(x.description)}</td>
   <td><input type="number" min="0.01" step="0.01" value="${Number(x.quantity)}" onchange="updateExtractedQuantity('delivery',${i},this.value)"></td>
-  <td><button class="danger icon-button" title="Position entfernen" onclick="removeExtractedItem('delivery',${i})">🗑️</button></td>
+  <td><button class="danger icon-button" title="Position entfernen" aria-label="Position entfernen" onclick="removeExtractedItem('delivery',${i})">🗑️</button></td>
  </tr>`).join('');
  dcommit.disabled=!deliveryp.length;
  if(deliveryExtractedSummary.style.display!=='none'){
@@ -963,7 +972,7 @@ function renderServicePreviewRows(){
   <td title="Artikel im Lagerbestand gefunden">✅</td>
   <td>${esc(x.article_no)}</td><td>${esc(x.description)}</td>
   <td><input type="number" min="0.01" step="0.01" value="${Number(x.quantity)}" onchange="updateExtractedQuantity('service',${i},this.value)"></td>
-  <td><button class="danger icon-button" title="Position entfernen" onclick="removeExtractedItem('service',${i})">🗑️</button></td>
+  <td><button class="danger icon-button" title="Position entfernen" aria-label="Position entfernen" onclick="removeExtractedItem('service',${i})">🗑️</button></td>
  </tr>`).join('');
  scommit.disabled=!servicep.length;
 }
@@ -1039,7 +1048,7 @@ async function openUnknownRegistration(source,index){
  ur_no.value=item.article_no||'';ur_desc.value=item.description||'';ur_initial.value='0';ur_target.value='0';ur_min.value='0';ur_unit.value='Stk.';
  ur_manufacturer.value='';ur_supplier.value='';ur_supplier_no.value='';ur_barcode.value='';ur_notes.value='';ur_active.value='true';
  ur_location.innerHTML='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
- ur_machine.innerHTML=machineMultiOptions([]);ur_location_new.value='';ur_machine_new.value='';ur_location_suggestions.innerHTML='';ur_machine_suggestions.innerHTML='';
+ ur_machine.innerHTML=machineMultiOptions([]);renderMachineChips('ur');ur_location_new.value='';ur_machine_new.value='';ur_location_suggestions.innerHTML='';ur_machine_suggestions.innerHTML='';
  if(source==='service'&&currentServiceMachine()){
   const serviceMachine=currentServiceMachine();const found=(md.machines||[]).find(x=>normLabel(x.name)===normLabel(serviceMachine));
   if(found){const opt=[...ur_machine.options].find(o=>Number(o.value)===Number(found.id));if(opt)opt.selected=true}
@@ -1062,7 +1071,7 @@ async function saveUnknownRegistration(){
   const created=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});
   const source=st.source;closeUnknownRegistration();arts=[];await master();await dash();await loadRecentMovements('IN');
   if(source==='delivery')await deliveryPreview(true);else await servicePreview(true);
-  const target=source==='delivery'?dmsg:smsg;msg(target,(created.levels_adjusted||adjusted)?'Neues Material wurde registriert. Mindestbestand wurde automatisch auf den Sollbestand angehoben.':'Neues Material wurde registriert und in die Buchung übernommen.',true);
+  const target=source==='delivery'?dmsg:smsg;msg(target,(created.levels_adjusted||adjusted)?'Neues Material wurde registriert. Sollbestand wurde automatisch auf den Mindestbestand angehoben.':'Neues Material wurde registriert und in die Buchung übernommen.',true);
  }catch(e){msg(ur_msg,e.message,false)}
 }
 async function createUnknown(source){
@@ -1139,7 +1148,7 @@ async function csvCommit(){
 function renderInventory(d){inventoryData=d.items||[];invrows.innerHTML=inventoryData.map(x=>`<tr data-id="${x.article_id}"><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.system_stock)}</td><td><input type="number" min="0" step=".01" value="${x.counted_stock}"></td><td>${n(x.difference)}</td></tr>`).join('');inverrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';invcommit.disabled=!inventoryData.length;msg(invmsg,inventoryData.length+' Inventurposition(en) erkannt, '+(d.errors||[]).length+' Fehler.',inventoryData.length>0)}
 async function inventoryPreview(){try{renderInventory(await api('/api/inventory/preview',{method:'POST',body:JSON.stringify({text:invtext.value})}))}catch(e){msg(invmsg,e.message,false)}}
 async function loadInventoryFile(input){let f=input.files[0];if(!f)return;try{let buffer=await f.arrayBuffer(),bytes=new Uint8Array(buffer),binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));renderInventory(await api('/api/inventory/file-preview',{method:'POST',body:JSON.stringify({filename:f.name,content_base64:btoa(binary)})}))}catch(e){msg(invmsg,e.message,false)}}
-async function inventoryCommit(){let password=sessionStorage.adminPassword||prompt('Passwort für Stammdaten:');if(!password)return;let items=[...invrows.children].map(r=>({article_id:+r.dataset.id,counted_stock:+r.children[3].firstChild.value}));try{let d=await api('/api/inventory/commit',{method:'POST',body:JSON.stringify({password,items,technician:(md.technicians?.[0]?.name||'Techniker'),movement_date:td()})});sessionStorage.adminPassword=password;msg(invmsg,`${d.changed} Bestandskorrektur(en) gebucht, ${d.unchanged} unverändert.`,true);inventoryData=[];invcommit.disabled=true;arts=[];await loadArticles();await dash();await loadRecentMovements('IN');await loadRecentMovements('OUT')}catch(e){msg(invmsg,e.message,false)}}
+async function inventoryCommit(){let password='';if(!window.LVAdminSession?.unlocked){password=prompt('Passwort für Stammdaten:')||'';if(!password)return;}let items=[...invrows.children].map(r=>({article_id:+r.dataset.id,counted_stock:+r.children[3].firstChild.value}));try{let d=await api('/api/inventory/commit',{method:'POST',body:JSON.stringify({password,items,technician:(md.technicians?.[0]?.name||'Techniker'),movement_date:td()})});msg(invmsg,`${d.changed} Bestandskorrektur(en) gebucht, ${d.unchanged} unverändert.`,true);inventoryData=[];invcommit.disabled=true;arts=[];await loadArticles();await dash();await loadRecentMovements('IN');await loadRecentMovements('OUT')}catch(e){msg(invmsg,e.message,false)}}
 
 function insertDeliveryPrompt(){
  const prompt=`IMPORTTYP: EINBUCHUNG
@@ -1248,7 +1257,7 @@ async function serviceCommit(){
  }catch(e){msg(smsg,e.message,false)}
 }
 
-async function loadReq(){let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.order_target??Math.max(Number(x.target_stock||0),Number(x.minimum_stock||0)))}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}
+async function loadReq(){let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.order_target??Number(x.target_stock||0))}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}
 function reqItems(){return [...rrows.children].filter(r=>r.children[0].firstChild.checked).map(r=>({article_id:+r.dataset.id,quantity:+r.children[5].firstChild.value}))}
 async function previewReq(){
  try{
@@ -1421,15 +1430,15 @@ async function loadRecentMovements(type){
   if(window.recentInRows)recentInRows.innerHTML=data.map(x=>`<tr>
    <td>#${x.id}</td><td>${esc(formatAppDate(x.movement_date))}</td><td>${esc(x.article_no)}</td>
    <td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.technician)}</td><td>${esc(x.note||'')}</td>
-   <td><div class="action-buttons"><button class="secondary icon-button" title="Einbuchung korrigieren" onclick="openMovementEditor(${x.id})">✏️</button>
-   <button class="danger icon-button" title="Einbuchung löschen" onclick="deleteMovement(${x.id})">🗑️</button></div></td></tr>`).join('')||'<tr><td colspan="8">Keine Einbuchungen vorhanden.</td></tr>';
+   <td><div class="action-buttons"><button class="secondary icon-button" title="Einbuchung korrigieren" aria-label="Einbuchung korrigieren" onclick="openMovementEditor(${x.id})">✏️</button>
+   <button class="danger icon-button" title="Einbuchung löschen" aria-label="Einbuchung löschen" onclick="deleteMovement(${x.id})">🗑️</button></div></td></tr>`).join('')||'<tr><td colspan="8">Keine Einbuchungen vorhanden.</td></tr>';
  }else{
   recentOutData=data;
   if(window.recentOutRows)recentOutRows.innerHTML=data.map(x=>`<tr>
    <td>#${x.id}</td><td>${esc(formatAppDate(x.movement_date))}</td><td>${esc(x.article_no)}</td>
    <td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.customer)}</td><td>${esc(x.machine)}</td><td>${esc(x.technician)}</td>
-   <td><div class="action-buttons"><button class="secondary icon-button" title="Entnahme korrigieren" onclick="openMovementEditor(${x.id})">✏️</button>
-   <button class="danger icon-button" title="Entnahme löschen" onclick="deleteMovement(${x.id})">🗑️</button></div></td></tr>`).join('')||'<tr><td colspan="9">Keine Entnahmen vorhanden.</td></tr>';
+   <td><div class="action-buttons"><button class="secondary icon-button" title="Entnahme korrigieren" aria-label="Entnahme korrigieren" onclick="openMovementEditor(${x.id})">✏️</button>
+   <button class="danger icon-button" title="Entnahme löschen" aria-label="Entnahme löschen" onclick="deleteMovement(${x.id})">🗑️</button></div></td></tr>`).join('')||'<tr><td colspan="9">Keine Entnahmen vorhanden.</td></tr>';
  }
 }
 
@@ -1466,7 +1475,7 @@ function clearHistoryFilters(){
 async function openMovementEditor(id){
  if(!await ensureAdminPassword())return;
  const x=findMovementById(id);
- if(!x){sessionStorage.removeItem('adminPassword');return alert('Buchung wurde nicht gefunden.')}
+ if(!x){return alert('Buchung wurde nicht gefunden.')}
  if(!arts.length)arts=await api('/api/articles');
  movementEditId.value=x.id;movementEditDate.value=x.movement_date;movementEditType.value=x.movement_type;
  movementEditArticle.innerHTML=arts.map(a=>`<option value="${a.id}" ${Number(a.id)===Number(x.article_id)?'selected':''}>${esc(a.article_no)} – ${esc(a.description)}</option>`).join('');
@@ -1491,8 +1500,8 @@ async function saveMovementCorrection(){
 async function deleteMovement(id){
  if(!await ensureAdminPassword())return;
  const x=findMovementById(id);
- if(!x){sessionStorage.removeItem('adminPassword');return}
- if(!confirm('Buchung löschen?')){sessionStorage.removeItem('adminPassword');return}
+ if(!x){return}
+ if(!confirm('Buchung löschen?')){return}
  try{
   await api('/api/movement/delete',{method:'POST',body:JSON.stringify({id,password:sessionStorage.adminPassword||''})});
   arts=[];await hist();await dash();await loadArticles();await loadRecentMovements('IN');await loadRecentMovements('OUT');
@@ -1513,16 +1522,45 @@ function machineMultiOptions(selected=[]){
 function selectedMachineIds(select){return [...select.selectedOptions].map(o=>Number(o.value)).filter(Boolean)}
 function fillNewMaterialLists(){
  let loc='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
- nm_location.innerHTML=loc;nm_machine.innerHTML=machineMultiOptions([]);
+ nm_location.innerHTML=loc;nm_machine.innerHTML=machineMultiOptions([]);renderMachineChips('nm');
 }
+let levelDrafts=new Map();
+function levelKey(prefix,id){return `${prefix}:${id}`}
+function markLevelDraft(prefix,id){
+ const t=document.getElementById(`${prefix}-target-${id}`),m=document.getElementById(`${prefix}-min-${id}`);if(!t||!m)return;
+ levelDrafts.set(levelKey(prefix,id),{prefix,id,target:t.value,minimum:m.value});t.classList.add('level-dirty');m.classList.add('level-dirty');
+ const st=document.getElementById(`${prefix}-level-status-${id}`);if(st)st.textContent='Ungespeichert';
+}
+function restoreLevelDrafts(){for(const d of levelDrafts.values()){const t=document.getElementById(`${d.prefix}-target-${d.id}`),m=document.getElementById(`${d.prefix}-min-${d.id}`);if(t&&m){t.value=d.target;m.value=d.minimum;t.classList.add('level-dirty');m.classList.add('level-dirty');const st=document.getElementById(`${d.prefix}-level-status-${d.id}`);if(st)st.textContent='Ungespeichert'}}}
+async function saveAllLevelChanges(){for(const d of [...levelDrafts.values()])await saveArticleLevels(d.id,d.prefix,true)}
+window.addEventListener('beforeunload',e=>{if(levelDrafts.size){e.preventDefault();e.returnValue=''}});
+function materialFormHasData(){return !!(nm_no.value.trim()||nm_desc.value.trim()||Number(nm_initial.value)||Number(nm_target.value)||Number(nm_min.value)||nm_location.value||nm_notes.value.trim())}
+async function checkNewArticleNumber(){const q=nm_no.value.trim();if(!q){nm_no_status.textContent='';return}try{const list=await api('/api/articles?q='+encodeURIComponent(q));const hit=list.find(x=>String(x.article_no).toLowerCase()===q.toLowerCase());nm_no_status.textContent=hit?'⚠ Artikelnummer bereits vorhanden':'✓ Artikelnummer frei';nm_no_status.style.color=hit?'#b42318':'#12613d'}catch{nm_no_status.textContent=''}}
+function renderMachineChips(prefix='nm'){
+ const select=document.getElementById(`${prefix}_machine`),box=document.getElementById(`${prefix}_machine_chips`);if(!select||!box)return;
+ const selected=new Set([...select.selectedOptions].map(o=>String(o.value)));
+ box.innerHTML=(md.machines||[]).map(x=>`<label class="machine-chip"><input type="checkbox" value="${Number(x.id)}" ${selected.has(String(x.id))?'checked':''} onchange="syncMachineChip('${prefix}',this)"><span>${esc(x.name)}</span></label>`).join('')||'<span class="small">Noch keine Maschinen vorhanden.</span>';
+}
+function syncMachineChip(prefix,cb){const select=document.getElementById(`${prefix}_machine`);const o=[...select.options].find(x=>String(x.value)===String(cb.value));if(o)o.selected=cb.checked}
 async function createMaterial(){
+ const articleNo=nm_no.value.trim(),description=nm_desc.value.trim(),locationValue=nm_location.value;
+ if(!articleNo)return msg(nm_msg,'Bitte eine Artikelnummer eingeben.',false);
+ if(!description)return msg(nm_msg,'Bitte eine Bezeichnung eingeben.',false);
+ if(!locationValue)return msg(nm_msg,'Bitte einen Lagerort auswählen.',false);
  let whole=isWholeNumberUnit(nm_unit.value),num=v=>whole?Math.round(Number(v||0)):Number(v||0);const adjusted=normalizeMaterialLevelFields('nm');
- let body={article_no:nm_no.value,description:nm_desc.value,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:nm_location.value,machine_ids:selectedMachineIds(nm_machine),manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true',creation_source:'Manuelle Materialanlage'};
- try{const d=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});msg(nm_msg,(d.levels_adjusted||adjusted)?'Material wurde angelegt. Mindestbestand wurde automatisch auf den Sollbestand angehoben.':'Material wurde erfolgreich angelegt.',true);clearMaterialForm();arts=[];await master();await dash();await loadArticles();await loadRecentMovements('IN');if(document.getElementById('hist')?.classList.contains('active'))await hist()}catch(e){msg(nm_msg,e.message,false)}
+ let body={article_no:articleNo,description,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:locationValue,machine_ids:selectedMachineIds(nm_machine),manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true',creation_source:'Manuelle Materialanlage'};
+ let saved=false;
+ try{
+  const d=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});saved=true;
+  msg(nm_msg,`Material ${d.article_no||articleNo} wurde erfolgreich angelegt.`+(d.levels_adjusted||adjusted?' Sollbestand wurde automatisch auf den Mindestbestand angehoben.':''),true);
+  clearMaterialForm(false);nm_no.focus();arts=[];
+  const refresh=await Promise.allSettled([master(),dash(),loadArticles(),loadRecentMovements('IN'),document.getElementById('hist')?.classList.contains('active')?hist():Promise.resolve()]);
+  if(refresh.some(x=>x.status==='rejected'))msg(nm_msg,`Material ${d.article_no||articleNo} wurde gespeichert, aber die Ansicht konnte nicht vollständig aktualisiert werden.`,true);
+ }catch(e){if(!saved)msg(nm_msg,e.message,false)}
 }
-function clearMaterialForm(){
+function clearMaterialForm(confirmIfDirty=false){if(confirmIfDirty&&materialFormHasData()&&!confirm('Formular wirklich leeren? Nicht gespeicherte Eingaben gehen verloren.'))return;
  ['nm_no','nm_desc','nm_manufacturer','nm_supplier','nm_supplier_no','nm_barcode','nm_notes','nm_location_new','nm_machine_new'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
- nm_initial.value=0;nm_target.value=0;nm_min.value=0;nm_active.value='true';if(nm_location)nm_location.value='';[...nm_machine.options].forEach(o=>o.selected=false);if(nm_location_suggestions)nm_location_suggestions.innerHTML='';if(nm_machine_suggestions)nm_machine_suggestions.innerHTML='';
+ nm_initial.value=0;nm_target.value=0;nm_min.value=0;nm_active.value='true';if(nm_location)nm_location.value='';[...nm_machine.options].forEach(o=>o.selected=false);if(nm_location_suggestions)nm_location_suggestions.innerHTML='';if(nm_machine_suggestions)nm_machine_suggestions.innerHTML='';if(window.nm_no_status)nm_no_status.textContent='';renderMachineChips('nm');
 }
 
 function normLabel(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9.]+/g,' ').replace(/\s+/g,' ').trim()}
@@ -1538,7 +1576,7 @@ function selectExistingMaster(type,prefix,id){
  const item=(type==='location'?md.locations:md.machines).find(x=>Number(x.id)===Number(id));if(!item)return;
  const select=document.getElementById(`${prefix}_${type==='location'?'location':'machine'}`);
  if(type==='location')select.value=item.name;
- else{const opt=[...select.options].find(o=>Number(o.value)===Number(id));if(opt)opt.selected=true}
+ else{const opt=[...select.options].find(o=>Number(o.value)===Number(id));if(opt)opt.selected=true;renderMachineChips(prefix)}
  const input=document.getElementById(`${prefix}_${type}_new`),box=document.getElementById(`${prefix}_${type}_suggestions`);if(input)input.value='';if(box)box.innerHTML=`Bestehender Eintrag gewählt: <b>${esc(item.name)}</b>`;
 }
 async function createInlineMaster(type,prefix){
@@ -1577,7 +1615,7 @@ async function mergeMachines(){
 }
 async function undoMachineMerge(id){if(!confirm('Diese Zusammenführung rückgängig machen und die frühere Maschine wieder trennen?'))return;try{await api('/api/machine/merge/undo',{method:'POST',body:JSON.stringify({id,password:sessionStorage.adminPassword||''})});await master();await loadEditTable();await loadArticles();msg(machineMergeMsg,'Zusammenführung wurde rückgängig gemacht.',true)}catch(e){msg(machineMergeMsg,e.message,false)}}
 
-async function unlockAdmin(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:adminpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(unlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(unlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';sessionStorage.adminPassword=adminpw.value;window.LVAdminSession?.unlock();lockbox.style.display='none';adminarea.style.display='block';loadEditTable()}
+async function unlockAdmin(){let d=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:adminpw.value})});if(!d.ok){if(d.setup_required){refreshPasswordStatus();return msg(unlockmsg,'Bitte zuerst ein neues Passwort festlegen.',false)}return msg(unlockmsg,'Passwort ist falsch.',false)}sessionStorage.admin='1';window.LVAdminSession?.unlock(d.token);lockbox.style.display='none';adminarea.style.display='block';loadEditTable()}
 async function addMaster(type){
  let body={type}; if(type!=='technician')body.password=sessionStorage.adminPassword||'';
  if(type==='location'){body.name=locname.value.trim();body.description=locdesc.value.trim()}
@@ -1746,7 +1784,7 @@ async function copyStockToLevels(mode){
    method:'POST',
    body:JSON.stringify({password,mode})
   });
-  sessionStorage.adminPassword=password;
+  
   msg(mastermsg,`${label} wurde bei ${result.count} Artikeln aus dem Istbestand übernommen.`,true);
   await loadEditTable();
   await loadArticles();
@@ -1865,7 +1903,7 @@ async function refreshSetupStatus(){
   document.body.style.overflow=d.setup_required?'hidden':'';
   if(d.setup_required){
    sessionStorage.removeItem('admin');
-   sessionStorage.removeItem('adminPassword');
+   
   }
  }catch(e){console.error(e)}
 }
@@ -1883,7 +1921,7 @@ async function completeFirstSetup(){
    })
   });
   sessionStorage.admin='1';
-  sessionStorage.adminPassword=setupPassword.value;
+  window.LVAdminSession?.unlock(d.token);
   appDateFormat=d.date_format;
   initialSetupOverlay.style.display='none';
   document.body.style.overflow='';
@@ -1908,8 +1946,8 @@ window.LVStorageMode={
     storageModeBadge.className='mode-badge '+(isCloud?'cloud':'local');
    }
    if(window.headerStorageMode){
-    headerStorageMode.textContent=isCloud?'☁ Cloud':hasLocalFolder?'🏠 Lokal: Ordner':'🏠 Browser lokal';
-    headerStorageMode.className='mode-badge '+(isCloud?'cloud':'local');
+    const stateText=s.permissionRequired?'🔐 Ordnerzugriff erforderlich':s.cloudStatus==='invalid_database'||s.cloudStatus==='io_error'?'⛔ Cloud-Datei nicht lesbar':s.cloudStatus==='missing'&&isCloud?'⚠ Cloud-Datei fehlt':s.conflict?'⚠ Konflikt erkannt':s.syncing?'🔄 Synchronisierung läuft':s.dirty?'⏳ Lokale Änderungen warten':isCloud?'✓ Synchronisiert':hasLocalFolder?'💾 Nur lokal gespeichert':'🏠 Browser lokal';headerStorageMode.textContent=stateText;
+    headerStorageMode.className='mode-badge '+(s.conflict?'conflict':s.syncing?'syncing':s.dirty?'pending':(isCloud?'cloud':'local'));
    }
    if(window.localModeActions)localModeActions.style.display=isCloud?'none':'block';
    if(window.cloudModeActions)cloudModeActions.style.display=isCloud?'block':'none';
@@ -2006,7 +2044,7 @@ async function copyPromptElement(code,status){
  try{const ok=await copyTextReliable(code.textContent);if(!ok)throw Error('Kopieren wurde vom Browser blockiert.');if(status){status.className='message ok';status.textContent='Prompt kopiert ✓'}}catch(e){if(status){status.className='message error';status.textContent=e.message||'Prompt konnte nicht kopiert werden.'}}
 }
 async function copyPromptCode(button){const code=promptCodeFromButton(button),status=button.closest('.prompt-box')?.querySelector('.prompt-copy-status');if(code)await copyPromptElement(code,status)}
-function showPromptDialog(prompt,title){promptDialogTitle.textContent=title||'M365/Copilot-Prompt';promptDialogCode.textContent=String(prompt||'');promptDialogStatus.className='message';promptDialogStatus.textContent='';promptOverlay.style.display='block'}
+function showPromptDialog(prompt,title){promptDialogTitle.textContent=title||'M365/Copilot-Prompt';promptDialogCode.textContent=String(prompt||'');promptDialogStatus.className='message';promptDialogStatus.textContent='';promptOverlay.style.display='block';openModalA11y(promptOverlay)}
 
 async function refreshPasswordStatus(){
  try{
@@ -2022,7 +2060,7 @@ async function refreshPasswordStatus(){
 
   if(passwordSetupRequired){
    sessionStorage.removeItem('admin');
-   sessionStorage.removeItem('adminPassword');
+   
    window.LVAdminSession?.lock();
    lockbox.style.display='block';
    adminarea.style.display='none';
@@ -2036,10 +2074,10 @@ async function refreshPasswordStatus(){
 
 async function createFirstAdminPassword(){
  try{
-  if(firstPwNew.value.length<6)throw Error('Das Passwort muss mindestens 6 Zeichen haben.');
+  if(firstPwNew.value.length<8)throw Error('Das Passwort muss mindestens 8 Zeichen haben.');
   if(firstPwNew.value!==firstPwRepeat.value)throw Error('Die Passwörter stimmen nicht überein.');
-  await api('/api/admin/setup-password',{method:'POST',body:JSON.stringify({password:firstPwNew.value,repeat_password:firstPwRepeat.value})});
-  sessionStorage.admin='1';sessionStorage.adminPassword=firstPwNew.value;window.LVAdminSession?.unlock();
+  const setupResult=await api('/api/admin/setup-password',{method:'POST',body:JSON.stringify({password:firstPwNew.value,repeat_password:firstPwRepeat.value})});
+  sessionStorage.admin='1';window.LVAdminSession?.unlock(setupResult.token);
   firstPwNew.value='';firstPwRepeat.value='';
   lockbox.style.display='none';adminarea.style.display='block';
   msg(unlockmsg,'Das Passwort wurde gespeichert. Die Stammdaten sind freigeschaltet.',true);
@@ -2058,8 +2096,8 @@ async function completeInitialSetup(){
   });
 
   sessionStorage.admin='1';
-  sessionStorage.adminPassword=initialPwNew.value;
-  window.LVAdminSession?.unlock();
+  
+  window.LVAdminSession?.unlock(result?.token||'');
   initialPwNew.value='';
   initialPwRepeat.value='';
 
@@ -2079,7 +2117,7 @@ async function completeInitialSetup(){
 
 async function changeAdminPassword(){
  try{
-  await api('/api/admin/change-password',{
+  const result=await api('/api/admin/change-password',{
    method:'POST',
    body:JSON.stringify({
     old_password:pwCurrent.value,
@@ -2087,7 +2125,8 @@ async function changeAdminPassword(){
     repeat_password:pwRepeat.value
    })
   });
-  sessionStorage.adminPassword=pwNew.value;
+  
+  window.LVAdminSession?.unlock(result.token);
   pwCurrent.value='';pwNew.value='';pwRepeat.value='';
   msg(passwordmsg,'Das Passwort wurde erfolgreich geändert.',true);
  }catch(e){
@@ -2097,7 +2136,7 @@ async function changeAdminPassword(){
 
 async function setupAdminPassword(){
  try{
-  await api('/api/admin/setup-password',{
+  const result=await api('/api/admin/setup-password',{
    method:'POST',
    body:JSON.stringify({
     password:pwSetupNew.value,
@@ -2105,8 +2144,8 @@ async function setupAdminPassword(){
    })
   });
   sessionStorage.admin='1';
-  sessionStorage.adminPassword=pwSetupNew.value;
-  window.LVAdminSession?.unlock();
+  
+  window.LVAdminSession?.unlock(result?.token||'');
   pwSetupNew.value='';pwSetupRepeat.value='';
   lockbox.style.display='none';
   adminarea.style.display='block';
@@ -2143,7 +2182,7 @@ async function resetWarehouse(){
    body:JSON.stringify({password,confirmed:true})
   });
 
-  sessionStorage.adminPassword=password;
+  
   msg(resetmsg,result.message,true);
 
   // Ansichten und Zwischenspeicher leeren/neu laden.
@@ -2302,6 +2341,8 @@ setInterval(async()=>{
  }
 },15000);
 
+function openModalA11y(el){if(!el)return;el.dataset.previousFocus=document.activeElement?.id||'';setTimeout(()=>{const f=el.querySelector('button,input,select,textarea,[tabindex]:not([tabindex="-1"])');f?.focus()},0)}
+document.addEventListener('keydown',e=>{const visible=[...document.querySelectorAll('.modal-overlay,#logoutOverlay,#movementEditorOverlay,#unknownRegistrationOverlay')].find(x=>getComputedStyle(x).display!=='none');if(!visible)return;if(e.key==='Escape'){if(visible.id==='logoutOverlay')LVLogout.cancel();else if(visible.id==='movementEditorOverlay'&&window.closeMovementEditor)closeMovementEditor();else if(visible.id==='unknownRegistrationOverlay'&&window.closeUnknownRegistration)closeUnknownRegistration();else if(visible.id==='promptOverlay')promptOverlay.style.display='none';return}if(e.key==='Tab'){const fs=[...visible.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x=>x.offsetParent!==null);if(!fs.length)return;const first=fs[0],last=fs[fs.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 window.LVStartup={
  data:null,
  async check(){
@@ -2622,33 +2663,10 @@ window.LVLogout={
 };
 
 async function restoreAdminSession(){
- const savedPassword=sessionStorage.adminPassword||'';
- if(!savedPassword){
-  sessionStorage.removeItem('admin');
-  window.LVAdminSession?.lock();
-  lockbox.style.display='block';
-  adminarea.style.display='none';
-  if(window.newform)newform.style.display='block';
-  return false;
- }
- try{
-  const result=await api('/api/admin/unlock',{method:'POST',body:JSON.stringify({password:savedPassword})});
-  if(!result.ok)throw Error('Ungültige Sitzung');
-  sessionStorage.admin='1';
-  window.LVAdminSession?.unlock();
-  lockbox.style.display='none';
-  adminarea.style.display='block';
-  if(window.newform)newform.style.display='block';
-  return true;
- }catch{
-  sessionStorage.removeItem('admin');
-  sessionStorage.removeItem('adminPassword');
-  window.LVAdminSession?.lock();
-  lockbox.style.display='block';
-  adminarea.style.display='none';
-  if(window.newform)newform.style.display='block';
-  return false;
- }
+ sessionStorage.removeItem('admin');
+ window.LVAdminSession?.lock();
+ lockbox.style.display='block';adminarea.style.display='none';if(window.newform)newform.style.display='block';
+ return false;
 }
 
 (async()=>{
