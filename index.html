@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V65 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V66 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -74,6 +74,27 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 
 .form-section-title{grid-column:1/-1;font-weight:800;font-size:15px;margin-top:6px;padding-top:8px;border-top:1px solid #e4e9ed}.formgrid .form-section-title:first-child{border-top:0;margin-top:0}.nav-group-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;padding:12px 10px 4px}.mode-badge.conflict{background:#fee2e2;color:#991b1b}.mode-badge.pending{background:#fff7ed;color:#9a3412}.mode-badge.syncing{background:#eff6ff;color:#1d4ed8}
 @media(max-width:600px){#mainNav .nav-group-label{display:block}.action-buttons{display:grid;grid-template-columns:1fr 1fr}.action-buttons .icon-button{width:44px;height:44px}.search-row .article-search,.search-row .qty,.search-row button{min-width:0}.prompt-pre{max-height:45vh;overflow:auto}}
+
+/* V66 Lagerbestand: feste fachliche Spaltenfolge + mobile Karten */
+#stockTable .stock-location-select{min-width:145px}
+.stock-machine-summary{font-size:12px;line-height:1.35;margin-bottom:5px;max-width:230px}
+.stock-machine-button{white-space:nowrap}
+.stock-row-saved{animation:v66saved 1.2s ease}
+@keyframes v66saved{0%{background:#dcfce7}100%{background:transparent}}
+@media(max-width:700px){
+ #articles .stock-tablewrap{border:0;background:transparent;overflow:visible}
+ #articles #stockTable{min-width:0!important;display:block}
+ #articles #stockTable thead{display:none}
+ #articles #stockTable tbody{display:block}
+ #articles #stockTable tr{display:block;background:#fff;border:1px solid #d9e0e6;border-radius:12px;margin:10px 0;padding:10px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+ #articles #stockTable tr.low{background:#fff0ee}
+ #articles #stockTable td{display:grid;grid-template-columns:125px minmax(0,1fr);gap:8px;align-items:center;border:0;padding:6px 2px}
+ #articles #stockTable td::before{content:attr(data-label);font-weight:800;color:#475569}
+ #articles #stockTable td[data-label="Artikelnummer"],#articles #stockTable td[data-label="Bezeichnung"],#articles #stockTable td[data-label="Istbestand"]{font-size:15px}
+ #articles #stockTable td input,#articles #stockTable td select,#articles #stockTable td button{min-width:0;max-width:none;width:100%}
+ #articles #stockTable .stock-machine-summary{max-width:none}
+}
+
 </style></head><body>
 
 
@@ -287,7 +308,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">65.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">66.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -305,7 +326,8 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div class="formgrid"><div class="form-section-title">Hauptangaben</div>
 <label>Artikelnummer *<input id="nm_no" autocomplete="off" oninput="checkNewArticleNumber()"><span id="nm_no_status" class="small"></span></label>
 <label>Bezeichnung *<input id="nm_desc"></label>
-<label>Anfangsbestand / Anzahl *<input id="nm_initial" type="number" min="0" step="0.01" value="0"></label>
+<label>Ausgangsbestand / Anzahl *<input id="nm_initial" type="number" min="0" step="0.01" value="0"></label>
+<label>Techniker<select id="nm_technician"></select></label>
 <label>Einheit *<select id="nm_unit" onchange="adjustNewMaterialUnit()">
 <option>Stk.</option><option>Liter</option><option>ml</option><option>kg</option><option>g</option>
 <option>m</option><option>cm</option><option>mm</option><option>Satz</option><option>Rolle</option>
@@ -328,7 +350,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div class="material-save-bar"><button class="primary" onclick="createMaterial()">Material speichern</button><button class="secondary" onclick="clearMaterialForm(true)">Formular leeren</button></div>
 <div id="nm_msg" class="message"></div></div></div></section>
 
-<section id="articles" class="view"><h2>Lagerbestand</h2><div class="toolbar"><input id="search" placeholder="Artikelnummer, Bezeichnung, Lagerort oder Maschine" oninput="scheduleLiveStockSearch()"><div class="small">Die Suche startet automatisch während der Eingabe – auch auf dem Smartphone.</div><button class="primary" onclick="loadArticles()">Suchen</button></div><p class="small">Soll- und Mindestbestand können hier ohne Passwort geändert werden. Istbestand und übrige Stammdaten bleiben unveränderbar.</p><div class="toolbar"><button class="primary" onclick="saveAllLevelChanges()">Alle Änderungen speichern</button></div><div id="articleLevelsMsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Soll</th><th>Mindest.</th><th>Ist</th><th>Differenz</th><th>Lagerort</th><th>Maschine</th><th>Aktion</th></tr></thead><tbody id="arows"></tbody></table></div></section>
+<section id="articles" class="view"><h2>Lagerbestand</h2><div class="toolbar"><input id="search" placeholder="Artikelnummer, Bezeichnung, Lagerort oder Maschine" oninput="scheduleLiveStockSearch()"><div class="small">Die Suche startet automatisch während der Eingabe – auch auf dem Smartphone.</div><button class="primary" onclick="loadArticles()">Suchen</button></div><p class="small">Mindestbestand, Sollbestand, Lagerort und Maschinenzuordnung können hier ohne Passwort geändert werden. Istbestand, Artikelnummer und Bezeichnung bleiben unveränderbar. Neue zentrale Lagerorte oder Maschinen werden weiterhin unter Stammdaten angelegt.</p><div class="toolbar"><button class="primary" onclick="saveAllLevelChanges()">Alle Änderungen speichern</button></div><div id="articleLevelsMsg" class="message"></div><div class="tablewrap stock-tablewrap"><table id="stockTable"><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Istbestand</th><th>Mindestbestand</th><th>Sollbestand</th><th>Lagerort</th><th>Maschine/Maschinenzuordnung</th><th>Aktionen</th></tr></thead><tbody id="arows"></tbody></table></div></section>
 <section id="in" class="view"><h2>Einbuchung</h2>
 <div class="card"><h3>Manuelle Einbuchung</h3>
 <div class="formgrid"><label>Datum<input type="date" id="idate"></label>
@@ -427,6 +449,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div class="card"><h3>SAP-Excel/CSV als Einbuchung importieren</h3>
 <p>Unterstützte Dateien: <b>XLSX, CSV und TXT</b>. Erkannte SAP-Spalten: <b>Material</b>, <b>Bezeichnung zum Material</b>, <b>Lagerort</b>, <b>Bezeichnung des Lagerorts</b>, <b>Frei verwendbar</b>.</p>
 <input id="cfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadImportFile(this)">
+<label>Techniker<select id="ctech"></select></label>
 <textarea id="ctext" placeholder="Material;Bezeichnung zum Material;Lagerort;Bezeichnung des Lagerorts;Frei verwendbar"></textarea>
 <button class="secondary" onclick="csvPreview()">Import prüfen</button>
 <button id="ccommit" class="primary" disabled onclick="csvCommit()">Bekannte Artikel einbuchen</button><button id="callcommit" class="danger" disabled onclick="createAndBookAll()">Neue Artikel anlegen und alles einbuchen</button>
@@ -668,7 +691,8 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
   <div class="formgrid" style="margin-top:14px">
    <label>Artikelnummer *<input id="ur_no" readonly></label>
    <label>Bezeichnung / Beschreibung *<input id="ur_desc"></label>
-   <label>Anfangsbestand / Istbestand<input id="ur_initial" type="number" min="0" step="1" value="0"></label>
+   <label>Ausgangsbestand / Istbestand<input id="ur_initial" type="number" min="0" step="1" value="0"></label>
+   <label>Techniker<select id="ur_technician"></select></label>
    <label>Sollbestand<input id="ur_target" type="number" min="0" step="1" value="0" onchange="normalizeMaterialLevelFields('ur')"></label>
    <label>Mindestbestand<input id="ur_min" type="number" min="0" step="1" value="0" onchange="normalizeMaterialLevelFields('ur')"><span class="small">Mindestbestand ≤ Sollbestand</span></label>
    <label>Einheit<select id="ur_unit" onchange="adjustUnknownRegistrationUnit()">
@@ -688,6 +712,14 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
    <button class="secondary" onclick="closeUnknownRegistration()">Abbrechen</button>
   </div>
   <div id="ur_msg" class="message"></div>
+ </div>
+</div>
+<div id="stockMachineOverlay" class="modal-overlay">
+ <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="stockMachineTitle">
+  <h2 id="stockMachineTitle">Maschinenzuordnung bearbeiten</h2>
+  <p id="stockMachineArticleLabel" class="small"></p>
+  <div id="stockMachineEditorChips" class="machine-chip-list"></div>
+  <div class="toolbar" style="margin-top:14px"><button class="primary" onclick="applyStockMachineEditor()">Übernehmen</button><button class="secondary" onclick="closeStockMachineEditor()">Abbrechen</button></div>
  </div>
 </div>
 <div id="movementEditOverlay" class="modal-overlay">
@@ -739,6 +771,7 @@ window.LVAdminSession = window.LVAdminSession || {
 <script src="transaction_core.js"></script>
 <script src="help_core.js"></script>
 <script src="sync_core.js"></script>
+<script src="v66_core.js"></script>
 <script src="local_backend.js"></script>
 <script>
 let arts=[],deliveryp=[],servicep=[],csvp=[],deliveryUnknown=[],serviceUnknown=[],csvUnknown=[],historyData=[],inventoryData=[],md={},lastImportFilename='',appDateFormat='DD.MM.YYYY',helpFiles=[];
@@ -772,13 +805,17 @@ function formatAppDate(value,withTime=false){
 }
 async function api(u,o={}){await LVBackend.ready;const h={'Content-Type':'application/json',...(o.headers||{})};if(window.LVAdminSession?.token)h['X-LV-Admin-Token']=window.LVAdminSession.token;let r=await fetch(u,{...o,headers:h});let d=await r.json();if(!r.ok){const e=Error(d.error||d.message||'Fehler');e.data=d;e.status=r.status;throw e}return d}
 function msg(e,t,ok){e.textContent=t;e.className='message '+(ok?'ok':'error')}
-function show(id,b){const current=document.querySelector('.view.active')?.id;if(current&&current!==id&&levelDrafts?.size&&!confirm('Es gibt ungespeicherte Soll-/Mindestbestände. Ansicht trotzdem verlassen?'))return;document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()}
+function show(id,b){const current=document.querySelector('.view.active')?.id;if(current&&current!==id&&levelDrafts?.size&&!confirm('Es gibt ungespeicherte Änderungen im Lagerbestand oder Dashboard. Ansicht trotzdem verlassen?'))return;document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()}
 
 async function master(){
- md=await api('/api/masterdata');
- let to=md.technicians.map(x=>`<option>${esc(x.name)}</option>`).join('');
- let mo='<option></option>'+md.machines.map(x=>`<option>${esc(x.name)}</option>`).join('');
- ['itech','otech','dtech','stech','rtech'].forEach(id=>{let e=document.getElementById(id);if(e)e.innerHTML=to});
+ const oldMd=md||{};md=await api('/api/masterdata');
+ const techNames=(md.technicians||[]).map(x=>x.name),to=techNames.map(x=>`<option>${esc(x)}</option>`).join('');
+ const defaultTech=md.default_technician||techNames[0]||'Techniker';
+ ['itech','otech','dtech','stech','rtech','nm_technician','ur_technician','ctech'].forEach(id=>{
+  const e=document.getElementById(id);if(!e)return;const previous=e.value;e.innerHTML=to;
+  e.value=LVV66Core.technicianChoice(previous,techNames,defaultTech);
+ });
+ let mo='<option></option>'+(md.machines||[]).map(x=>`<option>${esc(x.name)}</option>`).join('');
  omachine.innerHTML=mo;smachine.innerHTML=mo;
  if(document.getElementById('nm_location'))fillNewMaterialLists();if(document.getElementById('machineAliasRows'))loadMachineRelations()
 }
@@ -791,15 +828,15 @@ async function loadAppInfo(){
   infoMovements.textContent=d.movements;
   document.title='Lagerverwaltung Lovrencic – Version '+d.version;
  }catch(e){
-  appVersion.textContent='65.0';
-  infoVersion.textContent='65.0';
+  appVersion.textContent='66.0';
+  infoVersion.textContent='66.0';
  }
 }
 let dashboardLowItems=[];
 function renderDashboardLow(showAll=false){
  const list=showAll?dashboardLowItems:dashboardLowItems.slice(0,8);
  dashLow.innerHTML=list.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td><input class="level-input" id="dash-target-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.target_stock,x.unit)}" oninput="markLevelDraft('dash',${x.id})" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><input class="level-input" id="dash-min-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.minimum_stock,x.unit)}" oninput="markLevelDraft('dash',${x.id})" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><button class="secondary level-save" onclick="saveArticleLevels(${x.id},'dash')">Speichern</button><div id="dash-level-status-${x.id}" class="level-saved"></div></td></tr>`).join('')||'<tr><td colspan="6">Kein Unterbestand</td></tr>';
- dashLowMore.style.display=!showAll&&dashboardLowItems.length>8?'inline-flex':'none';
+ dashLowMore.style.display=!showAll&&dashboardLowItems.length>8?'inline-flex':'none';restoreLevelDrafts();
 }
 async function dash(){
  let d=await api('/api/dashboard');ka.textContent=d.articles;kl.textContent=d.low_stock;kt.textContent=d.today;km.textContent=d.movements;
@@ -808,30 +845,51 @@ async function dash(){
  dashRecent.innerHTML=(d.recent||[]).map(x=>`<tr><td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.technician)}</td></tr>`).join('')||'<tr><td colspan="6">Noch keine Buchungen</td></tr>'
 }
 async function loadArticles(){
+ if(!Array.isArray(md.locations)||!Array.isArray(md.machines))await master();
  arts=await api('/api/articles?q='+encodeURIComponent(search.value||''));
- arows.innerHTML=arts.filter(a=>a.active).map(a=>`<tr class="${a.stock<a.minimum_stock?'low':''}"><td>${esc(a.article_no)}</td><td>${esc(a.description)}</td><td><input class="level-input" id="stock-target-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.target_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td><td><input class="level-input" id="stock-min-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.minimum_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td><td><b>${n(a.stock)}</b></td><td>${n(a.stock-a.target_stock)}</td><td>${esc(a.location)}</td><td>${esc(a.machine)}</td><td><button class="secondary level-save" onclick="saveArticleLevels(${a.id},'stock')">Speichern</button><div id="stock-level-status-${a.id}" class="level-saved"></div></td></tr>`).join('')
+ const locOptions='<option value="">—</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+ arows.innerHTML=arts.filter(a=>a.active).map(a=>`<tr id="stock-row-${a.id}" class="${a.stock<a.minimum_stock?'low':''}">
+  <td data-label="Artikelnummer"><b>${esc(a.article_no)}</b></td>
+  <td data-label="Bezeichnung">${esc(a.description)}</td>
+  <td data-label="Istbestand"><b>${n(a.stock)}</b></td>
+  <td data-label="Mindestbestand"><input class="level-input" id="stock-min-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.minimum_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td>
+  <td data-label="Sollbestand"><input class="level-input" id="stock-target-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.target_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td>
+  <td data-label="Lagerort"><select class="stock-location-select" id="stock-location-${a.id}" onchange="markLevelDraft('stock',${a.id})">${locOptions}</select></td>
+  <td data-label="Maschine/Maschinenzuordnung"><div class="stock-machine-summary" id="stock-machines-label-${a.id}">${esc((a.machines||[]).join(', ')||'—')}</div><button type="button" class="secondary stock-machine-button" onclick="openStockMachineEditor(${a.id})">Maschinen wählen</button></td>
+  <td data-label="Aktionen"><button class="secondary level-save" onclick="saveArticleLevels(${a.id},'stock')">Speichern</button><div id="stock-level-status-${a.id}" class="level-saved"></div></td>
+ </tr>`).join('');
+ for(const a of arts.filter(a=>a.active)){const e=document.getElementById(`stock-location-${a.id}`);if(e)e.value=a.location||''}
+ restoreLevelDrafts();
 }
 function normalizeRowLevels(prefix,id,unit){
  const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`);if(!target||!minimum)return false;
- const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,unit);target.value=levels.target_stock;minimum.value=levels.minimum_stock;return levels.adjusted;
+ const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,unit);target.value=levels.target_stock;minimum.value=levels.minimum_stock;markLevelDraft(prefix,id);return levels.adjusted;
 }
 function normalizeMaterialLevelFields(prefix){
  const target=document.getElementById(`${prefix}_target`),minimum=document.getElementById(`${prefix}_min`),unit=document.getElementById(`${prefix}_unit`);if(!target||!minimum)return false;
  const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,unit?.value||'Stk.');target.value=levels.target_stock;minimum.value=levels.minimum_stock;return levels.adjusted;
 }
 async function saveArticleLevels(id,prefix,fromBatch=false){
- const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`),status=document.getElementById(`${prefix}-level-status-${id}`);if(!target||!minimum)return;
- const sourceArticle=prefix==='dash'?dashboardLowItems.find(x=>Number(x.id)===Number(id)):arts.find(x=>Number(x.id)===Number(id));const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,sourceArticle?.unit||'Stk.');target.value=levels.target_stock;minimum.value=levels.minimum_stock;
+ const draft=levelDrafts.get(levelKey(prefix,id));
+ const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`),status=document.getElementById(`${prefix}-level-status-${id}`);
+ if((!target||!minimum)&&!draft)return;
+ const sourceArticle=prefix==='dash'?dashboardLowItems.find(x=>Number(x.id)===Number(id)):arts.find(x=>Number(x.id)===Number(id));
+ const unit=sourceArticle?.unit||draft?.unit||'Stk.',targetValue=target?.value??draft?.target??0,minimumValue=minimum?.value??draft?.minimum??0;
+ const levels=LVAppRules.normalizeStockLevels(targetValue,minimumValue,unit);if(target)target.value=levels.target_stock;if(minimum)minimum.value=levels.minimum_stock;
+ let payload={id,target_stock:levels.target_stock,minimum_stock:levels.minimum_stock,technician:md.default_technician||''};let endpoint='/api/articles/levels';
+ if(prefix==='stock'){
+  endpoint='/api/articles/stock-settings';payload.location=draft?.location??document.getElementById(`stock-location-${id}`)?.value??sourceArticle?.location??'';payload.machine_ids=draft?.machine_ids??currentStockMachineIds(id);
+ }
  let saved=false;
  try{
-  const d=await api('/api/articles/levels',{method:'POST',body:JSON.stringify({id,target_stock:Number(target.value||0),minimum_stock:Number(minimum.value||0)})});saved=true;
-  levelDrafts.delete(levelKey(prefix,id));target.classList.remove('level-dirty');minimum.classList.remove('level-dirty');if(status)status.textContent='Gespeichert ✓';
-  const text=d.levels_adjusted?'Gespeichert. Sollbestand wurde automatisch auf den Mindestbestand angehoben.':'Bestandsgrenzen gespeichert.';msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,text,true);
-  const drafts=new Map(levelDrafts);
-  const refreshed=await Promise.allSettled([dash(),loadArticles(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]);
-  levelDrafts=drafts;restoreLevelDrafts();
-  if(refreshed.some(x=>x.status==='rejected'))msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,'Gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true);
- }catch(e){if(!saved)msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,e.message,false)}
+  const d=await api(endpoint,{method:'POST',body:JSON.stringify(payload)});saved=true;
+  levelDrafts.delete(levelKey(prefix,id));if(target)target.classList.remove('level-dirty');if(minimum)minimum.classList.remove('level-dirty');const loc=document.getElementById(`stock-location-${id}`);if(loc)loc.classList.remove('level-dirty');if(status)status.textContent='Gespeichert ✓';
+  if(sourceArticle){sourceArticle.target_stock=d.target_stock;sourceArticle.minimum_stock=d.minimum_stock;if(prefix==='stock'){sourceArticle.location=d.location;sourceArticle.machine_ids=d.machine_ids||[];sourceArticle.machines=d.machines||[];sourceArticle.machine=(d.machines||[]).join(', ')}}
+  const row=document.getElementById(`stock-row-${id}`);if(row){row.classList.remove('low');if(Number(sourceArticle?.stock)<Number(d.minimum_stock))row.classList.add('low');row.classList.add('stock-row-saved');setTimeout(()=>row.classList.remove('stock-row-saved'),1200)}
+  const text=d.levels_adjusted?'Gespeichert. Sollbestand wurde automatisch auf den Mindestbestand angehoben.':(prefix==='stock'?'Lagerbestand-Zuordnung gespeichert.':'Bestandsgrenzen gespeichert.');msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,text,true);
+  if(!fromBatch){const refreshed=await Promise.allSettled(prefix==='stock'?[dash(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]:[dash(),loadArticles(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]);if(refreshed.some(x=>x.status==='rejected'))msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,'Gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true)}
+  return d;
+ }catch(e){if(!saved)msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,e.message,false);if(fromBatch)throw e;return null}
 }
 
 async function addRow(t){
@@ -909,11 +967,14 @@ async function saveMove(t){
 
 
 let extractionPreviewTimers={delivery:null,service:null};
+let deliveryInitialBooked=new Set();let deliveryInitialBookedKey='';
+function deliveryExtractionKey(value){return String(value||'').replace(/\r/g,'').split('\n').map(x=>x.trim().replace(/\s+/g,' ')).filter(Boolean).join('\n')}
 function scheduleExtractionPreview(type){
  clearTimeout(extractionPreviewTimers[type]);
  const value=(type==='delivery'?dtext.value:stext.value).trim();
  if(value!==extractionLastInput[type]){
   ignoredUnknown[type]?.clear();
+  if(type==='delivery'&&deliveryInitialBooked.size&&deliveryInitialBookedKey&&deliveryExtractionKey(value)!==deliveryInitialBookedKey){deliveryInitialBooked.clear();deliveryInitialBookedKey=''}
   extractionLastInput[type]=value;
  }
  if(!value){clearExtractionResults(type);return}
@@ -924,7 +985,7 @@ function scheduleExtractionPreview(type){
 }
 function clearExtractionResults(type){
  if(type==='delivery'){
-  ignoredUnknown.delivery.clear();extractionLastInput.delivery='';
+  ignoredUnknown.delivery.clear();deliveryInitialBooked.clear();deliveryInitialBookedKey='';extractionLastInput.delivery='';
   deliveryp=[];deliveryUnknown=[];drows.innerHTML='';derrors.innerHTML='';dunknown.innerHTML='';
   dcommit.disabled=true;deliveryExtractedSummary.style.display='none';dmsg.style.display='none';
  }else{
@@ -959,7 +1020,7 @@ function renderDeliveryPreviewRows(){
   <td><input type="number" min="0.01" step="0.01" value="${Number(x.quantity)}" onchange="updateExtractedQuantity('delivery',${i},this.value)"></td>
   <td><button class="danger icon-button" title="Position entfernen" aria-label="Position entfernen" onclick="removeExtractedItem('delivery',${i})">🗑️</button></td>
  </tr>`).join('');
- dcommit.disabled=!deliveryp.length;
+ dcommit.disabled=!deliveryp.length||deliveryUnknown.length>0;
  if(deliveryExtractedSummary.style.display!=='none'){
   deliveryExtractedSummary.innerHTML=`<h3>Erkannte Lieferung</h3>
    <p><b>Positionen:</b> ${deliveryp.length+deliveryUnknown.length}</p>
@@ -974,7 +1035,7 @@ function renderServicePreviewRows(){
   <td><input type="number" min="0.01" step="0.01" value="${Number(x.quantity)}" onchange="updateExtractedQuantity('service',${i},this.value)"></td>
   <td><button class="danger icon-button" title="Position entfernen" aria-label="Position entfernen" onclick="removeExtractedItem('service',${i})">🗑️</button></td>
  </tr>`).join('');
- scommit.disabled=!servicep.length;
+ scommit.disabled=!servicep.length||serviceUnknown.length>0;
 }
 
 async function deliveryPreview(silent=false){
@@ -986,7 +1047,7 @@ async function deliveryPreview(silent=false){
    derrors.innerHTML='<div class="message error" style="display:block">'+esc(d.error)+'</div>';
    return msg(dmsg,d.error,false);
   }
-  deliveryp=d.items||[];deliveryUnknown=(d.unknown||[]).filter(x=>!ignoredUnknown.delivery.has(String(x.article_no)));
+  deliveryp=(d.items||[]).filter(x=>!deliveryInitialBooked.has(String(x.article_no)));deliveryUnknown=(d.unknown||[]).filter(x=>!ignoredUnknown.delivery.has(String(x.article_no)));
   renderDeliveryPreviewRows();
   derrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
   dunknown.innerHTML=unknownBlock(deliveryUnknown,'delivery');
@@ -994,7 +1055,7 @@ async function deliveryPreview(silent=false){
   deliveryExtractedSummary.innerHTML=`<h3>Erkannte Lieferung</h3>
    <p><b>Positionen:</b> ${deliveryp.length+deliveryUnknown.length}</p>
    <p><b>Bekannte Artikel:</b> ${deliveryp.length}</p>
-   <p><b>Unbekannte Artikel:</b> ${deliveryUnknown.length}</p>`;
+   <p><b>Unbekannte Artikel:</b> ${deliveryUnknown.length}</p><p><b>Bereits als Ausgangsbestand gebucht:</b> ${deliveryInitialBooked.size}</p>`;
   dcommit.disabled=!deliveryp.length||deliveryUnknown.length>0;
   msg(dmsg,deliveryp.length+' bekannte Position(en), '+deliveryUnknown.length+' noch zu entscheidende neue Artikel, '+ignoredUnknown.delivery.size+' ignoriert, '+(d.errors||[]).length+' Fehler.',deliveryp.length>0&&deliveryUnknown.length===0);
  }catch(e){if(!silent)msg(dmsg,e.message,false)}
@@ -1004,7 +1065,7 @@ async function deliveryCommit(){
   const payload={movement_type:'IN',items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value};
   if(!await confirmPossibleDuplicate(payload))return msg(dmsg,'Einbuchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
   let d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify(payload)});
-  msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);deliveryp=[];deliveryUnknown=[];ignoredUnknown.delivery.clear();extractionLastInput.delivery='';dtext.value='';drows.innerHTML='';dunknown.innerHTML='';derrors.innerHTML='';deliveryExtractedSummary.style.display='none';dcommit.disabled=true;arts=[];await dash();await loadRecentMovements('IN')
+  msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);deliveryp=[];deliveryUnknown=[];ignoredUnknown.delivery.clear();deliveryInitialBooked.clear();deliveryInitialBookedKey='';extractionLastInput.delivery='';dtext.value='';drows.innerHTML='';dunknown.innerHTML='';derrors.innerHTML='';deliveryExtractedSummary.style.display='none';dcommit.disabled=true;arts=[];await dash();await loadRecentMovements('IN')
  }catch(e){msg(dmsg,e.message,false)}
 }
 
@@ -1045,14 +1106,16 @@ async function openUnknownRegistration(source,index){
  const list=unknownList(source),item=list[index];if(!item)return;
  if(!md.locations)await master();
  unknownRegistrationState={source,index,article_no:item.article_no,quantity:Number(item.quantity)||0};
- ur_no.value=item.article_no||'';ur_desc.value=item.description||'';ur_initial.value='0';ur_target.value='0';ur_min.value='0';ur_unit.value='Stk.';
+ const plan=LVV66Core.m365UnknownCreationPlan(source,item.quantity);ur_no.value=item.article_no||'';ur_desc.value=item.description||'';ur_initial.value=String(plan.initial_stock);ur_target.value='0';ur_min.value='0';ur_unit.value='Stk.';
  ur_manufacturer.value='';ur_supplier.value='';ur_supplier_no.value='';ur_barcode.value='';ur_notes.value='';ur_active.value='true';
+ const sourceTech=source==='delivery'?dtech.value:stech.value;ur_technician.value=LVV66Core.technicianChoice(sourceTech,(md.technicians||[]).map(x=>x.name),md.default_technician);
  ur_location.innerHTML='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
  ur_machine.innerHTML=machineMultiOptions([]);renderMachineChips('ur');ur_location_new.value='';ur_machine_new.value='';ur_location_suggestions.innerHTML='';ur_machine_suggestions.innerHTML='';
  if(source==='service'&&currentServiceMachine()){
   const serviceMachine=currentServiceMachine();const found=(md.machines||[]).find(x=>normLabel(x.name)===normLabel(serviceMachine));
   if(found){const opt=[...ur_machine.options].find(o=>Number(o.value)===Number(found.id));if(opt)opt.selected=true}
  }
+ renderMachineChips('ur');
  unknownArticleContext.innerHTML=`<b>Quelle:</b> ${source==='delivery'?'Lieferschein / Einbuchung':'Servicebericht / Entnahme'}<br><b>Erkannte Buchungsmenge:</b> ${n(item.quantity)}${source==='service'?'<br><span class="small">Für eine anschließende Entnahme muss der Anfangsbestand mindestens der Entnahmemenge entsprechen.</span>':''}`;
  adjustUnknownRegistrationUnit();ur_msg.className='message';ur_msg.textContent='';unknownArticleOverlay.style.display='block';setTimeout(()=>ur_desc.focus(),0);
 }
@@ -1063,16 +1126,24 @@ function adjustUnknownRegistrationUnit(){
 async function saveUnknownRegistration(){
  const st=unknownRegistrationState;if(!st)return;
  const description=ur_desc.value.trim();if(!description)return msg(ur_msg,'Bitte eine Bezeichnung eingeben.',false);
- const initial=Number(ur_initial.value||0);
- if(st.source==='service'&&initial<st.quantity)return msg(ur_msg,`Für die Entnahme von ${n(st.quantity)} muss der Anfangsbestand mindestens ${n(st.quantity)} betragen. Alternativ kann die Position ignoriert werden.`,false);
+ const initial=Number(ur_initial.value||0);if(st.source==='service'&&initial<st.quantity)return msg(ur_msg,`Für die Entnahme von ${n(st.quantity)} muss der Ausgangsbestand mindestens ${n(st.quantity)} betragen. Alternativ kann die Position ignoriert werden.`,false);
  const adjusted=normalizeMaterialLevelFields('ur');
- const body={article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),notes:ur_notes.value.trim(),active:ur_active.value==='true',creation_source:st.source==='delivery'?'Lieferschein / M365':'Servicebericht / M365'};
+ const body={article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),notes:ur_notes.value.trim(),active:ur_active.value==='true',technician:ur_technician.value||md.default_technician||'',creation_source:st.source==='delivery'?'Lieferschein / M365':'Servicebericht / M365'};
+ if(!body.location)return msg(ur_msg,'Bitte einen Lagerort auswählen.',false);
+ if(saveUnknownRegistration.busy)return;saveUnknownRegistration.busy=true;
  try{
-  const created=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});
-  const source=st.source;closeUnknownRegistration();arts=[];await master();await dash();await loadRecentMovements('IN');
-  if(source==='delivery')await deliveryPreview(true);else await servicePreview(true);
-  const target=source==='delivery'?dmsg:smsg;msg(target,(created.levels_adjusted||adjusted)?'Neues Material wurde registriert. Sollbestand wurde automatisch auf den Mindestbestand angehoben.':'Neues Material wurde registriert und in die Buchung übernommen.',true);
- }catch(e){msg(ur_msg,e.message,false)}
+  const created=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});const source=st.source,articleNo=st.article_no,quantity=st.quantity;
+  closeUnknownRegistration();arts=[];await master();await dash();await loadRecentMovements('IN');
+  const list=unknownList(source);const ix=list.findIndex(x=>String(x.article_no)===String(articleNo));if(ix>=0)list.splice(ix,1);setUnknownList(source,list);
+  if(source==='delivery'){
+   deliveryInitialBooked.add(String(articleNo));deliveryInitialBookedKey=deliveryExtractionKey(dtext.value);updateUnknownSourceUI('delivery');renderDeliveryPreviewRows();
+   msg(dmsg,`Neues Material ${articleNo} wurde mit Ausgangsbestand ${n(initial)} angelegt. Diese Menge wird aus diesem Lieferschein nicht noch einmal eingebucht.`+(created.levels_adjusted||adjusted?' Sollbestand wurde automatisch auf den Mindestbestand angehoben.':''),true);
+  }else{
+   if(!servicep.some(x=>String(x.article_no)===String(articleNo)))servicep.push({article_no:articleNo,article_id:created.id,description,quantity});
+   updateUnknownSourceUI('service');renderServicePreviewRows();
+   msg(smsg,`Neues Material ${articleNo} wurde mit Ausgangsbestand ${n(initial)} angelegt und steht für die erkannte Entnahme bereit.`+(created.levels_adjusted||adjusted?' Sollbestand wurde automatisch auf den Mindestbestand angehoben.':''),true);
+  }
+ }catch(e){msg(ur_msg,e.message,false)}finally{saveUnknownRegistration.busy=false}
 }
 async function createUnknown(source){
  let list=source==='delivery'?deliveryUnknown:(source==='service'?serviceUnknown:csvUnknown);
@@ -1080,7 +1151,8 @@ async function createUnknown(source){
  if(!table)return;
  let rows=[...table.tBodies[0].rows];
  let items=list.map((x,i)=>({...x,description:rows[i].querySelector('[data-field="description"]').value,location:rows[i].querySelector('[data-field="location"]').value,minimum_stock:+rows[i].querySelector('[data-field="minimum_stock"]').value,target_stock:+rows[i].querySelector('[data-field="target_stock"]').value}));
- try{let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({items,technician:'Lovrencic'})});alert((d.created||0)+' Artikel wurden angelegt.'+(d.levels_adjusted?' Soll-/Mindestbestand wurde bei '+d.levels_adjusted+' Artikel(n) automatisch angeglichen.':'')+' Bitte den Import erneut prüfen.');arts=[];await master();await dash();await loadRecentMovements('IN');if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()}catch(e){alert(e.message)}
+ const sourceTech=source==='delivery'?dtech.value:(source==='service'?stech.value:ctech.value);
+ try{let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({items,technician:sourceTech||md.default_technician||'Techniker'})});alert((d.created||0)+' Artikel wurden angelegt.'+(d.levels_adjusted?' Soll-/Mindestbestand wurde bei '+d.levels_adjusted+' Artikel(n) automatisch angeglichen.':'')+' Bitte den Import erneut prüfen.');arts=[];await master();await dash();await loadRecentMovements('IN');if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()}catch(e){alert(e.message)}
 }
 
 async function loadImportFile(input){
@@ -1129,7 +1201,7 @@ async function createAndBookAll(){
  });
  try{
   let d=await api('/api/import/create-and-book',{method:'POST',body:JSON.stringify({
-   known_items:csvp,new_items:newItems,technician:'Lovrencic',
+   known_items:csvp,new_items:newItems,technician:ctech.value||md.default_technician||'Techniker',
    movement_date:td(),note:'SAP-Import '+(lastImportFilename||'')
   })});
   msg(cmsg,`${d.created} neue Artikel angelegt und ${d.booked} Position(en) eingebucht.${d.levels_adjusted?' '+d.levels_adjusted+' Mindestbestand/Mindestbestände automatisch angeglichen.':''}`,true);
@@ -1139,7 +1211,7 @@ async function createAndBookAll(){
 }
 async function csvCommit(){
  try{
-  let d=await api('/api/import/commit',{method:'POST',body:JSON.stringify({items:csvp,technician:'Lovrencic',movement_date:td(),note:'SAP-CSV-Import'})});
+  let d=await api('/api/import/commit',{method:'POST',body:JSON.stringify({items:csvp,technician:ctech.value||md.default_technician||'Techniker',movement_date:td(),note:'SAP-CSV-Import'})});
   msg(cmsg,d.count+' Position(en) eingebucht.',true);csvp=[];ccommit.disabled=true;arts=[];dash()
  }catch(e){msg(cmsg,e.message,false)}
 }
@@ -1525,14 +1597,54 @@ function fillNewMaterialLists(){
  nm_location.innerHTML=loc;nm_machine.innerHTML=machineMultiOptions([]);renderMachineChips('nm');
 }
 let levelDrafts=new Map();
+let stockMachineEditorArticleId=0;
 function levelKey(prefix,id){return `${prefix}:${id}`}
+function currentStockMachineIds(id){
+ const draft=levelDrafts.get(levelKey('stock',id));if(draft?.machine_ids)return [...draft.machine_ids];
+ const a=arts.find(x=>Number(x.id)===Number(id));return [...(a?.machine_ids||[])];
+}
+function stockMachineNames(ids){const set=new Set((ids||[]).map(Number));return (md.machines||[]).filter(x=>set.has(Number(x.id))).map(x=>x.name)}
 function markLevelDraft(prefix,id){
  const t=document.getElementById(`${prefix}-target-${id}`),m=document.getElementById(`${prefix}-min-${id}`);if(!t||!m)return;
- levelDrafts.set(levelKey(prefix,id),{prefix,id,target:t.value,minimum:m.value});t.classList.add('level-dirty');m.classList.add('level-dirty');
+ const a=prefix==='dash'?dashboardLowItems.find(x=>Number(x.id)===Number(id)):arts.find(x=>Number(x.id)===Number(id));let next={prefix,id,target:t.value,minimum:m.value,unit:a?.unit||levelDrafts.get(levelKey(prefix,id))?.unit||'Stk.'};
+ if(prefix==='stock'){
+  const loc=document.getElementById(`stock-location-${id}`);next.location=loc?.value||'';next.machine_ids=currentStockMachineIds(id);
+ }
+ const key=levelKey(prefix,id);levelDrafts.set(key,LVV66Core.mergeDraft(levelDrafts.get(key),next));
+ t.classList.add('level-dirty');m.classList.add('level-dirty');
+ const loc=document.getElementById(`stock-location-${id}`);if(loc)loc.classList.add('level-dirty');
  const st=document.getElementById(`${prefix}-level-status-${id}`);if(st)st.textContent='Ungespeichert';
 }
-function restoreLevelDrafts(){for(const d of levelDrafts.values()){const t=document.getElementById(`${d.prefix}-target-${d.id}`),m=document.getElementById(`${d.prefix}-min-${d.id}`);if(t&&m){t.value=d.target;m.value=d.minimum;t.classList.add('level-dirty');m.classList.add('level-dirty');const st=document.getElementById(`${d.prefix}-level-status-${d.id}`);if(st)st.textContent='Ungespeichert'}}}
-async function saveAllLevelChanges(){for(const d of [...levelDrafts.values()])await saveArticleLevels(d.id,d.prefix,true)}
+function restoreLevelDrafts(){
+ for(const d of levelDrafts.values()){
+  const t=document.getElementById(`${d.prefix}-target-${d.id}`),m=document.getElementById(`${d.prefix}-min-${d.id}`);if(!t||!m)continue;
+  t.value=d.target;m.value=d.minimum;t.classList.add('level-dirty');m.classList.add('level-dirty');
+  if(d.prefix==='stock'){
+   const loc=document.getElementById(`stock-location-${d.id}`);if(loc){loc.value=d.location??loc.value;loc.classList.add('level-dirty')}
+   const label=document.getElementById(`stock-machines-label-${d.id}`);if(label)label.textContent=stockMachineNames(d.machine_ids).join(', ')||'—';
+  }
+  const st=document.getElementById(`${d.prefix}-level-status-${d.id}`);if(st)st.textContent='Ungespeichert';
+ }
+}
+function openStockMachineEditor(id){
+ stockMachineEditorArticleId=Number(id);const a=arts.find(x=>Number(x.id)===Number(id));
+ stockMachineArticleLabel.textContent=a?`${a.article_no} – ${a.description}`:'';const selected=new Set(currentStockMachineIds(id).map(Number));
+ stockMachineEditorChips.innerHTML=(md.machines||[]).map(x=>`<label class="machine-chip"><input type="checkbox" value="${Number(x.id)}" ${selected.has(Number(x.id))?'checked':''}><span>${esc(x.name)}</span></label>`).join('')||'<span class="small">Keine Maschinen vorhanden.</span>';
+ stockMachineOverlay.style.display='block';
+}
+function closeStockMachineEditor(){stockMachineOverlay.style.display='none';stockMachineEditorArticleId=0}
+function applyStockMachineEditor(){
+ const id=stockMachineEditorArticleId;if(!id)return closeStockMachineEditor();
+ const ids=[...stockMachineEditorChips.querySelectorAll('input[type="checkbox"]:checked')].map(x=>Number(x.value));
+ const key=levelKey('stock',id),base=levelDrafts.get(key)||{prefix:'stock',id,target:document.getElementById(`stock-target-${id}`)?.value||0,minimum:document.getElementById(`stock-min-${id}`)?.value||0,location:document.getElementById(`stock-location-${id}`)?.value||''};
+ levelDrafts.set(key,LVV66Core.mergeDraft(base,{machine_ids:ids}));const label=document.getElementById(`stock-machines-label-${id}`);if(label)label.textContent=stockMachineNames(ids).join(', ')||'—';markLevelDraft('stock',id);closeStockMachineEditor();
+}
+async function saveAllLevelChanges(){
+ const pending=[...levelDrafts.values()];if(!pending.length)return msg(articleLevelsMsg,'Keine ungespeicherten Änderungen vorhanden.',true);
+ let failed=0;for(const d of pending){try{await saveArticleLevels(d.id,d.prefix,true)}catch{failed++}}
+ const refreshed=await Promise.allSettled([dash(),loadArticles(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]);
+ if(failed)msg(articleLevelsMsg,`${pending.length-failed} Änderung(en) gespeichert, ${failed} fehlgeschlagen.`,false);else if(refreshed.some(x=>x.status==='rejected'))msg(articleLevelsMsg,'Alle Änderungen gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true);else msg(articleLevelsMsg,'Alle Änderungen gespeichert ✓',true);
+}
 window.addEventListener('beforeunload',e=>{if(levelDrafts.size){e.preventDefault();e.returnValue=''}});
 function materialFormHasData(){return !!(nm_no.value.trim()||nm_desc.value.trim()||Number(nm_initial.value)||Number(nm_target.value)||Number(nm_min.value)||nm_location.value||nm_notes.value.trim())}
 async function checkNewArticleNumber(){const q=nm_no.value.trim();if(!q){nm_no_status.textContent='';return}try{const list=await api('/api/articles?q='+encodeURIComponent(q));const hit=list.find(x=>String(x.article_no).toLowerCase()===q.toLowerCase());nm_no_status.textContent=hit?'⚠ Artikelnummer bereits vorhanden':'✓ Artikelnummer frei';nm_no_status.style.color=hit?'#b42318':'#12613d'}catch{nm_no_status.textContent=''}}
@@ -1548,7 +1660,8 @@ async function createMaterial(){
  if(!description)return msg(nm_msg,'Bitte eine Bezeichnung eingeben.',false);
  if(!locationValue)return msg(nm_msg,'Bitte einen Lagerort auswählen.',false);
  let whole=isWholeNumberUnit(nm_unit.value),num=v=>whole?Math.round(Number(v||0)):Number(v||0);const adjusted=normalizeMaterialLevelFields('nm');
- let body={article_no:articleNo,description,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:locationValue,machine_ids:selectedMachineIds(nm_machine),manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true',creation_source:'Manuelle Materialanlage'};
+ let body={article_no:articleNo,description,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:locationValue,machine_ids:selectedMachineIds(nm_machine),manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true',technician:nm_technician.value||md.default_technician||'',creation_source:'Manuelle Materialanlage'};
+ if(createMaterial.busy)return;createMaterial.busy=true;
  let saved=false;
  try{
   const d=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});saved=true;
@@ -1556,11 +1669,11 @@ async function createMaterial(){
   clearMaterialForm(false);nm_no.focus();arts=[];
   const refresh=await Promise.allSettled([master(),dash(),loadArticles(),loadRecentMovements('IN'),document.getElementById('hist')?.classList.contains('active')?hist():Promise.resolve()]);
   if(refresh.some(x=>x.status==='rejected'))msg(nm_msg,`Material ${d.article_no||articleNo} wurde gespeichert, aber die Ansicht konnte nicht vollständig aktualisiert werden.`,true);
- }catch(e){if(!saved)msg(nm_msg,e.message,false)}
+ }catch(e){if(!saved)msg(nm_msg,e.message,false)}finally{createMaterial.busy=false}
 }
 function clearMaterialForm(confirmIfDirty=false){if(confirmIfDirty&&materialFormHasData()&&!confirm('Formular wirklich leeren? Nicht gespeicherte Eingaben gehen verloren.'))return;
  ['nm_no','nm_desc','nm_manufacturer','nm_supplier','nm_supplier_no','nm_barcode','nm_notes','nm_location_new','nm_machine_new'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
- nm_initial.value=0;nm_target.value=0;nm_min.value=0;nm_active.value='true';if(nm_location)nm_location.value='';[...nm_machine.options].forEach(o=>o.selected=false);if(nm_location_suggestions)nm_location_suggestions.innerHTML='';if(nm_machine_suggestions)nm_machine_suggestions.innerHTML='';if(window.nm_no_status)nm_no_status.textContent='';renderMachineChips('nm');
+ nm_initial.value=0;nm_target.value=0;nm_min.value=0;nm_active.value='true';if(nm_technician)nm_technician.value=LVV66Core.technicianChoice('',(md.technicians||[]).map(x=>x.name),md.default_technician);if(nm_location)nm_location.value='';[...nm_machine.options].forEach(o=>o.selected=false);if(nm_location_suggestions)nm_location_suggestions.innerHTML='';if(nm_machine_suggestions)nm_machine_suggestions.innerHTML='';if(window.nm_no_status)nm_no_status.textContent='';renderMachineChips('nm');
 }
 
 function normLabel(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9.]+/g,' ').replace(/\s+/g,' ').trim()}
