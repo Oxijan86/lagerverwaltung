@@ -29,7 +29,7 @@
   - bestehende V60-Sync-/Guard-Logik bleibt erhalten
 - `app_rules.js` **neu**
   - Mengen-/Bestandsnormalisierung
-  - Regel `minimum_stock >= target_stock`
+  - Regel `0 <= minimum_stock <= target_stock`; bei Mindest > Soll wird Soll angehoben
   - Unterbestandslogik
   - Materialanforderungsziel
 - `help_core.js` **neu**

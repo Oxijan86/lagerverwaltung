@@ -1,3 +1,6 @@
+HINWEIS ZUR SPÄTER KORRIGIERTEN FACHLOgIK (V65+):
+Der historische V64-Test „Bestellziel max(Soll,Mindest)“ ist fachlich überholt. Aktuell gilt: Bestellvorschlag nur bei Ist < Mindest und Menge = max(0, Soll - Ist).
+
 Lagerverwaltung Lovrencic – V64 finale Prüfung
 Zeitpunkt: 2026-09-24T14:38:34
 

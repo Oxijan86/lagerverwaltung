@@ -41,13 +41,15 @@ Soll- und Mindestbestand können im Lagerbestand und im Dashboard ohne Passwort 
 
 Verbindliche Regel:
 
-`minimum_stock >= target_stock`
+`0 <= minimum_stock <= target_stock`
 
-Ist Mindestbestand kleiner, wird er automatisch auf Sollbestand angehoben. Die Regel gilt auch für neue Materialien und Importe.
+Ist Mindestbestand größer als Sollbestand, wird Sollbestand automatisch auf Mindestbestand angehoben. Die Regel gilt auch für neue Materialien und Importe.
 
 Für Materialanforderungen gilt:
 
-`Bestellziel = max(Sollbestand, Mindestbestand)`
+- nur wenn `Istbestand < Mindestbestand`,
+- Bestellmenge `max(0, Sollbestand - Istbestand)`,
+- bei `Istbestand >= Mindestbestand` kein Bestellvorschlag.
 
 ## Dashboard-Unterbestand
 

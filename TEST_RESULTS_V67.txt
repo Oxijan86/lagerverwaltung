@@ -1,0 +1,1794 @@
+Lagerverwaltung Lovrencic – Version 67 FINAL – TEST_RESULTS_V67.txt
+Prüfzeitpunkt: 2026-09-25T21:47:37
+
+GESAMTERGEBNIS
+- Automatisierte Node-Tests: 147 ausgeführt, 147 bestanden, 0 fehlgeschlagen, 0 übersprungen.
+- JavaScript-Syntax: 9 Projektdateien + 3 Inline-Skripte geprüft, alle bestanden.
+- Manifest: gültiges JSON und Version 67 geprüft.
+- Service Worker: V67-Cache, skipWaiting(), clients.claim() und network-first/no-store für kritische Dateien geprüft.
+- XLSX: beide Materialanforderungsvorlagen als gültige XLSX geprüft und byte-identisch zu V66 FINAL.
+
+VERPFLICHTENDE 25 ABNAHMEFÄLLE
+
+1. M365-Neuanlage Menge 5 ergibt Bestand 5
+Erwartet: Exakt ein Artikel und eine Anfangsbuchung; Bestand 5
+Tatsächlich: V67 M365-Neuanlage Menge 5 ergibt exakt Bestand 5 und Retry bleibt 5
+Status: PASS
+
+2. Wiederholung desselben Requests bleibt Bestand 5
+Erwartet: Retry liefert vorhandenes Ergebnis; keine zweite Buchung
+Tatsächlich: V67 M365-Neuanlage Menge 5 ergibt exakt Bestand 5 und Retry bleibt 5
+Status: PASS
+
+3. Verlorener Response + Retry
+Erwartet: Keine zweite Anfangsbuchung
+Tatsächlich: Verlorener Response und Browser-Retry erzeugt keine zweite Anfangsbuchung
+Status: PASS
+
+4. Reload nach Materialanlage
+Erwartet: Persistente DB erkennt Position nach Neuöffnung
+Tatsächlich: SQLite: gleicher Vorgang + Position bleibt nach DB-Neuöffnung idempotent
+Status: PASS
+
+5. Neuer Vorgang bei identischem Inhalt
+Erwartet: Neue operation_id erlaubt bewusste neue Buchung
+Tatsächlich: Bewusst neuer Vorgang mit identischem Inhalt kann vorhandenen Artikel erneut buchen
+Status: PASS
+
+6. Mehrfachentnahme, zweite Position unzureichend
+Erwartet: Keine Teilbuchung; vollständige Vorvalidierung/Rollback
+Tatsächlich: Mehrfachentnahme wird vor Schreibbeginn vollständig validiert + SQLite Rollback
+Status: PASS
+
+7. Mehrfacheinbuchung, fehlerhafte Position
+Erwartet: Keine Teilbuchung
+Tatsächlich: Mehrfacheinbuchung mit ungültiger zweiter Position führt zu keiner Teilbuchung
+Status: PASS
+
+8. Legacy-Passwort 6 Zeichen
+Erwartet: Altpasswort wird geprüft und nach PBKDF2 migriert
+Tatsächlich: Legacy-Passwort mit 6 Zeichen kann geprüft und auf PBKDF2 migriert werden
+Status: PASS
+
+9. Legacy-Passwort 7 Zeichen
+Erwartet: Altpasswort wird geprüft und nach PBKDF2 migriert
+Tatsächlich: Legacy-Passwort mit 7 Zeichen kann geprüft und auf PBKDF2 migriert werden
+Status: PASS
+
+10. Neues Passwort unter 8 Zeichen
+Erwartet: Ablehnung
+Tatsächlich: Neues Passwort unter 8 Zeichen wird weiterhin abgelehnt
+Status: PASS
+
+11. Gemeinsamer Entwurf Dashboard/Lagerbestand
+Erwartet: Genau ein Entwurf pro Artikel-ID
+Tatsächlich: Dashboard und Lagerbestand verwenden denselben Entwurf pro Artikel
+Status: PASS
+
+12. Alle Änderungen speichern
+Erwartet: Jeder Artikel nur einmal
+Tatsächlich: Alle Änderungen speichern kann denselben Artikel nur einmal iterieren
+Status: PASS
+
+13. Verwerfen
+Erwartet: Entwurf wird wirklich gelöscht
+Tatsächlich: Verwerfen löscht gemeinsamen Entwurf tatsächlich
+Status: PASS
+
+14. Smartphone eingeklappt
+Erwartet: Nur Grunddaten + Details-Bedienung; Dirty-Marker nur bei Änderung
+Tatsächlich: Smartphone Details-State zeigt eingeklappt nur Grunddaten plus Bedienung/Dirty-Marker
+Status: PASS
+
+15. Details anzeigen
+Erwartet: Mindest/Soll/Lagerort/Maschinen/Speichern sichtbar
+Tatsächlich: Details anzeigen öffnet alle geforderten Felder und bleibt je Artikel unabhängig
+Status: PASS
+
+16. Ein-/Ausklappen
+Erwartet: Entwurfswerte bleiben erhalten
+Tatsächlich: Ein- und Ausklappen verändert einen Artikelentwurf nicht
+Status: PASS
+
+17. Ungespeichert-Markierung eingeklappt
+Erwartet: Dirty-Marker bleibt Teil der kollabierten Darstellung
+Tatsächlich: Smartphone Details-State zeigt eingeklappt nur Grunddaten plus Bedienung/Dirty-Marker
+Status: PASS
+
+18. 360/390/430 Pixel
+Erwartet: Alle Breiten fallen in getestete mobile Darstellung
+Tatsächlich: 360, 390 und 430 Pixel verwenden die eingeklappte Smartphone-Darstellung
+Status: PASS (Code-/State-Test; kein physisches Gerät)
+
+19. Tastatur und aria-expanded
+Erwartet: Nativer Button, aria-expanded/aria-controls
+Tatsächlich: Tastaturfähiger nativer Button besitzt aria-expanded und aria-controls
+Status: PASS (DOM/Quelltest; keine physische Tastaturautomation)
+
+20. Technikeranlage ohne Admin-Token
+Erwartet: Keine Mutation ohne gültiges Sitzungstoken
+Tatsächlich: Zentrale Stammdaten: fehlendes/falsches Token verändert keinen Zustand
+Status: PASS
+
+21. Datumsformat ohne Admin-Token
+Erwartet: Keine Änderung ohne gültiges Sitzungstoken
+Tatsächlich: Datumsformat: nur aktuell ausgegebenes Sitzungstoken autorisiert Mutation
+Status: PASS
+
+22. Unterschiedliche Setup-Passwörter
+Erwartet: Ablehnung vor Speicherung
+Tatsächlich: Setup: unterschiedliche Passwörter werden vor jeder Speicherung abgelehnt
+Status: PASS
+
+23. Nicht autorisierte Inventur
+Erwartet: Kein Backup und keine Mutation
+Tatsächlich: Inventur: fehlende Adminfreigabe verhindert Backup und Mutation
+Status: PASS
+
+24. Produktive Testschalter
+Erwartet: Keine öffentlich erreichbaren Testfehler-Parameter
+Tatsächlich: Produktive Endpunkte enthalten keine öffentlich erreichbaren Testschalter
+Status: PASS
+
+25. Synchronisation/Parallelkonflikt
+Erwartet: Bestehende V59-V66 Sicherheits-/Race-/Two-device-Suite bleibt grün
+Tatsächlich: Sync-Entscheidung, Persistenz, Race, Two-device, Write-Guard und Close-Regressionen
+Status: PASS
+
+ALLE AUTOMATISIERT AUSGEFÜHRTEN TESTS
+
+Test 1: Mindestbestand darf unter Sollbestand liegen
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 2: Mindest über Soll hebt Soll automatisch an
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 3: negative Werte werden verhindert und Stückwerte normalisiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 4: Unterbestand nur bei Ist kleiner Mindest
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 5: Dashboard zählt 17 Unterbestände vollständig und begrenzt Vorschau
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 6: Materialanforderung nur unter Mindest und bis Soll
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 7: PBKDF2 Hash ist gesalzen und verifizierbar
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 8: Sitzungstoken ist zufällig, exakt geprüft und widerrufbar
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 9: manipulierter alter Unlock-Header wird nicht akzeptiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 10: sessionStorage Boolean gewährt keine Rechte
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 11: Setup-Endpunkte können bestehendes Passwort nicht überschreiben
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 12: Logout widerruft Sitzung im Backend
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 13: alle aktiven Versionsstellen stehen auf V67
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 14: Service Worker enthält Kern- und V67-Module
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 15: Speichern trennt Schreibvorgang und UI-Aktualisierung
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 16: andere Entwürfe bleiben im Map erhalten und werden nach Re-Render restauriert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 17: bestehende gültige lager.db kann als Cloud-Ordner verbunden werden
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 18: bestehende Cloud-Datei wird beim bloßen Verbinden nicht initialisiert oder überschrieben
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 19: nur fehlende lager.db wird als neue Cloud-Ablage initialisiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 20: ungültige oder nicht lesbare Cloud-Datei bleibt geschützt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 21: Smartphone-UI benennt den richtigen Verbindungsweg eindeutig
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 22: Codeblöcke werden unverändert extrahiert und Sprachkennung text entfernt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 23: Gerenderter Prompt enthält unveränderten Code und beide Aktionen
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 24: Prompt ist für Maus/Langdruck auswählbar und Copy besitzt Clipboard plus Fallback
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 25: Levels-Endpunkt bleibt eng begrenzt und passwortfrei
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 26: Lagerbestand und Dashboard besitzen Entwurfsverwaltung
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 27: A2 cloud und local_folder liefern geschützte Close-Requests
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 28: A2 beschädigte Datei, fremde DB und Parallelbasis bleiben gesperrt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 29: Logout-Reauthorize prüft direkt LVSync.inspect und nutzt danach LVSession.close
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 30: LVSync.inspect ist unabhängig vom storageMode öffentlich verfügbar
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 31: local_folder save benutzt keinen direkten unklassifizierten Write-Bypass
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 32: Logout-Dialog besitzt expliziten Reauthorize-&-Sync-Button
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 33: Logout prüft Permission ohne requestPermission im Hintergrund
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 34: Reauthorize wird nur im Button-Handler ausgelöst und danach normaler Close-Sync verwendet
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 35: Permission-Fehler im normalen Close blendet Retry-Aktion ein
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 36: Neue Materialanlage ist backendseitig passwortfrei
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 37: Import-Anlage und create-and-book sind passwortfrei
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 38: Material-Stammdatenweg erlaubt nur Lagerort/Maschine und verlangt Admin
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 39: Zentrale Stammdaten und bestehende Artikel bleiben geschützt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 40: Neues-Material-UI zeigt kein Passwort-Lock mehr
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 41: Alle Frontend-Anlagewege kommen ohne Passwortprompt aus
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 42: Materialformular legt Lagerort/Maschine nur über begrenzten Endpoint an
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 43: Audit-Änderungen am Materialanforderungs-Exportordner revisionieren
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 44: V64 nutzt gerätespezifischen Speichermodus in IndexedDB
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 45: Sync-Queue statt isSyncing-Flag
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 46: Buchung während laufendem Write überschreibt keinen neueren lokalen Stand
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 47: persist(false) wird nicht direkt nach Audit-Inhaltsänderungen verwendet
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 48: V67 Cache-Name
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 49: skipWaiting aktiv
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 50: clients.claim aktiv
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 51: kritische App-Dateien network-first/no-store
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 52: Startdialog besitzt direkte erneute Ordnerfreigabe
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 53: Berechtigungsbutton erscheint nur bei permission_denied
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 54: Freigabe läuft aus Benutzeraktion über bestehende sichere Reauthorize-Funktion
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 55: Hintergrundprüfung fordert weiterhin nicht automatisch Berechtigung an
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 56: useCloud leitet permission_denied zur ausdrücklichen Freigabe um
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 57: A1 echte Migration: ältere Cloud-DB + kein IndexedDB-Wert + Handle bleibt cloud und wird in IndexedDB übernommen
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 58: IndexedDB-Wert hat Vorrang vor Legacy und Handle
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 59: Legacy local_folder wird übernommen und migriert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 60: Vorhandener Handle fällt ohne Altwerte auf cloud zurück und wird gespeichert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 61: Ohne gespeicherten Zustand gilt browser_local
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 62: 1 Cloud 87, lokale Kindrevision 88 ist sicher
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 63: 2 mehrere lokale Revisionen 90 auf Basis 87 sind sicher
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 64: 3 identisch trotz fehlender Metadaten
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 65: 4 direkte Kindrevision via parent_revision_id
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 66: 9 gleiche Revisionsnummer mit anderer revision_id ist Konflikt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 67: 10 veralteter Zweig bleibt blockiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 68: cloud permission required
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 69: cloud missing
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 70: cloud unreadable
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 71: 19 nach Schreiben wird erneut gelesen und geprüft
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 72: 16 write-Fehler übernimmt Kandidat nicht
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 73: post-write falsche revision_id ist Fehler
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 74: force legt zuerst Backup der lesbaren Cloud-Datei an
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 75: 17 Buchung während Sync löst Nachlauf aus
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 76: 18 zwei manuelle Syncs schreiben nie parallel
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 77: 5 beide Geräte starten identisch 87
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 78: 6/7/8 PC 88-A in Cloud, Smartphone 88-B darf nicht überschreiben
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 79: 12 Cloud ändert sich nach bewusster lokaler Fortsetzung erneut => neuer Konflikt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 80: 11 nach lokal weiterarbeiten wird derselbe Cloud-Konflikt nicht erneut gezeigt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 81: 12 neue Cloud-Revision hebt die Bestätigung auf
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 82: strikter Guard erlaubt bestätigte Basis
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 83: 13 beschädigte DB wird blockiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 84: 14 missing wird normal nicht erzeugt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 85: missing nur bei ausdrücklicher Initialisierung erlaubt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 86: 15 permission denied blockiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 87: 20 unterschiedliche database_id blockiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 88: expectedCloudDatabaseId muss exakt passen
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 89: expectedCloudRevisionId muss exakt passen
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 90: writeBlocked blockiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 91: Fehler mitten in Transaktion führt zu ROLLBACK und nicht COMMIT
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 92: Erfolg führt BEGIN -> Arbeit -> COMMIT aus
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 93: Materialanlage und Import verwenden Transaktionshelper
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 94: Materialformular validiert Pflichtfelder und Lagerort
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 95: Formular leeren fragt bei Eingaben nach
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 96: Maschinen werden als touchfreundliche Chips angeboten
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 97: Touchflächen, Fokus und M365-Höhe sind mobil optimiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 98: Bearbeiten/Löschen Symbole haben aria-labels
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 99: Synchronisationsstatus nennt verständliche Zustände
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 100: V59 API-Routen bleiben in V64 erhalten
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 101: V64 enthält keine destruktive Schema-Migration beim Start
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 102: zentrale Ansichten bleiben erhalten
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 103: V66 Lagerbestand hat verbindliche Spaltenreihenfolge
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 104: Lagerbestand bleibt am PC Tabelle und wird auf Smartphone Kartenlayout
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 105: Lagerort und Mehrfach-Maschinenzuordnung sind im Lagerbestand editierbar und passwortfrei
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 106: Entwurfsmodell behält Lagerort und Maschinen sowie andere Werte
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 107: Standard-Techniker wird automatisch gewählt, manuelle Auswahl bleibt erhalten
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 108: M365-Neuanlage Menge 5 wird genau als Ausgangsbestand 5 geplant
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 109: Servicebericht-Neuanlage nutzt Ausgangsbestand, anschließende Entnahme bleibt erlaubt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 110: Doppelte Anfangsbuchung wird durch eindeutige Artikelnummer und Delivery-Sperre verhindert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 111: Materialanlage bleibt transaktional und produktive Testschalter sind entfernt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 112: V66 Rollback-Simulation entfernt Artikel, Maschinenrelation und Anfangsbuchung gemeinsam
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 113: Manuelle Materialanlage startet weiterhin mit Ausgangsbestand 0
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 114: CSV-SAP nutzt den ausgewählten bzw. Standard-Techniker
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 115: Bestandslogik V65 bleibt in V66 unverändert korrekt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 116: V67 M365-Neuanlage Menge 5 ergibt exakt Bestand 5 und Retry bleibt 5
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 117: Verlorener Response und Browser-Retry erzeugt keine zweite Anfangsbuchung
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 118: Bewusst neuer Vorgang mit identischem Inhalt kann vorhandenen Artikel erneut buchen
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 119: Mehrfachentnahme wird vor Schreibbeginn vollständig validiert
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 120: Mehrfacheinbuchung mit ungültiger zweiter Position führt zu keiner Teilbuchung
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 121: Transaktionsfehler rollt alle simulierten Teiländerungen zurück
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 122: Legacy-Passwort mit 6 Zeichen kann geprüft und auf PBKDF2 migriert werden
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 123: Legacy-Passwort mit 7 Zeichen kann geprüft und auf PBKDF2 migriert werden
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 124: Neues Passwort unter 8 Zeichen wird weiterhin abgelehnt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 125: Dashboard und Lagerbestand verwenden denselben Entwurf pro Artikel
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 126: Alle Änderungen speichern kann denselben Artikel nur einmal iterieren
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 127: Verwerfen löscht gemeinsamen Entwurf tatsächlich
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 128: Smartphone Details-State zeigt eingeklappt nur Grunddaten plus Bedienung/Dirty-Marker
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 129: Details anzeigen öffnet alle geforderten Felder und bleibt je Artikel unabhängig
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 130: Ein- und Ausklappen verändert einen Artikelentwurf nicht
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 131: Tastaturfähiger nativer Button besitzt aria-expanded und aria-controls
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 132: Mobile CSS blendet Detailzellen bis zum Öffnen aus und unterstützt <=700px
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 133: 360, 390 und 430 Pixel verwenden die eingeklappte Smartphone-Darstellung
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 134: Zentrale Stammdaten erfordern Admin; Materialzuordnung vorhandener Stammdaten bleibt passwortfrei
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 135: Datumsformatänderung ist backendseitig geschützt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 136: Setup verlangt identische Passwörter und mindestens acht Zeichen
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 137: Inventur prüft Admin vor Sicherheitsbackup
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 138: Produktive Endpunkte enthalten keine öffentlich erreichbaren Testschalter
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 139: Produktionsbackend verwendet SQLite-Idempotenzregister und stabile Vorgangskennung
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 140: Frontend sendet Importkontext für unbekannte M365-Artikel und bietet neuen Vorgang
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 141: Zentrale Stammdaten: fehlendes/falsches Token verändert keinen Zustand
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 142: Datumsformat: nur aktuell ausgegebenes Sitzungstoken autorisiert Mutation
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 143: Inventur: fehlende Adminfreigabe verhindert Backup und Mutation
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 144: Setup: unterschiedliche Passwörter werden vor jeder Speicherung abgelehnt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 145: Zentrale Guard-Funktion akzeptiert kein Passwort als Ersatz für Sitzungstoken
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 146: SQLite: gleicher Vorgang + Position bleibt nach DB-Neuöffnung idempotent
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+Test 147: SQLite: Fehler mitten in Mehrfachbuchung wird vollständig zurückgerollt
+Erwartet: Die im Test definierten funktionalen/Sicherheits-/Regressions-Assertions werden erfüllt.
+Tatsächlich: Alle Assertions erfüllt.
+Status: BESTANDEN
+
+ZUSÄTZLICHE BUILD-PRÜFUNGEN
+- index appVersion=67.0: BESTANDEN
+- /api/info version=67.0: BESTANDEN
+- database_version=67: BESTANDEN
+- manifest V67: BESTANDEN
+- package 67.0.0: BESTANDEN
+- service-worker V67 cache: BESTANDEN
+- skipWaiting: BESTANDEN
+- clients.claim: BESTANDEN
+- network-first critical files: BESTANDEN
+- persistent import registry: BESTANDEN
+- token-only central masterdata: BESTANDEN
+- token-only date format: BESTANDEN
+- no public test switches: BESTANDEN
+- no deliveryInitialBooked: BESTANDEN
+- no obsolete stock logic text: BESTANDEN
+- materialanforderung_vorlage.xlsx: XLSX gültig, byte-identisch zu V66, SHA256 6ecfe2dad8e9e595786885c2018e8b9eafa6314316d5b26af4bfc5ef89a09df7
+- materialanforderung_vorlage_lang.xlsx: XLSX gültig, byte-identisch zu V66, SHA256 e743b05526b36a6305942d28ca86ab4084f31f2a78f4a430d585aada5b4e2801
+
+NICHT PHYSISCH/HARDWARESEITIG GETESTET
+- Tatsächlicher Android-Langdruck, echte Bildschirmhardware bei 360/390/430 px und systemeigene Dateiberechtigungsdialoge wurden nicht auf einem physischen Gerät automatisiert. Die Responsive-CSS-/State-/ARIA-Codepfade wurden automatisiert geprüft.
+- Ein echter gleichzeitig stattfindender OneDrive-Schreibvorgang zweier physischer Geräte kann in der Containerumgebung nicht reproduziert werden. Die vorhandenen Sync-Race-/Two-device-/Write-Guard-Tests wurden vollständig ausgeführt und bestanden. Die bekannte Grenze des browserbasierten OneDrive-Dateizugriffs bleibt bestehen.
+
+ROHES NODE-TESTPROTOKOLL
+
+> lagerverwaltung-lovrencic-v67@67.0.0 test
+> node --test tests/*.spec.js
+
+TAP version 13
+# Subtest: Mindestbestand darf unter Sollbestand liegen
+ok 1 - Mindestbestand darf unter Sollbestand liegen
+  ---
+  duration_ms: 1.589138
+  type: 'test'
+  ...
+# Subtest: Mindest über Soll hebt Soll automatisch an
+ok 2 - Mindest über Soll hebt Soll automatisch an
+  ---
+  duration_ms: 0.207421
+  type: 'test'
+  ...
+# Subtest: negative Werte werden verhindert und Stückwerte normalisiert
+ok 3 - negative Werte werden verhindert und Stückwerte normalisiert
+  ---
+  duration_ms: 0.194352
+  type: 'test'
+  ...
+# Subtest: Unterbestand nur bei Ist kleiner Mindest
+ok 4 - Unterbestand nur bei Ist kleiner Mindest
+  ---
+  duration_ms: 0.228844
+  type: 'test'
+  ...
+# Subtest: Dashboard zählt 17 Unterbestände vollständig und begrenzt Vorschau
+ok 5 - Dashboard zählt 17 Unterbestände vollständig und begrenzt Vorschau
+  ---
+  duration_ms: 0.337157
+  type: 'test'
+  ...
+# Subtest: Materialanforderung nur unter Mindest und bis Soll
+ok 6 - Materialanforderung nur unter Mindest und bis Soll
+  ---
+  duration_ms: 0.277798
+  type: 'test'
+  ...
+# Subtest: PBKDF2 Hash ist gesalzen und verifizierbar
+ok 7 - PBKDF2 Hash ist gesalzen und verifizierbar
+  ---
+  duration_ms: 232.374492
+  type: 'test'
+  ...
+# Subtest: Sitzungstoken ist zufällig, exakt geprüft und widerrufbar
+ok 8 - Sitzungstoken ist zufällig, exakt geprüft und widerrufbar
+  ---
+  duration_ms: 0.401554
+  type: 'test'
+  ...
+# Subtest: manipulierter alter Unlock-Header wird nicht akzeptiert
+ok 9 - manipulierter alter Unlock-Header wird nicht akzeptiert
+  ---
+  duration_ms: 0.236646
+  type: 'test'
+  ...
+# Subtest: sessionStorage Boolean gewährt keine Rechte
+ok 10 - sessionStorage Boolean gewährt keine Rechte
+  ---
+  duration_ms: 0.192529
+  type: 'test'
+  ...
+# Subtest: Setup-Endpunkte können bestehendes Passwort nicht überschreiben
+ok 11 - Setup-Endpunkte können bestehendes Passwort nicht überschreiben
+  ---
+  duration_ms: 0.237176
+  type: 'test'
+  ...
+# Subtest: Logout widerruft Sitzung im Backend
+ok 12 - Logout widerruft Sitzung im Backend
+  ---
+  duration_ms: 0.187391
+  type: 'test'
+  ...
+# Subtest: alle aktiven Versionsstellen stehen auf V67
+ok 13 - alle aktiven Versionsstellen stehen auf V67
+  ---
+  duration_ms: 0.759502
+  type: 'test'
+  ...
+# Subtest: Service Worker enthält Kern- und V67-Module
+ok 14 - Service Worker enthält Kern- und V67-Module
+  ---
+  duration_ms: 0.169304
+  type: 'test'
+  ...
+# Subtest: Speichern trennt Schreibvorgang und UI-Aktualisierung
+ok 15 - Speichern trennt Schreibvorgang und UI-Aktualisierung
+  ---
+  duration_ms: 0.756897
+  type: 'test'
+  ...
+# Subtest: andere Entwürfe bleiben im Map erhalten und werden nach Re-Render restauriert
+ok 16 - andere Entwürfe bleiben im Map erhalten und werden nach Re-Render restauriert
+  ---
+  duration_ms: 0.500212
+  type: 'test'
+  ...
+# Subtest: bestehende gültige lager.db kann als Cloud-Ordner verbunden werden
+ok 17 - bestehende gültige lager.db kann als Cloud-Ordner verbunden werden
+  ---
+  duration_ms: 0.920663
+  type: 'test'
+  ...
+# Subtest: bestehende Cloud-Datei wird beim bloßen Verbinden nicht initialisiert oder überschrieben
+ok 18 - bestehende Cloud-Datei wird beim bloßen Verbinden nicht initialisiert oder überschrieben
+  ---
+  duration_ms: 0.147371
+  type: 'test'
+  ...
+# Subtest: nur fehlende lager.db wird als neue Cloud-Ablage initialisiert
+ok 19 - nur fehlende lager.db wird als neue Cloud-Ablage initialisiert
+  ---
+  duration_ms: 0.223186
+  type: 'test'
+  ...
+# Subtest: ungültige oder nicht lesbare Cloud-Datei bleibt geschützt
+ok 20 - ungültige oder nicht lesbare Cloud-Datei bleibt geschützt
+  ---
+  duration_ms: 0.121753
+  type: 'test'
+  ...
+# Subtest: Smartphone-UI benennt den richtigen Verbindungsweg eindeutig
+ok 21 - Smartphone-UI benennt den richtigen Verbindungsweg eindeutig
+  ---
+  duration_ms: 0.166531
+  type: 'test'
+  ...
+# Subtest: Codeblöcke werden unverändert extrahiert und Sprachkennung text entfernt
+ok 22 - Codeblöcke werden unverändert extrahiert und Sprachkennung text entfernt
+  ---
+  duration_ms: 1.162116
+  type: 'test'
+  ...
+# Subtest: Gerenderter Prompt enthält unveränderten Code und beide Aktionen
+ok 23 - Gerenderter Prompt enthält unveränderten Code und beide Aktionen
+  ---
+  duration_ms: 0.840273
+  type: 'test'
+  ...
+# Subtest: Prompt ist für Maus/Langdruck auswählbar und Copy besitzt Clipboard plus Fallback
+ok 24 - Prompt ist für Maus/Langdruck auswählbar und Copy besitzt Clipboard plus Fallback
+  ---
+  duration_ms: 0.242324
+  type: 'test'
+  ...
+# Subtest: Levels-Endpunkt bleibt eng begrenzt und passwortfrei
+ok 25 - Levels-Endpunkt bleibt eng begrenzt und passwortfrei
+  ---
+  duration_ms: 1.013042
+  type: 'test'
+  ...
+# Subtest: Lagerbestand und Dashboard besitzen Entwurfsverwaltung
+ok 26 - Lagerbestand und Dashboard besitzen Entwurfsverwaltung
+  ---
+  duration_ms: 0.258459
+  type: 'test'
+  ...
+# Subtest: A2 cloud und local_folder liefern geschützte Close-Requests
+ok 27 - A2 cloud und local_folder liefern geschützte Close-Requests
+  ---
+  duration_ms: 1.043368
+  type: 'test'
+  ...
+# Subtest: A2 beschädigte Datei, fremde DB und Parallelbasis bleiben gesperrt
+ok 28 - A2 beschädigte Datei, fremde DB und Parallelbasis bleiben gesperrt
+  ---
+  duration_ms: 0.536957
+  type: 'test'
+  ...
+# Subtest: Logout-Reauthorize prüft direkt LVSync.inspect und nutzt danach LVSession.close
+ok 29 - Logout-Reauthorize prüft direkt LVSync.inspect und nutzt danach LVSession.close
+  ---
+  duration_ms: 0.268734
+  type: 'test'
+  ...
+# Subtest: LVSync.inspect ist unabhängig vom storageMode öffentlich verfügbar
+ok 30 - LVSync.inspect ist unabhängig vom storageMode öffentlich verfügbar
+  ---
+  duration_ms: 0.253231
+  type: 'test'
+  ...
+# Subtest: local_folder save benutzt keinen direkten unklassifizierten Write-Bypass
+ok 31 - local_folder save benutzt keinen direkten unklassifizierten Write-Bypass
+  ---
+  duration_ms: 0.157967
+  type: 'test'
+  ...
+# Subtest: Logout-Dialog besitzt expliziten Reauthorize-&-Sync-Button
+ok 32 - Logout-Dialog besitzt expliziten Reauthorize-&-Sync-Button
+  ---
+  duration_ms: 0.687153
+  type: 'test'
+  ...
+# Subtest: Logout prüft Permission ohne requestPermission im Hintergrund
+ok 33 - Logout prüft Permission ohne requestPermission im Hintergrund
+  ---
+  duration_ms: 0.249404
+  type: 'test'
+  ...
+# Subtest: Reauthorize wird nur im Button-Handler ausgelöst und danach normaler Close-Sync verwendet
+ok 34 - Reauthorize wird nur im Button-Handler ausgelöst und danach normaler Close-Sync verwendet
+  ---
+  duration_ms: 0.248453
+  type: 'test'
+  ...
+# Subtest: Permission-Fehler im normalen Close blendet Retry-Aktion ein
+ok 35 - Permission-Fehler im normalen Close blendet Retry-Aktion ein
+  ---
+  duration_ms: 0.191428
+  type: 'test'
+  ...
+# Subtest: Neue Materialanlage ist backendseitig passwortfrei
+ok 36 - Neue Materialanlage ist backendseitig passwortfrei
+  ---
+  duration_ms: 0.703708
+  type: 'test'
+  ...
+# Subtest: Import-Anlage und create-and-book sind passwortfrei
+ok 37 - Import-Anlage und create-and-book sind passwortfrei
+  ---
+  duration_ms: 0.18011
+  type: 'test'
+  ...
+# Subtest: Material-Stammdatenweg erlaubt nur Lagerort/Maschine und verlangt Admin
+ok 38 - Material-Stammdatenweg erlaubt nur Lagerort/Maschine und verlangt Admin
+  ---
+  duration_ms: 0.459982
+  type: 'test'
+  ...
+# Subtest: Zentrale Stammdaten und bestehende Artikel bleiben geschützt
+ok 39 - Zentrale Stammdaten und bestehende Artikel bleiben geschützt
+  ---
+  duration_ms: 0.286381
+  type: 'test'
+  ...
+# Subtest: Neues-Material-UI zeigt kein Passwort-Lock mehr
+ok 40 - Neues-Material-UI zeigt kein Passwort-Lock mehr
+  ---
+  duration_ms: 0.389646
+  type: 'test'
+  ...
+# Subtest: Alle Frontend-Anlagewege kommen ohne Passwortprompt aus
+ok 41 - Alle Frontend-Anlagewege kommen ohne Passwortprompt aus
+  ---
+  duration_ms: 0.387162
+  type: 'test'
+  ...
+# Subtest: Materialformular legt Lagerort/Maschine nur über begrenzten Endpoint an
+ok 42 - Materialformular legt Lagerort/Maschine nur über begrenzten Endpoint an
+  ---
+  duration_ms: 0.210326
+  type: 'test'
+  ...
+# Subtest: Audit-Änderungen am Materialanforderungs-Exportordner revisionieren
+ok 43 - Audit-Änderungen am Materialanforderungs-Exportordner revisionieren
+  ---
+  duration_ms: 0.853973
+  type: 'test'
+  ...
+# Subtest: V64 nutzt gerätespezifischen Speichermodus in IndexedDB
+ok 44 - V64 nutzt gerätespezifischen Speichermodus in IndexedDB
+  ---
+  duration_ms: 0.130275
+  type: 'test'
+  ...
+# Subtest: Sync-Queue statt isSyncing-Flag
+ok 45 - Sync-Queue statt isSyncing-Flag
+  ---
+  duration_ms: 0.2133
+  type: 'test'
+  ...
+# Subtest: Buchung während laufendem Write überschreibt keinen neueren lokalen Stand
+ok 46 - Buchung während laufendem Write überschreibt keinen neueren lokalen Stand
+  ---
+  duration_ms: 0.239931
+  type: 'test'
+  ...
+# Subtest: persist(false) wird nicht direkt nach Audit-Inhaltsänderungen verwendet
+ok 47 - persist(false) wird nicht direkt nach Audit-Inhaltsänderungen verwendet
+  ---
+  duration_ms: 0.33285
+  type: 'test'
+  ...
+# Subtest: V67 Cache-Name
+ok 48 - V67 Cache-Name
+  ---
+  duration_ms: 0.615935
+  type: 'test'
+  ...
+# Subtest: skipWaiting aktiv
+ok 49 - skipWaiting aktiv
+  ---
+  duration_ms: 0.109865
+  type: 'test'
+  ...
+# Subtest: clients.claim aktiv
+ok 50 - clients.claim aktiv
+  ---
+  duration_ms: 0.082124
+  type: 'test'
+  ...
+# Subtest: kritische App-Dateien network-first/no-store
+ok 51 - kritische App-Dateien network-first/no-store
+  ---
+  duration_ms: 0.10616
+  type: 'test'
+  ...
+# Subtest: Startdialog besitzt direkte erneute Ordnerfreigabe
+ok 52 - Startdialog besitzt direkte erneute Ordnerfreigabe
+  ---
+  duration_ms: 0.636055
+  type: 'test'
+  ...
+# Subtest: Berechtigungsbutton erscheint nur bei permission_denied
+ok 53 - Berechtigungsbutton erscheint nur bei permission_denied
+  ---
+  duration_ms: 0.182274
+  type: 'test'
+  ...
+# Subtest: Freigabe läuft aus Benutzeraktion über bestehende sichere Reauthorize-Funktion
+ok 54 - Freigabe läuft aus Benutzeraktion über bestehende sichere Reauthorize-Funktion
+  ---
+  duration_ms: 0.258919
+  type: 'test'
+  ...
+# Subtest: Hintergrundprüfung fordert weiterhin nicht automatisch Berechtigung an
+ok 55 - Hintergrundprüfung fordert weiterhin nicht automatisch Berechtigung an
+  ---
+  duration_ms: 0.214983
+  type: 'test'
+  ...
+# Subtest: useCloud leitet permission_denied zur ausdrücklichen Freigabe um
+ok 56 - useCloud leitet permission_denied zur ausdrücklichen Freigabe um
+  ---
+  duration_ms: 0.2265
+  type: 'test'
+  ...
+# Subtest: A1 echte Migration: ältere Cloud-DB + kein IndexedDB-Wert + Handle bleibt cloud und wird in IndexedDB übernommen
+ok 57 - A1 echte Migration: ältere Cloud-DB + kein IndexedDB-Wert + Handle bleibt cloud und wird in IndexedDB übernommen
+  ---
+  duration_ms: 0.73896
+  type: 'test'
+  ...
+# Subtest: IndexedDB-Wert hat Vorrang vor Legacy und Handle
+ok 58 - IndexedDB-Wert hat Vorrang vor Legacy und Handle
+  ---
+  duration_ms: 0.12639
+  type: 'test'
+  ...
+# Subtest: Legacy local_folder wird übernommen und migriert
+ok 59 - Legacy local_folder wird übernommen und migriert
+  ---
+  duration_ms: 0.140972
+  type: 'test'
+  ...
+# Subtest: Vorhandener Handle fällt ohne Altwerte auf cloud zurück und wird gespeichert
+ok 60 - Vorhandener Handle fällt ohne Altwerte auf cloud zurück und wird gespeichert
+  ---
+  duration_ms: 0.128072
+  type: 'test'
+  ...
+# Subtest: Ohne gespeicherten Zustand gilt browser_local
+ok 61 - Ohne gespeicherten Zustand gilt browser_local
+  ---
+  duration_ms: 0.159049
+  type: 'test'
+  ...
+# Subtest: 1 Cloud 87, lokale Kindrevision 88 ist sicher
+ok 62 - 1 Cloud 87, lokale Kindrevision 88 ist sicher
+  ---
+  duration_ms: 0.831549
+  type: 'test'
+  ...
+# Subtest: 2 mehrere lokale Revisionen 90 auf Basis 87 sind sicher
+ok 63 - 2 mehrere lokale Revisionen 90 auf Basis 87 sind sicher
+  ---
+  duration_ms: 0.217016
+  type: 'test'
+  ...
+# Subtest: 3 identisch trotz fehlender Metadaten
+ok 64 - 3 identisch trotz fehlender Metadaten
+  ---
+  duration_ms: 0.146019
+  type: 'test'
+  ...
+# Subtest: 4 direkte Kindrevision via parent_revision_id
+ok 65 - 4 direkte Kindrevision via parent_revision_id
+  ---
+  duration_ms: 0.104578
+  type: 'test'
+  ...
+# Subtest: 9 gleiche Revisionsnummer mit anderer revision_id ist Konflikt
+ok 66 - 9 gleiche Revisionsnummer mit anderer revision_id ist Konflikt
+  ---
+  duration_ms: 0.148873
+  type: 'test'
+  ...
+# Subtest: 10 veralteter Zweig bleibt blockiert
+ok 67 - 10 veralteter Zweig bleibt blockiert
+  ---
+  duration_ms: 0.089714
+  type: 'test'
+  ...
+# Subtest: cloud permission required
+ok 68 - cloud permission required
+  ---
+  duration_ms: 0.91876
+  type: 'test'
+  ...
+# Subtest: cloud missing
+ok 69 - cloud missing
+  ---
+  duration_ms: 0.103997
+  type: 'test'
+  ...
+# Subtest: cloud unreadable
+ok 70 - cloud unreadable
+  ---
+  duration_ms: 0.240501
+  type: 'test'
+  ...
+# Subtest: 19 nach Schreiben wird erneut gelesen und geprüft
+ok 71 - 19 nach Schreiben wird erneut gelesen und geprüft
+  ---
+  duration_ms: 1.055085
+  type: 'test'
+  ...
+# Subtest: 16 write-Fehler übernimmt Kandidat nicht
+ok 72 - 16 write-Fehler übernimmt Kandidat nicht
+  ---
+  duration_ms: 0.85234
+  type: 'test'
+  ...
+# Subtest: post-write falsche revision_id ist Fehler
+ok 73 - post-write falsche revision_id ist Fehler
+  ---
+  duration_ms: 0.242414
+  type: 'test'
+  ...
+# Subtest: force legt zuerst Backup der lesbaren Cloud-Datei an
+ok 74 - force legt zuerst Backup der lesbaren Cloud-Datei an
+  ---
+  duration_ms: 0.428074
+  type: 'test'
+  ...
+# Subtest: 17 Buchung während Sync löst Nachlauf aus
+ok 75 - 17 Buchung während Sync löst Nachlauf aus
+  ---
+  duration_ms: 71.093929
+  type: 'test'
+  ...
+# Subtest: 18 zwei manuelle Syncs schreiben nie parallel
+ok 76 - 18 zwei manuelle Syncs schreiben nie parallel
+  ---
+  duration_ms: 42.876482
+  type: 'test'
+  ...
+# Subtest: 5 beide Geräte starten identisch 87
+ok 77 - 5 beide Geräte starten identisch 87
+  ---
+  duration_ms: 0.727003
+  type: 'test'
+  ...
+# Subtest: 6/7/8 PC 88-A in Cloud, Smartphone 88-B darf nicht überschreiben
+ok 78 - 6/7/8 PC 88-A in Cloud, Smartphone 88-B darf nicht überschreiben
+  ---
+  duration_ms: 0.120291
+  type: 'test'
+  ...
+# Subtest: 12 Cloud ändert sich nach bewusster lokaler Fortsetzung erneut => neuer Konflikt
+ok 79 - 12 Cloud ändert sich nach bewusster lokaler Fortsetzung erneut => neuer Konflikt
+  ---
+  duration_ms: 0.101803
+  type: 'test'
+  ...
+# Subtest: 11 nach lokal weiterarbeiten wird derselbe Cloud-Konflikt nicht erneut gezeigt
+ok 80 - 11 nach lokal weiterarbeiten wird derselbe Cloud-Konflikt nicht erneut gezeigt
+  ---
+  duration_ms: 0.128693
+  type: 'test'
+  ...
+# Subtest: 12 neue Cloud-Revision hebt die Bestätigung auf
+ok 81 - 12 neue Cloud-Revision hebt die Bestätigung auf
+  ---
+  duration_ms: 0.101091
+  type: 'test'
+  ...
+# Subtest: strikter Guard erlaubt bestätigte Basis
+ok 82 - strikter Guard erlaubt bestätigte Basis
+  ---
+  duration_ms: 0.880043
+  type: 'test'
+  ...
+# Subtest: 13 beschädigte DB wird blockiert
+ok 83 - 13 beschädigte DB wird blockiert
+  ---
+  duration_ms: 0.374954
+  type: 'test'
+  ...
+# Subtest: 14 missing wird normal nicht erzeugt
+ok 84 - 14 missing wird normal nicht erzeugt
+  ---
+  duration_ms: 0.15996
+  type: 'test'
+  ...
+# Subtest: missing nur bei ausdrücklicher Initialisierung erlaubt
+ok 85 - missing nur bei ausdrücklicher Initialisierung erlaubt
+  ---
+  duration_ms: 0.097246
+  type: 'test'
+  ...
+# Subtest: 15 permission denied blockiert
+ok 86 - 15 permission denied blockiert
+  ---
+  duration_ms: 0.10635
+  type: 'test'
+  ...
+# Subtest: 20 unterschiedliche database_id blockiert
+ok 87 - 20 unterschiedliche database_id blockiert
+  ---
+  duration_ms: 0.114713
+  type: 'test'
+  ...
+# Subtest: expectedCloudDatabaseId muss exakt passen
+ok 88 - expectedCloudDatabaseId muss exakt passen
+  ---
+  duration_ms: 0.198087
+  type: 'test'
+  ...
+# Subtest: expectedCloudRevisionId muss exakt passen
+ok 89 - expectedCloudRevisionId muss exakt passen
+  ---
+  duration_ms: 0.149224
+  type: 'test'
+  ...
+# Subtest: writeBlocked blockiert
+ok 90 - writeBlocked blockiert
+  ---
+  duration_ms: 0.257437
+  type: 'test'
+  ...
+# Subtest: Fehler mitten in Transaktion führt zu ROLLBACK und nicht COMMIT
+ok 91 - Fehler mitten in Transaktion führt zu ROLLBACK und nicht COMMIT
+  ---
+  duration_ms: 1.379703
+  type: 'test'
+  ...
+# Subtest: Erfolg führt BEGIN -> Arbeit -> COMMIT aus
+ok 92 - Erfolg führt BEGIN -> Arbeit -> COMMIT aus
+  ---
+  duration_ms: 0.148494
+  type: 'test'
+  ...
+# Subtest: Materialanlage und Import verwenden Transaktionshelper
+ok 93 - Materialanlage und Import verwenden Transaktionshelper
+  ---
+  duration_ms: 0.317617
+  type: 'test'
+  ...
+# Subtest: Materialformular validiert Pflichtfelder und Lagerort
+ok 94 - Materialformular validiert Pflichtfelder und Lagerort
+  ---
+  duration_ms: 0.75242
+  type: 'test'
+  ...
+# Subtest: Formular leeren fragt bei Eingaben nach
+ok 95 - Formular leeren fragt bei Eingaben nach
+  ---
+  duration_ms: 0.140831
+  type: 'test'
+  ...
+# Subtest: Maschinen werden als touchfreundliche Chips angeboten
+ok 96 - Maschinen werden als touchfreundliche Chips angeboten
+  ---
+  duration_ms: 0.211919
+  type: 'test'
+  ...
+# Subtest: Touchflächen, Fokus und M365-Höhe sind mobil optimiert
+ok 97 - Touchflächen, Fokus und M365-Höhe sind mobil optimiert
+  ---
+  duration_ms: 0.101252
+  type: 'test'
+  ...
+# Subtest: Bearbeiten/Löschen Symbole haben aria-labels
+ok 98 - Bearbeiten/Löschen Symbole haben aria-labels
+  ---
+  duration_ms: 0.318698
+  type: 'test'
+  ...
+# Subtest: Synchronisationsstatus nennt verständliche Zustände
+ok 99 - Synchronisationsstatus nennt verständliche Zustände
+  ---
+  duration_ms: 0.280511
+  type: 'test'
+  ...
+# Subtest: V59 API-Routen bleiben in V64 erhalten
+ok 100 - V59 API-Routen bleiben in V64 erhalten
+  ---
+  duration_ms: 1.241835
+  type: 'test'
+  ...
+# Subtest: V64 enthält keine destruktive Schema-Migration beim Start
+ok 101 - V64 enthält keine destruktive Schema-Migration beim Start
+  ---
+  duration_ms: 0.468064
+  type: 'test'
+  ...
+# Subtest: zentrale Ansichten bleiben erhalten
+ok 102 - zentrale Ansichten bleiben erhalten
+  ---
+  duration_ms: 0.561463
+  type: 'test'
+  ...
+# Subtest: V66 Lagerbestand hat verbindliche Spaltenreihenfolge
+ok 103 - V66 Lagerbestand hat verbindliche Spaltenreihenfolge
+  ---
+  duration_ms: 1.395026
+  type: 'test'
+  ...
+# Subtest: Lagerbestand bleibt am PC Tabelle und wird auf Smartphone Kartenlayout
+ok 104 - Lagerbestand bleibt am PC Tabelle und wird auf Smartphone Kartenlayout
+  ---
+  duration_ms: 0.534613
+  type: 'test'
+  ...
+# Subtest: Lagerort und Mehrfach-Maschinenzuordnung sind im Lagerbestand editierbar und passwortfrei
+ok 105 - Lagerort und Mehrfach-Maschinenzuordnung sind im Lagerbestand editierbar und passwortfrei
+  ---
+  duration_ms: 0.240581
+  type: 'test'
+  ...
+# Subtest: Entwurfsmodell behält Lagerort und Maschinen sowie andere Werte
+ok 106 - Entwurfsmodell behält Lagerort und Maschinen sowie andere Werte
+  ---
+  duration_ms: 0.41931
+  type: 'test'
+  ...
+# Subtest: Standard-Techniker wird automatisch gewählt, manuelle Auswahl bleibt erhalten
+ok 107 - Standard-Techniker wird automatisch gewählt, manuelle Auswahl bleibt erhalten
+  ---
+  duration_ms: 0.969036
+  type: 'test'
+  ...
+# Subtest: M365-Neuanlage Menge 5 wird genau als Ausgangsbestand 5 geplant
+ok 108 - M365-Neuanlage Menge 5 wird genau als Ausgangsbestand 5 geplant
+  ---
+  duration_ms: 0.242224
+  type: 'test'
+  ...
+# Subtest: Servicebericht-Neuanlage nutzt Ausgangsbestand, anschließende Entnahme bleibt erlaubt
+ok 109 - Servicebericht-Neuanlage nutzt Ausgangsbestand, anschließende Entnahme bleibt erlaubt
+  ---
+  duration_ms: 0.222054
+  type: 'test'
+  ...
+# Subtest: Doppelte Anfangsbuchung wird durch eindeutige Artikelnummer und Delivery-Sperre verhindert
+ok 110 - Doppelte Anfangsbuchung wird durch eindeutige Artikelnummer und Delivery-Sperre verhindert
+  ---
+  duration_ms: 0.212219
+  type: 'test'
+  ...
+# Subtest: Materialanlage bleibt transaktional und produktive Testschalter sind entfernt
+ok 111 - Materialanlage bleibt transaktional und produktive Testschalter sind entfernt
+  ---
+  duration_ms: 0.355985
+  type: 'test'
+  ...
+# Subtest: V66 Rollback-Simulation entfernt Artikel, Maschinenrelation und Anfangsbuchung gemeinsam
+ok 112 - V66 Rollback-Simulation entfernt Artikel, Maschinenrelation und Anfangsbuchung gemeinsam
+  ---
+  duration_ms: 5.205221
+  type: 'test'
+  ...
+# Subtest: Manuelle Materialanlage startet weiterhin mit Ausgangsbestand 0
+ok 113 - Manuelle Materialanlage startet weiterhin mit Ausgangsbestand 0
+  ---
+  duration_ms: 0.230496
+  type: 'test'
+  ...
+# Subtest: CSV-SAP nutzt den ausgewählten bzw. Standard-Techniker
+ok 114 - CSV-SAP nutzt den ausgewählten bzw. Standard-Techniker
+  ---
+  duration_ms: 0.149955
+  type: 'test'
+  ...
+# Subtest: Bestandslogik V65 bleibt in V66 unverändert korrekt
+ok 115 - Bestandslogik V65 bleibt in V66 unverändert korrekt
+  ---
+  duration_ms: 0.707463
+  type: 'test'
+  ...
+# Subtest: V67 M365-Neuanlage Menge 5 ergibt exakt Bestand 5 und Retry bleibt 5
+ok 116 - V67 M365-Neuanlage Menge 5 ergibt exakt Bestand 5 und Retry bleibt 5
+  ---
+  duration_ms: 2.498594
+  type: 'test'
+  ...
+# Subtest: Verlorener Response und Browser-Retry erzeugt keine zweite Anfangsbuchung
+ok 117 - Verlorener Response und Browser-Retry erzeugt keine zweite Anfangsbuchung
+  ---
+  duration_ms: 0.182985
+  type: 'test'
+  ...
+# Subtest: Bewusst neuer Vorgang mit identischem Inhalt kann vorhandenen Artikel erneut buchen
+ok 118 - Bewusst neuer Vorgang mit identischem Inhalt kann vorhandenen Artikel erneut buchen
+  ---
+  duration_ms: 0.200301
+  type: 'test'
+  ...
+# Subtest: Mehrfachentnahme wird vor Schreibbeginn vollständig validiert
+ok 119 - Mehrfachentnahme wird vor Schreibbeginn vollständig validiert
+  ---
+  duration_ms: 0.934454
+  type: 'test'
+  ...
+# Subtest: Mehrfacheinbuchung mit ungültiger zweiter Position führt zu keiner Teilbuchung
+ok 120 - Mehrfacheinbuchung mit ungültiger zweiter Position führt zu keiner Teilbuchung
+  ---
+  duration_ms: 0.17281
+  type: 'test'
+  ...
+# Subtest: Transaktionsfehler rollt alle simulierten Teiländerungen zurück
+ok 121 - Transaktionsfehler rollt alle simulierten Teiländerungen zurück
+  ---
+  duration_ms: 0.33303
+  type: 'test'
+  ...
+# Subtest: Legacy-Passwort mit 6 Zeichen kann geprüft und auf PBKDF2 migriert werden
+ok 122 - Legacy-Passwort mit 6 Zeichen kann geprüft und auf PBKDF2 migriert werden
+  ---
+  duration_ms: 97.116578
+  type: 'test'
+  ...
+# Subtest: Legacy-Passwort mit 7 Zeichen kann geprüft und auf PBKDF2 migriert werden
+ok 123 - Legacy-Passwort mit 7 Zeichen kann geprüft und auf PBKDF2 migriert werden
+  ---
+  duration_ms: 106.304762
+  type: 'test'
+  ...
+# Subtest: Neues Passwort unter 8 Zeichen wird weiterhin abgelehnt
+ok 124 - Neues Passwort unter 8 Zeichen wird weiterhin abgelehnt
+  ---
+  duration_ms: 0.703447
+  type: 'test'
+  ...
+# Subtest: Dashboard und Lagerbestand verwenden denselben Entwurf pro Artikel
+ok 125 - Dashboard und Lagerbestand verwenden denselben Entwurf pro Artikel
+  ---
+  duration_ms: 0.517328
+  type: 'test'
+  ...
+# Subtest: Alle Änderungen speichern kann denselben Artikel nur einmal iterieren
+ok 126 - Alle Änderungen speichern kann denselben Artikel nur einmal iterieren
+  ---
+  duration_ms: 0.244588
+  type: 'test'
+  ...
+# Subtest: Verwerfen löscht gemeinsamen Entwurf tatsächlich
+ok 127 - Verwerfen löscht gemeinsamen Entwurf tatsächlich
+  ---
+  duration_ms: 0.109224
+  type: 'test'
+  ...
+# Subtest: Smartphone Details-State zeigt eingeklappt nur Grunddaten plus Bedienung/Dirty-Marker
+ok 128 - Smartphone Details-State zeigt eingeklappt nur Grunddaten plus Bedienung/Dirty-Marker
+  ---
+  duration_ms: 0.1066
+  type: 'test'
+  ...
+# Subtest: Details anzeigen öffnet alle geforderten Felder und bleibt je Artikel unabhängig
+ok 129 - Details anzeigen öffnet alle geforderten Felder und bleibt je Artikel unabhängig
+  ---
+  duration_ms: 0.154552
+  type: 'test'
+  ...
+# Subtest: Ein- und Ausklappen verändert einen Artikelentwurf nicht
+ok 130 - Ein- und Ausklappen verändert einen Artikelentwurf nicht
+  ---
+  duration_ms: 0.100351
+  type: 'test'
+  ...
+# Subtest: Tastaturfähiger nativer Button besitzt aria-expanded und aria-controls
+ok 131 - Tastaturfähiger nativer Button besitzt aria-expanded und aria-controls
+  ---
+  duration_ms: 0.143295
+  type: 'test'
+  ...
+# Subtest: Mobile CSS blendet Detailzellen bis zum Öffnen aus und unterstützt <=700px
+ok 132 - Mobile CSS blendet Detailzellen bis zum Öffnen aus und unterstützt <=700px
+  ---
+  duration_ms: 0.672891
+  type: 'test'
+  ...
+# Subtest: 360, 390 und 430 Pixel verwenden die eingeklappte Smartphone-Darstellung
+ok 133 - 360, 390 und 430 Pixel verwenden die eingeklappte Smartphone-Darstellung
+  ---
+  duration_ms: 0.234162
+  type: 'test'
+  ...
+# Subtest: Zentrale Stammdaten erfordern Admin; Materialzuordnung vorhandener Stammdaten bleibt passwortfrei
+ok 134 - Zentrale Stammdaten erfordern Admin; Materialzuordnung vorhandener Stammdaten bleibt passwortfrei
+  ---
+  duration_ms: 0.242755
+  type: 'test'
+  ...
+# Subtest: Datumsformatänderung ist backendseitig geschützt
+ok 135 - Datumsformatänderung ist backendseitig geschützt
+  ---
+  duration_ms: 0.302134
+  type: 'test'
+  ...
+# Subtest: Setup verlangt identische Passwörter und mindestens acht Zeichen
+ok 136 - Setup verlangt identische Passwörter und mindestens acht Zeichen
+  ---
+  duration_ms: 0.125208
+  type: 'test'
+  ...
+# Subtest: Inventur prüft Admin vor Sicherheitsbackup
+ok 137 - Inventur prüft Admin vor Sicherheitsbackup
+  ---
+  duration_ms: 6.743532
+  type: 'test'
+  ...
+# Subtest: Produktive Endpunkte enthalten keine öffentlich erreichbaren Testschalter
+ok 138 - Produktive Endpunkte enthalten keine öffentlich erreichbaren Testschalter
+  ---
+  duration_ms: 0.338278
+  type: 'test'
+  ...
+# Subtest: Produktionsbackend verwendet SQLite-Idempotenzregister und stabile Vorgangskennung
+ok 139 - Produktionsbackend verwendet SQLite-Idempotenzregister und stabile Vorgangskennung
+  ---
+  duration_ms: 0.308654
+  type: 'test'
+  ...
+# Subtest: Frontend sendet Importkontext für unbekannte M365-Artikel und bietet neuen Vorgang
+ok 140 - Frontend sendet Importkontext für unbekannte M365-Artikel und bietet neuen Vorgang
+  ---
+  duration_ms: 0.155653
+  type: 'test'
+  ...
+# Subtest: Zentrale Stammdaten: fehlendes/falsches Token verändert keinen Zustand
+ok 141 - Zentrale Stammdaten: fehlendes/falsches Token verändert keinen Zustand
+  ---
+  duration_ms: 5.097649
+  type: 'test'
+  ...
+# Subtest: Datumsformat: nur aktuell ausgegebenes Sitzungstoken autorisiert Mutation
+ok 142 - Datumsformat: nur aktuell ausgegebenes Sitzungstoken autorisiert Mutation
+  ---
+  duration_ms: 0.269915
+  type: 'test'
+  ...
+# Subtest: Inventur: fehlende Adminfreigabe verhindert Backup und Mutation
+ok 143 - Inventur: fehlende Adminfreigabe verhindert Backup und Mutation
+  ---
+  duration_ms: 0.139279
+  type: 'test'
+  ...
+# Subtest: Setup: unterschiedliche Passwörter werden vor jeder Speicherung abgelehnt
+ok 144 - Setup: unterschiedliche Passwörter werden vor jeder Speicherung abgelehnt
+  ---
+  duration_ms: 0.144907
+  type: 'test'
+  ...
+# Subtest: Zentrale Guard-Funktion akzeptiert kein Passwort als Ersatz für Sitzungstoken
+ok 145 - Zentrale Guard-Funktion akzeptiert kein Passwort als Ersatz für Sitzungstoken
+  ---
+  duration_ms: 0.179069
+  type: 'test'
+  ...
+# Subtest: SQLite: gleicher Vorgang + Position bleibt nach DB-Neuöffnung idempotent
+ok 146 - SQLite: gleicher Vorgang + Position bleibt nach DB-Neuöffnung idempotent
+  ---
+  duration_ms: 763.494529
+  type: 'test'
+  ...
+# Subtest: SQLite: Fehler mitten in Mehrfachbuchung wird vollständig zurückgerollt
+ok 147 - SQLite: Fehler mitten in Mehrfachbuchung wird vollständig zurückgerollt
+  ---
+  duration_ms: 591.833454
+  type: 'test'
+  ...
+1..147
+# tests 147
+# suites 0
+# pass 147
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1911.489464

@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V66 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V67 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -93,6 +93,20 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
  #articles #stockTable td[data-label="Artikelnummer"],#articles #stockTable td[data-label="Bezeichnung"],#articles #stockTable td[data-label="Istbestand"]{font-size:15px}
  #articles #stockTable td input,#articles #stockTable td select,#articles #stockTable td button{min-width:0;max-width:none;width:100%}
  #articles #stockTable .stock-machine-summary{max-width:none}
+}
+
+
+/* V67: mobile Lagerbestand mit einklappbaren Details */
+.mobile-stock-controls{display:none}.mobile-dirty-badge{background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;margin:6px 0}.stock-details-toggle{min-height:44px}
+@media(max-width:700px){
+ #articles #stockTable tr{position:relative}
+ #articles #stockTable td{display:none!important}
+ #articles #stockTable td:nth-child(1),#articles #stockTable td:nth-child(2),#articles #stockTable td:nth-child(3){display:grid!important}
+ #articles #stockTable td.stock-detail-cell{display:none!important}
+ #articles #stockTable tr.mobile-details-open td.stock-detail-cell{display:grid!important}
+ #articles #stockTable .mobile-stock-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;grid-column:1/-1;margin-top:6px}
+ #articles #stockTable .stock-details-toggle{width:auto;min-width:150px}
+ #articles #stockTable td[data-label="Artikelnummer"],#articles #stockTable td[data-label="Bezeichnung"],#articles #stockTable td[data-label="Istbestand"]{grid-template-columns:110px minmax(0,1fr)}
 }
 
 </style></head><body>
@@ -308,7 +322,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">66.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">67.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -366,7 +380,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div class="split"><div>
 <p>Die Copilot-Ausgabe muss mit <b>IMPORTTYP: EINBUCHUNG</b> beginnen. Danach: <b>Artikelnummer → Bezeichnung → Anzahl</b>. So kann ein noch unbekanntes Material direkt mit Artikelnummer und Bezeichnung vorausgefüllt werden.</p>
 <textarea id="dtext" oninput="scheduleExtractionPreview('delivery')" placeholder="Artikelnummer    Bezeichnung    Menge&#10;7079    Abstreiferhalter    2&#10;126084    Sensor    4"></textarea>
-<div class="toolbar"><button class="secondary" onclick="deliveryPreview()">Extraktion jetzt prüfen</button><button class="secondary" onclick="insertDeliveryPrompt()">Copilot-Prompt anzeigen</button><button class="secondary" onclick="clearExtraction('delivery')">Eingabe leeren</button></div><p class="small">Die Vorschau aktualisiert sich automatisch. TAB wird empfohlen; Semikolon und | werden ebenfalls unterstützt. Neue Artikel können direkt registriert oder bewusst ignoriert werden.</p></div>
+<div class="toolbar"><button class="secondary" onclick="deliveryPreview()">Extraktion jetzt prüfen</button><button class="secondary" onclick="insertDeliveryPrompt()">Copilot-Prompt anzeigen</button><button class="secondary" onclick="clearExtraction('delivery')">Eingabe leeren</button><button class="secondary" onclick="startNewImportOperation('delivery')">Als neuen Vorgang starten</button></div><p class="small">Die Vorschau aktualisiert sich automatisch. TAB wird empfohlen; Semikolon und | werden ebenfalls unterstützt. Neue Artikel können direkt registriert oder bewusst ignoriert werden.</p></div>
 <div class="formgrid">
 <label>Datum<input type="date" id="ddate"></label>
 <label>Techniker<select id="dtech"></select></label>
@@ -400,7 +414,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <textarea id="stext" oninput="scheduleExtractionPreview('service')" placeholder="29.07.2026&#9;7079&#9;Abstreiferhalter&#9;2&#9;Van Hamme&#9;Compas 4.0 Pro&#10;29.07.2026&#9;126084&#9;Sensor&#9;1&#9;Van Hamme&#9;Compas 4.0 Pro"></textarea>
 <div class="toolbar">
 <button class="secondary" onclick="servicePreview()">Extraktion jetzt prüfen</button>
-<button class="secondary" onclick="insertServicePrompt()">Copilot-Prompt anzeigen</button><button class="secondary" onclick="clearExtraction('service')">Eingabe leeren</button>
+<button class="secondary" onclick="insertServicePrompt()">Copilot-Prompt anzeigen</button><button class="secondary" onclick="clearExtraction('service')">Eingabe leeren</button><button class="secondary" onclick="startNewImportOperation('service')">Als neuen Vorgang starten</button>
 </div>
 <p class="small">Fahrzeit, Arbeitszeit und Kilometer werden nicht übernommen. Neue Artikel können direkt registriert oder bewusst ignoriert werden; die erkannten Werte bleiben vor der Buchung änderbar.</p>
 </div>
@@ -752,7 +766,14 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
   <div id="movementEditMsg" class="message"></div>
  </div>
 </div>
-</div><script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+</div><div id="draftNavigationOverlay" class="modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="draftNavigationTitle">
+ <div class="card modal-card" style="max-width:520px">
+  <h3 id="draftNavigationTitle">Ungespeicherte Änderungen</h3>
+  <p>Es gibt ungespeicherte Änderungen an Artikeln. Was möchtest du tun?</p>
+  <div class="toolbar"><button class="primary" id="draftNavSave">Änderungen speichern</button><button class="danger" id="draftNavDiscard">Änderungen verwerfen</button><button class="secondary" id="draftNavCancel">Abbrechen</button></div>
+ </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -772,6 +793,7 @@ window.LVAdminSession = window.LVAdminSession || {
 <script src="help_core.js"></script>
 <script src="sync_core.js"></script>
 <script src="v66_core.js"></script>
+<script src="v67_core.js"></script>
 <script src="local_backend.js"></script>
 <script>
 let arts=[],deliveryp=[],servicep=[],csvp=[],deliveryUnknown=[],serviceUnknown=[],csvUnknown=[],historyData=[],inventoryData=[],md={},lastImportFilename='',appDateFormat='DD.MM.YYYY',helpFiles=[];
@@ -805,7 +827,25 @@ function formatAppDate(value,withTime=false){
 }
 async function api(u,o={}){await LVBackend.ready;const h={'Content-Type':'application/json',...(o.headers||{})};if(window.LVAdminSession?.token)h['X-LV-Admin-Token']=window.LVAdminSession.token;let r=await fetch(u,{...o,headers:h});let d=await r.json();if(!r.ok){const e=Error(d.error||d.message||'Fehler');e.data=d;e.status=r.status;throw e}return d}
 function msg(e,t,ok){e.textContent=t;e.className='message '+(ok?'ok':'error')}
-function show(id,b){const current=document.querySelector('.view.active')?.id;if(current&&current!==id&&levelDrafts?.size&&!confirm('Es gibt ungespeicherte Änderungen im Lagerbestand oder Dashboard. Ansicht trotzdem verlassen?'))return;document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()}
+let draftNavigationResolver=null;
+function closeDraftNavigation(value='cancel'){draftNavigationOverlay.style.display='none';closeModalA11y(draftNavigationOverlay);const r=draftNavigationResolver;draftNavigationResolver=null;if(r)r(value)}
+function askDraftNavigation(){
+ return new Promise(resolve=>{
+  draftNavigationResolver=resolve;draftNavigationOverlay.style.display='block';openModalA11y(draftNavigationOverlay);
+  draftNavSave.onclick=()=>closeDraftNavigation('save');draftNavDiscard.onclick=()=>closeDraftNavigation('discard');draftNavCancel.onclick=()=>closeDraftNavigation('cancel');
+ });
+}
+async function show(id,b){
+ const current=document.querySelector('.view.active')?.id;
+ if(current&&current!==id&&levelDrafts?.size){
+  const choice=await askDraftNavigation();
+  if(choice==='cancel')return;
+  if(choice==='save'){await saveAllLevelChanges();if(levelDrafts.size)return}
+  if(choice==='discard'){levelDrafts.discardAll();refreshDraftIndicators()}
+ }
+ document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+ if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()
+}
 
 async function master(){
  const oldMd=md||{};md=await api('/api/masterdata');
@@ -828,8 +868,8 @@ async function loadAppInfo(){
   infoMovements.textContent=d.movements;
   document.title='Lagerverwaltung Lovrencic – Version '+d.version;
  }catch(e){
-  appVersion.textContent='66.0';
-  infoVersion.textContent='66.0';
+  appVersion.textContent='67.0';
+  infoVersion.textContent='67.0';
  }
 }
 let dashboardLowItems=[];
@@ -848,19 +888,20 @@ async function loadArticles(){
  if(!Array.isArray(md.locations)||!Array.isArray(md.machines))await master();
  arts=await api('/api/articles?q='+encodeURIComponent(search.value||''));
  const locOptions='<option value="">—</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
- arows.innerHTML=arts.filter(a=>a.active).map(a=>`<tr id="stock-row-${a.id}" class="${a.stock<a.minimum_stock?'low':''}">
+ arows.innerHTML=arts.filter(a=>a.active).map(a=>{const open=stockDetailsState.isOpen(a.id),dirty=levelDrafts.has(a.id);return `<tr id="stock-row-${a.id}" class="${a.stock<a.minimum_stock?'low':''} ${open?'mobile-details-open':''}">
   <td data-label="Artikelnummer"><b>${esc(a.article_no)}</b></td>
   <td data-label="Bezeichnung">${esc(a.description)}</td>
-  <td data-label="Istbestand"><b>${n(a.stock)}</b></td>
-  <td data-label="Mindestbestand"><input class="level-input" id="stock-min-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.minimum_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td>
-  <td data-label="Sollbestand"><input class="level-input" id="stock-target-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.target_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td>
-  <td data-label="Lagerort"><select class="stock-location-select" id="stock-location-${a.id}" onchange="markLevelDraft('stock',${a.id})">${locOptions}</select></td>
-  <td data-label="Maschine/Maschinenzuordnung"><div class="stock-machine-summary" id="stock-machines-label-${a.id}">${esc((a.machines||[]).join(', ')||'—')}</div><button type="button" class="secondary stock-machine-button" onclick="openStockMachineEditor(${a.id})">Maschinen wählen</button></td>
-  <td data-label="Aktionen"><button class="secondary level-save" onclick="saveArticleLevels(${a.id},'stock')">Speichern</button><div id="stock-level-status-${a.id}" class="level-saved"></div></td>
- </tr>`).join('');
+  <td data-label="Istbestand"><b>${n(a.stock)}</b><div class="mobile-stock-controls"><span id="stock-mobile-dirty-${a.id}" class="mobile-dirty-badge" style="${dirty?'':'display:none'}">Ungespeichert</span><button type="button" class="secondary stock-details-toggle" aria-expanded="${open?'true':'false'}" aria-controls="stock-details-min-${a.id} stock-details-target-${a.id} stock-details-location-${a.id} stock-details-machines-${a.id} stock-details-actions-${a.id}" onclick="toggleStockDetails(${a.id},this)">${open?'Details ausblenden':'Details anzeigen'}</button></div></td>
+  <td class="stock-detail-cell" id="stock-details-min-${a.id}" data-label="Mindestbestand"><input class="level-input" id="stock-min-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.minimum_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td>
+  <td class="stock-detail-cell" id="stock-details-target-${a.id}" data-label="Sollbestand"><input class="level-input" id="stock-target-${a.id}" type="number" min="0" step="${isWholeNumberUnit(a.unit)?'1':'0.01'}" value="${displayStockValue(a.target_stock,a.unit)}" oninput="markLevelDraft('stock',${a.id})" onchange="normalizeRowLevels('stock',${a.id},'${esc(a.unit)}')"></td>
+  <td class="stock-detail-cell" id="stock-details-location-${a.id}" data-label="Lagerort"><select class="stock-location-select" id="stock-location-${a.id}" onchange="markLevelDraft('stock',${a.id})">${locOptions}</select></td>
+  <td class="stock-detail-cell" id="stock-details-machines-${a.id}" data-label="Maschine/Maschinenzuordnung"><div class="stock-machine-summary" id="stock-machines-label-${a.id}">${esc((a.machines||[]).join(', ')||'—')}</div><button type="button" class="secondary stock-machine-button" onclick="openStockMachineEditor(${a.id})">Maschinen wählen</button></td>
+  <td class="stock-detail-cell" id="stock-details-actions-${a.id}" data-label="Aktionen"><button class="secondary level-save" onclick="saveArticleLevels(${a.id},'stock')">Speichern</button><div id="stock-level-status-${a.id}" class="level-saved"></div></td>
+ </tr>`}).join('');
  for(const a of arts.filter(a=>a.active)){const e=document.getElementById(`stock-location-${a.id}`);if(e)e.value=a.location||''}
  restoreLevelDrafts();
 }
+function toggleStockDetails(id,button){const open=stockDetailsState.toggle(id),row=document.getElementById(`stock-row-${id}`);if(row)row.classList.toggle('mobile-details-open',open);if(button){button.setAttribute('aria-expanded',String(open));button.textContent=open?'Details ausblenden':'Details anzeigen'}}
 function normalizeRowLevels(prefix,id,unit){
  const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`);if(!target||!minimum)return false;
  const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,unit);target.value=levels.target_stock;minimum.value=levels.minimum_stock;markLevelDraft(prefix,id);return levels.adjusted;
@@ -869,25 +910,16 @@ function normalizeMaterialLevelFields(prefix){
  const target=document.getElementById(`${prefix}_target`),minimum=document.getElementById(`${prefix}_min`),unit=document.getElementById(`${prefix}_unit`);if(!target||!minimum)return false;
  const levels=LVAppRules.normalizeStockLevels(target.value,minimum.value,unit?.value||'Stk.');target.value=levels.target_stock;minimum.value=levels.minimum_stock;return levels.adjusted;
 }
-async function saveArticleLevels(id,prefix,fromBatch=false){
- const draft=levelDrafts.get(levelKey(prefix,id));
+async function saveArticleLevels(id,prefix='stock',fromBatch=false){
+ const draft=levelDrafts.get(id),sourceArticle=articleById(id);if(!draft&&!sourceArticle)return null;
  const target=document.getElementById(`${prefix}-target-${id}`),minimum=document.getElementById(`${prefix}-min-${id}`),status=document.getElementById(`${prefix}-level-status-${id}`);
- if((!target||!minimum)&&!draft)return;
- const sourceArticle=prefix==='dash'?dashboardLowItems.find(x=>Number(x.id)===Number(id)):arts.find(x=>Number(x.id)===Number(id));
- const unit=sourceArticle?.unit||draft?.unit||'Stk.',targetValue=target?.value??draft?.target??0,minimumValue=minimum?.value??draft?.minimum??0;
- const levels=LVAppRules.normalizeStockLevels(targetValue,minimumValue,unit);if(target)target.value=levels.target_stock;if(minimum)minimum.value=levels.minimum_stock;
- let payload={id,target_stock:levels.target_stock,minimum_stock:levels.minimum_stock,technician:md.default_technician||''};let endpoint='/api/articles/levels';
- if(prefix==='stock'){
-  endpoint='/api/articles/stock-settings';payload.location=draft?.location??document.getElementById(`stock-location-${id}`)?.value??sourceArticle?.location??'';payload.machine_ids=draft?.machine_ids??currentStockMachineIds(id);
- }
+ const unit=draft?.unit||sourceArticle?.unit||'Stk.',levels=LVAppRules.normalizeStockLevels(draft?.target??target?.value??sourceArticle?.target_stock??0,draft?.minimum??minimum?.value??sourceArticle?.minimum_stock??0,unit);
+ const payload={id:Number(id),target_stock:levels.target_stock,minimum_stock:levels.minimum_stock,location:draft?.location??sourceArticle?.location??'',machine_ids:draft?.machine_ids??sourceArticle?.machine_ids??[],technician:md.default_technician||''};
  let saved=false;
  try{
-  const d=await api(endpoint,{method:'POST',body:JSON.stringify(payload)});saved=true;
-  levelDrafts.delete(levelKey(prefix,id));if(target)target.classList.remove('level-dirty');if(minimum)minimum.classList.remove('level-dirty');const loc=document.getElementById(`stock-location-${id}`);if(loc)loc.classList.remove('level-dirty');if(status)status.textContent='Gespeichert ✓';
-  if(sourceArticle){sourceArticle.target_stock=d.target_stock;sourceArticle.minimum_stock=d.minimum_stock;if(prefix==='stock'){sourceArticle.location=d.location;sourceArticle.machine_ids=d.machine_ids||[];sourceArticle.machines=d.machines||[];sourceArticle.machine=(d.machines||[]).join(', ')}}
-  const row=document.getElementById(`stock-row-${id}`);if(row){row.classList.remove('low');if(Number(sourceArticle?.stock)<Number(d.minimum_stock))row.classList.add('low');row.classList.add('stock-row-saved');setTimeout(()=>row.classList.remove('stock-row-saved'),1200)}
-  const text=d.levels_adjusted?'Gespeichert. Sollbestand wurde automatisch auf den Mindestbestand angehoben.':(prefix==='stock'?'Lagerbestand-Zuordnung gespeichert.':'Bestandsgrenzen gespeichert.');msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,text,true);
-  if(!fromBatch){const refreshed=await Promise.allSettled(prefix==='stock'?[dash(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]:[dash(),loadArticles(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]);if(refreshed.some(x=>x.status==='rejected'))msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,'Gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true)}
+  const d=await api('/api/articles/stock-settings',{method:'POST',body:JSON.stringify(payload)});saved=true;levelDrafts.delete(id);applySavedArticleState(id,d);refreshDraftIndicators();
+  const text=d.levels_adjusted?'Gespeichert. Sollbestand wurde automatisch auf den Mindestbestand angehoben.':'Gespeichert ✓';msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,text,true);
+  if(!fromBatch){const refreshed=await Promise.allSettled([dash(),loadArticles(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]);if(refreshed.some(x=>x.status==='rejected'))msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,'Gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true)}
   return d;
  }catch(e){if(!saved)msg(prefix==='dash'?dashLowMsg:articleLevelsMsg,e.message,false);if(fromBatch)throw e;return null}
 }
@@ -967,14 +999,19 @@ async function saveMove(t){
 
 
 let extractionPreviewTimers={delivery:null,service:null};
-let deliveryInitialBooked=new Set();let deliveryInitialBookedKey='';
+const importOps={delivery:{id:'',nonce:''},service:{id:'',nonce:''},csv:{id:'',nonce:''}};
+function freshImportNonce(){return globalThis.crypto?.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random()}
 function deliveryExtractionKey(value){return String(value||'').replace(/\r/g,'').split('\n').map(x=>x.trim().replace(/\s+/g,' ')).filter(Boolean).join('\n')}
+function importTextFor(type){return type==='delivery'?dtext.value:(type==='service'?stext.value:ctext.value)}
+function rememberImportOp(type){try{localStorage.setItem(`lv67-import-${type}`,JSON.stringify({content:deliveryExtractionKey(importTextFor(type)),nonce:importOps[type].nonce||'',id:importOps[type].id||''}))}catch{}}
+function restoreImportOp(type){try{const x=JSON.parse(localStorage.getItem(`lv67-import-${type}`)||'null');if(x&&x.content===deliveryExtractionKey(importTextFor(type))){importOps[type].nonce=x.nonce||'';importOps[type].id=x.id||'';return true}}catch{}return false}
+function forgetImportOp(type){try{localStorage.removeItem(`lv67-import-${type}`)}catch{}importOps[type]={id:'',nonce:''}}
+async function startNewImportOperation(type){if(!confirm('Diesen identischen Inhalt bewusst als neuen Vorgang behandeln?'))return;importOps[type].nonce=freshImportNonce();importOps[type].id='';rememberImportOp(type);if(type==='delivery')await deliveryPreview();else if(type==='service')await servicePreview();else await csvPreview()}
 function scheduleExtractionPreview(type){
  clearTimeout(extractionPreviewTimers[type]);
  const value=(type==='delivery'?dtext.value:stext.value).trim();
  if(value!==extractionLastInput[type]){
   ignoredUnknown[type]?.clear();
-  if(type==='delivery'&&deliveryInitialBooked.size&&deliveryInitialBookedKey&&deliveryExtractionKey(value)!==deliveryInitialBookedKey){deliveryInitialBooked.clear();deliveryInitialBookedKey=''}
   extractionLastInput[type]=value;
  }
  if(!value){clearExtractionResults(type);return}
@@ -985,11 +1022,11 @@ function scheduleExtractionPreview(type){
 }
 function clearExtractionResults(type){
  if(type==='delivery'){
-  ignoredUnknown.delivery.clear();deliveryInitialBooked.clear();deliveryInitialBookedKey='';extractionLastInput.delivery='';
+  ignoredUnknown.delivery.clear();forgetImportOp('delivery');extractionLastInput.delivery='';
   deliveryp=[];deliveryUnknown=[];drows.innerHTML='';derrors.innerHTML='';dunknown.innerHTML='';
   dcommit.disabled=true;deliveryExtractedSummary.style.display='none';dmsg.style.display='none';
  }else{
-  ignoredUnknown.service.clear();extractionLastInput.service='';
+  ignoredUnknown.service.clear();forgetImportOp('service');extractionLastInput.service='';
   servicep=[];serviceUnknown=[];srows.innerHTML='';serrors.innerHTML='';sunknown.innerHTML='';
   scommit.disabled=true;serviceExtractedSummary.style.display='none';smsg.style.display='none';
  }
@@ -1040,14 +1077,15 @@ function renderServicePreviewRows(){
 
 async function deliveryPreview(silent=false){
  try{
-  let d=await api('/api/delivery-note/preview',{method:'POST',body:JSON.stringify({text:dtext.value})});
+  if(!importOps.delivery.id&&!importOps.delivery.nonce)restoreImportOp('delivery');
+  let d=await api('/api/delivery-note/preview',{method:'POST',body:JSON.stringify({text:dtext.value,new_operation_nonce:importOps.delivery.nonce})});importOps.delivery.id=d.operation_id||importOps.delivery.id;rememberImportOp('delivery');
   if(d.wrong_import_type){
    deliveryp=[];deliveryUnknown=[];renderDeliveryPreviewRows();dcommit.disabled=true;
    deliveryExtractedSummary.style.display='none';dunknown.innerHTML='';
    derrors.innerHTML='<div class="message error" style="display:block">'+esc(d.error)+'</div>';
    return msg(dmsg,d.error,false);
   }
-  deliveryp=(d.items||[]).filter(x=>!deliveryInitialBooked.has(String(x.article_no)));deliveryUnknown=(d.unknown||[]).filter(x=>!ignoredUnknown.delivery.has(String(x.article_no)));
+  deliveryp=d.items||[];deliveryUnknown=(d.unknown||[]).filter(x=>!ignoredUnknown.delivery.has(String(x.article_no)));
   renderDeliveryPreviewRows();
   derrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
   dunknown.innerHTML=unknownBlock(deliveryUnknown,'delivery');
@@ -1055,18 +1093,23 @@ async function deliveryPreview(silent=false){
   deliveryExtractedSummary.innerHTML=`<h3>Erkannte Lieferung</h3>
    <p><b>Positionen:</b> ${deliveryp.length+deliveryUnknown.length}</p>
    <p><b>Bekannte Artikel:</b> ${deliveryp.length}</p>
-   <p><b>Unbekannte Artikel:</b> ${deliveryUnknown.length}</p><p><b>Bereits als Ausgangsbestand gebucht:</b> ${deliveryInitialBooked.size}</p>`;
+   <p><b>Unbekannte Artikel:</b> ${deliveryUnknown.length}</p><p><b>Bereits verarbeitet:</b> ${d.processed_count||0}</p>`;
   dcommit.disabled=!deliveryp.length||deliveryUnknown.length>0;
   msg(dmsg,deliveryp.length+' bekannte Position(en), '+deliveryUnknown.length+' noch zu entscheidende neue Artikel, '+ignoredUnknown.delivery.size+' ignoriert, '+(d.errors||[]).length+' Fehler.',deliveryp.length>0&&deliveryUnknown.length===0);
  }catch(e){if(!silent)msg(dmsg,e.message,false)}
 }
 async function deliveryCommit(){
+ let d;
  try{
-  const payload={movement_type:'IN',items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value};
+  const payload={movement_type:'IN',items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value,operation_id:importOps.delivery.id};
   if(!await confirmPossibleDuplicate(payload))return msg(dmsg,'Einbuchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
-  let d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify(payload)});
-  msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);deliveryp=[];deliveryUnknown=[];ignoredUnknown.delivery.clear();deliveryInitialBooked.clear();deliveryInitialBookedKey='';extractionLastInput.delivery='';dtext.value='';drows.innerHTML='';dunknown.innerHTML='';derrors.innerHTML='';deliveryExtractedSummary.style.display='none';dcommit.disabled=true;arts=[];await dash();await loadRecentMovements('IN')
- }catch(e){msg(dmsg,e.message,false)}
+  d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify(payload)});
+ }catch(e){return msg(dmsg,e.message,false)}
+ msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);
+ deliveryp=[];deliveryUnknown=[];ignoredUnknown.delivery.clear();forgetImportOp('delivery');extractionLastInput.delivery='';
+ dtext.value='';drows.innerHTML='';dunknown.innerHTML='';derrors.innerHTML='';deliveryExtractedSummary.style.display='none';dcommit.disabled=true;arts=[];
+ const refreshed=await Promise.allSettled([dash(),loadRecentMovements('IN'),loadArticles()]);
+ if(refreshed.some(x=>x.status==='rejected'))msg(dmsg,'Einbuchung gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true)
 }
 
 function unknownList(source){return source==='delivery'?deliveryUnknown:(source==='service'?serviceUnknown:csvUnknown)}
@@ -1105,7 +1148,7 @@ function ignoreUnknown(source,index){
 async function openUnknownRegistration(source,index){
  const list=unknownList(source),item=list[index];if(!item)return;
  if(!md.locations)await master();
- unknownRegistrationState={source,index,article_no:item.article_no,quantity:Number(item.quantity)||0};
+ unknownRegistrationState={source,index,article_no:item.article_no,quantity:Number(item.quantity)||0,position_key:item.position_key||`${Number(item.line)||index+1}:${String(item.article_no||'').trim().toLowerCase()}`};
  const plan=LVV66Core.m365UnknownCreationPlan(source,item.quantity);ur_no.value=item.article_no||'';ur_desc.value=item.description||'';ur_initial.value=String(plan.initial_stock);ur_target.value='0';ur_min.value='0';ur_unit.value='Stk.';
  ur_manufacturer.value='';ur_supplier.value='';ur_supplier_no.value='';ur_barcode.value='';ur_notes.value='';ur_active.value='true';
  const sourceTech=source==='delivery'?dtech.value:stech.value;ur_technician.value=LVV66Core.technicianChoice(sourceTech,(md.technicians||[]).map(x=>x.name),md.default_technician);
@@ -1128,22 +1171,31 @@ async function saveUnknownRegistration(){
  const description=ur_desc.value.trim();if(!description)return msg(ur_msg,'Bitte eine Bezeichnung eingeben.',false);
  const initial=Number(ur_initial.value||0);if(st.source==='service'&&initial<st.quantity)return msg(ur_msg,`Für die Entnahme von ${n(st.quantity)} muss der Ausgangsbestand mindestens ${n(st.quantity)} betragen. Alternativ kann die Position ignoriert werden.`,false);
  const adjusted=normalizeMaterialLevelFields('ur');
- const body={article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),notes:ur_notes.value.trim(),active:ur_active.value==='true',technician:ur_technician.value||md.default_technician||'',creation_source:st.source==='delivery'?'Lieferschein / M365':'Servicebericht / M365'};
+ const body={article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),notes:ur_notes.value.trim(),active:ur_active.value==='true',technician:ur_technician.value||md.default_technician||'',creation_source:st.source==='delivery'?'Lieferschein / M365':'Servicebericht / M365',import_context:{operation_id:importOps[st.source]?.id||'',source:st.source,position_key:st.position_key}};
  if(!body.location)return msg(ur_msg,'Bitte einen Lagerort auswählen.',false);
  if(saveUnknownRegistration.busy)return;saveUnknownRegistration.busy=true;
+ let created;
  try{
-  const created=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});const source=st.source,articleNo=st.article_no,quantity=st.quantity;
-  closeUnknownRegistration();arts=[];await master();await dash();await loadRecentMovements('IN');
-  const list=unknownList(source);const ix=list.findIndex(x=>String(x.article_no)===String(articleNo));if(ix>=0)list.splice(ix,1);setUnknownList(source,list);
-  if(source==='delivery'){
-   deliveryInitialBooked.add(String(articleNo));deliveryInitialBookedKey=deliveryExtractionKey(dtext.value);updateUnknownSourceUI('delivery');renderDeliveryPreviewRows();
-   msg(dmsg,`Neues Material ${articleNo} wurde mit Ausgangsbestand ${n(initial)} angelegt. Diese Menge wird aus diesem Lieferschein nicht noch einmal eingebucht.`+(created.levels_adjusted||adjusted?' Sollbestand wurde automatisch auf den Mindestbestand angehoben.':''),true);
-  }else{
-   if(!servicep.some(x=>String(x.article_no)===String(articleNo)))servicep.push({article_no:articleNo,article_id:created.id,description,quantity});
-   updateUnknownSourceUI('service');renderServicePreviewRows();
-   msg(smsg,`Neues Material ${articleNo} wurde mit Ausgangsbestand ${n(initial)} angelegt und steht für die erkannte Entnahme bereit.`+(created.levels_adjusted||adjusted?' Sollbestand wurde automatisch auf den Mindestbestand angehoben.':''),true);
-  }
- }catch(e){msg(ur_msg,e.message,false)}finally{saveUnknownRegistration.busy=false}
+  created=await api('/api/article/create',{method:'POST',body:JSON.stringify(body)});
+ }catch(e){saveUnknownRegistration.busy=false;return msg(ur_msg,e.message,false)}
+ const source=st.source,articleNo=st.article_no,quantity=st.quantity;
+ closeUnknownRegistration();
+ const list=unknownList(source);const ix=list.findIndex(x=>String(x.article_no)===String(articleNo));if(ix>=0)list.splice(ix,1);setUnknownList(source,list);
+ if(source==='delivery'){
+  updateUnknownSourceUI('delivery');renderDeliveryPreviewRows();
+  msg(dmsg,`Neues Material ${articleNo} wurde mit Ausgangsbestand ${n(initial)} angelegt. Diese Position ist mit Vorgang ${esc(importOps.delivery.id||'')} dauerhaft als verarbeitet gespeichert.`+(created.levels_adjusted||adjusted?' Sollbestand wurde automatisch auf den Mindestbestand angehoben.':''),true);
+ }else{
+  if(!servicep.some(x=>String(x.article_no)===String(articleNo)))servicep.push({article_no:articleNo,article_id:created.id,description,quantity,position_key:st.position_key});
+  updateUnknownSourceUI('service');renderServicePreviewRows();
+  msg(smsg,`Neues Material ${articleNo} wurde mit Ausgangsbestand ${n(initial)} angelegt und steht für die erkannte Entnahme bereit.`+(created.levels_adjusted||adjusted?' Sollbestand wurde automatisch auf den Mindestbestand angehoben.':''),true);
+ }
+ arts=[];
+ const refreshed=await Promise.allSettled([master(),dash(),loadRecentMovements('IN'),loadArticles()]);
+ if(refreshed.some(x=>x.status==='rejected')){
+  const box=source==='delivery'?dmsg:smsg;
+  msg(box,`Material ${articleNo} wurde gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.`,true);
+ }
+ saveUnknownRegistration.busy=false
 }
 async function createUnknown(source){
  let list=source==='delivery'?deliveryUnknown:(source==='service'?serviceUnknown:csvUnknown);
@@ -1152,7 +1204,7 @@ async function createUnknown(source){
  let rows=[...table.tBodies[0].rows];
  let items=list.map((x,i)=>({...x,description:rows[i].querySelector('[data-field="description"]').value,location:rows[i].querySelector('[data-field="location"]').value,minimum_stock:+rows[i].querySelector('[data-field="minimum_stock"]').value,target_stock:+rows[i].querySelector('[data-field="target_stock"]').value}));
  const sourceTech=source==='delivery'?dtech.value:(source==='service'?stech.value:ctech.value);
- try{let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({items,technician:sourceTech||md.default_technician||'Techniker'})});alert((d.created||0)+' Artikel wurden angelegt.'+(d.levels_adjusted?' Soll-/Mindestbestand wurde bei '+d.levels_adjusted+' Artikel(n) automatisch angeglichen.':'')+' Bitte den Import erneut prüfen.');arts=[];await master();await dash();await loadRecentMovements('IN');if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()}catch(e){alert(e.message)}
+ try{let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({items,technician:sourceTech||md.default_technician||'Techniker',operation_id:importOps[source]?.id||''})});alert((d.created||0)+' Artikel wurden angelegt.'+(d.levels_adjusted?' Soll-/Mindestbestand wurde bei '+d.levels_adjusted+' Artikel(n) automatisch angeglichen.':'')+' Bitte den Import erneut prüfen.');arts=[];await master();await dash();await loadRecentMovements('IN');if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()}catch(e){alert(e.message)}
 }
 
 async function loadImportFile(input){
@@ -1165,7 +1217,7 @@ async function loadImportFile(input){
   let bytes=new Uint8Array(buffer),chunk=0x8000,binary='';
   for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
   let d=await api('/api/import/file-preview',{method:'POST',body:JSON.stringify({
-    filename:f.name,content_base64:btoa(binary)
+    filename:f.name,content_base64:btoa(binary),new_operation_nonce:importOps.csv.nonce
   })});
   applyImportPreview(d);
   if(d.text)ctext.value=d.text;
@@ -1174,7 +1226,7 @@ async function loadImportFile(input){
  }catch(e){msg(cmsg,e.message,false)}
 }
 function applyImportPreview(d){
- csvp=d.items||[];csvUnknown=d.unknown||[];
+ if(d.operation_id){importOps.csv.id=d.operation_id;rememberImportOp('csv')}csvp=d.items||[];csvUnknown=d.unknown||[];
  crows.innerHTML=csvp.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.location||'')}</td></tr>`).join('');
  cunknown.innerHTML=unknownBlock(csvUnknown,'csv');
  cerr.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';
@@ -1182,7 +1234,8 @@ function applyImportPreview(d){
  callcommit.disabled=!(csvp.length||csvUnknown.length);
 }
 async function csvPreview(){
- let d=await api('/api/import/preview',{method:'POST',body:JSON.stringify({text:ctext.value})});
+ if(!importOps.csv.id&&!importOps.csv.nonce)restoreImportOp('csv');
+ let d=await api('/api/import/preview',{method:'POST',body:JSON.stringify({text:ctext.value,new_operation_nonce:importOps.csv.nonce})});
  applyImportPreview(d);
  msg(cmsg,csvp.length+' bekannte Position(en), '+csvUnknown.length+' neue Artikel, '+d.errors.length+' Fehler.',csvp.length>0||csvUnknown.length>0)
 }
@@ -1202,7 +1255,7 @@ async function createAndBookAll(){
  try{
   let d=await api('/api/import/create-and-book',{method:'POST',body:JSON.stringify({
    known_items:csvp,new_items:newItems,technician:ctech.value||md.default_technician||'Techniker',
-   movement_date:td(),note:'SAP-Import '+(lastImportFilename||'')
+   movement_date:td(),note:'SAP-Import '+(lastImportFilename||''),operation_id:importOps.csv.id
   })});
   msg(cmsg,`${d.created} neue Artikel angelegt und ${d.booked} Position(en) eingebucht.${d.levels_adjusted?' '+d.levels_adjusted+' Mindestbestand/Mindestbestände automatisch angeglichen.':''}`,true);
   csvp=[];csvUnknown=[];crows.innerHTML='';cunknown.innerHTML='';cerr.innerHTML='';
@@ -1211,7 +1264,7 @@ async function createAndBookAll(){
 }
 async function csvCommit(){
  try{
-  let d=await api('/api/import/commit',{method:'POST',body:JSON.stringify({items:csvp,technician:ctech.value||md.default_technician||'Techniker',movement_date:td(),note:'SAP-CSV-Import'})});
+  let d=await api('/api/import/commit',{method:'POST',body:JSON.stringify({items:csvp,technician:ctech.value||md.default_technician||'Techniker',movement_date:td(),note:'SAP-CSV-Import',operation_id:importOps.csv.id})});
   msg(cmsg,d.count+' Position(en) eingebucht.',true);csvp=[];ccommit.disabled=true;arts=[];dash()
  }catch(e){msg(cmsg,e.message,false)}
 }
@@ -1280,14 +1333,15 @@ function useServiceMachineSuggestion(id,name,raw){
  smachine.value=name;smachineNew.value='';smachineHint.innerHTML=`Vorhandene Maschine <b>${esc(name)}</b> ausgewählt.`+(raw&&normLabel(raw)!==normLabel(name)?` <button type="button" class="secondary" onclick='rememberServiceMachineAlias(${Number(id)},${JSON.stringify(raw)})'>„${esc(raw)}“ als gleiche Maschine merken</button>`:'');
 }
 async function rememberServiceMachineAlias(machine_id,alias){
- if(!alias)return;try{await api('/api/machine/alias',{method:'POST',body:JSON.stringify({machine_id,alias,password:sessionStorage.adminPassword||''})});await master();smachineHint.innerHTML=`Alternative Bezeichnung <b>${esc(alias)}</b> wurde dauerhaft der Maschine zugeordnet.`}catch(e){alert(e.message)}
+ if(!alias)return;if(!await ensureAdminPassword())return;try{await api('/api/machine/alias',{method:'POST',body:JSON.stringify({machine_id,alias,password:sessionStorage.adminPassword||''})});await master();smachineHint.innerHTML=`Alternative Bezeichnung <b>${esc(alias)}</b> wurde dauerhaft der Maschine zugeordnet.`}catch(e){alert(e.message)}
 }
 function currentServiceMachine(){
  return smachineNew.value.trim()||smachine.value.trim();
 }
 async function servicePreview(silent=false){
  try{
-  let d=await api('/api/service-report/preview',{method:'POST',body:JSON.stringify({text:stext.value})});
+  if(!importOps.service.id&&!importOps.service.nonce)restoreImportOp('service');
+  let d=await api('/api/service-report/preview',{method:'POST',body:JSON.stringify({text:stext.value,new_operation_nonce:importOps.service.nonce})});importOps.service.id=d.operation_id||importOps.service.id;rememberImportOp('service');
   if(d.wrong_import_type){
    servicep=[];serviceUnknown=[];renderServicePreviewRows();scommit.disabled=true;
    serviceExtractedSummary.style.display='none';sunknown.innerHTML='';
@@ -1314,19 +1368,23 @@ async function servicePreview(silent=false){
  }catch(e){if(!silent)msg(smsg,e.message,false)}
 }
 async function serviceCommit(){
+ let d;
  try{
+  if(smachineNew.value.trim()&&!await ensureAdminPassword())return;
   const machine=currentServiceMachine();
   const payload={
    movement_type:'OUT',items:servicep,technician:stech.value,movement_date:sdate.value,
-   customer:scustomer.value,machine,note:snote.value,create_machine_if_missing:true
+   customer:scustomer.value,machine,note:snote.value,create_machine_if_missing:true,operation_id:importOps.service.id
   };
   if(!await confirmPossibleDuplicate(payload))return msg(smsg,'Entnahme wurde wegen möglicher Doppelbuchung abgebrochen.',false);
-  let d=await api('/api/service-report/commit',{method:'POST',body:JSON.stringify(payload)});
-  msg(smsg,d.count+' Position(en) aus dem Servicebericht als Entnahme gebucht.'+(d.machine_created?' Neue Maschine „'+d.machine+'“ wurde angelegt.':''),true);
-  servicep=[];serviceUnknown=[];ignoredUnknown.service.clear();extractionLastInput.service='';stext.value='';srows.innerHTML='';sunknown.innerHTML='';serrors.innerHTML='';scommit.disabled=true;arts=[];
-  smachineNew.value='';smachineHint.textContent='';serviceExtractedSummary.style.display='none';
-  await meta();await dash();await loadRecentMovements('OUT')
- }catch(e){msg(smsg,e.message,false)}
+  d=await api('/api/service-report/commit',{method:'POST',body:JSON.stringify(payload)});
+ }catch(e){return msg(smsg,e.message,false)}
+ msg(smsg,d.count+' Position(en) aus dem Servicebericht als Entnahme gebucht.'+(d.machine_created?' Neue Maschine „'+d.machine+'“ wurde angelegt.':''),true);
+ servicep=[];serviceUnknown=[];ignoredUnknown.service.clear();forgetImportOp('service');extractionLastInput.service='';
+ stext.value='';srows.innerHTML='';sunknown.innerHTML='';serrors.innerHTML='';scommit.disabled=true;arts=[];
+ smachineNew.value='';smachineHint.textContent='';serviceExtractedSummary.style.display='none';
+ const refreshed=await Promise.allSettled([master(),dash(),loadRecentMovements('OUT'),loadArticles()]);
+ if(refreshed.some(x=>x.status==='rejected'))msg(smsg,'Entnahme gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true)
 }
 
 async function loadReq(){let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.order_target??Number(x.target_stock||0))}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}
@@ -1596,55 +1654,44 @@ function fillNewMaterialLists(){
  let loc='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
  nm_location.innerHTML=loc;nm_machine.innerHTML=machineMultiOptions([]);renderMachineChips('nm');
 }
-let levelDrafts=new Map();
+let levelDrafts=new LVV67Core.ArticleDraftStore();
+let stockDetailsState=new LVV67Core.StockDetailsState();
 let stockMachineEditorArticleId=0;
-function levelKey(prefix,id){return `${prefix}:${id}`}
-function currentStockMachineIds(id){
- const draft=levelDrafts.get(levelKey('stock',id));if(draft?.machine_ids)return [...draft.machine_ids];
- const a=arts.find(x=>Number(x.id)===Number(id));return [...(a?.machine_ids||[])];
-}
+function levelKey(prefix,id){return Number(id)}
+function articleById(id){return arts.find(x=>Number(x.id)===Number(id))||dashboardLowItems.find(x=>Number(x.id)===Number(id))||null}
+function baseDraftForArticle(id){const a=articleById(id)||{};return {id:Number(id),target:a.target_stock??0,minimum:a.minimum_stock??0,unit:a.unit||'Stk.',location:a.location||'',machine_ids:[...(a.machine_ids||[])]}}
+function currentStockMachineIds(id){const d=levelDrafts.get(id);return d?.machine_ids?[...d.machine_ids]:[...(articleById(id)?.machine_ids||[])]}
 function stockMachineNames(ids){const set=new Set((ids||[]).map(Number));return (md.machines||[]).filter(x=>set.has(Number(x.id))).map(x=>x.name)}
 function markLevelDraft(prefix,id){
- const t=document.getElementById(`${prefix}-target-${id}`),m=document.getElementById(`${prefix}-min-${id}`);if(!t||!m)return;
- const a=prefix==='dash'?dashboardLowItems.find(x=>Number(x.id)===Number(id)):arts.find(x=>Number(x.id)===Number(id));let next={prefix,id,target:t.value,minimum:m.value,unit:a?.unit||levelDrafts.get(levelKey(prefix,id))?.unit||'Stk.'};
- if(prefix==='stock'){
-  const loc=document.getElementById(`stock-location-${id}`);next.location=loc?.value||'';next.machine_ids=currentStockMachineIds(id);
+ const base=baseDraftForArticle(id),old=levelDrafts.get(id)||base;
+ const t=document.getElementById(`${prefix}-target-${id}`),m=document.getElementById(`${prefix}-min-${id}`);
+ const stockT=document.getElementById(`stock-target-${id}`),stockM=document.getElementById(`stock-min-${id}`),loc=document.getElementById(`stock-location-${id}`);
+ const next={target:t?.value??stockT?.value??old.target,minimum:m?.value??stockM?.value??old.minimum,unit:base.unit,location:loc?.value??old.location,machine_ids:old.machine_ids??base.machine_ids};
+ levelDrafts.set(id,next,base);restoreLevelDrafts();
+}
+function refreshDraftIndicators(){
+ document.querySelectorAll('.mobile-dirty-badge').forEach(x=>x.style.display='none');
+ for(const d of levelDrafts.values()){
+  for(const prefix of ['stock','dash']){const st=document.getElementById(`${prefix}-level-status-${d.id}`);if(st)st.textContent='Ungespeichert'}
+  const badge=document.getElementById(`stock-mobile-dirty-${d.id}`);if(badge)badge.style.display='inline-flex';
  }
- const key=levelKey(prefix,id);levelDrafts.set(key,LVV66Core.mergeDraft(levelDrafts.get(key),next));
- t.classList.add('level-dirty');m.classList.add('level-dirty');
- const loc=document.getElementById(`stock-location-${id}`);if(loc)loc.classList.add('level-dirty');
- const st=document.getElementById(`${prefix}-level-status-${id}`);if(st)st.textContent='Ungespeichert';
 }
 function restoreLevelDrafts(){
  for(const d of levelDrafts.values()){
-  const t=document.getElementById(`${d.prefix}-target-${d.id}`),m=document.getElementById(`${d.prefix}-min-${d.id}`);if(!t||!m)continue;
-  t.value=d.target;m.value=d.minimum;t.classList.add('level-dirty');m.classList.add('level-dirty');
-  if(d.prefix==='stock'){
-   const loc=document.getElementById(`stock-location-${d.id}`);if(loc){loc.value=d.location??loc.value;loc.classList.add('level-dirty')}
-   const label=document.getElementById(`stock-machines-label-${d.id}`);if(label)label.textContent=stockMachineNames(d.machine_ids).join(', ')||'—';
+  for(const prefix of ['stock','dash']){
+   const t=document.getElementById(`${prefix}-target-${d.id}`),m=document.getElementById(`${prefix}-min-${d.id}`);if(t){t.value=d.target;t.classList.add('level-dirty')}if(m){m.value=d.minimum;m.classList.add('level-dirty')}
+   const st=document.getElementById(`${prefix}-level-status-${d.id}`);if(st)st.textContent='Ungespeichert';
   }
-  const st=document.getElementById(`${d.prefix}-level-status-${d.id}`);if(st)st.textContent='Ungespeichert';
+  const loc=document.getElementById(`stock-location-${d.id}`);if(loc){loc.value=d.location??loc.value;loc.classList.add('level-dirty')}
+  const label=document.getElementById(`stock-machines-label-${d.id}`);if(label)label.textContent=stockMachineNames(d.machine_ids).join(', ')||'—';
  }
+ refreshDraftIndicators();
 }
-function openStockMachineEditor(id){
- stockMachineEditorArticleId=Number(id);const a=arts.find(x=>Number(x.id)===Number(id));
- stockMachineArticleLabel.textContent=a?`${a.article_no} – ${a.description}`:'';const selected=new Set(currentStockMachineIds(id).map(Number));
- stockMachineEditorChips.innerHTML=(md.machines||[]).map(x=>`<label class="machine-chip"><input type="checkbox" value="${Number(x.id)}" ${selected.has(Number(x.id))?'checked':''}><span>${esc(x.name)}</span></label>`).join('')||'<span class="small">Keine Maschinen vorhanden.</span>';
- stockMachineOverlay.style.display='block';
-}
+function applySavedArticleState(id,d){for(const list of [arts,dashboardLowItems]){const a=list.find(x=>Number(x.id)===Number(id));if(a){a.target_stock=d.target_stock;a.minimum_stock=d.minimum_stock;if('location' in d)a.location=d.location;if(d.machine_ids)a.machine_ids=d.machine_ids;if(d.machines){a.machines=d.machines;a.machine=d.machines.join(', ')}}}const row=document.getElementById(`stock-row-${id}`);if(row){row.classList.toggle('low',Number(articleById(id)?.stock)<Number(d.minimum_stock));row.classList.add('stock-row-saved');setTimeout(()=>row.classList.remove('stock-row-saved'),1200)}}
+function openStockMachineEditor(id){stockMachineEditorArticleId=Number(id);const a=articleById(id);stockMachineArticleLabel.textContent=a?`${a.article_no} – ${a.description}`:'';const selected=new Set(currentStockMachineIds(id).map(Number));stockMachineEditorChips.innerHTML=(md.machines||[]).map(x=>`<label class="machine-chip"><input type="checkbox" value="${Number(x.id)}" ${selected.has(Number(x.id))?'checked':''}><span>${esc(x.name)}</span></label>`).join('')||'<span class="small">Keine Maschinen vorhanden.</span>';stockMachineOverlay.style.display='block'}
 function closeStockMachineEditor(){stockMachineOverlay.style.display='none';stockMachineEditorArticleId=0}
-function applyStockMachineEditor(){
- const id=stockMachineEditorArticleId;if(!id)return closeStockMachineEditor();
- const ids=[...stockMachineEditorChips.querySelectorAll('input[type="checkbox"]:checked')].map(x=>Number(x.value));
- const key=levelKey('stock',id),base=levelDrafts.get(key)||{prefix:'stock',id,target:document.getElementById(`stock-target-${id}`)?.value||0,minimum:document.getElementById(`stock-min-${id}`)?.value||0,location:document.getElementById(`stock-location-${id}`)?.value||''};
- levelDrafts.set(key,LVV66Core.mergeDraft(base,{machine_ids:ids}));const label=document.getElementById(`stock-machines-label-${id}`);if(label)label.textContent=stockMachineNames(ids).join(', ')||'—';markLevelDraft('stock',id);closeStockMachineEditor();
-}
-async function saveAllLevelChanges(){
- const pending=[...levelDrafts.values()];if(!pending.length)return msg(articleLevelsMsg,'Keine ungespeicherten Änderungen vorhanden.',true);
- let failed=0;for(const d of pending){try{await saveArticleLevels(d.id,d.prefix,true)}catch{failed++}}
- const refreshed=await Promise.allSettled([dash(),loadArticles(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]);
- if(failed)msg(articleLevelsMsg,`${pending.length-failed} Änderung(en) gespeichert, ${failed} fehlgeschlagen.`,false);else if(refreshed.some(x=>x.status==='rejected'))msg(articleLevelsMsg,'Alle Änderungen gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true);else msg(articleLevelsMsg,'Alle Änderungen gespeichert ✓',true);
-}
+function applyStockMachineEditor(){const id=stockMachineEditorArticleId;if(!id)return closeStockMachineEditor();const ids=[...stockMachineEditorChips.querySelectorAll('input[type="checkbox"]:checked')].map(x=>Number(x.value));const base=levelDrafts.get(id)||baseDraftForArticle(id);levelDrafts.set(id,{machine_ids:ids},base);restoreLevelDrafts();closeStockMachineEditor()}
+async function saveAllLevelChanges(){const pending=levelDrafts.values();if(!pending.length)return msg(articleLevelsMsg,'Keine ungespeicherten Änderungen vorhanden.',true);let failed=0;for(const d of pending){try{await saveArticleLevels(d.id,'stock',true)}catch{failed++}}const refreshed=await Promise.allSettled([dash(),loadArticles(),loadReq(),window.LVStorageMode?LVStorageMode.refresh():Promise.resolve()]);if(failed)msg(articleLevelsMsg,`${pending.length-failed} Änderung(en) gespeichert, ${failed} fehlgeschlagen.`,false);else if(refreshed.some(x=>x.status==='rejected'))msg(articleLevelsMsg,'Alle Änderungen gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true);else msg(articleLevelsMsg,'Alle Änderungen gespeichert ✓',true)}
 window.addEventListener('beforeunload',e=>{if(levelDrafts.size){e.preventDefault();e.returnValue=''}});
 function materialFormHasData(){return !!(nm_no.value.trim()||nm_desc.value.trim()||Number(nm_initial.value)||Number(nm_target.value)||Number(nm_min.value)||nm_location.value||nm_notes.value.trim())}
 async function checkNewArticleNumber(){const q=nm_no.value.trim();if(!q){nm_no_status.textContent='';return}try{const list=await api('/api/articles?q='+encodeURIComponent(q));const hit=list.find(x=>String(x.article_no).toLowerCase()===q.toLowerCase());nm_no_status.textContent=hit?'⚠ Artikelnummer bereits vorhanden':'✓ Artikelnummer frei';nm_no_status.style.color=hit?'#b42318':'#12613d'}catch{nm_no_status.textContent=''}}
@@ -1693,6 +1740,7 @@ function selectExistingMaster(type,prefix,id){
  const input=document.getElementById(`${prefix}_${type}_new`),box=document.getElementById(`${prefix}_${type}_suggestions`);if(input)input.value='';if(box)box.innerHTML=`Bestehender Eintrag gewählt: <b>${esc(item.name)}</b>`;
 }
 async function createInlineMaster(type,prefix){
+ if(!await ensureAdminPassword())return;
  const input=document.getElementById(`${prefix}_${type}_new`),name=input?.value.trim();if(!name)return alert(type==='location'?'Bitte neuen Lagerort eingeben.':'Bitte neue Maschinenbezeichnung eingeben.');
  try{
   const sim=await api('/api/masterdata/similar?type='+encodeURIComponent(type)+'&q='+encodeURIComponent(name));const top=sim.suggestions?.[0];
@@ -2129,6 +2177,7 @@ async function loadSettings(){
 }
 
 async function saveDateFormat(){
+ if(!await ensureAdminPassword())return;
  try{
   let d=await api('/api/settings/date-format',{
    method:'POST',
@@ -2455,7 +2504,8 @@ setInterval(async()=>{
 },15000);
 
 function openModalA11y(el){if(!el)return;el.dataset.previousFocus=document.activeElement?.id||'';setTimeout(()=>{const f=el.querySelector('button,input,select,textarea,[tabindex]:not([tabindex="-1"])');f?.focus()},0)}
-document.addEventListener('keydown',e=>{const visible=[...document.querySelectorAll('.modal-overlay,#logoutOverlay,#movementEditorOverlay,#unknownRegistrationOverlay')].find(x=>getComputedStyle(x).display!=='none');if(!visible)return;if(e.key==='Escape'){if(visible.id==='logoutOverlay')LVLogout.cancel();else if(visible.id==='movementEditorOverlay'&&window.closeMovementEditor)closeMovementEditor();else if(visible.id==='unknownRegistrationOverlay'&&window.closeUnknownRegistration)closeUnknownRegistration();else if(visible.id==='promptOverlay')promptOverlay.style.display='none';return}if(e.key==='Tab'){const fs=[...visible.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x=>x.offsetParent!==null);if(!fs.length)return;const first=fs[0],last=fs[fs.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+function closeModalA11y(el){if(!el)return;const prev=el.dataset.previousFocus&&document.getElementById(el.dataset.previousFocus);if(prev)setTimeout(()=>prev.focus(),0)}
+document.addEventListener('keydown',e=>{const visible=[...document.querySelectorAll('.modal-overlay,#logoutOverlay,#movementEditorOverlay,#unknownRegistrationOverlay')].find(x=>getComputedStyle(x).display!=='none');if(!visible)return;if(e.key==='Escape'){if(visible.id==='draftNavigationOverlay')closeDraftNavigation('cancel');else if(visible.id==='logoutOverlay')LVLogout.cancel();else if(visible.id==='movementEditorOverlay'&&window.closeMovementEditor)closeMovementEditor();else if(visible.id==='unknownRegistrationOverlay'&&window.closeUnknownRegistration)closeUnknownRegistration();else if(visible.id==='promptOverlay')promptOverlay.style.display='none';return}if(e.key==='Tab'){const fs=[...visible.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x=>x.offsetParent!==null);if(!fs.length)return;const first=fs[0],last=fs[fs.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 window.LVStartup={
  data:null,
  async check(){
