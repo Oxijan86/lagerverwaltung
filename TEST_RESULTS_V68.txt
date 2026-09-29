@@ -1,0 +1,1087 @@
+Lagerverwaltung Lovrencic – Version 68 FINAL – Testergebnisse
+Prüfzeitpunkt: 2026-09-29T08:03:31
+Quell-/Build-Commit-ID: a8291f54f760918741e3e5ecdab53f7f1bee4e15
+Hinweis: Diese Commit-ID wurde lokal für den ausgelieferten V68-Quellstand erzeugt und nicht automatisch zu GitHub hochgeladen.
+
+== Automatisierte Tests ==
+Ausgelieferter Test-Runner: tests/run-tests.js
+Testdateien: 30 *.spec.js
+Tests ausgeführt: 168
+Bestanden: 168
+Fehlgeschlagen: 0
+Übersprungen: 0
+Ergebnis: BESTANDEN
+
+Der Test-Runner beendet sich ausdrücklich mit Fehler, wenn 0 Testdateien gefunden werden. Die GitHub-Actions-Datei .github/workflows/ci.yml führt npm test und npm run test:syntax aus.
+
+== Vollständiger npm-test-Lauf ==
+
+> lagerverwaltung-lovrencic-v68@68.0.0 test
+> node tests/run-tests.js
+
+TAP version 13
+# Subtest: Mindestbestand darf unter Sollbestand liegen
+ok 1 - Mindestbestand darf unter Sollbestand liegen
+  ---
+  duration_ms: 2.560053
+  type: 'test'
+  ...
+# Subtest: Mindest über Soll hebt Soll automatisch an
+ok 2 - Mindest über Soll hebt Soll automatisch an
+  ---
+  duration_ms: 0.355827
+  type: 'test'
+  ...
+# Subtest: negative Werte werden verhindert und Stückwerte normalisiert
+ok 3 - negative Werte werden verhindert und Stückwerte normalisiert
+  ---
+  duration_ms: 0.296336
+  type: 'test'
+  ...
+# Subtest: Unterbestand nur bei Ist kleiner Mindest
+ok 4 - Unterbestand nur bei Ist kleiner Mindest
+  ---
+  duration_ms: 0.417569
+  type: 'test'
+  ...
+# Subtest: Dashboard zählt 17 Unterbestände vollständig und begrenzt Vorschau
+ok 5 - Dashboard zählt 17 Unterbestände vollständig und begrenzt Vorschau
+  ---
+  duration_ms: 0.534784
+  type: 'test'
+  ...
+# Subtest: Materialanforderung nur unter Mindest und bis Soll
+ok 6 - Materialanforderung nur unter Mindest und bis Soll
+  ---
+  duration_ms: 0.446801
+  type: 'test'
+  ...
+# Subtest: PBKDF2 Hash ist gesalzen und verifizierbar
+ok 7 - PBKDF2 Hash ist gesalzen und verifizierbar
+  ---
+  duration_ms: 959.525998
+  type: 'test'
+  ...
+# Subtest: Sitzungstoken ist zufällig, exakt geprüft und widerrufbar
+ok 8 - Sitzungstoken ist zufällig, exakt geprüft und widerrufbar
+  ---
+  duration_ms: 0.729189
+  type: 'test'
+  ...
+# Subtest: manipulierter alter Unlock-Header wird nicht akzeptiert
+ok 9 - manipulierter alter Unlock-Header wird nicht akzeptiert
+  ---
+  duration_ms: 0.435379
+  type: 'test'
+  ...
+# Subtest: sessionStorage Boolean gewährt keine Rechte
+ok 10 - sessionStorage Boolean gewährt keine Rechte
+  ---
+  duration_ms: 4.936476
+  type: 'test'
+  ...
+# Subtest: Setup-Endpunkte können bestehendes Passwort nicht überschreiben
+ok 11 - Setup-Endpunkte können bestehendes Passwort nicht überschreiben
+  ---
+  duration_ms: 0.489888
+  type: 'test'
+  ...
+# Subtest: Logout widerruft Sitzung im Backend
+ok 12 - Logout widerruft Sitzung im Backend
+  ---
+  duration_ms: 0.672441
+  type: 'test'
+  ...
+# Subtest: alle aktiven Versionsstellen stehen auf V68
+ok 13 - alle aktiven Versionsstellen stehen auf V68
+  ---
+  duration_ms: 2.211057
+  type: 'test'
+  ...
+# Subtest: Service Worker enthält Kern- und V68-Module
+ok 14 - Service Worker enthält Kern- und V68-Module
+  ---
+  duration_ms: 0.460521
+  type: 'test'
+  ...
+# Subtest: Speichern trennt Schreibvorgang und UI-Aktualisierung
+ok 15 - Speichern trennt Schreibvorgang und UI-Aktualisierung
+  ---
+  duration_ms: 2.76259
+  type: 'test'
+  ...
+# Subtest: andere Entwürfe bleiben im Map erhalten und werden nach Re-Render restauriert
+ok 16 - andere Entwürfe bleiben im Map erhalten und werden nach Re-Render restauriert
+  ---
+  duration_ms: 1.174567
+  type: 'test'
+  ...
+# Subtest: bestehende gültige lager.db kann als Cloud-Ordner verbunden werden
+ok 17 - bestehende gültige lager.db kann als Cloud-Ordner verbunden werden
+  ---
+  duration_ms: 2.481045
+  type: 'test'
+  ...
+# Subtest: bestehende Cloud-Datei wird beim bloßen Verbinden nicht initialisiert oder überschrieben
+ok 18 - bestehende Cloud-Datei wird beim bloßen Verbinden nicht initialisiert oder überschrieben
+  ---
+  duration_ms: 0.309123
+  type: 'test'
+  ...
+# Subtest: nur fehlende lager.db wird als neue Cloud-Ablage initialisiert
+ok 19 - nur fehlende lager.db wird als neue Cloud-Ablage initialisiert
+  ---
+  duration_ms: 0.405077
+  type: 'test'
+  ...
+# Subtest: ungültige oder nicht lesbare Cloud-Datei bleibt geschützt
+ok 20 - ungültige oder nicht lesbare Cloud-Datei bleibt geschützt
+  ---
+  duration_ms: 0.400437
+  type: 'test'
+  ...
+# Subtest: Smartphone-UI benennt den richtigen Verbindungsweg eindeutig
+ok 21 - Smartphone-UI benennt den richtigen Verbindungsweg eindeutig
+  ---
+  duration_ms: 0.530326
+  type: 'test'
+  ...
+# Subtest: Codeblöcke werden unverändert extrahiert und Sprachkennung text entfernt
+ok 22 - Codeblöcke werden unverändert extrahiert und Sprachkennung text entfernt
+  ---
+  duration_ms: 4.706548
+  type: 'test'
+  ...
+# Subtest: Gerenderter Prompt enthält unveränderten Code und beide Aktionen
+ok 23 - Gerenderter Prompt enthält unveränderten Code und beide Aktionen
+  ---
+  duration_ms: 2.222266
+  type: 'test'
+  ...
+# Subtest: Prompt ist für Maus/Langdruck auswählbar und Copy besitzt Clipboard plus Fallback
+ok 24 - Prompt ist für Maus/Langdruck auswählbar und Copy besitzt Clipboard plus Fallback
+  ---
+  duration_ms: 0.680357
+  type: 'test'
+  ...
+# Subtest: Levels-Endpunkt bleibt eng begrenzt und passwortfrei
+ok 25 - Levels-Endpunkt bleibt eng begrenzt und passwortfrei
+  ---
+  duration_ms: 2.47291
+  type: 'test'
+  ...
+# Subtest: Lagerbestand und Dashboard besitzen Entwurfsverwaltung
+ok 26 - Lagerbestand und Dashboard besitzen Entwurfsverwaltung
+  ---
+  duration_ms: 0.558111
+  type: 'test'
+  ...
+# Subtest: A2 cloud und local_folder liefern geschützte Close-Requests
+ok 27 - A2 cloud und local_folder liefern geschützte Close-Requests
+  ---
+  duration_ms: 3.754609
+  type: 'test'
+  ...
+# Subtest: A2 beschädigte Datei, fremde DB und Parallelbasis bleiben gesperrt
+ok 28 - A2 beschädigte Datei, fremde DB und Parallelbasis bleiben gesperrt
+  ---
+  duration_ms: 3.272765
+  type: 'test'
+  ...
+# Subtest: Logout-Reauthorize prüft direkt LVSync.inspect und nutzt danach LVSession.close
+ok 29 - Logout-Reauthorize prüft direkt LVSync.inspect und nutzt danach LVSession.close
+  ---
+  duration_ms: 0.665252
+  type: 'test'
+  ...
+# Subtest: LVSync.inspect ist unabhängig vom storageMode öffentlich verfügbar
+ok 30 - LVSync.inspect ist unabhängig vom storageMode öffentlich verfügbar
+  ---
+  duration_ms: 0.539201
+  type: 'test'
+  ...
+# Subtest: local_folder save benutzt keinen direkten unklassifizierten Write-Bypass
+ok 31 - local_folder save benutzt keinen direkten unklassifizierten Write-Bypass
+  ---
+  duration_ms: 0.419595
+  type: 'test'
+  ...
+# Subtest: Logout-Dialog besitzt expliziten Reauthorize-&-Sync-Button
+ok 32 - Logout-Dialog besitzt expliziten Reauthorize-&-Sync-Button
+  ---
+  duration_ms: 2.210004
+  type: 'test'
+  ...
+# Subtest: Logout prüft Permission ohne requestPermission im Hintergrund
+ok 33 - Logout prüft Permission ohne requestPermission im Hintergrund
+  ---
+  duration_ms: 0.854699
+  type: 'test'
+  ...
+# Subtest: Reauthorize wird nur im Button-Handler ausgelöst und danach normaler Close-Sync verwendet
+ok 34 - Reauthorize wird nur im Button-Handler ausgelöst und danach normaler Close-Sync verwendet
+  ---
+  duration_ms: 0.804774
+  type: 'test'
+  ...
+# Subtest: Permission-Fehler im normalen Close blendet Retry-Aktion ein
+ok 35 - Permission-Fehler im normalen Close blendet Retry-Aktion ein
+  ---
+  duration_ms: 0.579006
+  type: 'test'
+  ...
+# Subtest: Neue Materialanlage ist backendseitig passwortfrei
+ok 36 - Neue Materialanlage ist backendseitig passwortfrei
+  ---
+  duration_ms: 2.297814
+  type: 'test'
+  ...
+# Subtest: Import-Anlage und create-and-book sind passwortfrei
+ok 37 - Import-Anlage und create-and-book sind passwortfrei
+  ---
+  duration_ms: 0.468185
+  type: 'test'
+  ...
+# Subtest: Material-Stammdatenweg erlaubt nur Lagerort/Maschine und verlangt Admin
+ok 38 - Material-Stammdatenweg erlaubt nur Lagerort/Maschine und verlangt Admin
+  ---
+  duration_ms: 0.46091
+  type: 'test'
+  ...
+# Subtest: Zentrale Stammdaten und bestehende Artikel bleiben geschützt
+ok 39 - Zentrale Stammdaten und bestehende Artikel bleiben geschützt
+  ---
+  duration_ms: 0.467258
+  type: 'test'
+  ...
+# Subtest: Neues-Material-UI zeigt kein Passwort-Lock mehr
+ok 40 - Neues-Material-UI zeigt kein Passwort-Lock mehr
+  ---
+  duration_ms: 1.093435
+  type: 'test'
+  ...
+# Subtest: Alle Frontend-Anlagewege kommen ohne Passwortprompt aus
+ok 41 - Alle Frontend-Anlagewege kommen ohne Passwortprompt aus
+  ---
+  duration_ms: 3.745735
+  type: 'test'
+  ...
+# Subtest: Materialformular legt Lagerort/Maschine nur über begrenzten Endpoint an
+ok 42 - Materialformular legt Lagerort/Maschine nur über begrenzten Endpoint an
+  ---
+  duration_ms: 0.592167
+  type: 'test'
+  ...
+# Subtest: Audit-Änderungen am Materialanforderungs-Exportordner revisionieren
+ok 43 - Audit-Änderungen am Materialanforderungs-Exportordner revisionieren
+  ---
+  duration_ms: 3.304371
+  type: 'test'
+  ...
+# Subtest: V64 nutzt gerätespezifischen Speichermodus in IndexedDB
+ok 44 - V64 nutzt gerätespezifischen Speichermodus in IndexedDB
+  ---
+  duration_ms: 0.49743
+  type: 'test'
+  ...
+# Subtest: Sync-Queue statt isSyncing-Flag
+ok 45 - Sync-Queue statt isSyncing-Flag
+  ---
+  duration_ms: 0.626894
+  type: 'test'
+  ...
+# Subtest: Buchung während laufendem Write überschreibt keinen neueren lokalen Stand
+ok 46 - Buchung während laufendem Write überschreibt keinen neueren lokalen Stand
+  ---
+  duration_ms: 1.020861
+  type: 'test'
+  ...
+# Subtest: persist(false) wird nicht direkt nach Audit-Inhaltsänderungen verwendet
+ok 47 - persist(false) wird nicht direkt nach Audit-Inhaltsänderungen verwendet
+  ---
+  duration_ms: 1.010633
+  type: 'test'
+  ...
+# Subtest: V68 Cache-Name
+ok 48 - V68 Cache-Name
+  ---
+  duration_ms: 2.453741
+  type: 'test'
+  ...
+# Subtest: skipWaiting aktiv
+ok 49 - skipWaiting aktiv
+  ---
+  duration_ms: 0.307773
+  type: 'test'
+  ...
+# Subtest: clients.claim aktiv
+ok 50 - clients.claim aktiv
+  ---
+  duration_ms: 0.251932
+  type: 'test'
+  ...
+# Subtest: kritische App-Dateien network-first/no-store
+ok 51 - kritische App-Dateien network-first/no-store
+  ---
+  duration_ms: 0.355298
+  type: 'test'
+  ...
+# Subtest: Startdialog besitzt direkte erneute Ordnerfreigabe
+ok 52 - Startdialog besitzt direkte erneute Ordnerfreigabe
+  ---
+  duration_ms: 1.760421
+  type: 'test'
+  ...
+# Subtest: Berechtigungsbutton erscheint nur bei permission_denied
+ok 53 - Berechtigungsbutton erscheint nur bei permission_denied
+  ---
+  duration_ms: 0.633357
+  type: 'test'
+  ...
+# Subtest: Freigabe läuft aus Benutzeraktion über bestehende sichere Reauthorize-Funktion
+ok 54 - Freigabe läuft aus Benutzeraktion über bestehende sichere Reauthorize-Funktion
+  ---
+  duration_ms: 0.916611
+  type: 'test'
+  ...
+# Subtest: Hintergrundprüfung fordert weiterhin nicht automatisch Berechtigung an
+ok 55 - Hintergrundprüfung fordert weiterhin nicht automatisch Berechtigung an
+  ---
+  duration_ms: 0.550466
+  type: 'test'
+  ...
+# Subtest: useCloud leitet permission_denied zur ausdrücklichen Freigabe um
+ok 56 - useCloud leitet permission_denied zur ausdrücklichen Freigabe um
+  ---
+  duration_ms: 0.563104
+  type: 'test'
+  ...
+# Subtest: A1 echte Migration: ältere Cloud-DB + kein IndexedDB-Wert + Handle bleibt cloud und wird in IndexedDB übernommen
+ok 57 - A1 echte Migration: ältere Cloud-DB + kein IndexedDB-Wert + Handle bleibt cloud und wird in IndexedDB übernommen
+  ---
+  duration_ms: 2.850433
+  type: 'test'
+  ...
+# Subtest: IndexedDB-Wert hat Vorrang vor Legacy und Handle
+ok 58 - IndexedDB-Wert hat Vorrang vor Legacy und Handle
+  ---
+  duration_ms: 0.447356
+  type: 'test'
+  ...
+# Subtest: Legacy local_folder wird übernommen und migriert
+ok 59 - Legacy local_folder wird übernommen und migriert
+  ---
+  duration_ms: 0.474714
+  type: 'test'
+  ...
+# Subtest: Vorhandener Handle fällt ohne Altwerte auf cloud zurück und wird gespeichert
+ok 60 - Vorhandener Handle fällt ohne Altwerte auf cloud zurück und wird gespeichert
+  ---
+  duration_ms: 0.74538
+  type: 'test'
+  ...
+# Subtest: Ohne gespeicherten Zustand gilt browser_local
+ok 61 - Ohne gespeicherten Zustand gilt browser_local
+  ---
+  duration_ms: 0.806918
+  type: 'test'
+  ...
+# Subtest: 1 Cloud 87, lokale Kindrevision 88 ist sicher
+ok 62 - 1 Cloud 87, lokale Kindrevision 88 ist sicher
+  ---
+  duration_ms: 3.483712
+  type: 'test'
+  ...
+# Subtest: 2 mehrere lokale Revisionen 90 auf Basis 87 sind sicher
+ok 63 - 2 mehrere lokale Revisionen 90 auf Basis 87 sind sicher
+  ---
+  duration_ms: 0.608078
+  type: 'test'
+  ...
+# Subtest: 3 identisch trotz fehlender Metadaten
+ok 64 - 3 identisch trotz fehlender Metadaten
+  ---
+  duration_ms: 0.360486
+  type: 'test'
+  ...
+# Subtest: 4 direkte Kindrevision via parent_revision_id
+ok 65 - 4 direkte Kindrevision via parent_revision_id
+  ---
+  duration_ms: 0.392608
+  type: 'test'
+  ...
+# Subtest: 9 gleiche Revisionsnummer mit anderer revision_id ist Konflikt
+ok 66 - 9 gleiche Revisionsnummer mit anderer revision_id ist Konflikt
+  ---
+  duration_ms: 0.541801
+  type: 'test'
+  ...
+# Subtest: 10 veralteter Zweig bleibt blockiert
+ok 67 - 10 veralteter Zweig bleibt blockiert
+  ---
+  duration_ms: 0.387094
+  type: 'test'
+  ...
+# Subtest: cloud permission required
+ok 68 - cloud permission required
+  ---
+  duration_ms: 8.090016
+  type: 'test'
+  ...
+# Subtest: cloud missing
+ok 69 - cloud missing
+  ---
+  duration_ms: 0.434487
+  type: 'test'
+  ...
+# Subtest: cloud unreadable
+ok 70 - cloud unreadable
+  ---
+  duration_ms: 1.100732
+  type: 'test'
+  ...
+# Subtest: 19 nach Schreiben wird erneut gelesen und geprüft
+ok 71 - 19 nach Schreiben wird erneut gelesen und geprüft
+  ---
+  duration_ms: 2.276208
+  type: 'test'
+  ...
+# Subtest: 16 write-Fehler übernimmt Kandidat nicht
+ok 72 - 16 write-Fehler übernimmt Kandidat nicht
+  ---
+  duration_ms: 1.283111
+  type: 'test'
+  ...
+# Subtest: post-write falsche revision_id ist Fehler
+ok 73 - post-write falsche revision_id ist Fehler
+  ---
+  duration_ms: 0.627379
+  type: 'test'
+  ...
+# Subtest: force legt zuerst Backup der lesbaren Cloud-Datei an
+ok 74 - force legt zuerst Backup der lesbaren Cloud-Datei an
+  ---
+  duration_ms: 0.466062
+  type: 'test'
+  ...
+# Subtest: 17 Buchung während Sync löst Nachlauf aus
+ok 75 - 17 Buchung während Sync löst Nachlauf aus
+  ---
+  duration_ms: 73.77998
+  type: 'test'
+  ...
+# Subtest: 18 zwei manuelle Syncs schreiben nie parallel
+ok 76 - 18 zwei manuelle Syncs schreiben nie parallel
+  ---
+  duration_ms: 41.127977
+  type: 'test'
+  ...
+# Subtest: 5 beide Geräte starten identisch 87
+ok 77 - 5 beide Geräte starten identisch 87
+  ---
+  duration_ms: 2.908357
+  type: 'test'
+  ...
+# Subtest: 6/7/8 PC 88-A in Cloud, Smartphone 88-B darf nicht überschreiben
+ok 78 - 6/7/8 PC 88-A in Cloud, Smartphone 88-B darf nicht überschreiben
+  ---
+  duration_ms: 0.807553
+  type: 'test'
+  ...
+# Subtest: 12 Cloud ändert sich nach bewusster lokaler Fortsetzung erneut => neuer Konflikt
+ok 79 - 12 Cloud ändert sich nach bewusster lokaler Fortsetzung erneut => neuer Konflikt
+  ---
+  duration_ms: 0.374071
+  type: 'test'
+  ...
+# Subtest: 11 nach lokal weiterarbeiten wird derselbe Cloud-Konflikt nicht erneut gezeigt
+ok 80 - 11 nach lokal weiterarbeiten wird derselbe Cloud-Konflikt nicht erneut gezeigt
+  ---
+  duration_ms: 0.374793
+  type: 'test'
+  ...
+# Subtest: 12 neue Cloud-Revision hebt die Bestätigung auf
+ok 81 - 12 neue Cloud-Revision hebt die Bestätigung auf
+  ---
+  duration_ms: 0.350114
+  type: 'test'
+  ...
+# Subtest: strikter Guard erlaubt bestätigte Basis
+ok 82 - strikter Guard erlaubt bestätigte Basis
+  ---
+  duration_ms: 2.498879
+  type: 'test'
+  ...
+# Subtest: 13 beschädigte DB wird blockiert
+ok 83 - 13 beschädigte DB wird blockiert
+  ---
+  duration_ms: 1.089737
+  type: 'test'
+  ...
+# Subtest: 14 missing wird normal nicht erzeugt
+ok 84 - 14 missing wird normal nicht erzeugt
+  ---
+  duration_ms: 0.377838
+  type: 'test'
+  ...
+# Subtest: missing nur bei ausdrücklicher Initialisierung erlaubt
+ok 85 - missing nur bei ausdrücklicher Initialisierung erlaubt
+  ---
+  duration_ms: 0.39115
+  type: 'test'
+  ...
+# Subtest: 15 permission denied blockiert
+ok 86 - 15 permission denied blockiert
+  ---
+  duration_ms: 1.311388
+  type: 'test'
+  ...
+# Subtest: 20 unterschiedliche database_id blockiert
+ok 87 - 20 unterschiedliche database_id blockiert
+  ---
+  duration_ms: 0.419386
+  type: 'test'
+  ...
+# Subtest: expectedCloudDatabaseId muss exakt passen
+ok 88 - expectedCloudDatabaseId muss exakt passen
+  ---
+  duration_ms: 0.368259
+  type: 'test'
+  ...
+# Subtest: expectedCloudRevisionId muss exakt passen
+ok 89 - expectedCloudRevisionId muss exakt passen
+  ---
+  duration_ms: 0.29802
+  type: 'test'
+  ...
+# Subtest: writeBlocked blockiert
+ok 90 - writeBlocked blockiert
+  ---
+  duration_ms: 0.829158
+  type: 'test'
+  ...
+# Subtest: Fehler mitten in Transaktion führt zu ROLLBACK und nicht COMMIT
+ok 91 - Fehler mitten in Transaktion führt zu ROLLBACK und nicht COMMIT
+  ---
+  duration_ms: 3.687391
+  type: 'test'
+  ...
+# Subtest: Erfolg führt BEGIN -> Arbeit -> COMMIT aus
+ok 92 - Erfolg führt BEGIN -> Arbeit -> COMMIT aus
+  ---
+  duration_ms: 0.439517
+  type: 'test'
+  ...
+# Subtest: Materialanlage und Import verwenden Transaktionshelper
+ok 93 - Materialanlage und Import verwenden Transaktionshelper
+  ---
+  duration_ms: 1.008882
+  type: 'test'
+  ...
+# Subtest: Materialformular validiert Pflichtfelder und Lagerort
+ok 94 - Materialformular validiert Pflichtfelder und Lagerort
+  ---
+  duration_ms: 2.611852
+  type: 'test'
+  ...
+# Subtest: Formular leeren fragt bei Eingaben nach
+ok 95 - Formular leeren fragt bei Eingaben nach
+  ---
+  duration_ms: 0.424079
+  type: 'test'
+  ...
+# Subtest: Maschinen werden als touchfreundliche Chips angeboten
+ok 96 - Maschinen werden als touchfreundliche Chips angeboten
+  ---
+  duration_ms: 0.538141
+  type: 'test'
+  ...
+# Subtest: Touchflächen, Fokus und M365-Höhe sind mobil optimiert
+ok 97 - Touchflächen, Fokus und M365-Höhe sind mobil optimiert
+  ---
+  duration_ms: 0.261396
+  type: 'test'
+  ...
+# Subtest: Bearbeiten/Löschen Symbole haben aria-labels
+ok 98 - Bearbeiten/Löschen Symbole haben aria-labels
+  ---
+  duration_ms: 0.6356
+  type: 'test'
+  ...
+# Subtest: Synchronisationsstatus nennt verständliche Zustände
+ok 99 - Synchronisationsstatus nennt verständliche Zustände
+  ---
+  duration_ms: 0.664225
+  type: 'test'
+  ...
+# Subtest: V59 API-Routen bleiben in V64 erhalten
+ok 100 - V59 API-Routen bleiben in V64 erhalten
+  ---
+  duration_ms: 3.701019
+  type: 'test'
+  ...
+# Subtest: V64 enthält keine destruktive Schema-Migration beim Start
+ok 101 - V64 enthält keine destruktive Schema-Migration beim Start
+  ---
+  duration_ms: 2.141483
+  type: 'test'
+  ...
+# Subtest: zentrale Ansichten bleiben erhalten
+ok 102 - zentrale Ansichten bleiben erhalten
+  ---
+  duration_ms: 1.722468
+  type: 'test'
+  ...
+# Subtest: V66 Lagerbestand hat verbindliche Spaltenreihenfolge
+ok 103 - V66 Lagerbestand hat verbindliche Spaltenreihenfolge
+  ---
+  duration_ms: 5.707131
+  type: 'test'
+  ...
+# Subtest: Lagerbestand bleibt am PC Tabelle und wird auf Smartphone Kartenlayout
+ok 104 - Lagerbestand bleibt am PC Tabelle und wird auf Smartphone Kartenlayout
+  ---
+  duration_ms: 1.924924
+  type: 'test'
+  ...
+# Subtest: Lagerort und Mehrfach-Maschinenzuordnung sind im Lagerbestand editierbar und passwortfrei
+ok 105 - Lagerort und Mehrfach-Maschinenzuordnung sind im Lagerbestand editierbar und passwortfrei
+  ---
+  duration_ms: 1.24836
+  type: 'test'
+  ...
+# Subtest: Entwurfsmodell behält Lagerort und Maschinen sowie andere Werte
+ok 106 - Entwurfsmodell behält Lagerort und Maschinen sowie andere Werte
+  ---
+  duration_ms: 1.521323
+  type: 'test'
+  ...
+# Subtest: Standard-Techniker wird automatisch gewählt, manuelle Auswahl bleibt erhalten
+ok 107 - Standard-Techniker wird automatisch gewählt, manuelle Auswahl bleibt erhalten
+  ---
+  duration_ms: 5.733373
+  type: 'test'
+  ...
+# Subtest: M365-Neuanlage Menge 5 wird genau als Ausgangsbestand 5 geplant
+ok 108 - M365-Neuanlage Menge 5 wird genau als Ausgangsbestand 5 geplant
+  ---
+  duration_ms: 0.556796
+  type: 'test'
+  ...
+# Subtest: Servicebericht-Neuanlage nutzt Ausgangsbestand, anschließende Entnahme bleibt erlaubt
+ok 109 - Servicebericht-Neuanlage nutzt Ausgangsbestand, anschließende Entnahme bleibt erlaubt
+  ---
+  duration_ms: 0.742593
+  type: 'test'
+  ...
+# Subtest: Doppelte Anfangsbuchung wird durch eindeutige Artikelnummer und Delivery-Sperre verhindert
+ok 110 - Doppelte Anfangsbuchung wird durch eindeutige Artikelnummer und Delivery-Sperre verhindert
+  ---
+  duration_ms: 0.503784
+  type: 'test'
+  ...
+# Subtest: Materialanlage bleibt transaktional und produktive Testschalter sind entfernt
+ok 111 - Materialanlage bleibt transaktional und produktive Testschalter sind entfernt
+  ---
+  duration_ms: 1.030735
+  type: 'test'
+  ...
+# Subtest: V66 Rollback-Simulation entfernt Artikel, Maschinenrelation und Anfangsbuchung gemeinsam
+ok 112 - V66 Rollback-Simulation entfernt Artikel, Maschinenrelation und Anfangsbuchung gemeinsam
+  ---
+  duration_ms: 2.770902
+  type: 'test'
+  ...
+# Subtest: Manuelle Materialanlage startet weiterhin mit Ausgangsbestand 0
+ok 113 - Manuelle Materialanlage startet weiterhin mit Ausgangsbestand 0
+  ---
+  duration_ms: 0.632248
+  type: 'test'
+  ...
+# Subtest: CSV-SAP nutzt den ausgewählten bzw. Standard-Techniker
+ok 114 - CSV-SAP nutzt den ausgewählten bzw. Standard-Techniker
+  ---
+  duration_ms: 0.266907
+  type: 'test'
+  ...
+# Subtest: Bestandslogik V65 bleibt in V66 unverändert korrekt
+ok 115 - Bestandslogik V65 bleibt in V66 unverändert korrekt
+  ---
+  duration_ms: 1.331398
+  type: 'test'
+  ...
+# Subtest: V67 M365-Neuanlage Menge 5 ergibt exakt Bestand 5 und Retry bleibt 5
+ok 116 - V67 M365-Neuanlage Menge 5 ergibt exakt Bestand 5 und Retry bleibt 5
+  ---
+  duration_ms: 4.107981
+  type: 'test'
+  ...
+# Subtest: Verlorener Response und Browser-Retry erzeugt keine zweite Anfangsbuchung
+ok 117 - Verlorener Response und Browser-Retry erzeugt keine zweite Anfangsbuchung
+  ---
+  duration_ms: 0.449509
+  type: 'test'
+  ...
+# Subtest: Bewusst neuer Vorgang mit identischem Inhalt kann vorhandenen Artikel erneut buchen
+ok 118 - Bewusst neuer Vorgang mit identischem Inhalt kann vorhandenen Artikel erneut buchen
+  ---
+  duration_ms: 0.808546
+  type: 'test'
+  ...
+# Subtest: Mehrfachentnahme wird vor Schreibbeginn vollständig validiert
+ok 119 - Mehrfachentnahme wird vor Schreibbeginn vollständig validiert
+  ---
+  duration_ms: 2.515999
+  type: 'test'
+  ...
+# Subtest: Mehrfacheinbuchung mit ungültiger zweiter Position führt zu keiner Teilbuchung
+ok 120 - Mehrfacheinbuchung mit ungültiger zweiter Position führt zu keiner Teilbuchung
+  ---
+  duration_ms: 0.45963
+  type: 'test'
+  ...
+# Subtest: Transaktionsfehler rollt alle simulierten Teiländerungen zurück
+ok 121 - Transaktionsfehler rollt alle simulierten Teiländerungen zurück
+  ---
+  duration_ms: 1.038017
+  type: 'test'
+  ...
+# Subtest: Legacy-Passwort mit 6 Zeichen kann geprüft und auf PBKDF2 migriert werden
+ok 122 - Legacy-Passwort mit 6 Zeichen kann geprüft und auf PBKDF2 migriert werden
+  ---
+  duration_ms: 586.185624
+  type: 'test'
+  ...
+# Subtest: Legacy-Passwort mit 7 Zeichen kann geprüft und auf PBKDF2 migriert werden
+ok 123 - Legacy-Passwort mit 7 Zeichen kann geprüft und auf PBKDF2 migriert werden
+  ---
+  duration_ms: 344.352363
+  type: 'test'
+  ...
+# Subtest: Neues Passwort unter 8 Zeichen wird weiterhin abgelehnt
+ok 124 - Neues Passwort unter 8 Zeichen wird weiterhin abgelehnt
+  ---
+  duration_ms: 2.70488
+  type: 'test'
+  ...
+# Subtest: Dashboard und Lagerbestand verwenden denselben Entwurf pro Artikel
+ok 125 - Dashboard und Lagerbestand verwenden denselben Entwurf pro Artikel
+  ---
+  duration_ms: 1.190287
+  type: 'test'
+  ...
+# Subtest: Alle Änderungen speichern kann denselben Artikel nur einmal iterieren
+ok 126 - Alle Änderungen speichern kann denselben Artikel nur einmal iterieren
+  ---
+  duration_ms: 0.646648
+  type: 'test'
+  ...
+# Subtest: Verwerfen löscht gemeinsamen Entwurf tatsächlich
+ok 127 - Verwerfen löscht gemeinsamen Entwurf tatsächlich
+  ---
+  duration_ms: 0.253002
+  type: 'test'
+  ...
+# Subtest: Smartphone Details-State zeigt eingeklappt nur Grunddaten plus Bedienung/Dirty-Marker
+ok 128 - Smartphone Details-State zeigt eingeklappt nur Grunddaten plus Bedienung/Dirty-Marker
+  ---
+  duration_ms: 0.199466
+  type: 'test'
+  ...
+# Subtest: Details anzeigen öffnet alle geforderten Felder und bleibt je Artikel unabhängig
+ok 129 - Details anzeigen öffnet alle geforderten Felder und bleibt je Artikel unabhängig
+  ---
+  duration_ms: 0.447653
+  type: 'test'
+  ...
+# Subtest: Ein- und Ausklappen verändert einen Artikelentwurf nicht
+ok 130 - Ein- und Ausklappen verändert einen Artikelentwurf nicht
+  ---
+  duration_ms: 0.341524
+  type: 'test'
+  ...
+# Subtest: Tastaturfähiger nativer Button besitzt aria-expanded und aria-controls
+ok 131 - Tastaturfähiger nativer Button besitzt aria-expanded und aria-controls
+  ---
+  duration_ms: 0.81018
+  type: 'test'
+  ...
+# Subtest: Mobile CSS blendet Detailzellen bis zum Öffnen aus und unterstützt <=700px
+ok 132 - Mobile CSS blendet Detailzellen bis zum Öffnen aus und unterstützt <=700px
+  ---
+  duration_ms: 1.374048
+  type: 'test'
+  ...
+# Subtest: 360, 390 und 430 Pixel verwenden die eingeklappte Smartphone-Darstellung
+ok 133 - 360, 390 und 430 Pixel verwenden die eingeklappte Smartphone-Darstellung
+  ---
+  duration_ms: 0.615391
+  type: 'test'
+  ...
+# Subtest: Zentrale Stammdaten erfordern Admin; Materialzuordnung vorhandener Stammdaten bleibt passwortfrei
+ok 134 - Zentrale Stammdaten erfordern Admin; Materialzuordnung vorhandener Stammdaten bleibt passwortfrei
+  ---
+  duration_ms: 0.749279
+  type: 'test'
+  ...
+# Subtest: Datumsformatänderung ist backendseitig geschützt
+ok 135 - Datumsformatänderung ist backendseitig geschützt
+  ---
+  duration_ms: 0.788587
+  type: 'test'
+  ...
+# Subtest: Setup verlangt identische Passwörter und mindestens acht Zeichen
+ok 136 - Setup verlangt identische Passwörter und mindestens acht Zeichen
+  ---
+  duration_ms: 0.360773
+  type: 'test'
+  ...
+# Subtest: Inventur prüft Admin vor Sicherheitsbackup
+ok 137 - Inventur prüft Admin vor Sicherheitsbackup
+  ---
+  duration_ms: 0.311923
+  type: 'test'
+  ...
+# Subtest: Produktive Endpunkte enthalten keine öffentlich erreichbaren Testschalter
+ok 138 - Produktive Endpunkte enthalten keine öffentlich erreichbaren Testschalter
+  ---
+  duration_ms: 0.604327
+  type: 'test'
+  ...
+# Subtest: Produktionsbackend verwendet SQLite-Idempotenzregister und stabile Vorgangskennung
+ok 139 - Produktionsbackend verwendet SQLite-Idempotenzregister und stabile Vorgangskennung
+  ---
+  duration_ms: 0.423565
+  type: 'test'
+  ...
+# Subtest: Frontend sendet Importkontext für unbekannte M365-Artikel und bietet neuen Vorgang
+ok 140 - Frontend sendet Importkontext für unbekannte M365-Artikel und bietet neuen Vorgang
+  ---
+  duration_ms: 0.39269
+  type: 'test'
+  ...
+# Subtest: Zentrale Stammdaten: fehlendes/falsches Token verändert keinen Zustand
+ok 141 - Zentrale Stammdaten: fehlendes/falsches Token verändert keinen Zustand
+  ---
+  duration_ms: 22.64688
+  type: 'test'
+  ...
+# Subtest: Datumsformat: nur aktuell ausgegebenes Sitzungstoken autorisiert Mutation
+ok 142 - Datumsformat: nur aktuell ausgegebenes Sitzungstoken autorisiert Mutation
+  ---
+  duration_ms: 0.785389
+  type: 'test'
+  ...
+# Subtest: Inventur: fehlende Adminfreigabe verhindert Backup und Mutation
+ok 143 - Inventur: fehlende Adminfreigabe verhindert Backup und Mutation
+  ---
+  duration_ms: 0.454075
+  type: 'test'
+  ...
+# Subtest: Setup: unterschiedliche Passwörter werden vor jeder Speicherung abgelehnt
+ok 144 - Setup: unterschiedliche Passwörter werden vor jeder Speicherung abgelehnt
+  ---
+  duration_ms: 0.475641
+  type: 'test'
+  ...
+# Subtest: Zentrale Guard-Funktion akzeptiert kein Passwort als Ersatz für Sitzungstoken
+ok 145 - Zentrale Guard-Funktion akzeptiert kein Passwort als Ersatz für Sitzungstoken
+  ---
+  duration_ms: 0.63468
+  type: 'test'
+  ...
+# Subtest: SQLite: gleicher Vorgang + Position bleibt nach DB-Neuöffnung idempotent
+ok 146 - SQLite: gleicher Vorgang + Position bleibt nach DB-Neuöffnung idempotent
+  ---
+  duration_ms: 2026.106678
+  type: 'test'
+  ...
+# Subtest: SQLite: Fehler mitten in Mehrfachbuchung wird vollständig zurückgerollt
+ok 147 - SQLite: Fehler mitten in Mehrfachbuchung wird vollständig zurückgerollt
+  ---
+  duration_ms: 1864.906925
+  type: 'test'
+  ...
+# Subtest: Repository liefert Testdateien und Zero-Test-Guard aus
+ok 148 - Repository liefert Testdateien und Zero-Test-Guard aus
+  ---
+  duration_ms: 2.914655
+  type: 'test'
+  ...
+# Subtest: CI führt npm test und Build-Prüfung aus
+ok 149 - CI führt npm test und Build-Prüfung aus
+  ---
+  duration_ms: 0.518591
+  type: 'test'
+  ...
+# Subtest: reiner Retry ohne Änderung fordert kein Persist/keine Revision
+ok 150 - reiner Retry ohne Änderung fordert kein Persist/keine Revision
+  ---
+  duration_ms: 1.921356
+  type: 'test'
+  ...
+# Subtest: create-and-book ignoriert doppelten clientseitigen initial_stock und nimmt Dokumentmenge genau einmal
+ok 151 - create-and-book ignoriert doppelten clientseitigen initial_stock und nimmt Dokumentmenge genau einmal
+  ---
+  duration_ms: 0.369205
+  type: 'test'
+  ...
+# Subtest: SQLite: identischer Commit direkt und nach Neustart ändert Revision nicht erneut
+ok 152 - SQLite: identischer Commit direkt und nach Neustart ändert Revision nicht erneut
+  ---
+  duration_ms: 2060.045791
+  type: 'test'
+  ...
+# Subtest: SQLite: neuer create-and-book Artikel 5 ergibt exakt Bestand 5, bestehender Artikel erhält normale Importmenge
+ok 153 - SQLite: neuer create-and-book Artikel 5 ergibt exakt Bestand 5, bestehender Artikel erhält normale Importmenge
+  ---
+  duration_ms: 1829.811212
+  type: 'test'
+  ...
+# Subtest: SQLite: Fehler mitten im gemischten create-and-book rollt neue und bestehende Position vollständig zurück
+ok 154 - SQLite: Fehler mitten im gemischten create-and-book rollt neue und bestehende Position vollständig zurück
+  ---
+  duration_ms: 1621.345743
+  type: 'test'
+  ...
+# Subtest: Produktionsendpunkte koppeln persist an tatsächliche Änderung
+ok 155 - Produktionsendpunkte koppeln persist an tatsächliche Änderung
+  ---
+  duration_ms: 5.399301
+  type: 'test'
+  ...
+# Subtest: Produktions-create-and-book nutzt Dokumentmenge einmalig und enthält keinen zweiten New-Item-Buchungsloop
+ok 156 - Produktions-create-and-book nutzt Dokumentmenge einmalig und enthält keinen zweiten New-Item-Buchungsloop
+  ---
+  duration_ms: 4.806772
+  type: 'test'
+  ...
+# Subtest: Smartphone-Suche liefert laufende Trefferzahl und erste Treffer
+ok 157 - Smartphone-Suche liefert laufende Trefferzahl und erste Treffer
+  ---
+  duration_ms: 5.23473
+  type: 'test'
+  ...
+# Subtest: Suche berücksichtigt Artikelnummer, Bezeichnung, Lagerort und Maschine
+ok 158 - Suche berücksichtigt Artikelnummer, Bezeichnung, Lagerort und Maschine
+  ---
+  duration_ms: 0.952663
+  type: 'test'
+  ...
+# Subtest: Suchfilter bleibt auch bei vielen Artikeln flüssig im Speicher
+ok 159 - Suchfilter bleibt auch bei vielen Artikeln flüssig im Speicher
+  ---
+  duration_ms: 224.503239
+  type: 'test'
+  ...
+# Subtest: UI enthält Trefferzahl, touchfähige Treffer und Tastatur-Schließen
+ok 160 - UI enthält Trefferzahl, touchfähige Treffer und Tastatur-Schließen
+  ---
+  duration_ms: 1.049276
+  type: 'test'
+  ...
+# Subtest: Treffer-Navigation bewahrt gemeinsame Entwürfe und Detailzustand
+ok 161 - Treffer-Navigation bewahrt gemeinsame Entwürfe und Detailzustand
+  ---
+  duration_ms: 3.041322
+  type: 'test'
+  ...
+# Subtest: PC und Smartphone ändern denselben Cloud-Stand unabhängig: sichtbarer Konflikt
+ok 162 - PC und Smartphone ändern denselben Cloud-Stand unabhängig: sichtbarer Konflikt
+  ---
+  duration_ms: 2.810517
+  type: 'test'
+  ...
+# Subtest: gleiche Revision mit unterschiedlicher revision_id ist Konflikt
+ok 163 - gleiche Revision mit unterschiedlicher revision_id ist Konflikt
+  ---
+  duration_ms: 0.582262
+  type: 'test'
+  ...
+# Subtest: Cloud ändert sich zwischen erster und unmittelbarer Prewrite-Prüfung: Write wird verhindert
+ok 164 - Cloud ändert sich zwischen erster und unmittelbarer Prewrite-Prüfung: Write wird verhindert
+  ---
+  duration_ms: 2.671338
+  type: 'test'
+  ...
+# Subtest: beschädigte, fehlende und nicht lesbare lager.db bleiben blockiert
+ok 165 - beschädigte, fehlende und nicht lesbare lager.db bleiben blockiert
+  ---
+  duration_ms: 0.684527
+  type: 'test'
+  ...
+# Subtest: verlorene Ordnerberechtigung blockiert, erneut gewährter Zugriff erlaubt bestätigte Basis
+ok 166 - verlorene Ordnerberechtigung blockiert, erneut gewährter Zugriff erlaubt bestätigte Basis
+  ---
+  duration_ms: 0.990806
+  type: 'test'
+  ...
+# Subtest: Auto, manuell und Synchronisieren-und-Schließen teilen eine Queue und schreiben nie parallel
+ok 167 - Auto, manuell und Synchronisieren-und-Schließen teilen eine Queue und schreiben nie parallel
+  ---
+  duration_ms: 53.820761
+  type: 'test'
+  ...
+# Subtest: weitere Buchung während laufendem Sync erzeugt Nachlauf
+ok 168 - weitere Buchung während laufendem Sync erzeugt Nachlauf
+  ---
+  duration_ms: 61.931824
+  type: 'test'
+  ...
+1..168
+# tests 168
+# suites 0
+# pass 168
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9027.37328
+
+
+== Syntax-/Build-Prüfung ==
+
+> lagerverwaltung-lovrencic-v68@68.0.0 test:syntax
+> node tests/check-build.js
+
+Build-Prüfung OK: 9 Pflichtdateien, 3 Inline-Skripte.
+
+
+== Smartphone-Suche – gerenderte Sichtprüfung ==
+Methode: Rendered shipped V68 stock-search HTML/CSS/JavaScript in headless Chromium with mobile/touch emulation. A 300px bottom occlusion represents an open Android keyboard. This is a visual simulation, not a physical Android keyboard test.
+- 360 px: 7 Artikel gefunden; erster Treffer endet bei y=302.2 px, simulierte Tastatur beginnt bei y=460 px; scrollfähig=True; Treffer-Tap beendet Fokus=True; Screenshot=stock-search-keyboard-360.png
+- 390 px: 7 Artikel gefunden; erster Treffer endet bei y=302.2 px, simulierte Tastatur beginnt bei y=460 px; scrollfähig=True; Treffer-Tap beendet Fokus=True; Screenshot=stock-search-keyboard-390.png
+- 430 px: 7 Artikel gefunden; erster Treffer endet bei y=302.2 px, simulierte Tastatur beginnt bei y=460 px; scrollfähig=True; Treffer-Tap beendet Fokus=True; Screenshot=stock-search-keyboard-430.png
+
+Geprüft wurden dabei: sichtbare Trefferzahl, sichtbarer erster Treffer oberhalb der simulierten Tastatur, Scrollbarkeit der Vorschau, Suchfokus, Touch/Tap auf Treffer, Schließen des Suchfokus sowie Erhalt von Artikelentwurf und aufgeklapptem Detailzustand.
+
+WICHTIG: Es wurde kein physisches Android-Gerät und keine echte Android-Bildschirmtastatur angesteuert. Die Sichtprüfung erfolgte im tatsächlich gerenderten V68-HTML/CSS/JavaScript in Headless Chromium mit Mobile-/Touch-Emulation und einer 300-px-Okklusion als Tastatursimulation. Dieser Punkt ist daher realistisch visuell simuliert, aber nicht hardwareseitig auf Android geprüft.
+
+== Import-/Idempotenzprüfung ==
+- Wiederholte delivery/service/import-Requests ohne neue Datenänderung: no-change-Pfad getestet; keine erneute Persist-/Revisionsentscheidung.
+- SQLite-Simulation: identischer Vorgang direkt und nach DB-Neuöffnung behält Revision 88; genau eine Bewegung mit Gesamtmenge 5.
+- Create-and-book: neuer Artikel quantity=5 plus clientseitig initial_stock=5 ergibt Gesamtbestandswirkung 5 und genau eine Anfangsbuchung.
+- Bestehender Artikel im gemischten Import wird normal mit seiner Importmenge gebucht.
+- Fehler mitten im gemischten Import: vollständiger SQLite-ROLLBACK getestet.
+
+== Synchronisations-/Konfliktprüfung ==
+- PC/Smartphone erzeugen voneinander abweichende Zweige aus derselben Basis: Konflikt.
+- gleiche Revisionsnummer, unterschiedliche revision_id: Konflikt.
+- Cloud ändert sich zwischen erster Prüfung und Prewrite-Prüfung: Write wird verhindert.
+- beschädigte, fehlende und nicht lesbare lager.db: blockiert.
+- verlorene Ordnerberechtigung: blockiert; bestätigte Basis nach erneuter Berechtigung erlaubt.
+- Auto-Sync, manuelle Synchronisation und Schließen-Sync teilen dieselbe Queue; keine parallelen Writes im Test.
+- weitere Änderung während laufendem Sync erzeugt einen Nachlauf.
+- bestehende V59–V67 Sync-/Race-/Write-Guard-Tests liefen ebenfalls im vollständigen Testlauf mit.
+
+== Manifest / Service Worker / Pflichtdateien ==
+- manifest.webmanifest: gültiges JSON; Name=Lagerverwaltung Lovrencic V68
+- Service Worker: V68-Cache, skipWaiting/clients.claim und v68_core.js in Build-Prüfung/Test abgedeckt.
+- Pflichtdateien: vollständig vorhanden.
+
+== XLSX ==
+- materialanforderung_vorlage.xlsx: gültige XLSX, gegenüber V67 unverändert: ja, SHA256 6ecfe2dad8e9e595786885c2018e8b9eafa6314316d5b26af4bfc5ef89a09df7
+- materialanforderung_vorlage_lang.xlsx: gültige XLSX, gegenüber V67 unverändert: ja, SHA256 e743b05526b36a6305942d28ca86ab4084f31f2a78f4a430d585aada5b4e2801
+
+== Technische Grenze OneDrive ==
+Die lokale Ordner-/OneDrive-Dateisynchronisation besitzt weiterhin keine serverseitige atomare Compare-and-Swap-Garantie. Ohne serverseitiges ETag/If-Match kann nicht vollständig garantiert werden, dass zwei exakt gleichzeitig schreibende Geräte niemals in einen Last-Writer-/Konfliktkopie-Fall geraten. V68 erhält die bestehende Konflikt-, Cloud-Basis-, Prewrite-/Postwrite- und Queue-Logik. Eine vollständige serverseitige Garantie wäre eine gesonderte Architekturänderung, etwa Microsoft Graph mit ETag/If-Match oder eine zentrale Datenbank.
