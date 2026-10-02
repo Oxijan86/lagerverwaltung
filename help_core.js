@@ -47,5 +47,6 @@
   });
   return `<div class="help-content">${rendered}</div>`;
  }
- return {extractCodeBlocks,renderMarkdown};
+ function filterTopics(topics,query){const q=String(query||'').trim().toLowerCase();return !q?[...(topics||[])]:[...(topics||[])].filter(x=>String((x.title||'')+'\n'+(x.content||'')).toLowerCase().includes(q));}
+ return {extractCodeBlocks,renderMarkdown,filterTopics};
 });

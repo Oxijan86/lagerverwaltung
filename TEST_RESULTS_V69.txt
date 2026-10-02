@@ -1,0 +1,79 @@
+Lagerverwaltung Lovrencic – TEST_RESULTS_V69
+Zeitpunkt: 2026-10-02T07:23:06
+
+ERGEBNIS
+- npm test: 189 bestanden, 0 fehlgeschlagen, 0 übersprungen
+- npm run test:syntax: bestanden
+- Pflichtdateien: 10 geprüft
+- Inline-JavaScript: 3 Skripte geprüft
+- Manifest: gültiges JSON
+- JavaScript-Syntax: bestanden
+- Service-Worker-Prüfung: bestanden
+
+MAßGEBLICHE FIRMENVORLAGE
+Datei: Bestandsliste Lovrencic 032026(3).xlsx
+Blatt: SAPUI5-Export
+Materialzeilen: 630
+Spalten: Material;Bezeichnung zum Material;Lagerort;Bezeichnung des Lagerorts;Frei verwendbar
+Alle geprüften Firmen-Lagerorte: 1025 = True
+Dezimalmengen in Frei verwendbar: [0.15, 1.5, 4.7]
+Beispiele alphanumerischer Artikelnummern: ['103722T06', '103722T08', '103722T09', '103898T03', '106114T01']
+
+Die reale XLSX-Datei wurde mit der V69-Headerlogik geprüft. Ergebnis:
+- 630/630 Materialzeilen erkannt
+- 0 Parserfehler
+- Dezimalwerte 1,5 / 4,7 / 0,15 erhalten
+- 1025 wurde nie als Menge interpretiert
+- Firmenexport-CSV wurde mit allen 630 Positionen erzeugt und wieder eingelesen; 630/630 Positionen und alle drei Dezimalwerte blieben erhalten
+
+V69-SPEZIFISCHE BESTANDENE TESTS
+- Dashboard zählt 17 Unterbestände vollständig und begrenzt Vorschau
+- CSV-Center trennt Inventur/Bestandsabgleich und Einbuchung ausdrücklich
+- Vorschau zeigt Dateimenge, App-Bestand, geplante Änderung und Fehler
+- Firmenexport liefert exakt die fünf Firmenfelder und Istbestand
+- Firmen-Lagerort wird beim Import nicht als interner Lagerort übernommen
+- Legacy-Inventurvorschau liefert jetzt ein Objekt mit items und errors
+- Dateiprüfung selbst persistiert nicht
+- SQLite Firmen-Einbuchung: Retry bleibt idempotent und erzeugt keine zweite Revision
+- SQLite Firmenimport: unbekannter Artikel Menge 5 wird genau einmal als Anfangsbestand angelegt
+- SQLite Firmen-Inventur: Bestand 3 auf Dateiwert 0 ergibt exakt OUT 3 und Zielbestand 0
+- SQLite Firmenimport: Fehler mitten in Transaktion rollt Artikel, Anfangsbuchung und Marker vollständig zurück
+- Produktionsroute Firmenimport persistiert nur wenn changed und nutzt Transaktion
+- maßgebliche XLSX-Firmenvorlage besitzt 630 Materialzeilen und erwartete Dezimalmengen
+- Headerparser liest ausschließlich Frei verwendbar als Menge und niemals 1025
+- Inventur akzeptiert 0; Einbuchung verlangt positive Menge
+- Unbekannte Artikel werden als unknown gekennzeichnet
+- Firmenexport hat exakt fünf Spalten, Istbestand und Roundtrip mit Sonderzeichen/Dezimalen/führenden Nullen
+- Hilfesuche filtert Titel und tatsächliche Inhalte
+- angezeigte Hilfe ist aus den ausgelieferten Hilfedateien eingebettet und enthält die fünf neuen Anleitungen
+- Hilfe öffnet, lädt Themen, sucht und rendert M365-Prompts im Chromium-UI-Test
+- Hilfe-Funktionen sind an den Hilfe-Reiter angeschlossen
+
+Zusätzlich bestanden sämtliche vorhandenen V59–V68 Regressions-, Sicherheits-, Transaktions-, Revisions-, Sync-, Konflikt- und UI-Tests.
+
+WICHTIGE FUNKTIONS-/INTEGRATIONSPRÜFUNGEN
+- Inventurmenge 0 bleibt gültig und wird nicht als leer behandelt: BESTANDEN
+- Leere Menge wird als Fehler behandelt: BESTANDEN
+- Ungültige Menge wird als Fehler behandelt: BESTANDEN
+- Doppelte Artikelnummer wird sichtbar als Fehler erkannt: BESTANDEN
+- Führende Nullen und alphanumerische Artikelnummern bleiben im Parser/CSV-Roundtrip erhalten: BESTANDEN
+- Unbekannte Artikel werden als unknown markiert: BESTANDEN
+- Einbuchung akzeptiert nur positive Mengen: BESTANDEN
+- Firmen-Lagerort 1025 ist niemals Mengenquelle und wird nicht als interner App-Lagerort verwendet: BESTANDEN
+- Firmen-Einbuchungs-Retry nach erneutem Öffnen erzeugt keine zweite Buchung/Revision: BESTANDEN
+- Neuer Firmenartikel mit Menge 5 erzeugt exakt eine Anfangsbuchung und Bestand 5: BESTANDEN
+- Fehler mitten in Firmenimport-Transaktion rollt Artikel, Bewegung und Idempotenzmarker zurück: BESTANDEN
+- Legacy-Inventurvorschau liefert einheitlich {{items, errors}}: BESTANDEN
+- Hilfe-Themen laden/öffnen/Suche sowie M365-Prompt-Rendering im Chromium-UI-Test: BESTANDEN
+- M365-Prompts enthalten weiterhin Prompt markieren / Prompt kopieren: BESTANDEN
+
+NICHT AUF PHYSISCHER HARDWARE GETESTET
+- Kein physischer Android-Langdruck/Clipboard-Test. Die Hilfe wurde in headless Chromium getestet; Clipboard-/Fallback-Logik bleibt aus V64+ erhalten.
+- Kein Öffnen des optionalen XLSX-Firmenexports in einer lokalen Microsoft-Excel-Installation. Der XLSX-Endpunkt, Blattname und Spaltenaufbau sind implementiert und syntaktisch/buildseitig geprüft; der verpflichtende CSV-Export wurde vollständig per Export/Wiedereinlesen getestet.
+- Die bekannte OneDrive-Grenze bleibt: ohne serverseitiges ETag/If-Match keine atomare Garantie gegen zwei exakt gleichzeitig schreibende Geräte.
+
+--- NPM TEST (vollständiger TAP-Lauf) ---
+{tap}
+
+--- BUILD-/SYNTAXPRÜFUNG ---
+{build}

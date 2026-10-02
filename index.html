@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V68 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V69 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -340,7 +340,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">68.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">69.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -470,25 +470,42 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 </section>
 <section id="csv" class="view"><h2>CSV-Center</h2>
-<div class="card"><h3>CSV-Exporte</h3>
-<p>Die Dateien werden im Excel-kompatiblen CSV-Format mit Semikolon und UTF-8 erstellt.</p>
-<div class="toolbar">
-<button class="primary" onclick="downloadCsv('/api/export/stock.csv','csvmsg')">Lagerbestand exportieren</button>
-<button class="secondary" onclick="downloadCsv('/api/export/inbookings.csv','csvmsg')">Einbuchungen exportieren</button>
-<button class="secondary" onclick="downloadCsv('/api/export/outbookings.csv','csvmsg')">Entnahmen exportieren</button>
-</div><div id="csvmsg" class="message"></div></div>
-<div class="split">
-<div class="card"><h3>SAP-Excel/CSV als Einbuchung importieren</h3>
-<p>Unterstützte Dateien: <b>XLSX, CSV und TXT</b>. Erkannte SAP-Spalten: <b>Material</b>, <b>Bezeichnung zum Material</b>, <b>Lagerort</b>, <b>Bezeichnung des Lagerorts</b>, <b>Frei verwendbar</b>.</p>
-<input id="cfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadImportFile(this)">
+<div class="card"><h3>Firmenexport</h3>
+<p>Export im Firmenformat <b>Material;Bezeichnung zum Material;Lagerort;Bezeichnung des Lagerorts;Frei verwendbar</b>. <b>Frei verwendbar</b> enthält immer den aktuellen Istbestand der App.</p>
+<div class="formgrid">
+<label>Firmen-Lagerort<input id="companyExportLocation" value="1025"></label>
+<label>Bezeichnung des Lagerorts<input id="companyExportLocationName" value="Lovrencic Tobias"></label>
+</div>
+<div class="toolbar"><button class="secondary" onclick="saveCompanyExportSettings()">Firmenfelder speichern</button><button class="primary" onclick="downloadCsv('/api/export/company-stock.csv','companyExportMsg')">Lagerbestand für Firma (CSV)</button><button class="secondary" onclick="downloadResponse('/api/export/company-stock.xlsx','companyExportMsg')">Lagerbestand für Firma (XLSX)</button></div>
+<div id="companyExportMsg" class="message"></div>
+<p class="small">Diese beiden Firmenfelder sind unabhängig von den internen Lagerorten der App und erzeugen keine Lagerorte in den Stammdaten.</p></div>
+
+<div class="card"><h3>Firmenliste importieren</h3>
+<p>Unterstützt wird die Firmenvorlage aus dem Blatt <b>SAPUI5-Export</b> mit den fünf Spalten <b>Material</b>, <b>Bezeichnung zum Material</b>, <b>Lagerort</b>, <b>Bezeichnung des Lagerorts</b>, <b>Frei verwendbar</b>.</p>
+<div class="formgrid">
+<label>Importart<select id="companyImportMode" onchange="companyImportModeChanged()"><option value="inventory">Inventur / Bestandsabgleich</option><option value="inbook">Einbuchung</option></select></label>
+<label>Techniker<select id="companyImportTechnician"></select></label>
+<label>Interner Lagerort für neu anzulegende Artikel<select id="companyImportInternalLocation"><option value="">Bitte auswählen</option></select></label>
+</div>
+<div id="companyImportWarning" class="message ok" style="display:block">Inventur/Bestandsabgleich: <b>Frei verwendbar</b> wird als Vergleichsbestand gelesen. Die Datei ändert beim Prüfen noch keine Daten.</div>
+<div class="toolbar"><input id="companyImportFile" type="file" accept=".xlsx,.csv,.txt" onchange="loadCompanyImportFile(this)"><button class="secondary" onclick="previewCompanyImport()">Datei erneut prüfen</button><button class="secondary" onclick="startNewCompanyImportOperation()">Als neuen Vorgang starten</button><button id="companyImportCommit" class="danger" disabled onclick="commitCompanyImport()">Geprüften Vorgang bestätigen</button></div>
+<div id="companyImportMsg" class="message"></div>
+<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Status</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Dateimenge</th><th>App-Bestand</th><th>Geplante Änderung</th><th>Unbekannter Artikel</th><th>Fehler</th></tr></thead><tbody id="companyImportRows"></tbody></table></div>
+<div id="companyImportErrors"></div>
+</div>
+
+<div class="card"><h3>Weitere CSV-Exporte</h3><p>Die Dateien werden im Excel-kompatiblen CSV-Format mit Semikolon und UTF-8 erstellt.</p><div class="toolbar"><button class="secondary" onclick="downloadCsv('/api/export/stock.csv','csvmsg')">Normalen Lagerbestand exportieren</button><button class="secondary" onclick="downloadCsv('/api/export/inbookings.csv','csvmsg')">Einbuchungen exportieren</button><button class="secondary" onclick="downloadCsv('/api/export/outbookings.csv','csvmsg')">Entnahmen exportieren</button><button class="secondary" onclick="downloadCsv('/api/export/inventory.csv','csvmsg')">Inventurliste exportieren</button></div><div id="csvmsg" class="message"></div></div>
+
+<details class="card"><summary><b>Erweiterter Textimport (bestehender Funktionsweg)</b></summary>
+<p class="small">Dieser Bereich bleibt für bisherige Text-/SAP-Importe erhalten. Für die Firmenvorlage oben den klar getrennten Firmenlisten-Import verwenden.</p>
 <label>Techniker<select id="ctech"></select></label>
-<textarea id="ctext" placeholder="Material;Bezeichnung zum Material;Lagerort;Bezeichnung des Lagerorts;Frei verwendbar"></textarea>
-<button class="secondary" onclick="csvPreview()">Import prüfen</button>
-<button id="ccommit" class="primary" disabled onclick="csvCommit()">Bekannte Artikel einbuchen</button><button id="callcommit" class="danger" disabled onclick="createAndBookAll()">Neue Artikel anlegen und alles einbuchen</button>
-<div id="cmsg" class="message"></div></div></div>
-<div class="card"><h3>Gültige Einbuchungen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Lagerort</th></tr></thead><tbody id="crows"></tbody></table></div></div>
-<div id="cunknown"></div><div id="cerr"></div>
-<div class="card"><h3>Inventur</h3><p>Inventurliste exportieren, gezählte Bestände eintragen und als CSV, TXT oder XLSX wieder einlesen.</p><div class="toolbar"><button class="primary" onclick="downloadCsv('/api/export/inventory.csv','invmsg')">Inventurliste exportieren</button><input id="invfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadInventoryFile(this)"></div><textarea id="invtext" placeholder="Artikelnummer;Gezählter Bestand"></textarea><div class="toolbar"><button class="secondary" onclick="inventoryPreview()">Inventur prüfen</button><button id="invcommit" class="danger" disabled onclick="inventoryCommit()">Bestandskorrekturen buchen</button></div><div id="invmsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>System</th><th>Gezählt</th><th>Differenz</th></tr></thead><tbody id="invrows"></tbody></table></div><div id="inverrors"></div></div></section>
+<textarea id="ctext" placeholder="Artikelnummer;Menge;Bezeichnung"></textarea>
+<div class="toolbar"><button class="secondary" onclick="csvPreview()">Textimport prüfen</button><button id="ccommit" class="primary" disabled onclick="csvCommit()">Bekannte Artikel einbuchen</button><button id="callcommit" class="danger" disabled onclick="createAndBookAll()">Neue Artikel anlegen und alles einbuchen</button></div>
+<div id="cmsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Lagerort</th></tr></thead><tbody id="crows"></tbody></table></div><div id="cunknown"></div><div id="cerr"></div>
+</details>
+
+<details class="card"><summary><b>Legacy-Inventur (bestehender Funktionsweg)</b></summary><p class="small">Für die Firmenvorlage bitte den neuen Modus „Inventur / Bestandsabgleich“ oben verwenden.</p><div class="toolbar"><input id="invfile" type="file" accept=".xlsx,.csv,.txt" onchange="loadInventoryFile(this)"></div><textarea id="invtext" placeholder="Artikelnummer;Gezählter Bestand"></textarea><div class="toolbar"><button class="secondary" onclick="inventoryPreview()">Inventur prüfen</button><button id="invcommit" class="danger" disabled onclick="inventoryCommit()">Bestandskorrekturen buchen</button></div><div id="invmsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>System</th><th>Gezählt</th><th>Differenz</th></tr></thead><tbody id="invrows"></tbody></table></div><div id="inverrors"></div></details>
+</section>
 
 <section id="hist" class="view"><h2>Buchungen</h2>
 <div class="card">
@@ -813,9 +830,10 @@ window.LVAdminSession = window.LVAdminSession || {
 <script src="v66_core.js"></script>
 <script src="v67_core.js"></script>
 <script src="v68_core.js"></script>
+<script src="v69_core.js"></script>
 <script src="local_backend.js"></script>
 <script>
-let arts=[],deliveryp=[],servicep=[],csvp=[],deliveryUnknown=[],serviceUnknown=[],csvUnknown=[],historyData=[],inventoryData=[],md={},lastImportFilename='',appDateFormat='DD.MM.YYYY',helpFiles=[];
+let arts=[],deliveryp=[],servicep=[],csvp=[],deliveryUnknown=[],serviceUnknown=[],csvUnknown=[],historyData=[],inventoryData=[],md={},lastImportFilename='',appDateFormat='DD.MM.YYYY',helpFiles=[],companyImportState={filename:'',content_base64:'',operation_id:'',nonce:'',items:[],errors:[],mode:'inventory'};
 const ignoredUnknown={delivery:new Set(),service:new Set()};
 const extractionLastInput={delivery:'',service:''};
 let unknownRegistrationState=null;
@@ -863,7 +881,7 @@ async function show(id,b){
   if(choice==='discard'){levelDrafts.discardAll();refreshDraftIndicators()}
  }
  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
- if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList()
+ if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList();if(id==='csv'){loadCompanyExportSettings();populateCompanyImportSelectors()}
 }
 
 async function master(){
@@ -887,8 +905,8 @@ async function loadAppInfo(){
   infoMovements.textContent=d.movements;
   document.title='Lagerverwaltung Lovrencic – Version '+d.version;
  }catch(e){
-  appVersion.textContent='68.0';
-  infoVersion.textContent='68.0';
+  appVersion.textContent='69.0';
+  infoVersion.textContent='69.0';
  }
 }
 let dashboardLowItems=[];
@@ -1216,6 +1234,88 @@ async function createUnknown(source){
  try{let d=await api('/api/articles/create-import',{method:'POST',body:JSON.stringify({items,technician:sourceTech||md.default_technician||'Techniker',operation_id:importOps[source]?.id||''})});alert((d.created||0)+' Artikel wurden angelegt.'+(d.levels_adjusted?' Soll-/Mindestbestand wurde bei '+d.levels_adjusted+' Artikel(n) automatisch angeglichen.':'')+' Bitte den Import erneut prüfen.');arts=[];await master();await dash();await loadRecentMovements('IN');if(source==='delivery')deliveryPreview();else if(source==='service')servicePreview();else csvPreview()}catch(e){alert(e.message)}
 }
 
+
+function companyImportModeChanged(){
+ companyImportState.mode=companyImportMode.value;
+ const inv=companyImportMode.value==='inventory';
+ companyImportWarning.className='message '+(inv?'ok':'error');
+ companyImportWarning.style.display='block';
+ companyImportWarning.innerHTML=inv
+  ?'Inventur/Bestandsabgleich: <b>Frei verwendbar</b> ist der erfasste Vergleichsbestand. Erst nach Bestätigung werden Differenzen gebucht. Ein Wert 0 ist gültig.'
+  :'<b>Achtung:</b> Einbuchung: <b>Frei verwendbar</b> wird als Zugangsmenge behandelt. Eine vollständige Bestandsliste würde sonst als Wareneingang eingebucht. Prüfe die Vorschau besonders sorgfältig.';
+ if(companyImportState.content_base64)previewCompanyImport();
+}
+function populateCompanyImportSelectors(){
+ const techNames=(md.technicians||[]).map(x=>x.name);const old=companyImportTechnician.value;
+ companyImportTechnician.innerHTML=techNames.map(x=>`<option>${esc(x)}</option>`).join('');
+ companyImportTechnician.value=LVV66Core.technicianChoice(old,techNames,md.default_technician||techNames[0]||'Techniker');
+ const locOld=companyImportInternalLocation.value;
+ companyImportInternalLocation.innerHTML='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+ if([...companyImportInternalLocation.options].some(o=>o.value===locOld))companyImportInternalLocation.value=locOld;
+}
+async function loadCompanyExportSettings(){
+ try{const d=await api('/api/company/settings');companyExportLocation.value=d.location||'1025';companyExportLocationName.value=d.location_name||'Lovrencic Tobias'}catch(e){msg(companyExportMsg,e.message,false)}
+}
+async function saveCompanyExportSettings(){
+ try{const d=await api('/api/company/settings',{method:'POST',body:JSON.stringify({location:companyExportLocation.value,location_name:companyExportLocationName.value})});companyExportLocation.value=d.location;companyExportLocationName.value=d.location_name;msg(companyExportMsg,d.unchanged?'Firmenfelder waren bereits gespeichert.':'Firmenfelder gespeichert.',true)}catch(e){msg(companyExportMsg,e.message,false)}
+}
+async function loadCompanyImportFile(input){
+ const f=input.files?.[0];if(!f)return;
+ try{
+  const bytes=new Uint8Array(await f.arrayBuffer());let binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+  companyImportState={...companyImportState,filename:f.name,content_base64:btoa(binary),operation_id:'',nonce:'',items:[],errors:[],mode:companyImportMode.value};
+  await previewCompanyImport();
+ }catch(e){msg(companyImportMsg,e.message,false)}
+}
+function companyStatusLabel(x){
+ if(x.processed)return '✓ Bereits verarbeitet';
+ if(x.error)return '⚠ Fehler';
+ if(x.status==='unknown')return 'Neu / unbekannt';
+ return 'Bekannt';
+}
+function companyPlannedText(x){
+ if(x.processed)return 'keine Änderung';
+ const q=Number(x.planned_change||0);
+ if(companyImportMode.value==='inventory')return Math.abs(q)<1e-9?'keine Änderung':`${q>0?'+':''}${n(q)} Korrektur`;
+ return `+${n(q)} Einbuchung`;
+}
+function renderCompanyImportPreview(d){
+ companyImportState.operation_id=d.operation_id||companyImportState.operation_id;companyImportState.items=d.items||[];companyImportState.errors=d.errors||[];
+ companyImportRows.innerHTML=companyImportState.items.map((x,i)=>{
+  const select=x.status==='unknown'&&!x.processed&&!x.error?`<select data-company-action="${i}"><option value="ignore">Ignorieren</option><option value="create">Anlegen</option></select>`:'—';
+  return `<tr data-line="${Number(x.line||0)}"><td>${esc(companyStatusLabel(x))}</td><td>${esc(x.article_no)}</td><td>${esc(x.description||'')}</td><td>${n(x.quantity)}</td><td>${x.app_stock===null?'—':n(x.app_stock)}</td><td>${esc(companyPlannedText(x))}</td><td>${select}</td><td>${esc(x.error||'')}</td></tr>`
+ }).join('')||'<tr><td colspan="8">Keine gültigen Materialzeilen erkannt.</td></tr>';
+ companyImportErrors.innerHTML=companyImportState.errors.length?`<div class="message error" style="display:block">${companyImportState.errors.map(e=>`Zeile ${Number(e.line||0)} · ${esc(e.article_no||'')}: ${esc(e.error||'Fehler')}`).join('<br>')}</div>`:'';
+ const pending=companyImportState.items.filter(x=>!x.processed&&!x.error).length;
+ companyImportCommit.disabled=!pending||companyImportState.errors.length>0;
+ const processed=companyImportState.items.filter(x=>x.processed).length,unknown=companyImportState.items.filter(x=>x.status==='unknown'&&!x.processed).length;
+ msg(companyImportMsg,`${companyImportState.items.length} Position(en) geprüft · ${unknown} unbekannt · ${processed} bereits verarbeitet · ${companyImportState.errors.length} Fehler.`,companyImportState.items.length>0&&companyImportState.errors.length===0);
+}
+async function previewCompanyImport(){
+ if(!companyImportState.content_base64)return msg(companyImportMsg,'Bitte zuerst eine CSV- oder XLSX-Datei auswählen.',false);
+ try{
+  companyImportState.mode=companyImportMode.value;
+  const d=await api('/api/company-import/file-preview',{method:'POST',body:JSON.stringify({filename:companyImportState.filename,content_base64:companyImportState.content_base64,mode:companyImportState.mode,new_operation_nonce:companyImportState.nonce})});
+  renderCompanyImportPreview(d);
+ }catch(e){msg(companyImportMsg,e.message,false)}
+}
+async function startNewCompanyImportOperation(){
+ if(!companyImportState.content_base64)return msg(companyImportMsg,'Bitte zuerst eine Datei auswählen.',false);
+ if(!confirm('Diesen Dateiinhalt bewusst als neuen Importvorgang behandeln? Bereits verarbeitete Mengen können dann erneut gebucht werden.'))return;
+ companyImportState.nonce=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random());companyImportState.operation_id='';await previewCompanyImport();
+}
+async function commitCompanyImport(){
+ if(!companyImportState.operation_id)return msg(companyImportMsg,'Bitte die Datei zuerst prüfen.',false);
+ const mode=companyImportMode.value;
+ if(mode==='inventory'&&!await ensureAdminPassword())return;
+ const actions={};document.querySelectorAll('[data-company-action]').forEach(s=>{const item=companyImportState.items[Number(s.dataset.companyAction)];if(item)actions[item.position_key||`${item.line}:${item.article_no}`]=s.value});
+ if(Object.values(actions).includes('create')&&!companyImportInternalLocation.value)return msg(companyImportMsg,'Für neu anzulegende Artikel bitte einen internen Lagerort auswählen. Der Firmenwert 1025 wird bewusst nicht als interner Lagerort verwendet.',false);
+ try{
+  const d=await api('/api/company-import/commit',{method:'POST',body:JSON.stringify({mode,operation_id:companyImportState.operation_id,items:companyImportState.items,unknown_actions:actions,internal_location:companyImportInternalLocation.value,technician:companyImportTechnician.value||md.default_technician||'Techniker',movement_date:td()})});
+  msg(companyImportMsg,d.no_change?'Keine neue Datenänderung – dieser Vorgang war bereits vollständig verarbeitet.':`${d.changed||0} Änderung(en) gespeichert, ${d.created||0} Artikel angelegt, ${d.booked||0} Buchung(en), ${d.ignored||0} ignoriert.`,true);
+  arts=[];await Promise.allSettled([loadArticles(),dash(),loadRecentMovements('IN'),loadRecentMovements('OUT')]);await previewCompanyImport();
+ }catch(e){msg(companyImportMsg,e.message,false)}
+}
 async function loadImportFile(input){
  let f=input.files[0];if(!f)return;
  lastImportFilename=f.name;
@@ -2236,6 +2336,31 @@ async function saveDateFormat(){
  }catch(e){msg(dateFormatMsg,e.message,false)}
 }
 
+
+function renderHelpTopics(list){
+ helpTopics.innerHTML=(list||[]).map(x=>`<button type="button" class="secondary help-topic-button" data-help-file="${esc(x.file)}" onclick="openHelpTopic('${esc(x.file)}')">${esc(x.title)}</button>`).join('')||'<p class="small">Keine Hilfethemen gefunden.</p>';
+}
+async function loadHelpList(){
+ try{
+  const list=await api('/api/help/list');
+  helpFiles=await Promise.all(list.map(async x=>{try{const c=await api('/api/help/content?file='+encodeURIComponent(x.file));return {...x,content:c.content||''}}catch{return {...x,content:''}}}));
+  renderHelpTopics(helpFiles);filterHelpTopics();
+  if(helpFiles.length&&!helpContent.dataset.loaded)await openHelpTopic(helpFiles[0].file);
+ }catch(e){helpContent.innerHTML=`<div class="message error" style="display:block">${esc(e.message)}</div>`}
+}
+function filterHelpTopics(){
+ const q=(helpSearch.value||'').trim().toLowerCase();
+ const filtered=LVHelpCore.filterTopics(helpFiles,q);
+ renderHelpTopics(filtered);
+ if(q&&!filtered.length)helpContent.innerHTML='<div class="message error" style="display:block">Kein Hilfethema gefunden.</div>';
+}
+async function openHelpTopic(file){
+ const found=helpFiles.find(x=>x.file===file);
+ try{
+  const content=found?.content||(await api('/api/help/content?file='+encodeURIComponent(file))).content;
+  helpContent.dataset.loaded=file;helpContent.innerHTML=renderMarkdown(content||'# Nicht gefunden');
+ }catch(e){helpContent.innerHTML=`<div class="message error" style="display:block">${esc(e.message)}</div>`}
+}
 function renderMarkdown(md){return LVHelpCore.renderMarkdown(md)}
 function promptCodeFromButton(button){return button.closest('.prompt-box')?.querySelector('.prompt-code')||null}
 function markPromptElement(code,status){
