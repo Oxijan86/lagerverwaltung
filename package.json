@@ -1,9 +1,15 @@
 {
-  "name": "lagerverwaltung-lovrencic-v69",
+  "name": "lagerverwaltung-lovrencic-v70",
   "private": true,
-  "version": "69.0.0",
+  "version": "70.0.0",
   "scripts": {
     "test": "node tests/run-tests.js",
     "test:syntax": "node tests/check-build.js"
+  },
+  "devDependencies": {
+    "sql.js": "1.10.3",
+    "exceljs": "4.4.0",
+    "xlsx": "0.18.5",
+    "jszip": "3.10.1"
   }
 }

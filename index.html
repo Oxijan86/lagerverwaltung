@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V69 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V70 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -13,11 +13,18 @@ body{margin:0;font-family:Segoe UI,Arial;background:#f4f6f8;color:#17202a}header
 .suggestions div{padding:9px;cursor:pointer}.suggestions div:hover,.suggestions div.active{background:#e7f0f7}.suggestions span{float:right;color:#65717e;font-size:12px}
 .search-row{grid-template-columns:minmax(300px,1fr) 110px 42px}@media(max-width:900px){.shell{display:block}nav{display:flex;overflow:auto;min-height:auto;position:sticky;top:52px;z-index:4}nav button{width:auto;white-space:nowrap}.grid{grid-template-columns:1fr 1fr}.formgrid,.split{grid-template-columns:1fr}main{padding:14px}}
 
-.setup-card{max-width:760px;margin:4vh auto;border:3px solid #1d5f91}
+.setup-card{max-width:760px;width:100%;min-width:0;box-sizing:border-box;margin:4vh auto;border:3px solid #1d5f91}
+.setup-card button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.setup-card .setup-actions{flex-wrap:wrap}
+button:disabled{opacity:.5;cursor:not-allowed}
+main,.card{min-width:0}
+body{overflow-x:hidden}
+#initialSetupOverlay,#startupCheckOverlay{box-sizing:border-box;width:100vw;max-width:100vw}
+@media(max-width:600px){header{flex-wrap:wrap}header>div{min-width:0;flex:1 1 100%}header>button{max-width:100%;margin-right:0!important}.setup-card button{width:100%}}
 .setup-progress{display:flex;align-items:center;justify-content:center;margin-bottom:24px}
-.setup-dot{width:34px;height:34px;border-radius:50%;background:#d7e0e8;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.setup-dot{width:34px;height:34px;flex:0 0 28px;border-radius:50%;background:#d7e0e8;display:flex;align-items:center;justify-content:center;font-weight:bold}
 .setup-dot.active{background:#1d5f91;color:white}
-.setup-line{height:3px;width:60px;background:#d7e0e8}
+.setup-line{height:3px;flex:1;min-width:4px;max-width:60px;background:#d7e0e8}
 .setup-actions{display:flex;justify-content:space-between;gap:12px;margin-top:24px}
 .summary-box{background:#eef5f9;border-radius:8px;padding:14px}
 .mobile-menu-button{display:none}
@@ -255,22 +262,22 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
         <div id="setupLocalCard" class="card">
           <h3>🏠 Lokal speichern</h3>
           <p>Wählen Sie einen Ordner auf diesem PC oder Smartphone. Dort wird die Datei <code>lager.db</code> gespeichert.</p>
-          <button class="primary" onclick="setupSelectStorageMode('local_folder')">Lokalen Ordner auswählen</button>
+          <button data-directory-picker class="primary" onclick="setupSelectStorageMode('local_folder')">Lokalen Ordner auswählen</button>
           <div id="setupLocalFolderStatus" class="folder-status">Noch kein lokaler Ordner ausgewählt.</div>
         </div>
 
         <div id="setupCloudCard" class="card">
           <h3>☁ In Cloud speichern</h3>
           <p>Wählen Sie einen Ordner in OneDrive, Google Drive oder einer anderen synchronisierten Ablage.</p>
-          <button class="primary" onclick="setupSelectStorageMode('cloud')">Cloud-Ordner auswählen</button>
+          <button data-directory-picker class="primary" onclick="setupSelectStorageMode('cloud')">Cloud-Ordner auswählen</button>
           <div id="setupCloudFolderStatus" class="folder-status">Noch kein Cloud-Ordner ausgewählt.</div>
         </div>
       </div>
 
-      <div class="card low">
-        <h3>Browser-Speicher als Rückfalllösung</h3>
-        <p>Falls der Browser keine Ordnerauswahl unterstützt, kann die Datenbank nur im Browser gespeichert und manuell exportiert werden.</p>
-        <button class="secondary" onclick="setupSelectStorageMode('browser_local')">Ohne Ordner nur im Browser speichern</button>
+      <div id="setupBrowserCard" class="card low">
+        <h3>Auf diesem Gerät im Browser speichern</h3>
+        <p id="setupBrowserHint">Die Datenbank wird auf diesem Gerät gespeichert. Nach der Einrichtung kannst du lager.db herunterladen.</p>
+        <button class="secondary" onclick="setupSelectStorageMode('browser_local')">Lagerdatenbank auf diesem Gerät erstellen</button>
       </div>
 
       <div class="setup-actions">
@@ -340,8 +347,8 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">69.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
-<div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this)">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">70.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this);loadConsumables().catch(e=>msg(consumableMsg,e.message,false))">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
 <div class="card"><h3>Letzte 20 Buchungen</h3><div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th>Artikel</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th></tr></thead><tbody id="dashRecent"></tbody></table></div></div>
@@ -367,7 +374,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </select></label>
 <label>Sollbestand *<input id="nm_target" type="number" min="0" step="0.01" value="0" onchange="normalizeMaterialLevelFields('nm')"></label>
 <label>Mindestbestand *<input id="nm_min" type="number" min="0" step="0.01" value="0" onchange="normalizeMaterialLevelFields('nm')"><span class="small">Mindestbestand ≤ Sollbestand</span></label>
-<label>Lagerort *<select id="nm_location"></select><input id="nm_location_new" placeholder="Neuen Lagerort eingeben" oninput="showSimilarMaster('location','nm')"><div id="nm_location_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('location','nm')">+ Lagerort anlegen</button></label>
+<label>Lagerort (optional)<select id="nm_location"></select><input id="nm_location_new" placeholder="Neuen Lagerort eingeben" oninput="showSimilarMaster('location','nm')"><div id="nm_location_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('location','nm')">+ Lagerort anlegen</button></label>
 <label>Maschinen <span class="small">(Mehrfachauswahl möglich)</span><div id="nm_machine_chips" class="machine-chip-list"></div><select id="nm_machine" multiple size="4" style="display:none"></select><input id="nm_machine_new" placeholder="Neue Maschinenbezeichnung" oninput="showSimilarMaster('machine','nm')"><div id="nm_machine_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('machine','nm')">+ Maschine anlegen</button></label>
 <div class="form-section-title">Optionale Zusatzangaben</div><label>Hersteller<input id="nm_manufacturer"></label>
 <label>Lieferant<input id="nm_supplier"></label>
@@ -458,6 +465,14 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <tbody id="recentOutRows"></tbody></table></div></div></section>
 
 <section id="req" class="view"><h2>Materialanforderung</h2><div class="card"><div class="toolbar"><select id="rtech"></select><button class="secondary" onclick="loadReq()">Unterbestand laden</button><button class="secondary" onclick="previewReq()">Vorschau prüfen</button><button class="primary" onclick="exportReq()">Materialanforderung exportieren</button></div><p class="small">Bis 25 Positionen wird die Standardvorlage verwendet. Ab 26 Positionen wird automatisch die große Vorlage verwendet. Doppelte Artikel werden zusammengefasst.</p><div class="tablewrap"><table><thead><tr><th>Export</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Ist</th><th>Bestellziel</th><th>Menge</th></tr></thead><tbody id="rrows"></tbody></table></div><div id="reqPreview"></div><div id="rmsg" class="message"></div></div>
+<div class="card"><h3>Verbrauchsmaterial ohne Artikelnummer</h3>
+<p>Material einmal anlegen und bei Bedarf mit der gewünschten Anzahl zur Materialanforderung hinzufügen.</p>
+<div class="formgrid"><label>Bezeichnung *<input id="consumableDescription" maxlength="500" placeholder="z. B. Reinigungstücher"></label><label>Einheit<input id="consumableUnit" maxlength="30" value="Stk."></label></div>
+<button class="primary" onclick="createConsumable()">Verbrauchsmaterial anlegen</button>
+<div class="toolbar"><select id="consumableSelect" aria-label="Verbrauchsmaterial"></select><input id="consumableQuantity" aria-label="Anzahl Verbrauchsmaterial" type="number" min="0.01" step="0.01" value="1"><button class="secondary" onclick="addConsumableToRequest()">Zur Materialanforderung hinzufügen</button></div>
+<div id="consumableMsg" class="message"></div>
+<div class="tablewrap"><table><thead><tr><th>Export</th><th>Bezeichnung</th><th>Einheit</th><th>Anzahl</th><th>Aktion</th></tr></thead><tbody id="consumableRequestRows"></tbody></table></div>
+</div>
 <div class="card">
 <h3>📁 Exportordner Materialanforderung</h3>
 <p>Ohne ausgewählten Ordner wird die Datei wie bisher über den normalen Browser-Download gespeichert.</p>
@@ -485,7 +500,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div class="formgrid">
 <label>Importart<select id="companyImportMode" onchange="companyImportModeChanged()"><option value="inventory">Inventur / Bestandsabgleich</option><option value="inbook">Einbuchung</option></select></label>
 <label>Techniker<select id="companyImportTechnician"></select></label>
-<label>Interner Lagerort für neu anzulegende Artikel<select id="companyImportInternalLocation"><option value="">Bitte auswählen</option></select></label>
+<label>Interner Lagerort für neu anzulegende Artikel (optional)<select id="companyImportInternalLocation"><option value="">Ohne Lagerort</option></select></label>
 </div>
 <div id="companyImportWarning" class="message ok" style="display:block">Inventur/Bestandsabgleich: <b>Frei verwendbar</b> wird als Vergleichsbestand gelesen. Die Datei ändert beim Prüfen noch keine Daten.</div>
 <div class="toolbar"><input id="companyImportFile" type="file" accept=".xlsx,.csv,.txt" onchange="loadCompanyImportFile(this)"><button class="secondary" onclick="previewCompanyImport()">Datei erneut prüfen</button><button class="secondary" onclick="startNewCompanyImportOperation()">Als neuen Vorgang starten</button><button id="companyImportCommit" class="danger" disabled onclick="commitCompanyImport()">Geprüften Vorgang bestätigen</button></div>
@@ -625,7 +640,13 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div id="saveAllArticlesMsg" class="message"></div>
 <div class="tablewrap"><table class="edit-table"><thead><tr><th>Art.-Nr.</th><th>Bezeichnung</th><th>Istbestand</th><th>Soll</th><th>Mindest.</th><th>Einheit</th><th>Lagerort</th><th>Maschine</th><th>Aktiv</th><th>Aktion</th></tr></thead><tbody id="editrows"></tbody></table></div></div></div></section>
 
-<section id="sync" class="view"><h2>Speicher &amp; Synchronisation</h2>
+<section id="sync" class="view">
+<div class="card"><h3>Lagerdatei auf Smartphone / im Browser</h3>
+<p>Deine Datenbank bleibt im Browser gespeichert. Mit „lager.db herunterladen“ erhältst du eine vollständige Datei einschließlich Passwort, Artikeln, Buchungen und Verbrauchsmaterial.</p>
+<p class="small">Ohne verbundenen Ordner werden Änderungen nicht automatisch zu OneDrive oder anderen Geräten übertragen. Die heruntergeladene Datei ist eine Kopie.</p>
+<button class="primary" onclick="downloadCurrentDatabase()">lager.db herunterladen</button>
+<div id="mobileDatabaseMsg" class="message"></div></div>
+<h2>Speicher &amp; Synchronisation</h2>
 <div class="card">
 <h3>Aktueller Speichermodus</h3>
 <div><span id="storageModeBadge" class="mode-badge local">🏠 Lokaler Modus</span></div>
@@ -747,7 +768,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
    <label>Einheit<select id="ur_unit" onchange="adjustUnknownRegistrationUnit()">
     <option>Stk.</option><option>Liter</option><option>ml</option><option>kg</option><option>g</option><option>m</option><option>cm</option><option>mm</option><option>Satz</option><option>Rolle</option><option>Packung</option><option>Karton</option>
    </select></label>
-   <label>Lagerort<select id="ur_location"></select><input id="ur_location_new" placeholder="Neuen Lagerort eingeben" oninput="showSimilarMaster('location','ur')"><div id="ur_location_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('location','ur')">+ Lagerort anlegen</button></label>
+   <label>Lagerort (optional)<select id="ur_location"></select><input id="ur_location_new" placeholder="Neuen Lagerort eingeben" oninput="showSimilarMaster('location','ur')"><div id="ur_location_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('location','ur')">+ Lagerort anlegen</button></label>
    <label>Maschinen <span class="small">(Mehrfachauswahl möglich)</span><div id="ur_machine_chips" class="machine-chip-list"></div><select id="ur_machine" multiple size="4" style="display:none"></select><input id="ur_machine_new" placeholder="Neue Maschinenbezeichnung" oninput="showSimilarMaster('machine','ur')"><div id="ur_machine_suggestions" class="small"></div><button type="button" class="secondary" onclick="createInlineMaster('machine','ur')">+ Maschine anlegen</button></label>
    <label>Hersteller<input id="ur_manufacturer"></label>
    <label>Lieferant<input id="ur_supplier"></label>
@@ -880,8 +901,8 @@ async function show(id,b){
   if(choice==='save'){await saveAllLevelChanges();if(levelDrafts.size)return}
   if(choice==='discard'){levelDrafts.discardAll();refreshDraftIndicators()}
  }
- document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
- if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList();if(id==='csv'){loadCompanyExportSettings();populateCompanyImportSelectors()}
+ document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');
+ if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList();if(id==='csv'){await loadCompanyExportSettings();populateCompanyImportSelectors()}
 }
 
 async function master(){
@@ -1179,7 +1200,7 @@ async function openUnknownRegistration(source,index){
  const plan=LVV66Core.m365UnknownCreationPlan(source,item.quantity);ur_no.value=item.article_no||'';ur_desc.value=item.description||'';ur_initial.value=String(plan.initial_stock);ur_target.value='0';ur_min.value='0';ur_unit.value='Stk.';
  ur_manufacturer.value='';ur_supplier.value='';ur_supplier_no.value='';ur_barcode.value='';ur_notes.value='';ur_active.value='true';
  const sourceTech=source==='delivery'?dtech.value:stech.value;ur_technician.value=LVV66Core.technicianChoice(sourceTech,(md.technicians||[]).map(x=>x.name),md.default_technician);
- ur_location.innerHTML='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+ ur_location.innerHTML='<option value="">Ohne Lagerort</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
  ur_machine.innerHTML=machineMultiOptions([]);renderMachineChips('ur');ur_location_new.value='';ur_machine_new.value='';ur_location_suggestions.innerHTML='';ur_machine_suggestions.innerHTML='';
  if(source==='service'&&currentServiceMachine()){
   const serviceMachine=currentServiceMachine();const found=(md.machines||[]).find(x=>normLabel(x.name)===normLabel(serviceMachine));
@@ -1199,7 +1220,7 @@ async function saveUnknownRegistration(){
  const initial=Number(ur_initial.value||0);if(st.source==='service'&&initial<st.quantity)return msg(ur_msg,`Für die Entnahme von ${n(st.quantity)} muss der Ausgangsbestand mindestens ${n(st.quantity)} betragen. Alternativ kann die Position ignoriert werden.`,false);
  const adjusted=normalizeMaterialLevelFields('ur');
  const body={article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),notes:ur_notes.value.trim(),active:ur_active.value==='true',technician:ur_technician.value||md.default_technician||'',creation_source:st.source==='delivery'?'Lieferschein / M365':'Servicebericht / M365',import_context:{operation_id:importOps[st.source]?.id||'',source:st.source,position_key:st.position_key}};
- if(!body.location)return msg(ur_msg,'Bitte einen Lagerort auswählen.',false);
+
  if(saveUnknownRegistration.busy)return;saveUnknownRegistration.busy=true;
  let created;
  try{
@@ -1250,7 +1271,7 @@ function populateCompanyImportSelectors(){
  companyImportTechnician.innerHTML=techNames.map(x=>`<option>${esc(x)}</option>`).join('');
  companyImportTechnician.value=LVV66Core.technicianChoice(old,techNames,md.default_technician||techNames[0]||'Techniker');
  const locOld=companyImportInternalLocation.value;
- companyImportInternalLocation.innerHTML='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+ companyImportInternalLocation.innerHTML='<option value="">Ohne Lagerort</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
  if([...companyImportInternalLocation.options].some(o=>o.value===locOld))companyImportInternalLocation.value=locOld;
 }
 async function loadCompanyExportSettings(){
@@ -1261,6 +1282,7 @@ async function saveCompanyExportSettings(){
 }
 async function loadCompanyImportFile(input){
  const f=input.files?.[0];if(!f)return;
+ companyImportCommit.disabled=true;companyImportState.operation_id='';companyImportRows.innerHTML='';
  try{
   const bytes=new Uint8Array(await f.arrayBuffer());let binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
   companyImportState={...companyImportState,filename:f.name,content_base64:btoa(binary),operation_id:'',nonce:'',items:[],errors:[],mode:companyImportMode.value};
@@ -1280,9 +1302,11 @@ function companyPlannedText(x){
  return `+${n(q)} Einbuchung`;
 }
 function renderCompanyImportPreview(d){
+ const previousActions=new Map();
+ document.querySelectorAll('[data-company-action]').forEach(s=>{const item=companyImportState.items[Number(s.dataset.companyAction)];if(item)previousActions.set(item.position_key,s.value)});
  companyImportState.operation_id=d.operation_id||companyImportState.operation_id;companyImportState.items=d.items||[];companyImportState.errors=d.errors||[];
  companyImportRows.innerHTML=companyImportState.items.map((x,i)=>{
-  const select=x.status==='unknown'&&!x.processed&&!x.error?`<select data-company-action="${i}"><option value="ignore">Ignorieren</option><option value="create">Anlegen</option></select>`:'—';
+  const select=x.status==='unknown'&&!x.processed&&!x.error?`<select data-company-action="${i}"><option value="ignore">Ignorieren</option><option value="create" ${previousActions.get(x.position_key)==='create'?'selected':''}>Anlegen</option></select>`:'—';
   return `<tr data-line="${Number(x.line||0)}"><td>${esc(companyStatusLabel(x))}</td><td>${esc(x.article_no)}</td><td>${esc(x.description||'')}</td><td>${n(x.quantity)}</td><td>${x.app_stock===null?'—':n(x.app_stock)}</td><td>${esc(companyPlannedText(x))}</td><td>${select}</td><td>${esc(x.error||'')}</td></tr>`
  }).join('')||'<tr><td colspan="8">Keine gültigen Materialzeilen erkannt.</td></tr>';
  companyImportErrors.innerHTML=companyImportState.errors.length?`<div class="message error" style="display:block">${companyImportState.errors.map(e=>`Zeile ${Number(e.line||0)} · ${esc(e.article_no||'')}: ${esc(e.error||'Fehler')}`).join('<br>')}</div>`:'';
@@ -1291,13 +1315,16 @@ function renderCompanyImportPreview(d){
  const processed=companyImportState.items.filter(x=>x.processed).length,unknown=companyImportState.items.filter(x=>x.status==='unknown'&&!x.processed).length;
  msg(companyImportMsg,`${companyImportState.items.length} Position(en) geprüft · ${unknown} unbekannt · ${processed} bereits verarbeitet · ${companyImportState.errors.length} Fehler.`,companyImportState.items.length>0&&companyImportState.errors.length===0);
 }
+let companyPreviewGeneration=0;
 async function previewCompanyImport(){
  if(!companyImportState.content_base64)return msg(companyImportMsg,'Bitte zuerst eine CSV- oder XLSX-Datei auswählen.',false);
+ const generation=++companyPreviewGeneration;
+ companyImportCommit.disabled=true;
  try{
   companyImportState.mode=companyImportMode.value;
   const d=await api('/api/company-import/file-preview',{method:'POST',body:JSON.stringify({filename:companyImportState.filename,content_base64:companyImportState.content_base64,mode:companyImportState.mode,new_operation_nonce:companyImportState.nonce})});
-  renderCompanyImportPreview(d);
- }catch(e){msg(companyImportMsg,e.message,false)}
+  if(generation===companyPreviewGeneration)renderCompanyImportPreview(d);
+ }catch(e){if(generation===companyPreviewGeneration){companyImportState.operation_id='';msg(companyImportMsg,e.message,false)}}
 }
 async function startNewCompanyImportOperation(){
  if(!companyImportState.content_base64)return msg(companyImportMsg,'Bitte zuerst eine Datei auswählen.',false);
@@ -1309,7 +1336,7 @@ async function commitCompanyImport(){
  const mode=companyImportMode.value;
  if(mode==='inventory'&&!await ensureAdminPassword())return;
  const actions={};document.querySelectorAll('[data-company-action]').forEach(s=>{const item=companyImportState.items[Number(s.dataset.companyAction)];if(item)actions[item.position_key||`${item.line}:${item.article_no}`]=s.value});
- if(Object.values(actions).includes('create')&&!companyImportInternalLocation.value)return msg(companyImportMsg,'Für neu anzulegende Artikel bitte einen internen Lagerort auswählen. Der Firmenwert 1025 wird bewusst nicht als interner Lagerort verwendet.',false);
+
  try{
   const d=await api('/api/company-import/commit',{method:'POST',body:JSON.stringify({mode,operation_id:companyImportState.operation_id,items:companyImportState.items,unknown_actions:actions,internal_location:companyImportInternalLocation.value,technician:companyImportTechnician.value||md.default_technician||'Techniker',movement_date:td()})});
   msg(companyImportMsg,d.no_change?'Keine neue Datenänderung – dieser Vorgang war bereits vollständig verarbeitet.':`${d.changed||0} Änderung(en) gespeichert, ${d.created||0} Artikel angelegt, ${d.booked||0} Buchung(en), ${d.ignored||0} ignoriert.`,true);
@@ -1343,10 +1370,13 @@ function applyImportPreview(d){
  callcommit.disabled=!(csvp.length||csvUnknown.length);
 }
 async function csvPreview(){
+ try{
+ ccommit.disabled=true;callcommit.disabled=true;
  if(!importOps.csv.id&&!importOps.csv.nonce)restoreImportOp('csv');
  let d=await api('/api/import/preview',{method:'POST',body:JSON.stringify({text:ctext.value,new_operation_nonce:importOps.csv.nonce})});
  applyImportPreview(d);
  msg(cmsg,csvp.length+' bekannte Position(en), '+csvUnknown.length+' neue Artikel, '+d.errors.length+' Fehler.',csvp.length>0||csvUnknown.length>0)
+ }catch(e){csvp=[];csvUnknown=[];msg(cmsg,e.message,false)}
 }
 async function createAndBookAll(){
  if(!csvp.length&&!csvUnknown.length)return;
@@ -1379,7 +1409,7 @@ async function csvCommit(){
 }
 
 
-function renderInventory(d){inventoryData=d.items||[];invrows.innerHTML=inventoryData.map(x=>`<tr data-id="${x.article_id}"><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.system_stock)}</td><td><input type="number" min="0" step=".01" value="${x.counted_stock}"></td><td>${n(x.difference)}</td></tr>`).join('');inverrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';invcommit.disabled=!inventoryData.length;msg(invmsg,inventoryData.length+' Inventurposition(en) erkannt, '+(d.errors||[]).length+' Fehler.',inventoryData.length>0)}
+function renderInventory(d){inventoryData=d.items||[];invrows.innerHTML=inventoryData.map(x=>`<tr data-id="${x.article_id}"><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.system_stock)}</td><td><input type="number" min="0" step=".01" value="${x.counted_stock}"></td><td>${n(x.difference)}</td></tr>`).join('');inverrors.innerHTML=(d.errors||[]).length?'<div class="message error" style="display:block">'+d.errors.map(e=>'Zeile '+e.line+': '+esc(e.article_no||'')+' '+esc(e.error)).join('<br>')+'</div>':'';invcommit.disabled=!inventoryData.length||(d.errors||[]).length>0;msg(invmsg,inventoryData.length+' Inventurposition(en) erkannt, '+(d.errors||[]).length+' Fehler.',inventoryData.length>0)}
 async function inventoryPreview(){try{renderInventory(await api('/api/inventory/preview',{method:'POST',body:JSON.stringify({text:invtext.value})}))}catch(e){msg(invmsg,e.message,false)}}
 async function loadInventoryFile(input){let f=input.files[0];if(!f)return;try{let buffer=await f.arrayBuffer(),bytes=new Uint8Array(buffer),binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));renderInventory(await api('/api/inventory/file-preview',{method:'POST',body:JSON.stringify({filename:f.name,content_base64:btoa(binary)})}))}catch(e){msg(invmsg,e.message,false)}}
 async function inventoryCommit(){let password='';if(!window.LVAdminSession?.unlocked){password=prompt('Passwort für Stammdaten:')||'';if(!password)return;}let items=[...invrows.children].map(r=>({article_id:+r.dataset.id,counted_stock:+r.children[3].firstChild.value}));try{let d=await api('/api/inventory/commit',{method:'POST',body:JSON.stringify({password,items,technician:(md.technicians?.[0]?.name||'Techniker'),movement_date:td()})});msg(invmsg,`${d.changed} Bestandskorrektur(en) gebucht, ${d.unchanged} unverändert.`,true);inventoryData=[];invcommit.disabled=true;arts=[];await loadArticles();await dash();await loadRecentMovements('IN');await loadRecentMovements('OUT')}catch(e){msg(invmsg,e.message,false)}}
@@ -1496,8 +1526,35 @@ async function serviceCommit(){
  if(refreshed.some(x=>x.status==='rejected'))msg(smsg,'Entnahme gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true)
 }
 
-async function loadReq(){let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.order_target??Number(x.target_stock||0))}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}
-function reqItems(){return [...rrows.children].filter(r=>r.children[0].firstChild.checked).map(r=>({article_id:+r.dataset.id,quantity:+r.children[5].firstChild.value}))}
+async function loadReq(){await loadConsumables();let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.order_target??Number(x.target_stock||0))}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}
+let consumableCatalog=[];
+async function loadConsumables(){
+ consumableCatalog=await api('/api/consumables');
+ const old=consumableSelect.value;
+ consumableSelect.innerHTML='<option value="">Verbrauchsmaterial auswählen</option>'+consumableCatalog.map(x=>`<option value="${x.id}">${esc(x.description)} (${esc(x.unit)})</option>`).join('');
+ consumableSelect.value=old;
+}
+async function createConsumable(){
+ try{
+  const d=await api('/api/consumables/create',{method:'POST',body:JSON.stringify({description:consumableDescription.value,unit:consumableUnit.value,technician:rtech.value})});
+  await loadConsumables();consumableSelect.value=String(d.id);consumableDescription.value='';
+  msg(consumableMsg,d.existing?'Dieses Verbrauchsmaterial ist bereits vorhanden und wurde ausgewählt.':'Verbrauchsmaterial gespeichert. Anzahl wählen und zur Anforderung hinzufügen.',true);
+ }catch(e){msg(consumableMsg,e.message,false)}
+}
+function addConsumableToRequest(){
+ const id=Number(consumableSelect.value),item=consumableCatalog.find(x=>Number(x.id)===id),q=Number(consumableQuantity.value);
+ if(!item)return msg(consumableMsg,'Bitte ein Verbrauchsmaterial auswählen.',false);
+ if(!Number.isFinite(q)||q<=0)return msg(consumableMsg,'Bitte eine Anzahl größer als 0 eingeben.',false);
+ const existing=consumableRequestRows.querySelector(`tr[data-consumable-id="${id}"]`);
+ if(existing){existing.querySelector('[data-quantity]').value=Number(existing.querySelector('[data-quantity]').value)+q;existing.querySelector('[data-selected]').checked=true}
+ else consumableRequestRows.insertAdjacentHTML('beforeend',`<tr data-consumable-id="${id}"><td><input data-selected type="checkbox" checked aria-label="Export ${esc(item.description)}"></td><td>${esc(item.description)}</td><td>${esc(item.unit)}</td><td><input data-quantity type="number" min="0.01" step="0.01" value="${q}" aria-label="Anzahl ${esc(item.description)}"></td><td><button class="secondary" onclick="this.closest('tr').remove();reqPreview.innerHTML=''">Entfernen</button></td></tr>`);
+ reqPreview.innerHTML='';msg(consumableMsg,'Verbrauchsmaterial zur Anforderung hinzugefügt.',true);
+}
+function reqItems(){
+ const numbered=[...rrows.children].filter(r=>r.children[0].firstChild.checked).map(r=>({article_id:+r.dataset.id,quantity:+r.children[5].firstChild.value}));
+ const consumers=[...consumableRequestRows.children].filter(r=>r.querySelector('[data-selected]').checked).map(r=>({consumable_id:+r.dataset.consumableId,quantity:+r.querySelector('[data-quantity]').value}));
+ return [...numbered,...consumers];
+}
 async function previewReq(){
  try{
   const d=await api('/api/material-request/preview',{
@@ -1747,6 +1804,30 @@ async function deleteMovement(id){
  }catch(e){alert(e.message)}
  finally{sessionStorage.removeItem('adminPassword')}
 }
+function downloadBlob(blob,fileName){
+ const a=document.createElement('a'),url=URL.createObjectURL(blob);
+ a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+async function downloadResponse(url,messageTarget){
+ const target=typeof messageTarget==='string'?document.getElementById(messageTarget):messageTarget;
+ try{
+  const response=await fetch(url);
+  if(!response.ok){let text='Datei konnte nicht erstellt werden.';try{text=(await response.json()).error||text}catch{}throw Error(text)}
+  const blob=await response.blob();if(!blob.size)throw Error('Die erstellte Datei ist leer.');
+  const disposition=response.headers.get('Content-Disposition')||'';
+  const match=disposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
+  let fileName=match?match[1]:(url.split('?')[0].split('/').pop()||'Export.csv');
+  try{fileName=decodeURIComponent(fileName)}catch{}
+  downloadBlob(blob,fileName);
+  if(target)msg(target,`Datei „${fileName}“ erstellt. Der Browser-Download wurde gestartet.`,true);
+  return {ok:true,fileName};
+ }catch(e){if(target)msg(target,e.message,false);else alert(e.message);return {ok:false,error:e.message}}
+}
+async function downloadCurrentDatabase(){
+ try{downloadBlob(await LVStorage.exportDatabase(),'lager.db');msg(mobileDatabaseMsg,'lager.db erstellt. Der Browser-Download wurde gestartet.',true)}catch(e){msg(mobileDatabaseMsg,e.message,false)}
+}
+
 async function downloadCsv(url,messageTarget){
  return downloadResponse(url,messageTarget);
 }
@@ -1760,7 +1841,7 @@ function machineMultiOptions(selected=[]){
 }
 function selectedMachineIds(select){return [...select.selectedOptions].map(o=>Number(o.value)).filter(Boolean)}
 function fillNewMaterialLists(){
- let loc='<option value="">Bitte auswählen</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+ let loc='<option value="">Ohne Lagerort</option>'+(md.locations||[]).map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
  nm_location.innerHTML=loc;nm_machine.innerHTML=machineMultiOptions([]);renderMachineChips('nm');
 }
 let levelDrafts=new LVV67Core.ArticleDraftStore();
@@ -1814,7 +1895,7 @@ async function createMaterial(){
  const articleNo=nm_no.value.trim(),description=nm_desc.value.trim(),locationValue=nm_location.value;
  if(!articleNo)return msg(nm_msg,'Bitte eine Artikelnummer eingeben.',false);
  if(!description)return msg(nm_msg,'Bitte eine Bezeichnung eingeben.',false);
- if(!locationValue)return msg(nm_msg,'Bitte einen Lagerort auswählen.',false);
+
  let whole=isWholeNumberUnit(nm_unit.value),num=v=>whole?Math.round(Number(v||0)):Number(v||0);const adjusted=normalizeMaterialLevelFields('nm');
  let body={article_no:articleNo,description,initial_stock:num(nm_initial.value),target_stock:num(nm_target.value),minimum_stock:num(nm_min.value),unit:nm_unit.value,location:locationValue,machine_ids:selectedMachineIds(nm_machine),manufacturer:nm_manufacturer.value,supplier:nm_supplier.value,supplier_article_no:nm_supplier_no.value,barcode:nm_barcode.value,notes:nm_notes.value,active:nm_active.value==='true',technician:nm_technician.value||md.default_technician||'',creation_source:'Manuelle Materialanlage'};
  if(createMaterial.busy)return;createMaterial.busy=true;
@@ -1864,7 +1945,7 @@ async function createInlineMaster(type,prefix){
 }
 function loadMachineRelations(){
  if(!window.machineAliasTarget)return;
- const opts='<option value="">Bitte auswählen</option>'+(md.machines||[]).map(x=>`<option value="${Number(x.id)}">${esc(x.name)}</option>`).join('');
+ const opts='<option value="">Ohne Lagerort</option>'+(md.machines||[]).map(x=>`<option value="${Number(x.id)}">${esc(x.name)}</option>`).join('');
  machineAliasTarget.innerHTML=opts;machineMergeSource.innerHTML=opts;machineMergeTarget.innerHTML=opts;
  machineAliasRows.innerHTML=(md.machine_aliases||[]).map(x=>`<tr><td>${esc(x.alias)}</td><td>${esc(x.machine_name)}</td><td><button class="danger" onclick="deleteMachineAlias(${Number(x.id)})">Trennen</button></td></tr>`).join('')||'<tr><td colspan="3" class="small">Noch keine alternativen Bezeichnungen hinterlegt.</td></tr>';
  machineMergeHistory.innerHTML=(md.machine_merges||[]).length?`<h4>Rückgängig machbare Zusammenführungen</h4><div class="tablewrap"><table><thead><tr><th>Frühere Maschine</th><th>Jetzt unter</th><th>Aktion</th></tr></thead><tbody>${md.machine_merges.map(x=>`<tr><td>${esc(x.source_name)}</td><td>${esc(x.target_name)}</td><td><button class="secondary" onclick="undoMachineMerge(${Number(x.id)})">Wieder trennen</button></td></tr>`).join('')}</tbody></table></div>`:'';
@@ -2106,10 +2187,19 @@ let setupDatabaseMode='new';
 let setupStorageMode='';
 let setupFolderName='';
 
+function refreshSetupCapabilities(){
+ const supported=typeof window.showDirectoryPicker==='function'&&window.isSecureContext;
+ document.querySelectorAll('[data-directory-picker]').forEach(btn=>{btn.disabled=!supported});
+ setupBrowserHint.textContent=supported?'Wähle einen Speicherort oder verwende den Browser-Speicher.':'Dieser Browser bietet keine Ordnerfreigabe an. Du kannst die Einrichtung vollständig im Browser abschließen und lager.db herunterladen. Eine automatische Cloud-Synchronisation ist in diesem Modus nicht verfügbar.';
+ setupBrowserCard.classList.toggle('selected',!supported);
+ const folderChoices=setupStep2.querySelector('.storage-choice');
+ if(!supported)folderChoices.before(setupBrowserCard);else folderChoices.after(setupBrowserCard);
+}
 function setupStartNewDatabase(){
  setupDatabaseMode='new';
  setupStorageMode='';
  setupFolderName='';
+ refreshSetupCapabilities();
  setupNext(2);
 }
 async function setupSelectStorageMode(mode){
@@ -2231,6 +2321,7 @@ async function completeFirstSetup(){
   initialSetupOverlay.style.display='none';
   document.body.style.overflow='';
   await master();await dash();await loadAppInfo();
+  if(setupStorageMode==='browser_local'){await LVStartupState.confirm('local');await show('sync',null);msg(mobileDatabaseMsg,'Einrichtung abgeschlossen. Du kannst jetzt lager.db herunterladen.',true)}
   msg(initialSetupMsg,'Die Ersteinrichtung wurde abgeschlossen.',true);
  }catch(e){msg(initialSetupMsg,e.message,false)}
 }
@@ -2610,6 +2701,7 @@ function lvPrepareStartupCheck(){
  }
 }
 async function lvForceStartupCheck(reason='resume',forceDialog=false){
+ if(window.initialSetupOverlay?.style.display==='block')return;
  if(lvStartupCheckRunning||window.startupCheckOverlay?.style.display==='block')return;
  const now=Date.now();
  if(!forceDialog&&now-lvLastForegroundCheck<LV_FOREGROUND_CHECK_THROTTLE_MS)return;
@@ -2680,6 +2772,10 @@ window.LVStartup={
  async check(){
   try{
    this.data=await LVStartupState.get();
+   if(this.data.setupRequired&&!this.data.cloudConnected){
+    startupCheckOverlay.style.display='none';
+    return true;
+   }
    if(this.data.cloudConnected&&this.data.cloudAccessible&&this.data.comparison==='identical'){
     await LVStartupState.confirm('cloud');
     sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
