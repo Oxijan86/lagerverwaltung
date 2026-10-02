@@ -308,7 +308,7 @@ function existingDatabaseHasContent(){
 function adoptExistingDatabase(){
  let changed=false;
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
-  setSetting('setup_complete','1');setSetting('database_adopted','1');setSetting('database_version','72');
+  setSetting('setup_complete','1');setSetting('database_adopted','1');setSetting('database_version','73');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');changed=true;
  }
  return changed;
@@ -327,7 +327,7 @@ async function initialize(){
  migrated=migrateMachineRelationsV57()||migrated;
  try{migrated=backfillMovementAuditV55()||migrated}
  catch(e){console.warn('Audit-Nachtragung V55 konnte nicht vollständig ausgeführt werden. Die Datenbank wird trotzdem geladen.',e)}
- if(setting('database_version','')!=='72'){setSetting('database_version','72');migrated=true}
+ if(setting('database_version','')!=='73'){setSetting('database_version','73');migrated=true}
  if(!setting('date_format')){setSetting('date_format','DD.MM.YYYY');migrated=true}
  if(!setting('company_export_location')){setSetting('company_export_location','1025');migrated=true}
  if(!setting('company_export_location_name')){setSetting('company_export_location_name','Lovrencic Tobias');migrated=true}
@@ -1214,7 +1214,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'72.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'73.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -2451,7 +2451,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','72');
+  setSetting('database_version','73');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();

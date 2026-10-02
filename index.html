@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V72 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V73 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -347,7 +347,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">72.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">73.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this);loadConsumables().catch(e=>msg(consumableMsg,e.message,false))">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -505,6 +505,9 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div id="companyImportWarning" class="message ok" style="display:block">Inventur/Bestandsabgleich: <b>Frei verwendbar</b> wird als Vergleichsbestand gelesen. Die Datei ändert beim Prüfen noch keine Daten.</div>
 <div class="toolbar"><input id="companyImportFile" type="file" accept=".xlsx,.csv,.txt" onchange="loadCompanyImportFile(this)"><button class="secondary" onclick="previewCompanyImport()">Datei erneut prüfen</button><button class="secondary" onclick="startNewCompanyImportOperation()">Als neuen Vorgang starten</button><button id="companyImportCommit" class="danger" disabled onclick="commitCompanyImport()">Geprüften Vorgang bestätigen</button></div>
 <div id="companyImportMsg" class="message"></div>
+<div class="toolbar"><button id="companyImportCreateAll" class="secondary" disabled onclick="selectAllCompanyUnknownForCreation()">Alle unbekannten Artikel auf Anlegen stellen</button></div>
+<p class="small">Einzelne Positionen lassen sich danach wieder auf Ignorieren stellen. Angelegt und gebucht wird erst mit „Geprüften Vorgang bestätigen“.</p>
+<div id="companyImportSelectionMsg" class="small" aria-live="polite"></div>
 <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Status</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Dateimenge</th><th>App-Bestand</th><th>Geplante Änderung</th><th>Unbekannter Artikel</th><th>Fehler</th></tr></thead><tbody id="companyImportRows"></tbody></table></div>
 <div id="companyImportErrors"></div>
 </div>
@@ -1282,7 +1285,7 @@ async function saveCompanyExportSettings(){
 }
 async function loadCompanyImportFile(input){
  const f=input.files?.[0];if(!f)return;
- companyImportCommit.disabled=true;companyImportState.operation_id='';companyImportRows.innerHTML='';
+ companyImportCommit.disabled=true;companyImportCreateAll.disabled=true;companyImportSelectionMsg.textContent='';companyImportState.operation_id='';companyImportRows.innerHTML='';
  try{
   const bytes=new Uint8Array(await f.arrayBuffer());let binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
   companyImportState={...companyImportState,filename:f.name,content_base64:btoa(binary),operation_id:'',nonce:'',items:[],errors:[],mode:companyImportMode.value};
@@ -1301,6 +1304,20 @@ function companyPlannedText(x){
  if(companyImportMode.value==='inventory')return Math.abs(q)<1e-9?'keine Änderung':`${q>0?'+':''}${n(q)} Korrektur`;
  return `+${n(q)} Einbuchung`;
 }
+function updateCompanyImportCreateAll(){
+ const count=companyImportState.items.filter(x=>x.status==='unknown'&&!x.processed&&!x.error).length;
+ companyImportCreateAll.disabled=!companyImportState.operation_id||!count;
+ companyImportCreateAll.textContent='Alle unbekannten Artikel auf Anlegen stellen'+(count?` (${count})`:'');
+}
+function selectAllCompanyUnknownForCreation(){
+ if(companyImportCreateAll.disabled)return;
+ let count=0;
+ document.querySelectorAll('#companyImportRows [data-company-action]').forEach(s=>{
+  const item=companyImportState.items[Number(s.dataset.companyAction)];
+  if(item?.status==='unknown'&&!item.processed&&!item.error){s.value='create';count++}
+ });
+ companyImportSelectionMsg.textContent=`${count} unbekannte Artikel stehen auf Anlegen. Einzelne Positionen können weiterhin geändert werden.`;
+}
 function renderCompanyImportPreview(d){
  const previousActions=new Map();
  document.querySelectorAll('[data-company-action]').forEach(s=>{const item=companyImportState.items[Number(s.dataset.companyAction)];if(item)previousActions.set(item.position_key,s.value)});
@@ -1314,12 +1331,13 @@ function renderCompanyImportPreview(d){
  companyImportCommit.disabled=!pending||companyImportState.errors.length>0;
  const processed=companyImportState.items.filter(x=>x.processed).length,unknown=companyImportState.items.filter(x=>x.status==='unknown'&&!x.processed).length;
  msg(companyImportMsg,`${companyImportState.items.length} Position(en) geprüft · ${unknown} unbekannt · ${processed} bereits verarbeitet · ${companyImportState.errors.length} Fehler.`,companyImportState.items.length>0&&companyImportState.errors.length===0);
+ companyImportSelectionMsg.textContent='';updateCompanyImportCreateAll();
 }
 let companyPreviewGeneration=0;
 async function previewCompanyImport(){
  if(!companyImportState.content_base64)return msg(companyImportMsg,'Bitte zuerst eine CSV- oder XLSX-Datei auswählen.',false);
  const generation=++companyPreviewGeneration;
- companyImportCommit.disabled=true;
+ companyImportCommit.disabled=true;companyImportCreateAll.disabled=true;
  try{
   companyImportState.mode=companyImportMode.value;
   const d=await api('/api/company-import/file-preview',{method:'POST',body:JSON.stringify({filename:companyImportState.filename,content_base64:companyImportState.content_base64,mode:companyImportState.mode,new_operation_nonce:companyImportState.nonce})});
@@ -1336,12 +1354,12 @@ async function commitCompanyImport(){
  const mode=companyImportMode.value;
  if(mode==='inventory'&&!await ensureAdminPassword())return;
  const actions={};document.querySelectorAll('[data-company-action]').forEach(s=>{const item=companyImportState.items[Number(s.dataset.companyAction)];if(item)actions[item.position_key||`${item.line}:${item.article_no}`]=s.value});
-
+ companyImportCreateAll.disabled=true;
  try{
   const d=await api('/api/company-import/commit',{method:'POST',body:JSON.stringify({mode,operation_id:companyImportState.operation_id,items:companyImportState.items,unknown_actions:actions,internal_location:companyImportInternalLocation.value,technician:companyImportTechnician.value||md.default_technician||'Techniker',movement_date:td()})});
   msg(companyImportMsg,d.no_change?'Keine neue Datenänderung – dieser Vorgang war bereits vollständig verarbeitet.':`${d.changed||0} Änderung(en) gespeichert, ${d.created||0} Artikel angelegt, ${d.booked||0} Buchung(en), ${d.ignored||0} ignoriert.`,true);
   arts=[];await Promise.allSettled([loadArticles(),dash(),loadRecentMovements('IN'),loadRecentMovements('OUT')]);await previewCompanyImport();
- }catch(e){msg(companyImportMsg,e.message,false)}
+ }catch(e){msg(companyImportMsg,e.message,false);updateCompanyImportCreateAll()}
 }
 async function loadImportFile(input){
  let f=input.files[0];if(!f)return;
