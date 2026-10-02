@@ -308,7 +308,7 @@ function existingDatabaseHasContent(){
 function adoptExistingDatabase(){
  let changed=false;
  if(existingDatabaseHasContent()&&setting('setup_complete','0')!=='1'){
-  setSetting('setup_complete','1');setSetting('database_adopted','1');setSetting('database_version','70');
+  setSetting('setup_complete','1');setSetting('database_adopted','1');setSetting('database_version','71');
   if(!setting('date_format'))setSetting('date_format','DD.MM.YYYY');changed=true;
  }
  return changed;
@@ -327,7 +327,7 @@ async function initialize(){
  migrated=migrateMachineRelationsV57()||migrated;
  try{migrated=backfillMovementAuditV55()||migrated}
  catch(e){console.warn('Audit-Nachtragung V55 konnte nicht vollständig ausgeführt werden. Die Datenbank wird trotzdem geladen.',e)}
- if(setting('database_version','')!=='70'){setSetting('database_version','70');migrated=true}
+ if(setting('database_version','')!=='71'){setSetting('database_version','71');migrated=true}
  if(!setting('date_format')){setSetting('date_format','DD.MM.YYYY');migrated=true}
  if(!setting('company_export_location')){setSetting('company_export_location','1025');migrated=true}
  if(!setting('company_export_location_name')){setSetting('company_export_location_name','Lovrencic Tobias');migrated=true}
@@ -835,7 +835,7 @@ async function materialXlsx(d){
   items.forEach((x,index)=>{
    const row=4+index;
    worksheet.getCell(`A${row}`).value=index+1;
-   worksheet.getCell(`B${row}`).value=x.quantity;worksheet.getCell(`B${row}`).numFmt='0.##';
+   worksheet.getCell(`B${row}`).value=x.quantity;worksheet.getCell(`B${row}`).numFmt=Number.isInteger(x.quantity)?'0':'General';
    worksheet.getCell(`C${row}`).value=String(x.article_no);worksheet.getCell(`C${row}`).numFmt='@';
    worksheet.getCell(`D${row}`).value=String(x.description);
   });
@@ -858,7 +858,7 @@ async function materialXlsx(d){
   worksheet.pageSetup.printArea=`A1:H${Math.max(40,30+consumptionRows)}`;
   items.forEach((x,index)=>{
    const c=cells[index];
-   worksheet.getCell(`${c.qty}${c.row}`).value=x.quantity;worksheet.getCell(`${c.qty}${c.row}`).numFmt='0.##';
+   worksheet.getCell(`${c.qty}${c.row}`).value=x.quantity;worksheet.getCell(`${c.qty}${c.row}`).numFmt=Number.isInteger(x.quantity)?'0':'General';
    if(c.no){worksheet.getCell(`${c.no}${c.row}`).value=String(x.article_no);worksheet.getCell(`${c.no}${c.row}`).numFmt='@'}
    worksheet.getCell(`${c.desc}${c.row}`).value=String(x.description);
   });
@@ -1201,7 +1201,7 @@ async function route(url,opt={}){
  await ready;const u=new URL(url,location.href);if(!u.pathname.startsWith('/api/'))return nativeFetch(url,opt);const p=u.pathname,q=Object.fromEntries(u.searchParams),d=body(opt);
  try{
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'70.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'71.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -2438,7 +2438,7 @@ window.LVStartupState={
   db=new SQL.Database();
   initSchema();
   setSetting('setup_complete','0');
-  setSetting('database_version','70');
+  setSetting('database_version','71');
   const m=await ig(METAKEY)||{};
   m.dirty=true;
   m.localModified=Date.now();
