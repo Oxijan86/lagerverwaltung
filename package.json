@@ -1,7 +1,7 @@
 {
-  "name": "lagerverwaltung-lovrencic-v74",
+  "name": "lagerverwaltung-lovrencic-v75",
   "private": true,
-  "version": "74.0.0",
+  "version": "75.0.0",
   "scripts": {
     "test": "node tests/run-tests.js",
     "test:syntax": "node tests/check-build.js"
