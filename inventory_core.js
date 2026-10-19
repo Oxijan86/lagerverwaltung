@@ -20,17 +20,17 @@
    if(!Number.isInteger(d.version)||d.version!==s.version)error('Diese Inventur wurde inzwischen geändert. Bitte den gespeicherten Stand neu laden; ungespeicherte Eingaben bleiben lokal erhalten.');
    return s;
   }
-  const references=()=>({warehouses:rows('SELECT * FROM inventory_warehouses ORDER BY name'),locations:rows('SELECT id,name,warehouse_id FROM locations WHERE active=1 ORDER BY name')});
+  const references=()=>deps.storage().refs();
   function markers(){return new Map(rows('SELECT article_id,MAX(id) marker FROM movements GROUP BY article_id').map(x=>[x.article_id,Number(x.marker)]))}
   function view(id){
    const s=session(id),map=new Map(articles().map(x=>[x.id,x])),last=markers(),refs=references();
    const items=rows('SELECT * FROM inventory_counts WHERE session_id=? ORDER BY article_no',[s.id]).map(x=>{
     const a=map.get(x.article_id),missing=!a||!a.active;
-    const changed=missing||Number(a.stock)!==x.base_stock||(last.get(x.article_id)||0)!==x.base_marker||String(a.location||'')!==x.base_location||a.unit!==x.unit;
-    return {...x,current_stock:a?Number(a.stock):null,current_location:a?.location??'',barcode:a?.barcode||'',missing,stale:s.status==='draft'&&changed,conflict:s.status==='draft'&&x.counted_stock!==null&&changed,difference:x.counted_stock===null?null:x.counted_stock-x.base_stock};
+    const changed=missing||Number(a.stock)!==x.base_stock||(last.get(x.article_id)||0)!==x.base_marker||String(a.location||'')!==x.base_location||a.unit!==x.unit||(a.warehouse_id??null)!==(x.base_warehouse_id??null);
+    return {...x,current_stock:a?Number(a.stock):null,current_location:a?.location??'',current_warehouse_id:a?.warehouse_id??null,barcode:a?.barcode||'',missing,stale:s.status==='draft'&&changed,conflict:s.status==='draft'&&x.counted_stock!==null&&changed,difference:x.counted_stock===null?null:x.counted_stock-x.base_stock};
    });
    const counted=items.filter(x=>x.counted_stock!==null);
-   return {database_id:databaseId(),durable:!needsPersistence,session:s,items,...refs,stats:{total:items.length,counted:counted.length,remaining:items.length-counted.length,conflicts:counted.filter(x=>x.conflict).length,stock_changes:counted.filter(x=>Math.abs(x.difference)>1e-8).length,location_changes:counted.filter(x=>x.location!==x.base_location).length}};
+   return {database_id:databaseId(),durable:!needsPersistence,session:s,items,...refs,stats:{total:items.length,counted:counted.length,remaining:items.length-counted.length,conflicts:counted.filter(x=>x.conflict).length,stock_changes:counted.filter(x=>Math.abs(x.difference)>1e-8).length,location_changes:counted.filter(x=>x.location!==x.base_location||x.warehouse_id!==x.base_warehouse_id).length}};
   }
   function touch(id){run('UPDATE inventory_sessions SET version=version+1,updated_at=? WHERE id=?',[stamp(),id])}
   function count(value,unit){
@@ -48,7 +48,7 @@
   }
   function append(id,list){
    const last=markers();
-   for(const a of list)run('INSERT INTO inventory_counts(session_id,article_id,article_no,description,unit,base_stock,base_location,base_marker,location) VALUES(?,?,?,?,?,?,?,?,?)',[id,a.id,a.article_no,a.description,a.unit,Number(a.stock),a.location||'',last.get(a.id)||0,a.location||'']);
+   for(const a of list)run('INSERT INTO inventory_counts(session_id,article_id,article_no,description,unit,base_stock,base_location,base_marker,location,warehouse_id,base_warehouse_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)',[id,a.id,a.article_no,a.description,a.unit,Number(a.stock),a.location||'',last.get(a.id)||0,a.location||'',a.warehouse_id??(a.warehouse_selection_set?null:deps.storage().defaultId()),a.warehouse_id??null]);
   }
   function plan(d){
    const s=draft(d),v=view(s.id);
@@ -56,7 +56,7 @@
    if(v.stats.remaining&&d.allow_partial!==true)error(`${v.stats.remaining} Artikel sind noch ungezählt. Bitte weiterzählen oder den Teilabschluss ausdrücklich auswählen.`);
    const conflicts=v.items.filter(x=>x.conflict);
    if(conflicts.length)error(`Bestand oder Lagerort seit Beginn geändert: ${conflicts.slice(0,8).map(x=>x.article_no).join(', ')}. Bitte den Bestandsstand dieser Artikel aktualisieren und erneut zählen.`);
-   for(const x of v.items.filter(x=>x.counted_stock!==null)){count(x.counted_stock,x.unit);validLocation(x.location,x.base_location)}
+   for(const x of v.items.filter(x=>x.counted_stock!==null)){count(x.counted_stock,x.unit);validLocation(x.location,x.base_location);deps.storage().resolve(x,x)}
    return v;
   }
   async function action(name,d,opt){
@@ -73,21 +73,7 @@
     transaction(()=>{run('INSERT INTO inventory_sessions(id,name,technician,created_at,updated_at) VALUES(?,?,?,?,?)',[id,title,setting('primary_technician','Techniker'),stamp(),stamp()]);append(id,list);audit(setting('primary_technician','Techniker'),'INVENTUR-START','Inventur',id,`${title}: ${list.length} Artikel`)});
     await durable();return view(id);
    }
-   if(name==='warehouse'||name==='location'){
-    if(!await authorized(d,opt))error('Zum Anlegen von Lagern und Lagerorten ist die Administratorfreigabe erforderlich.');
-    const label=String(d.name||'').trim();if(!label||label.length>120)error('Bitte einen Namen mit höchstens 120 Zeichen eingeben.');
-    if(name==='warehouse'){
-     const old=rows('SELECT * FROM inventory_warehouses WHERE name=? COLLATE NOCASE',[label])[0];if(old)return {...references(),existing:true,created:old};
-     transaction(()=>{run('INSERT INTO inventory_warehouses(name,created_at) VALUES(?,?)',[label,stamp()]);audit(setting('primary_technician','Techniker'),'ANLAGE','Lager',String(scalar('SELECT last_insert_rowid()')),label)});
-     await durable();return {...references(),created:rows('SELECT * FROM inventory_warehouses WHERE name=? COLLATE NOCASE',[label])[0]};
-    }
-    const wid=Number(d.warehouse_id)||null,w=wid?rows('SELECT * FROM inventory_warehouses WHERE id=?',[wid])[0]:null;
-    if(wid&&!w)error('Das ausgewählte Lager wurde nicht gefunden.');
-    const full=w?`${w.name} / ${label}`:label,old=rows('SELECT * FROM locations WHERE name=? COLLATE NOCASE',[full])[0];
-    if(old){if(!old.active||Number(old.warehouse_id||0)!==Number(wid||0))error('Dieser Lagerortname ist bereits anderweitig vorhanden. Bitte einen anderen Namen wählen.');return {...references(),existing:true,created:old}}
-    transaction(()=>{run('INSERT INTO locations(name,warehouse_id) VALUES(?,?)',[full,wid]);audit(setting('primary_technician','Techniker'),'ANLAGE','Lagerort',String(scalar('SELECT last_insert_rowid()')),full)});
-    await durable();return {...references(),created:rows('SELECT * FROM locations WHERE name=?',[full])[0]};
-   }
+   if(name==='warehouse'||name==='location')return deps.storage().handle(name,d);
    if(name==='commit'){
     const existing=session(d.id);if(existing.status==='completed')return {...view(d.id),already_completed:true};
     if(!await authorized(d,opt))error('Zum Abschließen der Inventur ist die Administratorfreigabe erforderlich.');
@@ -99,7 +85,8 @@
      for(const x of v.items.filter(x=>x.counted_stock!==null)){
       const diff=x.counted_stock-x.current_stock;
       if(Math.abs(diff)>1e-8){book([{article_id:x.article_id,quantity:Math.abs(diff)}],diff>0?'IN':'OUT',{technician:v.session.technician,movement_date:d.movement_date||today(),source:'Inventur V75',note:`${v.session.name}; gezählt ${x.counted_stock}; ${x.note}`});booked++}
-      if(x.location!==x.current_location){run('UPDATE articles SET location=? WHERE id=?',[x.location,x.article_id]);locations++}
+      if(x.location!==x.current_location||x.warehouse_id!==x.current_warehouse_id){run('UPDATE articles SET location=?,warehouse_id=? WHERE id=?',[x.location,x.warehouse_id,x.article_id]);locations++}
+      run('UPDATE articles SET warehouse_selection_set=1 WHERE id=?',[x.article_id]);
       audit(v.session.technician,'INVENTUR-ZÄHLUNG','Artikel',String(x.article_id),`Inventur: ${v.session.name}\nArtikelnummer: ${x.article_no}\nIstbestand vorher: ${x.current_stock}\nGezählt: ${x.counted_stock}\nDifferenz: ${diff}\nLagerort: ${x.current_location||'—'} → ${x.location||'—'}\nNotiz: ${x.note}`);
      }
      run("UPDATE inventory_sessions SET status='completed',completed_at=?,updated_at=?,version=version+1 WHERE id=?",[stamp(),stamp(),v.session.id]);
@@ -113,7 +100,7 @@
     const current=session(d.id);
     if(current.status==='draft'&&d.database_id===databaseId()&&Number.isInteger(d.version)&&d.version<current.version&&Array.isArray(d.items)&&d.items.length<=1000){
      const saved=new Map(rows('SELECT * FROM inventory_counts WHERE session_id=?',[current.id]).map(x=>[x.article_id,x]));
-     if(d.items.every(p=>{const x=saved.get(Number(p.article_id));return x&&(!('counted_stock' in p)||count(p.counted_stock,x.unit)===x.counted_stock)&&(!('location' in p)||String(p.location).trim()===x.location)&&(!('note' in p)||String(p.note).trim()===x.note)}))return view(current.id);
+     if(d.items.every(p=>{const x=saved.get(Number(p.article_id));return x&&(!('counted_stock' in p)||count(p.counted_stock,x.unit)===x.counted_stock)&&(!('location' in p)||String(p.location).trim()===x.location)&&(!('warehouse_id' in p)||(Number(p.warehouse_id)||null)===x.warehouse_id)&&(!('note' in p)||String(p.note).trim()===x.note)}))return view(current.id);
     }
    }
    const s=draft(d);
@@ -123,17 +110,17 @@
     for(const p of d.items){
      const x=map.get(Number(p.article_id));if(!x||seen.has(x.article_id))error('Inventurposition fehlt oder wurde doppelt übermittelt.');seen.add(x.article_id);
      const quantity='counted_stock' in p?count(p.counted_stock,x.unit):x.counted_stock;
-     const location='location' in p?String(p.location).trim():x.location,note='note' in p?String(p.note).trim():x.note;
+     const {location,warehouse_id}=deps.storage().resolve(p,x);const note='note' in p?String(p.note).trim():x.note;
      if(note.length>2000)error('Eine Inventurnotiz darf höchstens 2000 Zeichen haben.');validLocation(location,x.base_location);
-     if(quantity!==x.counted_stock||location!==x.location||note!==x.note)changes.push({...x,quantity,location,note});
+     if(quantity!==x.counted_stock||location!==x.location||warehouse_id!==x.warehouse_id||note!==x.note)changes.push({...x,quantity,location,warehouse_id,note});
     }
     if(!changes.length)return view(s.id);
-    transaction(()=>{for(const x of changes)run('UPDATE inventory_counts SET counted_stock=?,location=?,note=? WHERE session_id=? AND article_id=?',[x.quantity,x.location,x.note,s.id,x.article_id]);touch(s.id)});
+    transaction(()=>{for(const x of changes)run('UPDATE inventory_counts SET counted_stock=?,location=?,warehouse_id=?,note=? WHERE session_id=? AND article_id=?',[x.quantity,x.location,x.warehouse_id,x.note,s.id,x.article_id]);touch(s.id)});
    }else if(name==='rebase'){
     const a=articles().find(x=>x.id===Number(d.article_id)&&x.active),old=rows('SELECT * FROM inventory_counts WHERE session_id=? AND article_id=?',[s.id,Number(d.article_id)])[0];
     if(!a||!old)error('Dieser Artikel ist nicht mehr aktiv vorhanden. Zählung leeren und beim Teilabschluss auslassen.');
-    const location=old.location===old.base_location?(a.location||''):old.location;
-    transaction(()=>{run('UPDATE inventory_counts SET base_stock=?,base_location=?,base_marker=?,counted_stock=NULL,location=?,unit=? WHERE session_id=? AND article_id=?',[a.stock,a.location||'',markers().get(a.id)||0,location,a.unit,s.id,a.id]);touch(s.id);audit(s.technician,'INVENTUR-NEUZÄHLUNG','Artikel',String(a.id),`Inventur ${s.name}: Zählung geleert, Bestandsstand aktualisiert.`)});
+    const location=old.location===old.base_location?(a.location||''):old.location,warehouse_id=old.warehouse_id===old.base_warehouse_id?(a.warehouse_id??null):old.warehouse_id;
+    transaction(()=>{run('UPDATE inventory_counts SET base_stock=?,base_location=?,base_marker=?,counted_stock=NULL,location=?,unit=?,base_warehouse_id=?,warehouse_id=? WHERE session_id=? AND article_id=?',[a.stock,a.location||'',markers().get(a.id)||0,location,a.unit,a.warehouse_id??null,warehouse_id,s.id,a.id]);touch(s.id);audit(s.technician,'INVENTUR-NEUZÄHLUNG','Artikel',String(a.id),`Inventur ${s.name}: Zählung geleert, Bestandsstand aktualisiert.`)});
    }else if(name==='refresh'){
     const existing=new Set(rows('SELECT article_id FROM inventory_counts WHERE session_id=?',[s.id]).map(x=>x.article_id)),list=articles().filter(a=>a.active&&!existing.has(a.id));
     if(!list.length)return view(s.id);transaction(()=>{append(s.id,list);touch(s.id)});

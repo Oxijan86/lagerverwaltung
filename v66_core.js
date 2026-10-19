@@ -4,7 +4,7 @@
  else root.LVV66Core=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const STOCK_COLUMNS=['Artikelnummer','Bezeichnung','Istbestand','Mindestbestand','Sollbestand','Lagerort','Maschine/Maschinenzuordnung','Aktionen'];
+ const STOCK_COLUMNS=['Artikelnummer','Bezeichnung','Istbestand','Mindestbestand','Sollbestand','Lager / Lagerort','Maschine/Maschinenzuordnung','Aktionen'];
  function technicianChoice(current,available,defaultTechnician){
   const list=(available||[]).map(x=>typeof x==='string'?x:x?.name).filter(Boolean);
   if(current&&list.includes(current))return current;

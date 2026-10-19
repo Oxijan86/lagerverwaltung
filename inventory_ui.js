@@ -26,7 +26,7 @@
  function referenceOptions(){
   if(!data&&!index)return;const refs=data||index;
   for(const id of ['inv75Warehouse','inv75WarehouseFilter']){
-   const el=$(id),old=el.value;el.innerHTML=`<option value="">${id==='inv75Warehouse'?'Ohne übergeordnetes Lager':'Alle Lager'}</option>`+refs.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('');el.value=old;
+   const el=$(id),old=el.value;el.innerHTML=`<option value="">${id==='inv75Warehouse'?'Ohne übergeordnetes Lager':'Alle Lager'}</option>`+refs.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('');el.value=el.dataset.ready?old:(id==='inv75Warehouse'?refs.default_warehouse_id||'':'');el.dataset.ready='1';
   }
  }
  function matching(){
@@ -34,8 +34,8 @@
   return data.items.filter(x=>{
    const counted=x.counted_stock!==null&&String(x.counted_stock).trim()!=='';
    const location=data.locations.find(l=>l.name===x.location);
-   const text=`${x.article_no} ${x.description} ${x.barcode} ${x.location}`.toLocaleLowerCase('de-DE');
-   return q.split(/\s+/).filter(Boolean).every(word=>text.includes(word))&&(!warehouse||String(location?.warehouse_id)===warehouse)&&(filter==='all'||filter==='open'&&!counted||filter==='counted'&&counted||filter==='conflict'&&x.stale);
+   const text=`${x.article_no} ${x.description} ${x.barcode} ${x.location} ${data.warehouses.find(w=>w.id===Number(x.warehouse_id))?.name||''}`.toLocaleLowerCase('de-DE');
+   return q.split(/\s+/).filter(Boolean).every(word=>text.includes(word))&&(!warehouse||String(x.warehouse_id)===warehouse)&&(filter==='all'||filter==='open'&&!counted||filter==='counted'&&counted||filter==='conflict'&&x.stale);
   });
  }
  function render(){
@@ -45,12 +45,13 @@
   $('inv75Prev').disabled=page===0;$('inv75Next').disabled=page>=pages-1;
   const done=data.session.status!=='draft',disabled=done||busy?'disabled':'';
   $('inv75Rows').innerHTML=items.slice(page*pageSize,(page+1)*pageSize).map(x=>{
-   const choices=new Map(data.locations.map(l=>[l.name,l.name]));if(x.location)choices.set(x.location,x.location);
+   const choices=new Map(data.locations.filter(l=>!x.warehouse_id||!l.warehouse_id||Number(l.warehouse_id)===Number(x.warehouse_id)).map(l=>[l.name,l.name]));if(x.location)choices.set(x.location,x.location);
    const options='<option value="">Ohne Lagerort</option>'+[...choices.keys()].map(name=>`<option value="${esc(name)}" ${name===x.location?'selected':''}>${esc(name)}</option>`).join('');
    return `<article class="inv75-row ${x.counted_stock!==null?'inv75-counted':''} ${x.stale?'inv75-conflict':''}">
     <div><b>${esc(x.article_no)}</b><div>${esc(x.description)}</div><span class="small">${esc(x.unit)} · Bestand bei Beginn: ${esc(x.base_stock)}</span>${x.stale?`<div class="inv75-warning">Bestandsstand geändert${x.missing?' / Artikel nicht mehr aktiv':''}. Bitte erneut prüfen.</div>${!x.missing?`<button class="secondary" onclick="LVInventory.rebase(${x.article_id})">Bestandsstand aktualisieren und neu zählen</button>`:''}`:''}</div>
     <label>Gezählt (${esc(x.unit)})<input id="inv75-count-${x.article_id}" type="text" inputmode="decimal" autocomplete="off" value="${esc(x.counted_stock??'')}" ${disabled} oninput="LVInventory.edit(${x.article_id},'counted_stock',this.value)"><span class="small">Leer = noch nicht gezählt · 0 = leerer Bestand</span></label>
-    <label>Lagerort<select id="inv75-location-${x.article_id}" ${disabled} onchange="LVInventory.edit(${x.article_id},'location',this.value)">${options}</select></label>
+    <label>Lager<select id="inv75-warehouse-${x.article_id}" ${disabled} onchange="LVInventory.warehouseChanged(${x.article_id},this.value)">${LVWarehouses.warehouses(x.warehouse_id)}</select></label>
+    <label>Lagerort (optional)<select id="inv75-location-${x.article_id}" ${disabled} onchange="LVInventory.edit(${x.article_id},'location',this.value)">${options}</select></label>
     <label>Notiz<input id="inv75-note-${x.article_id}" value="${esc(x.note)}" maxlength="2000" ${disabled} oninput="LVInventory.edit(${x.article_id},'note',this.value)"></label>
    </article>`;
   }).join('')||'<p>Keine passenden Artikel gefunden.</p>';
@@ -92,6 +93,7 @@
  async function list(){index=await window.api('/api/inventory-v75/index');dbid=index.database_id;referenceOptions();const old=$('inv75Session').value;$('inv75Session').innerHTML='<option value="">Inventur auswählen</option>'+index.sessions.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} · ${s.counted}/${s.total} · ${s.status==='draft'?'In Arbeit':s.status==='completed'?'Abgeschlossen':'Abgebrochen'}</option>`).join('');$('inv75Session').value=old;return index}
  async function guarded(fn){if(busy)return;busy=true;status();try{return await fn()}catch(e){message(e.message,false)}finally{busy=false;status()}}
  window.LVInventory={
+  updateReferences(refs){if(data){data.warehouses=refs.warehouses||[];data.locations=refs.locations||[];data.default_warehouse_id=refs.default_warehouse_id;referenceOptions();render()}if(index){index.warehouses=refs.warehouses||[];index.locations=refs.locations||[];index.default_warehouse_id=refs.default_warehouse_id}},
   async open(){return guarded(async()=>{
    if(data&&pending.size){render();return}
    const idx=await list();let id='';try{id=localStorage.getItem('lv75-last-inventory:'+dbid)||''}catch{}
@@ -110,8 +112,9 @@
    if(!data||data.session.status!=='draft')return;
    $('inv75ReviewBox').hidden=true;
    const row=data.items.find(x=>x.article_id===id);if(!row)return;row[field]=value===''&&field==='counted_stock'?null:value;
-   pending.set(id,{...(pending.get(id)||{article_id:id}),[field]:row[field]});cache();status();clearTimeout(timer);timer=setTimeout(()=>flush(),750);
+   pending.set(id,{...(pending.get(id)||{article_id:id}),[field]:row[field]});if(field==='location'){const loc=data.locations.find(l=>l.name===value);if(loc?.warehouse_id){row.warehouse_id=loc.warehouse_id;pending.get(id).warehouse_id=loc.warehouse_id;const w=$('inv75-warehouse-'+id);if(w)w.value=loc.warehouse_id}}cache();status();clearTimeout(timer);timer=setTimeout(()=>flush(),750);
   },
+  warehouseChanged(id,value){const row=data.items.find(x=>x.article_id===id);if(!row)return;const loc=data.locations.find(l=>l.name===row.location);this.edit(id,'warehouse_id',Number(value)||null);if(loc?.warehouse_id&&Number(loc.warehouse_id)!==Number(value))this.edit(id,'location','');render()},
   filter(){page=0;render()},page(delta){page=Math.max(0,page+delta);render()},save:flush,
   async reload(){return guarded(async()=>{
    if(!data)return;
@@ -124,11 +127,11 @@
    adopt(await post('rebase',payload({article_id:id})));message('Bestandsstand aktualisiert. Bitte diesen Artikel erneut zählen.');
   })},
   async addReference(kind){return guarded(async()=>{
-   if(!await flush()||!await window.ensureAdminPassword())return;
+   if(!await flush())return;
    const el=$(kind==='warehouse'?'inv75NewWarehouse':'inv75NewLocation');
    const result=await post(kind,{name:el.value,warehouse_id:$('inv75Warehouse').value,database_id:dbid});
    if(data){data.warehouses=result.warehouses;data.locations=result.locations}else{index.warehouses=result.warehouses;index.locations=result.locations}
-   referenceOptions();if(kind==='warehouse')$('inv75Warehouse').value=result.created.id;el.value='';render();message(`${kind==='warehouse'?'Lager':'Lagerort'} „${result.created.name}“ ist verfügbar. Den Lagerort beim Artikel auswählen.`);
+   LVWarehouses.setRefs(result);if(data)data.default_warehouse_id=result.default_warehouse_id;else index.default_warehouse_id=result.default_warehouse_id;await window.master();referenceOptions();if(kind==='warehouse')$('inv75Warehouse').value=result.created.id;el.value='';render();message(`${kind==='warehouse'?'Lager':'Lagerort'} „${result.created.name}“ ist verfügbar. Den Lagerort beim Artikel auswählen.`);
   })},
   async review(){return guarded(async()=>{
    if(!await flush())return;adopt(await window.api('/api/inventory-v75/preview?id='+encodeURIComponent(data.session.id)));
@@ -136,7 +139,7 @@
    $('inv75ReviewSummary').textContent=`${s.counted} gezählt · ${s.remaining} ungezählt · ${s.stock_changes} Bestandskorrekturen · ${s.location_changes} Lagerortänderungen · ${s.conflicts} Konflikte`;
    $('inv75PartialLabel').hidden=!s.remaining;$('inv75Partial').checked=false;
    $('inv75Finalize').disabled=!!s.conflicts||!s.counted;
-   $('inv75ReviewRows').innerHTML=data.items.filter(x=>x.counted_stock!==null).map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.base_stock)}</td><td>${esc(x.counted_stock)}</td><td>${esc(x.difference)}</td><td>${esc(x.location)}</td><td>${x.conflict?'Bitte neu zählen':''}</td></tr>`).join('');
+   $('inv75ReviewRows').innerHTML=data.items.filter(x=>x.counted_stock!==null).map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.base_stock)}</td><td>${esc(x.counted_stock)}</td><td>${esc(x.difference)}</td><td>${esc(data.warehouses.find(w=>w.id===Number(x.warehouse_id))?.name||'—')} / ${esc(x.location||'ohne Lagerort')}</td><td>${x.conflict?'Bitte neu zählen':''}</td></tr>`).join('');
   })},
   async finalize(){return guarded(async()=>{
    if(!await flush())return;
