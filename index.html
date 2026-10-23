@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V76 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V77 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -143,6 +143,12 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 .inv75-row input,.inv75-row select{min-height:44px;min-width:0;width:100%}
 .inv75-row label{min-width:0}.inv75-counted{border-left-color:#16803d;background:#f5fbf6}.inv75-conflict{border-left-color:#b42318;background:#fff5f4}.inv75-warning,.inv75-dirty{color:#9b2419;font-weight:700}.inv75-check{display:flex;align-items:center;gap:10px;margin:14px 0}.inv75-check input{width:auto;min-width:22px;min-height:22px}
 @media(max-width:700px){.inv75-row{grid-template-columns:minmax(0,1fr);padding:14px 8px}.inv75-row>div{overflow-wrap:anywhere}#inventory75 .toolbar{flex-wrap:wrap}#inventory75 .toolbar button{white-space:normal;max-width:100%}#inventory75 .formgrid input,#inventory75 .formgrid select{min-width:0}}
+
+.booking-done{border:2px solid #16803d;background:#edf9f0;border-radius:12px;padding:16px;margin:12px 0;scroll-margin-top:140px}.booking-done[hidden]{display:none!important}.booking-done h3{color:#12652e;margin-top:0}
+/* V77 direkter Servicebericht-PDF-Import */
+#pdf77Card [hidden]{display:none!important}.pdf77-document{margin-top:16px}.pdf77-document summary{cursor:pointer;min-height:44px;overflow-wrap:anywhere}.pdf77-document .formgrid{margin:12px 0}.pdf77-check{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}.pdf77-check input{width:auto;min-width:22px;min-height:22px}.pdf77-error{color:#9b2419;font-weight:700}.pdf77-warning{color:#84500b;margin-top:4px}.pdf77-table input{min-width:90px;width:100%;min-height:42px}.pdf77-table input[type=checkbox]{min-width:22px;width:22px}.pdf77-table td{vertical-align:top;overflow-wrap:anywhere}.pdf77-table td:first-child{min-width:44px}.pdf77-table td:nth-child(2){min-width:160px}.pdf77-table td:nth-child(3){min-width:110px}.pdf77-table td:nth-child(6){min-width:170px}#pdf77Card input[type=file]{max-width:100%;min-width:0}
+@media(max-width:700px){#pdf77Card .toolbar button{white-space:normal;max-width:100%}#pdf77Card .formgrid input,#pdf77Card .formgrid select{min-width:0}.pdf77-table,.pdf77-table tbody{display:block;width:100%;min-width:0!important}.pdf77-table thead{display:none}.pdf77-table tr{display:block;border:1px solid #d9e0e6;border-radius:10px;padding:8px;margin:10px 0}.pdf77-table td{display:grid;grid-template-columns:100px minmax(0,1fr);gap:8px;min-width:0!important;border:0;padding:6px 2px}.pdf77-table td:before{content:attr(data-label);font-weight:700}.pdf77-table td>*{grid-column:2;min-width:0}.pdf77-table td>input{width:100%;min-width:0}.pdf77-table td>input[type=checkbox]{width:24px}.pdf77-table td:first-child:before{grid-row:1}.pdf77-table td:first-child>input{grid-row:1}.pdf77-document{padding:10px}}
+
 </style></head><body>
 
 
@@ -356,7 +362,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">76.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">77.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('inventory75',this)">📋 Inventur</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this);loadConsumables().catch(e=>msg(consumableMsg,e.message,false))">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -413,7 +419,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div class="toolbar"><button id="inv75Review" class="primary" onclick="LVInventory.review()">Abschluss prüfen</button><button id="inv75Cancel" class="secondary" onclick="LVInventory.cancel()">Inventur abbrechen und archivieren</button></div>
 <div id="inv75ReviewBox" class="card" hidden><h3>Inventurabschluss prüfen</h3><p id="inv75ReviewSummary"></p><p>Nur gezählte Artikel und deren Lagerorte werden übernommen. Ungezählte Artikel bleiben unverändert. Bei geändertem Bestandsstand bitte die betroffenen Artikel aktualisieren und erneut zählen.</p><label id="inv75PartialLabel" class="inv75-check"><input id="inv75Partial" type="checkbox"> Ich möchte einen Teilabschluss durchführen; ungezählte Artikel bleiben unverändert.</label><label>Buchungsdatum<input id="inv75Date" type="date"></label><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bestand bei Beginn</th><th>Gezählt</th><th>Differenz</th><th>Lager / Lagerort</th><th>Hinweis</th></tr></thead><tbody id="inv75ReviewRows"></tbody></table></div><button id="inv75Finalize" class="danger" onclick="LVInventory.finalize()">Inventur verbindlich abschließen</button></div>
 </div></section>
-<section id="in" class="view"><h2>Einbuchung</h2>
+<section id="in" class="view"><h2>Einbuchung</h2><div id="bookingDone-in" class="booking-done" hidden role="status" aria-live="polite" tabindex="-1"></div>
 <div class="card"><h3>Manuelle Einbuchung</h3>
 <div class="formgrid"><label>Datum<input type="date" id="idate"></label>
 <label>Techniker<select id="itech"></select></label>
@@ -421,7 +427,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <p class="small">Artikelnummer oder Bezeichnung direkt eintippen. Vorschläge erscheinen automatisch; Auswahl mit Maus oder Pfeiltasten und Enter.</p>
 <div id="icart"></div>
 <button class="secondary" onclick="addRow('i')">+ Position</button>
-<button class="primary" onclick="saveMove('i')">Einbuchung bestätigen</button>
+<button id="iBookButton" class="primary" onclick="saveMove('i')">Einbuchung bestätigen</button>
 <div id="imsg" class="message"></div></div>
 
 <div class="card"><h3>Lieferschein M365</h3>
@@ -443,7 +449,19 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div class="tablewrap"><table><thead><tr><th>ID</th><th>Datum</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th><th>Bemerkung</th><th>Aktionen</th></tr></thead>
 <tbody id="recentInRows"></tbody></table></div></div></section>
 
-<section id="out" class="view"><h2>Entnahme</h2>
+<section id="out" class="view"><h2>Entnahme</h2><div id="bookingDone-out" class="booking-done" hidden role="status" aria-live="polite" tabindex="-1"></div>
+<div class="card" id="pdf77Card"><h3>RONDO-Servicebericht direkt aus PDF importieren</h3>
+<p>Vollständige Serviceberichte auswählen. Nur die Materialpositionen werden zur Prüfung vorgeschlagen. Arbeitszeit, Reisezeit und Kilometer werden ausgeschlossen. Die Verarbeitung erfolgt auf diesem Gerät; es ist kein M365-Umweg nötig.</p>
+<div class="formgrid"><label>Servicebericht-PDFs (mehrere möglich)<input id="pdf77Files" type="file" accept=".pdf,application/pdf" multiple><span class="small">Bis zu 20 PDFs, je höchstens 25 MB und 80 Seiten.</span></label><label>Techniker<select id="pdf77Technician" onchange="LVServicePDF.changed()"></select></label><label>Bemerkung für die Entnahmen<input id="pdf77Note" maxlength="2000" oninput="LVServicePDF.changed()"></label></div>
+<label class="pdf77-check"><input id="pdf77OCR" type="checkbox">Texterkennung (OCR) für gescannte Seiten verwenden <span class="small">– benötigt mehr Zeit; OCR-Positionen einzeln prüfen und auswählen.</span></label>
+<div class="toolbar"><button class="primary" id="pdf77Read" onclick="LVServicePDF.read()">Ausgewählte PDFs auslesen</button><button class="secondary" id="pdf77Cancel" hidden onclick="LVServicePDF.cancel()">Auslesen abbrechen</button><button class="secondary" onclick="LVServicePDF.clear()">PDF-Vorschau leeren</button></div>
+<div id="pdf77Msg" class="message" role="status" aria-live="polite" style="white-space:pre-line"></div><datalist id="pdf77ArticleOptions"></datalist>
+<div id="pdf77Preview"></div>
+<div id="pdf77Actions" hidden><p id="pdf77Summary" aria-live="polite"></p><p class="small">Unbekannte Artikelnummern korrigieren oder unter „Neues Material“ anlegen und den tatsächlichen Bestand einbuchen. Danach die Vorschau aktualisieren. Nur ausgewählte, gültige Positionen werden entnommen; ungeklärte Positionen können abgewählt bleiben. Vorhandene Buchungen werden anhand des PDF-Inhalts erkannt.</p>
+<div class="toolbar"><button class="secondary" onclick="LVServicePDF.selectAll(true)">Eindeutige Positionen auswählen</button><button class="secondary" onclick="LVServicePDF.selectAll(false)">Alle abwählen</button><button class="secondary" id="pdf77ShowBooked" hidden onclick="LVServicePDF.toggleBooked()">Gebuchte Positionen einblenden</button><button class="secondary" id="pdf77Refresh" onclick="LVServicePDF.refresh()">Vorschau / Bestände aktualisieren</button></div>
+<label class="pdf77-check"><input type="checkbox" id="pdf77Reviewed" onchange="LVServicePDF.update()">Ich habe die ausgewählten Artikel, Mengen, Einheiten, Leistungsdaten und möglichen Wiederholungen geprüft.</label>
+<button class="danger" id="pdf77Commit" disabled onclick="LVServicePDF.commit()">Geprüfte Materialien entnehmen</button></div></div>
+
 <div class="card"><h3>Manuelle Entnahme</h3>
 <div class="formgrid"><label>Datum<input type="date" id="odate"></label>
 <label>Techniker<select id="otech"></select></label>
@@ -453,7 +471,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <p class="small">Artikelnummer oder Bezeichnung direkt eintippen. Vorschläge erscheinen automatisch; Auswahl mit Maus oder Pfeiltasten und Enter.</p>
 <div id="ocart"></div>
 <button class="secondary" onclick="addRow('o')">+ Position</button>
-<button class="danger" onclick="saveMove('o')">Entnahme bestätigen</button>
+<button id="oBookButton" class="danger" onclick="saveMove('o')">Entnahme bestätigen</button>
 <div id="omsg" class="message"></div></div>
 
 <div class="card"><h3>Servicebericht M365/Copilot</h3>
@@ -507,7 +525,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div id="materialRequestFolderMsg" class="message"></div>
 </div>
 </section>
-<section id="csv" class="view"><h2>CSV-Center</h2>
+<section id="csv" class="view"><h2>CSV-Center</h2><div id="bookingDone-csv" class="booking-done" hidden role="status" aria-live="polite" tabindex="-1"></div>
 <div class="card"><h3>Firmenexport</h3>
 <p>Export im Firmenformat <b>Material;Bezeichnung zum Material;Lagerort;Bezeichnung des Lagerorts;Frei verwendbar</b>. <b>Frei verwendbar</b> enthält immer den aktuellen Istbestand der App.</p>
 <div class="formgrid">
@@ -880,6 +898,10 @@ window.LVAdminSession = window.LVAdminSession || {
 <script src="inventory_ui.js"></script>
 <script src="warehouse_core.js"></script>
 <script src="warehouse_ui.js"></script>
+<script src="service_pdf_core.js"></script>
+<script src="service_pdf_reader.js"></script>
+<script src="service_pdf_backend.js"></script>
+<script src="service_pdf_ui.js"></script>
 <script src="local_backend.js"></script>
 <script>
 let arts=[],deliveryp=[],servicep=[],csvp=[],deliveryUnknown=[],serviceUnknown=[],csvUnknown=[],historyData=[],inventoryData=[],md={},lastImportFilename='',appDateFormat='DD.MM.YYYY',helpFiles=[],companyImportState={filename:'',content_base64:'',operation_id:'',nonce:'',items:[],errors:[],mode:'inventory'};
@@ -923,6 +945,7 @@ function askDraftNavigation(){
 }
 async function show(id,b){
  const current=document.querySelector('.view.active')?.id;
+ if(current==='out'&&id!==current&&!LVServicePDF.beforeLeave())return;
  if(current==='inventory75'&&id!==current&&!await LVInventory.beforeLeave())return;
  if(current&&current!==id&&levelDrafts?.size){
   const choice=await askDraftNavigation();
@@ -932,11 +955,11 @@ async function show(id,b){
  }
  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));mainNav.classList.remove('open');document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');
  if(id==='inventory75'){if(!document.getElementById('inv75Date').value)document.getElementById('inv75Date').value=new Date().toLocaleDateString('en-CA');await LVInventory.open();}
- if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out')loadRecentMovements('OUT');if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList();if(id==='csv'){await loadCompanyExportSettings();populateCompanyImportSelectors()}
+ if(id==='dash')dash();if(id==='articles')loadArticles();if(id==='in')loadRecentMovements('IN');if(id==='out'){loadRecentMovements('OUT');LVServicePDF.open()}if(id==='req'){loadReq();refreshMaterialRequestFolderStatus();}if(id==='hist')hist();if(id==='audit')auditLoad();if(id==='master'){refreshPasswordStatus();loadSettings();if(sessionStorage.admin==='1')loadEditTable()}if(id==='help')loadHelpList();if(id==='csv'){await loadCompanyExportSettings();populateCompanyImportSelectors()}
 }
 
 async function master(){
- const oldMd=md||{};md=await api('/api/masterdata');LVWarehouses.setRefs(md);LVInventory.updateReferences(md);
+ const oldMd=md||{};md=await api('/api/masterdata');LVWarehouses.setRefs(md);LVInventory.updateReferences(md);LVServicePDF.setMaster(md);
  const techNames=(md.technicians||[]).map(x=>x.name),to=techNames.map(x=>`<option>${esc(x)}</option>`).join('');
  const defaultTech=md.default_technician||techNames[0]||'Techniker';
  ['itech','otech','dtech','stech','rtech','nm_technician','ur_technician','ctech'].forEach(id=>{
@@ -1058,21 +1081,31 @@ async function ensureAdminPassword(){
  }
 }
 
+const bookingBusy={};
+function showBookingCompleted(type,{count=0,items=[],source='',remaining=0,target='',resetText='Die erledigten Eingaben wurden geleert. Eine neue Buchung kann erfasst werden.'}={}){
+ const name=type==='IN'?'Einbuchung':'Entnahme',section=target||(type==='IN'?'in':'out'),box=document.getElementById('bookingDone-'+section);if(!box)return;
+ const positions=(items||[]).map(x=>{const a=arts.find(a=>Number(a.id)===Number(x.article_id))||{};return `<li>${esc(x.article_no||a.article_no||'Artikel')} – ${esc(x.description||a.description||'')}: <b>${esc(x.quantity??'')}</b> ${esc(x.unit||a.unit||'')}</li>`}).join('');
+ box.innerHTML=`<h3>Erledigt: ${name} abgeschlossen</h3><p><b>${Number(count)} Position(en) dauerhaft gespeichert.</b> ${esc(source)} · ${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</p><p>${esc(resetText)}${remaining?` ${Number(remaining)} nicht gebuchte Position(en) bleiben zur Prüfung in der Vorschau.`:''}</p>${positions?`<details><summary>Gebuchte Positionen anzeigen</summary><ul>${positions}</ul></details>`:''}`;
+ box.hidden=false;box.focus({preventScroll:true});box.scrollIntoView({behavior:'smooth',block:'start'});
+}
+document.addEventListener('input',e=>{const section=e.target.closest?.('#in,#out,#csv');if(section&&!e.target.closest('.booking-done')){const box=document.getElementById('bookingDone-'+section.id);if(box)box.hidden=true}});
 async function saveMove(t){
- let rs=[...document.querySelectorAll('#'+t+'cart .cart-row')],el=document.getElementById(t+'msg');
+ if(bookingBusy[t])return;
+ const rs=[...document.querySelectorAll('#'+t+'cart .cart-row')],el=document.getElementById(t+'msg'),button=document.getElementById(t+'BookButton');
  if(!rs.length)return msg(el,'Position fehlt.',false);
- let items=rs.map(r=>({article_id:+r.querySelector('.article-id').value,quantity:+r.querySelector('.qty').value}));
+ const items=rs.map(r=>({article_id:+r.querySelector('.article-id').value,quantity:+r.querySelector('.qty').value}));
  if(items.some(x=>!x.article_id))return msg(el,'Bitte jeden Artikel aus der Vorschlagsliste auswählen.',false);
- const payload={
-   movement_type:t==='i'?'IN':'OUT',items,movement_date:document.getElementById(t+'date').value,
-   technician:document.getElementById(t+'tech').value,note:document.getElementById(t+'note').value,
-   customer:t==='o'?ocustomer.value:'',machine:t==='o'?omachine.value:''
- };
+ const payload={movement_type:t==='i'?'IN':'OUT',items,movement_date:document.getElementById(t+'date').value,technician:document.getElementById(t+'tech').value,note:document.getElementById(t+'note').value,customer:t==='o'?ocustomer.value:'',machine:t==='o'?omachine.value:''};
+ bookingBusy[t]=true;const label=button?.textContent;if(button){button.disabled=true;button.textContent='Wird gespeichert …'}
  try{
   if(!await confirmPossibleDuplicate(payload))return msg(el,'Buchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
-  let d=await api('/api/movements',{method:'POST',body:JSON.stringify(payload)});
-  msg(el,d.count+' Position(en) gebucht.',true);document.getElementById(t+'cart').innerHTML='';arts=[];await loadArticles();addRow(t);await dash();await loadRecentMovements(t==='i'?'IN':'OUT')
- }catch(e){msg(el,e.message,false)}
+  const d=await api('/api/movements',{method:'POST',body:JSON.stringify(payload)});
+  showBookingCompleted(payload.movement_type,{count:d.count,items,source:'Manuelle Buchung'});
+  document.getElementById(t+'cart').innerHTML='';document.getElementById(t+'note').value='';document.getElementById(t+'date').value=td();if(t==='o'){ocustomer.value='';omachine.value=''}
+  await addRow(t);msg(el,`${t==='i'?'Einbuchung':'Entnahme'} abgeschlossen: ${d.count} Position(en) gespeichert. Eingaben geleert.`,true);arts=[];
+  const results=await Promise.allSettled([loadArticles(),dash(),loadRecentMovements(payload.movement_type)]);
+  if(results.some(x=>x.status==='rejected'))msg(el,'Buchung abgeschlossen und Eingaben geleert. Eine Ansicht konnte noch nicht aktualisiert werden.',true);
+ }catch(e){msg(el,e.message,false)}finally{bookingBusy[t]=false;if(button){button.disabled=false;button.textContent=label}}
 }
 
 
@@ -1177,17 +1210,22 @@ async function deliveryPreview(silent=false){
  }catch(e){if(!silent)msg(dmsg,e.message,false)}
 }
 async function deliveryCommit(){
- let d;
+ if(bookingBusy.delivery)return;bookingBusy.delivery=true;dcommit.disabled=true;try{
+
+ const bookingItems=deliveryp.map(x=>({...x}));let d;
  try{
   const payload={movement_type:'IN',items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value,operation_id:importOps.delivery.id};
   if(!await confirmPossibleDuplicate(payload))return msg(dmsg,'Einbuchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
   d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify(payload)});
  }catch(e){return msg(dmsg,e.message,false)}
- msg(dmsg,d.count+' Position(en) aus dem Lieferschein eingebucht.',true);
+ showBookingCompleted('IN',{count:d.count,items:bookingItems,source:'Lieferschein M365'});dnote.value='';ddate.value=td();
+ msg(dmsg,'Einbuchung abgeschlossen: '+d.count+' Position(en) gespeichert. Eingaben geleert.',true);
  deliveryp=[];deliveryUnknown=[];ignoredUnknown.delivery.clear();forgetImportOp('delivery');extractionLastInput.delivery='';
  dtext.value='';drows.innerHTML='';dunknown.innerHTML='';derrors.innerHTML='';deliveryExtractedSummary.style.display='none';dcommit.disabled=true;arts=[];
  const refreshed=await Promise.allSettled([dash(),loadRecentMovements('IN'),loadArticles()]);
  if(refreshed.some(x=>x.status==='rejected'))msg(dmsg,'Einbuchung gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true)
+
+ }finally{bookingBusy.delivery=false;dcommit.disabled=!deliveryp.length||deliveryUnknown.length>0}
 }
 
 function unknownList(source){return source==='delivery'?deliveryUnknown:(source==='service'?serviceUnknown:csvUnknown)}
@@ -1316,7 +1354,7 @@ async function loadCompanyImportFile(input){
  try{
   const bytes=new Uint8Array(await f.arrayBuffer());let binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
   companyImportState={...companyImportState,filename:f.name,content_base64:btoa(binary),operation_id:'',nonce:'',items:[],errors:[],mode:companyImportMode.value};
-  await previewCompanyImport();
+  await previewCompanyImport();companyImportFile.value='';if(mode==='inbook'){showBookingCompleted('IN',{count:d.booked||0,source:'Firmenlisten-Import',target:'csv',resetText:'Die Dateiauswahl wurde geleert. Die Tabelle zeigt den abgeschlossenen Vorgang zur Kontrolle.'});msg(companyImportMsg,'Einbuchung abgeschlossen. '+(d.booked||0)+' Buchung(en) gespeichert. Dateiauswahl geleert.',true)}
  }catch(e){msg(companyImportMsg,e.message,false)}
 }
 function companyStatusLabel(x){
@@ -1385,7 +1423,7 @@ async function commitCompanyImport(){
  try{
   const d=await api('/api/company-import/commit',{method:'POST',body:JSON.stringify({mode,operation_id:companyImportState.operation_id,items:companyImportState.items,unknown_actions:actions,internal_location:companyImportInternalLocation.value,technician:companyImportTechnician.value||md.default_technician||'Techniker',movement_date:td()})});
   msg(companyImportMsg,d.no_change?'Keine neue Datenänderung – dieser Vorgang war bereits vollständig verarbeitet.':`${d.changed||0} Änderung(en) gespeichert, ${d.created||0} Artikel angelegt, ${d.booked||0} Buchung(en), ${d.ignored||0} ignoriert.`,true);
-  arts=[];await Promise.allSettled([loadArticles(),dash(),loadRecentMovements('IN'),loadRecentMovements('OUT')]);await previewCompanyImport();
+  arts=[];await Promise.allSettled([loadArticles(),dash(),loadRecentMovements('IN'),loadRecentMovements('OUT')]);await previewCompanyImport();companyImportFile.value='';if(mode==='inbook'){showBookingCompleted('IN',{count:d.booked||0,source:'Firmenlisten-Import',target:'csv',resetText:'Die Dateiauswahl wurde geleert. Die Tabelle zeigt den abgeschlossenen Vorgang zur Kontrolle.'});msg(companyImportMsg,'Einbuchung abgeschlossen. '+(d.booked||0)+' Buchung(en) gespeichert. Dateiauswahl geleert.',true)}
  }catch(e){msg(companyImportMsg,e.message,false);updateCompanyImportCreateAll()}
 }
 async function loadImportFile(input){
@@ -1442,6 +1480,7 @@ async function createAndBookAll(){
    movement_date:td(),note:'SAP-Import '+(lastImportFilename||''),operation_id:importOps.csv.id
   })});
   msg(cmsg,`${d.created} neue Artikel angelegt und ${d.booked} Position(en) eingebucht.${d.levels_adjusted?' '+d.levels_adjusted+' Mindestbestand/Mindestbestände automatisch angeglichen.':''}`,true);
+  showBookingCompleted('IN',{count:d.booked,items:[...csvp,...newItems],source:'CSV-Import / Materialanlage',target:'csv'});ctext.value='';forgetImportOp('csv');
   csvp=[];csvUnknown=[];crows.innerHTML='';cunknown.innerHTML='';cerr.innerHTML='';
   ccommit.disabled=true;callcommit.disabled=true;arts=[];await loadArticles();await master();dash()
  }catch(e){msg(cmsg,e.message,false)}
@@ -1449,7 +1488,7 @@ async function createAndBookAll(){
 async function csvCommit(){
  try{
   let d=await api('/api/import/commit',{method:'POST',body:JSON.stringify({items:csvp,technician:ctech.value||md.default_technician||'Techniker',movement_date:td(),note:'SAP-CSV-Import',operation_id:importOps.csv.id})});
-  msg(cmsg,d.count+' Position(en) eingebucht.',true);csvp=[];ccommit.disabled=true;arts=[];dash()
+  showBookingCompleted('IN',{count:d.count,items:csvp,source:'CSV-Textimport',target:'csv',remaining:csvUnknown.length});msg(cmsg,'Einbuchung abgeschlossen: '+d.count+' Position(en) gespeichert. Erledigte Eingaben geleert.',true);csvp=[];crows.innerHTML='';ctext.value='';ccommit.disabled=true;callcommit.disabled=!csvUnknown.length;if(!csvUnknown.length)forgetImportOp('csv');arts=[];dash()
  }catch(e){msg(cmsg,e.message,false)}
 }
 
@@ -1552,7 +1591,9 @@ async function servicePreview(silent=false){
  }catch(e){if(!silent)msg(smsg,e.message,false)}
 }
 async function serviceCommit(){
- let d;
+ if(bookingBusy.service)return;bookingBusy.service=true;scommit.disabled=true;try{
+
+ const bookingItems=servicep.map(x=>({...x}));let d;
  try{
   if(smachineNew.value.trim()&&!await ensureAdminPassword())return;
   const machine=currentServiceMachine();
@@ -1563,12 +1604,15 @@ async function serviceCommit(){
   if(!await confirmPossibleDuplicate(payload))return msg(smsg,'Entnahme wurde wegen möglicher Doppelbuchung abgebrochen.',false);
   d=await api('/api/service-report/commit',{method:'POST',body:JSON.stringify(payload)});
  }catch(e){return msg(smsg,e.message,false)}
- msg(smsg,d.count+' Position(en) aus dem Servicebericht als Entnahme gebucht.'+(d.machine_created?' Neue Maschine „'+d.machine+'“ wurde angelegt.':''),true);
+ showBookingCompleted('OUT',{count:d.count,items:bookingItems,source:'Servicebericht M365'});snote.value='';scustomer.value='';smachine.value='';sdate.value=td();
+ msg(smsg,'Entnahme abgeschlossen: '+d.count+' Position(en) gespeichert. Eingaben geleert.'+(d.machine_created?' Neue Maschine „'+d.machine+'“ wurde angelegt.':''),true);
  servicep=[];serviceUnknown=[];ignoredUnknown.service.clear();forgetImportOp('service');extractionLastInput.service='';
  stext.value='';srows.innerHTML='';sunknown.innerHTML='';serrors.innerHTML='';scommit.disabled=true;arts=[];
  smachineNew.value='';smachineHint.textContent='';serviceExtractedSummary.style.display='none';
  const refreshed=await Promise.allSettled([master(),dash(),loadRecentMovements('OUT'),loadArticles()]);
  if(refreshed.some(x=>x.status==='rejected'))msg(smsg,'Entnahme gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true)
+
+ }finally{bookingBusy.service=false;scommit.disabled=!servicep.length||serviceUnknown.length>0}
 }
 
 async function loadReq(){await loadConsumables();let a=await api('/api/material-request');rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td><input type="checkbox" checked></td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td>${n(x.order_target??Number(x.target_stock||0))}</td><td><input type="number" min=".01" step=".01" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';msg(rmsg,a.length+' Position(en) vorgeschlagen.',true)}

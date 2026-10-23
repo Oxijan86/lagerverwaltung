@@ -1,0 +1,32 @@
+# Entnahme
+
+## Manuelle Entnahme
+
+- Datum, Techniker, Kunde und Maschine eintragen.
+- Der hinterlegte Standard-Techniker ist automatisch vorausgewählt und kann geändert werden.
+- Artikel und Menge hinzufügen.
+- Entnahme bestätigen.
+
+## Servicebericht als Foto oder PDF mit Microsoft 365/Copilot auswerten
+
+Die Lagerverwaltung wertet Fotos oder PDFs **nicht selbst mit KI aus**. Die Auswertung erfolgt in Microsoft 365/Copilot.
+
+1. **Hilfe → Microsoft 365 / Copilot – aktuelle Prompts** öffnen.
+2. Beim Servicebericht **Prompt kopieren** wählen.
+3. Servicebericht als Foto oder PDF in Microsoft 365/Copilot öffnen beziehungsweise hochladen.
+4. Den kopierten Prompt einsetzen und ausführen.
+5. Die Copilot-Ausgabe vollständig kopieren. Sie muss mit `IMPORTTYP: ENTNAHME` beginnen.
+6. In der Lagerverwaltung den Bereich **Entnahme** öffnen und die Ausgabe in das M365-Textfeld einfügen.
+7. Artikelnummern, Bezeichnungen und Mengen prüfen.
+8. Kunde und erkannte Maschine kontrollieren. Alternative Maschinenbezeichnungen werden berücksichtigt.
+9. Unbekannte Artikel bewusst anlegen oder ignorieren.
+10. Die geprüfte Entnahme buchen.
+
+
+## Sichtbarer Buchungsabschluss ab V77
+
+Nach einer erfolgreichen Buchung zeigt eine grüne Abschlussanzeige **Erledigt** die gebuchten Positionen. Bei manuellen Buchungen werden die Artikelpositionen, Bemerkungen sowie bei Entnahmen Kunde und Maschine geleert; eine neue leere Position steht bereit und das Datum steht wieder auf heute. Der ausgewählte Techniker bleibt erhalten.
+
+Auch die M365-Importe leeren die erledigte Vorschau und zugehörigen Eingaben nach erfolgreicher Buchung. Bei Fehlern bleiben die Eingaben zur Korrektur erhalten. Während des Speicherns sind wiederholte Bestätigungen gesperrt.
+
+Für die direkte Verarbeitung vollständiger Servicebericht-PDFs siehe **RONDO-Servicebericht direkt aus PDF importieren (V77)** im Hilfe-Reiter.
