@@ -2,7 +2,7 @@
  'use strict';
  let library=null,worker=null;
  const root=new URL('./vendor/',document.baseURI);
- async function pdfjs(){if(!library)library=import(new URL('pdfjs/pdf.min.mjs',root).href).then(m=>{m.GlobalWorkerOptions.workerSrc=new URL('pdfjs/pdf.worker.min.mjs',root).href;return m}).catch(e=>{library=null;throw Error('PDF-Modul konnte nicht geladen werden. Bitte die Anwendung über ihre Webadresse öffnen und das vollständige V77-Paket bereitstellen. '+e.message)});return library}
+ async function pdfjs(){if(!library)library=import(new URL('pdfjs/pdf.min.mjs',root).href).then(m=>{m.GlobalWorkerOptions.workerSrc=new URL('pdfjs/pdf.worker.min.mjs',root).href;return m}).catch(e=>{library=null;throw Error('PDF-Modul konnte nicht geladen werden. Bitte die Anwendung über ihre Webadresse öffnen und das vollständige Programmpaket bereitstellen. '+e.message)});return library}
  function loadOCR(){if(window.Tesseract)return Promise.resolve();return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=new URL('tesseract/tesseract.min.js',root).href;s.onload=resolve;s.onerror=()=>{s.remove();reject(Error('Texterkennung konnte nicht geladen werden. Bitte die vollständigen Programmdateien prüfen.'))};document.head.appendChild(s)})}
  async function ocrPage(page,progress){
   await loadOCR();

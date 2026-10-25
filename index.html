@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V77 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V78 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -145,9 +145,11 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 @media(max-width:700px){.inv75-row{grid-template-columns:minmax(0,1fr);padding:14px 8px}.inv75-row>div{overflow-wrap:anywhere}#inventory75 .toolbar{flex-wrap:wrap}#inventory75 .toolbar button{white-space:normal;max-width:100%}#inventory75 .formgrid input,#inventory75 .formgrid select{min-width:0}}
 
 .booking-done{border:2px solid #16803d;background:#edf9f0;border-radius:12px;padding:16px;margin:12px 0;scroll-margin-top:140px}.booking-done[hidden]{display:none!important}.booking-done h3{color:#12652e;margin-top:0}
-/* V77 direkter Servicebericht-PDF-Import */
+/* V78 direkter Servicebericht-PDF-Import */
+.pdf78-duplicate{background:#fff4df;border:1px solid #d39b37;border-radius:9px;padding:12px;margin:10px 0;overflow-wrap:anywhere}.pdf78-duplicate ul{padding-left:20px}.pdf78-known{background:#e7f6ed;color:#12613d;padding:12px;border-radius:9px}
+#deliveryImportCard [hidden]{display:none!important}
 #pdf77Card [hidden]{display:none!important}.pdf77-document{margin-top:16px}.pdf77-document summary{cursor:pointer;min-height:44px;overflow-wrap:anywhere}.pdf77-document .formgrid{margin:12px 0}.pdf77-check{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}.pdf77-check input{width:auto;min-width:22px;min-height:22px}.pdf77-error{color:#9b2419;font-weight:700}.pdf77-warning{color:#84500b;margin-top:4px}.pdf77-table input{min-width:90px;width:100%;min-height:42px}.pdf77-table input[type=checkbox]{min-width:22px;width:22px}.pdf77-table td{vertical-align:top;overflow-wrap:anywhere}.pdf77-table td:first-child{min-width:44px}.pdf77-table td:nth-child(2){min-width:160px}.pdf77-table td:nth-child(3){min-width:110px}.pdf77-table td:nth-child(6){min-width:170px}#pdf77Card input[type=file]{max-width:100%;min-width:0}
-@media(max-width:700px){#pdf77Card .toolbar button{white-space:normal;max-width:100%}#pdf77Card .formgrid input,#pdf77Card .formgrid select{min-width:0}.pdf77-table,.pdf77-table tbody{display:block;width:100%;min-width:0!important}.pdf77-table thead{display:none}.pdf77-table tr{display:block;border:1px solid #d9e0e6;border-radius:10px;padding:8px;margin:10px 0}.pdf77-table td{display:grid;grid-template-columns:100px minmax(0,1fr);gap:8px;min-width:0!important;border:0;padding:6px 2px}.pdf77-table td:before{content:attr(data-label);font-weight:700}.pdf77-table td>*{grid-column:2;min-width:0}.pdf77-table td>input{width:100%;min-width:0}.pdf77-table td>input[type=checkbox]{width:24px}.pdf77-table td:first-child:before{grid-row:1}.pdf77-table td:first-child>input{grid-row:1}.pdf77-document{padding:10px}}
+@media(max-width:700px){#deliveryImportCard .toolbar button{width:100%}#deliveryImportCard .tablewrap{overflow:visible}#deliveryImportCard table,#deliveryImportCard tbody{display:block;width:100%;min-width:0!important}#deliveryImportCard thead{display:none}#deliveryImportCard tr{display:block;border:1px solid #d9e0e6;border-radius:9px;padding:8px;margin:8px 0}#deliveryImportCard td{display:grid;grid-template-columns:95px minmax(0,1fr);gap:8px;border:0;overflow-wrap:anywhere}#deliveryImportCard td:before{content:attr(data-label);font-weight:700}#deliveryImportCard td input{min-width:0;width:100%;min-height:44px}#deliveryImportCard td button{min-height:44px}#deliveryImportCard{scroll-margin-top:150px}#pdf77Card .toolbar button{white-space:normal;max-width:100%}#pdf77Card .formgrid input,#pdf77Card .formgrid select{min-width:0}.pdf77-table,.pdf77-table tbody{display:block;width:100%;min-width:0!important}.pdf77-table thead{display:none}.pdf77-table tr{display:block;border:1px solid #d9e0e6;border-radius:10px;padding:8px;margin:10px 0}.pdf77-table td{display:grid;grid-template-columns:100px minmax(0,1fr);gap:8px;min-width:0!important;border:0;padding:6px 2px}.pdf77-table td:before{content:attr(data-label);font-weight:700}.pdf77-table td>*{grid-column:2;min-width:0}.pdf77-table td>input{width:100%;min-width:0}.pdf77-table td>input[type=checkbox]{width:24px}.pdf77-table td:first-child:before{grid-row:1}.pdf77-table td:first-child>input{grid-row:1}.pdf77-document{padding:10px}}
 
 </style></head><body>
 
@@ -362,7 +364,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">77.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">78.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('inventory75',this)">📋 Inventur</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this);loadConsumables().catch(e=>msg(consumableMsg,e.message,false))">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -430,20 +432,29 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <button id="iBookButton" class="primary" onclick="saveMove('i')">Einbuchung bestätigen</button>
 <div id="imsg" class="message"></div></div>
 
-<div class="card"><h3>Lieferschein M365</h3>
+<div class="card" id="deliveryImportCard"><h3>Lieferung aus Bestell-Excel oder M365 einbuchen</h3>
+<h4>Materialanforderung als Excel einlesen</h4>
+<p>Deine exportierte Bestellliste direkt auswählen. Die Bestellmengen sind Vorschläge: Nur tatsächlich gelieferte Mengen einbuchen, fehlende Positionen entfernen. Das Buchungsdatum ist das Lieferdatum, nicht das Bestelldatum.</p>
+<label>Bestell-Excel (.xlsx)<input id="orderExcelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+<div class="toolbar" style="margin-top:10px"><button class="primary" id="orderExcelRead" onclick="readOrderExcel()">Bestell-Excel einlesen</button></div>
+<p class="small">Kleine und große Materialanforderung werden unterstützt. Einheiten kommen aus den Stammdaten. Verbrauchsmaterial ohne Artikelnummer wird nicht in den nummerierten Lagerbestand eingebucht.</p>
+<div id="orderExcelMsg" class="message" role="status" aria-live="polite" style="white-space:pre-line"></div>
+<details><summary>Alternativ: Lieferschein über M365 einfügen</summary>
 <div class="split"><div>
 <p>Die Copilot-Ausgabe muss mit <b>IMPORTTYP: EINBUCHUNG</b> beginnen. Danach: <b>Artikelnummer → Bezeichnung → Anzahl</b>. So kann ein noch unbekanntes Material direkt mit Artikelnummer und Bezeichnung vorausgefüllt werden.</p>
-<textarea id="dtext" oninput="scheduleExtractionPreview('delivery')" placeholder="Artikelnummer    Bezeichnung    Menge&#10;7079    Abstreiferhalter    2&#10;126084    Sensor    4"></textarea>
-<div class="toolbar"><button class="secondary" onclick="deliveryPreview()">Extraktion jetzt prüfen</button><button class="secondary" onclick="insertDeliveryPrompt()">Copilot-Prompt anzeigen</button><button class="secondary" onclick="clearExtraction('delivery')">Eingabe leeren</button><button class="secondary" onclick="startNewImportOperation('delivery')">Als neuen Vorgang starten</button></div><p class="small">Die Vorschau aktualisiert sich automatisch. TAB wird empfohlen; Semikolon und | werden ebenfalls unterstützt. Neue Artikel können direkt registriert oder bewusst ignoriert werden.</p></div>
+<textarea id="dtext" oninput="deliveryExcelContext=null;scheduleExtractionPreview('delivery')" placeholder="Artikelnummer    Bezeichnung    Menge&#10;7079    Abstreiferhalter    2&#10;126084    Sensor    4"></textarea>
+<div class="toolbar"><button class="secondary" onclick="deliveryPreview()">Extraktion jetzt prüfen</button><button class="secondary" onclick="insertDeliveryPrompt()">Copilot-Prompt anzeigen</button><button class="secondary" onclick="clearExtraction('delivery')">Eingabe leeren</button><button class="secondary" onclick="startNewImportOperation('delivery')">Als neuen Vorgang starten</button></div><p class="small">Die Vorschau aktualisiert sich automatisch. TAB wird empfohlen; Semikolon und | werden ebenfalls unterstützt. Neue Artikel können direkt registriert oder bewusst ignoriert werden.</p></div></div></details>
 <div class="formgrid">
-<label>Datum<input type="date" id="ddate"></label>
+<label>Liefer-/Buchungsdatum<input type="date" id="ddate" onchange="if(deliveryExcelContext){orderExcelReviewed.checked=false;refreshDeliveryCommit()}"></label>
 <label>Techniker<select id="dtech"></select></label>
 <label>Bemerkung<input id="dnote"></label>
-</div></div>
-<div id="deliveryExtractedSummary" class="summary-box" style="display:none;margin-top:12px"></div><button id="dcommit" class="primary" disabled onclick="deliveryCommit()">Geprüfte Lieferung einbuchen</button>
+</div>
+<div id="deliveryExtractedSummary" class="summary-box" style="display:none;margin-top:12px"></div>
 <div id="dmsg" class="message"></div>
 <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Status</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Aktion</th></tr></thead><tbody id="drows"></tbody></table></div>
-<div id="derrors"></div><div id="dunknown"></div></div>
+<div id="derrors"></div><div id="dunknown"></div>
+<label id="orderExcelReviewLabel" class="pdf77-check" hidden><input id="orderExcelReviewed" type="checkbox" onchange="refreshDeliveryCommit()">Ich habe die tatsächlich gelieferten Artikel, Mengen und das Buchungsdatum geprüft.</label>
+<button id="dcommit" class="primary" disabled onclick="deliveryCommit()">Geprüfte Lieferung einbuchen</button></div>
 <div class="card"><h3>Letzte 20 Einbuchungen</h3>
 <p class="small">Ist der Administratorbereich bereits freigeschaltet, ist keine erneute Passworteingabe erforderlich.</p>
 <div class="tablewrap"><table><thead><tr><th>ID</th><th>Datum</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Techniker</th><th>Bemerkung</th><th>Aktionen</th></tr></thead>
@@ -457,9 +468,9 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div class="toolbar"><button class="primary" id="pdf77Read" onclick="LVServicePDF.read()">Ausgewählte PDFs auslesen</button><button class="secondary" id="pdf77Cancel" hidden onclick="LVServicePDF.cancel()">Auslesen abbrechen</button><button class="secondary" onclick="LVServicePDF.clear()">PDF-Vorschau leeren</button></div>
 <div id="pdf77Msg" class="message" role="status" aria-live="polite" style="white-space:pre-line"></div><datalist id="pdf77ArticleOptions"></datalist>
 <div id="pdf77Preview"></div>
-<div id="pdf77Actions" hidden><p id="pdf77Summary" aria-live="polite"></p><p class="small">Unbekannte Artikelnummern korrigieren oder unter „Neues Material“ anlegen und den tatsächlichen Bestand einbuchen. Danach die Vorschau aktualisieren. Nur ausgewählte, gültige Positionen werden entnommen; ungeklärte Positionen können abgewählt bleiben. Vorhandene Buchungen werden anhand des PDF-Inhalts erkannt.</p>
+<div id="pdf77Actions" hidden><p id="pdf77Summary" aria-live="polite"></p><p class="small">Unbekannte Artikelnummern korrigieren oder unter „Neues Material“ anlegen und den tatsächlichen Bestand einbuchen. Danach die Vorschau aktualisieren. Nur ausgewählte, gültige Positionen werden entnommen; ungeklärte Positionen können abgewählt bleiben. Bereits importierte Positionen werden gesperrt. Bei gleichem Kunden und Datum erscheint zusätzlich ein Vergleichshinweis.</p>
 <div class="toolbar"><button class="secondary" onclick="LVServicePDF.selectAll(true)">Eindeutige Positionen auswählen</button><button class="secondary" onclick="LVServicePDF.selectAll(false)">Alle abwählen</button><button class="secondary" id="pdf77ShowBooked" hidden onclick="LVServicePDF.toggleBooked()">Gebuchte Positionen einblenden</button><button class="secondary" id="pdf77Refresh" onclick="LVServicePDF.refresh()">Vorschau / Bestände aktualisieren</button></div>
-<label class="pdf77-check"><input type="checkbox" id="pdf77Reviewed" onchange="LVServicePDF.update()">Ich habe die ausgewählten Artikel, Mengen, Einheiten, Leistungsdaten und möglichen Wiederholungen geprüft.</label>
+<label class="pdf77-check"><input type="checkbox" id="pdf77Reviewed" onchange="LVServicePDF.update()">Ich habe die ausgewählten Artikel, Anzahlen, Leistungsdaten und möglichen Wiederholungen geprüft.</label>
 <button class="danger" id="pdf77Commit" disabled onclick="LVServicePDF.commit()">Geprüfte Materialien entnehmen</button></div></div>
 
 <div class="card"><h3>Manuelle Entnahme</h3>
@@ -898,6 +909,7 @@ window.LVAdminSession = window.LVAdminSession || {
 <script src="inventory_ui.js"></script>
 <script src="warehouse_core.js"></script>
 <script src="warehouse_ui.js"></script>
+<script src="order_excel_core.js"></script>
 <script src="service_pdf_core.js"></script>
 <script src="service_pdf_reader.js"></script>
 <script src="service_pdf_backend.js"></script>
@@ -979,8 +991,8 @@ async function loadAppInfo(){
   infoMovements.textContent=d.movements;
   document.title='Lagerverwaltung Lovrencic – Version '+d.version;
  }catch(e){
-  appVersion.textContent='69.0';
-  infoVersion.textContent='69.0';
+  appVersion.textContent='78.0';
+  infoVersion.textContent='78.0';
  }
 }
 let dashboardLowItems=[];
@@ -1142,7 +1154,7 @@ function clearExtractionResults(type){
   scommit.disabled=true;serviceExtractedSummary.style.display='none';smsg.style.display='none';
  }
 }
-function clearExtraction(type){
+function clearExtraction(type){if(type==='delivery'){deliveryExcelContext=null;orderExcelFile.value='';orderExcelMsg.className='message';orderExcelReviewed.checked=false;orderExcelReviewLabel.hidden=true;}
  if(type==='delivery')dtext.value='';
  else stext.value='';
  clearExtractionResults(type);
@@ -1151,24 +1163,25 @@ function updateExtractedQuantity(type,index,value){
  const qty=Number(String(value).replace(',','.'));
  const list=type==='delivery'?deliveryp:servicep;
  if(!list[index])return;
- if(Number.isFinite(qty)&&qty>0)list[index].quantity=qty;
+ list[index].quantity=Number.isFinite(qty)?qty:0;
+ if(type==='delivery')orderExcelReviewed.checked=false;
  const commit=type==='delivery'?dcommit:scommit;
- commit.disabled=!list.length||list.some(x=>!(Number(x.quantity)>0));
+ commit.disabled=!list.length||list.some(x=>!(Number(x.quantity)>0))||(type==='delivery'?deliveryUnknown:serviceUnknown).length>0||(type==='delivery'&&deliveryExcelContext&&!orderExcelReviewed.checked);
 }
 function removeExtractedItem(type,index){
  const list=type==='delivery'?deliveryp:servicep;
- list.splice(index,1);
+ list.splice(index,1);if(type==='delivery')orderExcelReviewed.checked=false;
  if(type==='delivery')renderDeliveryPreviewRows();
  else renderServicePreviewRows();
 }
 function renderDeliveryPreviewRows(){
  drows.innerHTML=deliveryp.map((x,i)=>`<tr>
-  <td title="Artikel im Lagerbestand gefunden">✅</td>
-  <td>${esc(x.article_no)}</td><td>${esc(x.description)}</td>
-  <td><input type="number" min="0.01" step="0.01" value="${Number(x.quantity)}" onchange="updateExtractedQuantity('delivery',${i},this.value)"></td>
-  <td><button class="danger icon-button" title="Position entfernen" aria-label="Position entfernen" onclick="removeExtractedItem('delivery',${i})">🗑️</button></td>
+  <td data-label="Status" title="Artikel im Lagerbestand gefunden">✅</td>
+  <td data-label="Artikelnummer">${esc(x.article_no)}</td><td data-label="Bezeichnung">${esc(x.description)}</td>
+  <td data-label="Anzahl geliefert"><input type="number" aria-label="Gelieferte Anzahl" min="0.000001" step="any" value="${Number(x.quantity)}" oninput="updateExtractedQuantity('delivery',${i},this.value)"></td>
+  <td data-label="Aktion"><button class="danger icon-button" title="Position entfernen" aria-label="Position entfernen" onclick="removeExtractedItem('delivery',${i})">🗑️</button></td>
  </tr>`).join('');
- dcommit.disabled=!deliveryp.length||deliveryUnknown.length>0;
+ refreshDeliveryCommit();
  if(deliveryExtractedSummary.style.display!=='none'){
   deliveryExtractedSummary.innerHTML=`<h3>Erkannte Lieferung</h3>
    <p><b>Positionen:</b> ${deliveryp.length+deliveryUnknown.length}</p>
@@ -1186,7 +1199,29 @@ function renderServicePreviewRows(){
  scommit.disabled=!servicep.length||serviceUnknown.length>0;
 }
 
+let deliveryExcelContext=null,excelImportBusy=false;
+function deliveryReady(){return deliveryp.length>0&&deliveryUnknown.length===0&&deliveryp.every(x=>Number(x.quantity)>0)&&(!deliveryExcelContext||(orderExcelReviewed.checked&&LVServicePDFCore.date(ddate.value)))}
+function refreshDeliveryCommit(){dcommit.disabled=bookingBusy.delivery||excelImportBusy||!deliveryReady()}
+async function readOrderExcel(){
+ if(excelImportBusy||bookingBusy.delivery)return;
+ const file=orderExcelFile.files[0];if(!file)return msg(orderExcelMsg,'Bitte eine Bestell-Excel auswählen.',false);
+ if(!/\.xlsx$/i.test(file.name)||file.size>10*1024*1024)return msg(orderExcelMsg,'Bitte eine XLSX-Datei mit höchstens 10 MB auswählen.',false);
+ if(dtext.value.trim()&&!confirm('Die bisherige Liefer-Vorschau durch diese Excel-Bestellung ersetzen? Noch nicht gebuchte Änderungen werden verworfen.'))return;
+ clearTimeout(extractionPreviewTimers.delivery);excelImportBusy=true;orderExcelRead.disabled=true;dcommit.disabled=true;dtext.disabled=true;
+ try{
+  if(typeof XLSX==='undefined')throw Error('Excel-Modul konnte nicht geladen werden. Bitte Verbindung prüfen und die App neu laden.');
+  const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});
+  const parsed=LVOrderExcelCore.parseWorkbook(wb,XLSX);
+  const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(parsed.canonical)),key=[...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  deliveryExcelContext={filename:file.name};ignoredUnknown.delivery.clear();forgetImportOp('delivery');importOps.delivery.nonce='order-excel:'+key;
+  orderExcelReviewed.checked=false;orderExcelReviewLabel.hidden=false;dtext.value=LVOrderExcelCore.importText(parsed);ddate.value=td();dnote.value='Wareneingang aus Bestellung: '+file.name;
+  const result=await deliveryPreview();if(!result)throw Error('Die Excel-Vorschau konnte nicht erstellt werden. Bitte erneut versuchen.');
+  msg(orderExcelMsg,`${parsed.items.length} Bestellposition(en) eingelesen. ${result.processed_count||0} bereits verarbeitet. Gelieferte Mengen und Buchungsdatum unten prüfen; es wurde noch nichts eingebucht.`+(parsed.errors.length?'\nNicht übernommen – in der Datei korrigieren und erneut einlesen:\n'+parsed.errors.join('\n'):'')+(parsed.ignored.length?'\nOhne Artikelnummer ausgelassen:\n'+parsed.ignored.join('\n'):''),!parsed.errors.length);
+  deliveryExtractedSummary.scrollIntoView({behavior:'smooth',block:'center'});
+ }catch(e){msg(orderExcelMsg,e.message,false)}finally{excelImportBusy=false;orderExcelRead.disabled=false;dtext.disabled=false;refreshDeliveryCommit()}
+}
 async function deliveryPreview(silent=false){
+ orderExcelReviewed.checked=false;orderExcelReviewLabel.hidden=!deliveryExcelContext;
  try{
   if(!importOps.delivery.id&&!importOps.delivery.nonce)restoreImportOp('delivery');
   let d=await api('/api/delivery-note/preview',{method:'POST',body:JSON.stringify({text:dtext.value,new_operation_nonce:importOps.delivery.nonce})});importOps.delivery.id=d.operation_id||importOps.delivery.id;rememberImportOp('delivery');
@@ -1205,27 +1240,27 @@ async function deliveryPreview(silent=false){
    <p><b>Positionen:</b> ${deliveryp.length+deliveryUnknown.length}</p>
    <p><b>Bekannte Artikel:</b> ${deliveryp.length}</p>
    <p><b>Unbekannte Artikel:</b> ${deliveryUnknown.length}</p><p><b>Bereits verarbeitet:</b> ${d.processed_count||0}</p>`;
-  dcommit.disabled=!deliveryp.length||deliveryUnknown.length>0;
-  msg(dmsg,deliveryp.length+' bekannte Position(en), '+deliveryUnknown.length+' noch zu entscheidende neue Artikel, '+ignoredUnknown.delivery.size+' ignoriert, '+(d.errors||[]).length+' Fehler.',deliveryp.length>0&&deliveryUnknown.length===0);
+  refreshDeliveryCommit();
+  msg(dmsg,deliveryp.length+' bekannte Position(en), '+deliveryUnknown.length+' noch zu entscheidende neue Artikel, '+ignoredUnknown.delivery.size+' ignoriert, '+(d.errors||[]).length+' Fehler.',deliveryp.length>0&&deliveryUnknown.length===0);return d;
  }catch(e){if(!silent)msg(dmsg,e.message,false)}
 }
 async function deliveryCommit(){
- if(bookingBusy.delivery)return;bookingBusy.delivery=true;dcommit.disabled=true;try{
+ if(bookingBusy.delivery||excelImportBusy)return;if(!deliveryReady())return msg(dmsg,'Bitte gültige Liefermengen und bei Excel die Prüfbestätigung setzen.',false);bookingBusy.delivery=true;dcommit.disabled=true;try{
 
  const bookingItems=deliveryp.map(x=>({...x}));let d;
  try{
-  const payload={movement_type:'IN',items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value,operation_id:importOps.delivery.id};
+  const payload={movement_type:'IN',items:deliveryp,technician:dtech.value,movement_date:ddate.value,note:dnote.value,operation_id:importOps.delivery.id,import_format:deliveryExcelContext?'order_excel':'m365',reviewed:orderExcelReviewed.checked};
   if(!await confirmPossibleDuplicate(payload))return msg(dmsg,'Einbuchung wurde wegen möglicher Doppelbuchung abgebrochen.',false);
   d=await api('/api/delivery-note/commit',{method:'POST',body:JSON.stringify(payload)});
  }catch(e){return msg(dmsg,e.message,false)}
- showBookingCompleted('IN',{count:d.count,items:bookingItems,source:'Lieferschein M365'});dnote.value='';ddate.value=td();
+ showBookingCompleted('IN',{count:d.count||d.already_processed||0,items:bookingItems,source:deliveryExcelContext?'Materialanforderung Excel':'Lieferschein M365'});if(deliveryExcelContext){orderExcelFile.value='';msg(orderExcelMsg,'Erledigt: Die geprüfte Lieferung wurde eingebucht. Dateiauswahl und Eingaben wurden geleert.',true)}deliveryExcelContext=null;orderExcelReviewed.checked=false;orderExcelReviewLabel.hidden=true;dnote.value='';ddate.value=td();
  msg(dmsg,'Einbuchung abgeschlossen: '+d.count+' Position(en) gespeichert. Eingaben geleert.',true);
  deliveryp=[];deliveryUnknown=[];ignoredUnknown.delivery.clear();forgetImportOp('delivery');extractionLastInput.delivery='';
  dtext.value='';drows.innerHTML='';dunknown.innerHTML='';derrors.innerHTML='';deliveryExtractedSummary.style.display='none';dcommit.disabled=true;arts=[];
  const refreshed=await Promise.allSettled([dash(),loadRecentMovements('IN'),loadArticles()]);
  if(refreshed.some(x=>x.status==='rejected'))msg(dmsg,'Einbuchung gespeichert, aber Ansicht konnte nicht vollständig aktualisiert werden.',true)
 
- }finally{bookingBusy.delivery=false;dcommit.disabled=!deliveryp.length||deliveryUnknown.length>0}
+ }finally{bookingBusy.delivery=false;refreshDeliveryCommit()}
 }
 
 function unknownList(source){return source==='delivery'?deliveryUnknown:(source==='service'?serviceUnknown:csvUnknown)}
@@ -1233,12 +1268,12 @@ function setUnknownList(source,list){if(source==='delivery')deliveryUnknown=list
 function unknownBlock(rows,source){
  if(!rows.length)return '';
  if(source==='csv'){
-  let body=rows.map((x,i)=>`<tr><td>${esc(x.article_no)}</td><td><input value="${esc(x.description)}" data-field="description"></td><td>${n(x.quantity)}</td><td><input value="${esc(x.location||'')}" data-field="location"></td><td><input type="number" value="0" data-field="minimum_stock"></td><td><input type="number" value="0" data-field="target_stock"></td></tr>`).join('');
+  let body=rows.map((x,i)=>`<tr><td>${esc(x.article_no)}</td><td><input value="${esc(x.description)}" data-field="description"></td><td data-label="Anzahl">${n(x.quantity)}</td><td><input value="${esc(x.location||'')}" data-field="location"></td><td><input type="number" value="0" data-field="minimum_stock"></td><td><input type="number" value="0" data-field="target_stock"></td></tr>`).join('');
   return `<div class="card"><h3>Neue, noch nicht vorhandene Artikel</h3><p>Bezeichnung und Stammdaten prüfen. Danach können die Artikel direkt angelegt werden.</p><div class="tablewrap"><table data-unknown="${source}"><thead><tr><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Lagerort</th><th>Mindestbestand</th><th>Sollbestand</th></tr></thead><tbody>${body}</tbody></table></div><button class="primary" onclick="createUnknown('${source}')">Fehlende Artikel anlegen</button></div>`;
  }
  const body=rows.map((x,i)=>`<tr>
-  <td>⚠️</td><td><b>${esc(x.article_no)}</b></td><td>${esc(x.description||'Nicht erkannt – bitte beim Anlegen ergänzen')}</td><td>${n(x.quantity)}</td>
-  <td><button class="primary" onclick="openUnknownRegistration('${source}',${i})">Material anlegen</button> <button class="secondary" onclick="ignoreUnknown('${source}',${i})">Ignorieren</button></td>
+  <td data-label="Status">⚠️</td><td data-label="Artikelnummer"><b>${esc(x.article_no)}</b></td><td data-label="Bezeichnung">${esc(x.description||'Nicht erkannt – bitte beim Anlegen ergänzen')}</td><td data-label="Anzahl">${n(x.quantity)}</td>
+  <td data-label="Entscheidung"><button class="primary" onclick="openUnknownRegistration('${source}',${i})">Material anlegen</button> <button class="secondary" onclick="ignoreUnknown('${source}',${i})">Ignorieren</button></td>
  </tr>`).join('');
  return `<div class="card"><h3>Neue, noch nicht registrierte Materialien</h3><p>Jede Position muss bewusst <b>angelegt</b> oder <b>ignoriert</b> werden. Erst danach kann die übrige Buchung bestätigt werden.</p><div class="tablewrap"><table><thead><tr><th>Status</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Menge</th><th>Entscheidung</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
 }
@@ -1247,7 +1282,7 @@ function updateUnknownSourceUI(source){
   dunknown.innerHTML=unknownBlock(deliveryUnknown,'delivery');
   deliveryExtractedSummary.style.display='block';
   deliveryExtractedSummary.innerHTML=`<h3>Erkannte Lieferung</h3><p><b>Buchbare Positionen:</b> ${deliveryp.length}</p><p><b>Noch zu entscheiden:</b> ${deliveryUnknown.length}</p><p><b>Ignoriert:</b> ${ignoredUnknown.delivery.size}</p>`;
-  dcommit.disabled=!deliveryp.length||deliveryUnknown.length>0;
+  refreshDeliveryCommit();
  }else if(source==='service'){
   sunknown.innerHTML=unknownBlock(serviceUnknown,'service');
   const ignored=ignoredUnknown.service.size;
@@ -1275,7 +1310,7 @@ async function openUnknownRegistration(source,index){
   if(found){const opt=[...ur_machine.options].find(o=>Number(o.value)===Number(found.id));if(opt)opt.selected=true}
  }
  renderMachineChips('ur');
- unknownArticleContext.innerHTML=`<b>Quelle:</b> ${source==='delivery'?'Lieferschein / Einbuchung':'Servicebericht / Entnahme'}<br><b>Erkannte Buchungsmenge:</b> ${n(item.quantity)}${source==='service'?'<br><span class="small">Für eine anschließende Entnahme muss der Anfangsbestand mindestens der Entnahmemenge entsprechen.</span>':''}`;
+ unknownArticleContext.innerHTML=`<b>Quelle:</b> ${source==='delivery'?(deliveryExcelContext?'Bestell-Excel / Einbuchung':'Lieferschein / Einbuchung'):'Servicebericht / Entnahme'}<br><b>Erkannte Buchungsmenge:</b> ${n(item.quantity)}${source==='service'?'<br><span class="small">Für eine anschließende Entnahme muss der Anfangsbestand mindestens der Entnahmemenge entsprechen.</span>':''}`;
  adjustUnknownRegistrationUnit();ur_msg.className='message';ur_msg.textContent='';unknownArticleOverlay.style.display='block';setTimeout(()=>ur_desc.focus(),0);
 }
 function closeUnknownRegistration(){unknownArticleOverlay.style.display='none';unknownRegistrationState=null}
@@ -1287,7 +1322,7 @@ async function saveUnknownRegistration(){
  const description=ur_desc.value.trim();if(!description)return msg(ur_msg,'Bitte eine Bezeichnung eingeben.',false);
  const initial=Number(ur_initial.value||0);if(st.source==='service'&&initial<st.quantity)return msg(ur_msg,`Für die Entnahme von ${n(st.quantity)} muss der Ausgangsbestand mindestens ${n(st.quantity)} betragen. Alternativ kann die Position ignoriert werden.`,false);
  const adjusted=normalizeMaterialLevelFields('ur');
- const body={article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,warehouse_id:Number(ur_warehouse.value)||null,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),notes:ur_notes.value.trim(),active:ur_active.value==='true',technician:ur_technician.value||md.default_technician||'',creation_source:st.source==='delivery'?'Lieferschein / M365':'Servicebericht / M365',import_context:{operation_id:importOps[st.source]?.id||'',source:st.source,position_key:st.position_key}};
+ const body={article_no:ur_no.value.trim(),description,initial_stock:initial,target_stock:Number(ur_target.value||0),minimum_stock:Number(ur_min.value||0),unit:ur_unit.value,warehouse_id:Number(ur_warehouse.value)||null,location:ur_location.value,machine_ids:selectedMachineIds(ur_machine),manufacturer:ur_manufacturer.value.trim(),supplier:ur_supplier.value.trim(),supplier_article_no:ur_supplier_no.value.trim(),barcode:ur_barcode.value.trim(),notes:ur_notes.value.trim(),active:ur_active.value==='true',technician:ur_technician.value||md.default_technician||'',creation_source:st.source==='delivery'?(deliveryExcelContext?'Materialanforderung Excel':'Lieferschein / M365'):'Servicebericht / M365',import_context:{operation_id:importOps[st.source]?.id||'',source:st.source,position_key:st.position_key}};
 
  if(saveUnknownRegistration.busy)return;saveUnknownRegistration.busy=true;
  let created;

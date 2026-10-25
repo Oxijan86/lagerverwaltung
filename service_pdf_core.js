@@ -4,6 +4,10 @@
  const norm=v=>clean(v).toLocaleLowerCase('de-DE').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  function unit(value){const u=norm(value).replace(/[.()]/g,'');if(/^(stuck|stueck|stk|st|pcs?|pieces?|ea)$/.test(u))return 'Stk.';if(/^(m|meter|metre|meters|metres)$/.test(u))return 'm';if(/^(l|liter|litre|liters|litres)$/.test(u))return 'l';if(/^(kg|kilogramm|kilogram)$/.test(u))return 'kg';if(/^(g|gramm|gram)$/.test(u))return 'g';return clean(value)}
  function date(value){const s=clean(value);let y,m,d,a;if((a=s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/))){[,d,m,y]=a}else if((a=s.match(/^(\d{4})-(\d{2})-(\d{2})$/))){[,y,m,d]=a}else return '';const v=new Date(Date.UTC(+y,+m-1,+d));return v.getUTCFullYear()===+y&&v.getUTCMonth()===+m-1&&v.getUTCDate()===+d?`${y}-${m}-${d}`:''}
+ // The first eight digits of the export timestamp are YYYYMMDD; time is ignored.
+ function filenameDate(value){const m=clean(value).replace(/^.*[\\/]/,'').match(/(?:^|[^0-9])((?:19|20|21)\d{2})(\d{2})(\d{2})(?=\d{6}(?:[^0-9]|$)|[^0-9]|$)/);return m?date(`${m[1]}-${m[2]}-${m[3]}`):''}
+ function historyMatches(history,customer,dates,doc={}){const name=norm(customer),days=new Set(dates.filter(Boolean));if(!name||!days.size)return [];return (history||[]).filter(h=>norm(h.customer)===name&&days.has(h.movement_date)&&!(h.file_hash&&h.file_hash===doc.file_hash)&&!(h.content_hash&&[doc.content_hash,doc.legacy_content_hash].includes(h.content_hash)))}
+ function historyKey(matches){return JSON.stringify(matches.map(h=>[h.customer,h.movement_date,h.filename||'',h.ticket||'',h.source||'',h.created_at||'',h.file_hash||'',h.content_hash||'']).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))))}
  function quantity(value){const s=clean(value);if(!/^[+]?(?:\d+(?:[.,]\d+)?|[.,]\d+)$/.test(s))return null;const n=Number(s.replace(',','.'));return Number.isFinite(n)&&n>0?n:null}
  function serviceReason(no,description,u){
   if(['10000074','10000082','10000084','10000099'].includes(clean(no)))return 'Arbeitszeit, Reisezeit, Wartungsleistung oder Fahrtkosten';
@@ -25,7 +29,7 @@
   const address=first.lines.slice(0,ticketLine<0?0:ticketLine).map(l=>clean(l.parts.filter(p=>p.x<(Number(first.width)||595)*.52).map(p=>p.text).join(' '))).filter(x=>x&&!/@|rondo|www\.|^tel\.|^fax\./i.test(x));
   const field=label=>{const l=lines.find(l=>clean(l.text).includes(label+':'));return l?clean(l.text).split(label+':')[1].split(/\s+[A-ZÄÖÜ][A-ZÄÖÜ -]{2,}:/)[0].trim():''};
   const machineLine=lines.find(l=>/^Anlage\s*:/i.test(clean(l.text))),machine=(machineLine?clean(machineLine.text.replace(/^Anlage\s*:\s*/i,'')):field('REGISTRIERTES PRODUKT')).split(/\s+(?:Art|Typ)\s*:/i)[0];
-  const metadata={ticket,customer:address[0]||'',machine,technician:field('SERVICETECHNIKER'),reported_date:date(field('GEMELDET AM'))};
+  const metadata={ticket,customer:address[0]||'',machine,technician:field('SERVICETECHNIKER'),reported_date:date(field('GEMELDET AM')),service_date:filenameDate(doc.filename)};
   const items=[],excluded=[],warnings=[];let tableCount=0;
   for(const p of pages){
    let header=null,pending=null;
@@ -36,8 +40,7 @@
     if(reason){excluded.push({...x,reason});return}
     x.quantity=quantity(match?.[1]||'');x.unit=unit(rawUnit);x.movement_date=date(x.raw_date);x.warnings=[];
     if(!x.quantity)x.warnings.push('Menge fehlt, ist ungültig oder nicht positiv.');
-    if(!x.unit)x.warnings.push('Einheit fehlt im Bericht.');
-    if(!x.movement_date)x.warnings.push('Leistungsdatum fehlt. Bitte bestätigen oder ergänzen.');
+    if(!metadata.service_date&&!x.movement_date)x.warnings.push('Leistungsdatum fehlt. Bitte ergänzen.');
     if(p.ocr)x.warnings.push('Texterkennung (OCR): Artikelnummer und Menge sorgfältig prüfen.');
     x.ocr=!!p.ocr;x.position_key='material:'+items.length;items.push(x);
    };
@@ -58,10 +61,14 @@
    if(p.text_missing)warnings.push(`Seite ${p.number}: kein auslesbarer Text. Bei einem Scan die OCR-Option aktivieren.`);
   }
   const seen=new Map();
-  for(const x of items){const k=[norm(x.article_no),x.quantity].join('|'),old=seen.get(k);x.possible_duplicate=!!(old&&old.table!==x.table&&(!old.unit||!x.unit||old.unit===x.unit)&&(!old.movement_date||!x.movement_date||old.movement_date===x.movement_date));if(x.possible_duplicate)x.warnings.push(`Mögliche Wiederholung einer Position aus Tabelle ${old.table}. Nur bei zusätzlichem Verbrauch auswählen.`);if(!old)seen.set(k,x)}
+  for(const x of items){const k=[norm(x.article_no),x.quantity].join('|'),old=seen.get(k);x.possible_duplicate=!!(old&&old.table!==x.table&&(metadata.service_date||!old.movement_date||!x.movement_date||old.movement_date===x.movement_date));if(x.possible_duplicate)x.warnings.push(`Mögliche Wiederholung einer Position aus Tabelle ${old.table}. Nur bei zusätzlichem Verbrauch auswählen.`);if(!old)seen.set(k,x)}
   if(!tableCount)warnings.push('Keine Materialtabelle mit Produkt, Beschreibung und Istmenge erkannt. Angaben im Fließtext werden nicht automatisch abgebucht.');
-  const dates=[...new Set([...items.map(x=>x.movement_date),...excluded.map(x=>date(x.raw_date))].filter(Boolean))];
-  return {metadata,items,excluded,warnings,table_count:tableCount,dates,canonical:JSON.stringify({ticket,customer:metadata.customer,machine,items:items.map(x=>[x.article_no,x.quantity,x.unit,x.movement_date])})};
+  // Keep V77's signature so its already booked rows remain protected after updating.
+  const legacy_canonical=JSON.stringify({ticket,customer:metadata.customer,machine,items:items.map(x=>[x.article_no,x.quantity,x.unit,x.movement_date])});
+  for(const x of items){x.reported_movement_date=x.movement_date;if(metadata.service_date)x.movement_date=metadata.service_date}
+  if(!metadata.service_date)warnings.push('Kein gültiges Datum im PDF-Dateinamen erkannt. Leistungsdatum aus der Tabelle prüfen oder ergänzen.');
+  const dates=metadata.service_date?[metadata.service_date]:[...new Set([...items.map(x=>x.movement_date),...excluded.map(x=>date(x.raw_date))].filter(Boolean))];
+  return {metadata,items,excluded,warnings,table_count:tableCount,dates,legacy_canonical,canonical:JSON.stringify({ticket,customer:metadata.customer,machine,items:items.map(x=>[x.article_no,x.quantity,x.movement_date])})};
  }
- return {clean,norm,unit,date,quantity,serviceReason,groupItems,parseDocument};
+ return {clean,norm,unit,date,filenameDate,historyMatches,historyKey,quantity,serviceReason,groupItems,parseDocument};
 });
