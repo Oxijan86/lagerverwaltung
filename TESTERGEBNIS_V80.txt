@@ -1,0 +1,36 @@
+Lagerverwaltung Lovrencic V80 – lokaler Pruefbericht (02.11.2026)
+===============================================================
+
+ERFOLGREICH AUSGEFUEHRT:
+- node --test .github-v80/tests/test_subtickets.js:
+  6 von 6 Tests bestanden (Hauptticket, fuenf Untertickets,
+  technische Typkennung, fehlende Typkennung, Mehrdeutigkeit).
+- python .github-v80/tests/test_patcher.py: bestanden.
+  Schemaerweiterung, Suche und Backend-Integrationsanker geprueft.
+- python .github-v80/tests/test_ui_patch.py: bestanden.
+  Neuanlage-Dialog, PDF-Buchungsdaten und JavaScript-Syntax des
+  UI-Testfixtures geprueft.
+- YAML-Workflow eingelesen, Jobs und Testbefehle vorhanden: bestanden.
+- Echtes sechsseitiges Beispiel-PDF fuer Ticket 36416: Klassifizierer
+  erkennt die fuenf Untertickets 31482, 31497, 31498, 36415, 36385,
+  Haupttyp PMML113.B und Maschinen-Typcodes je Unterticket.
+- Originaler V79-PDF-Parser aus aktuellem GitHub-Code wurde mit
+  synthetischer RONDO-Positionsstruktur separat getestet:
+  6 Materialtabellen und 6 Artikelpositionen korrekt erkannt.
+- ZIP-Integritaet: erfolgreich geprueft.
+
+NOCH NICHT LOKAL MOEGLICH:
+- Gesamte Windows-/Android-PWA mit produktiver SQLite-Datenbank testen.
+- Vollstaendige GitHub-Build-Abnahme, bevor das Upload-Paket in das
+  Repository hochgeladen wird.
+
+DESHALB ENTHAELT DAS UPLOAD-PAKET EINEN AUTOMATISCHEN GITHUB-PRUEFLAUF:
+- Testet den kompletten Originalcode nach dem Anwenden der V80-Erweiterung
+  inkl. JavaScript-Syntax, realem Parser, PWA-Dateien und SQLite-Schema.
+- Fuehrt erst bei erfolgreichen Tests die GitHub-Codeaktualisierung aus.
+- Nach GitHub-Upload unter Actions Ergebnis (gruen/rot) kontrollieren.
+
+SICHERHEITSHINWEIS:
+Keine realen Lagerbewegungen wurden im lokalen Test erzeugt.
+Mit einer Kopie der Datenbank manuell testen, bevor reale Materialien
+registriert oder entnommen werden.

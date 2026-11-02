@@ -1,0 +1,53 @@
+LAGERVERWALTUNG LOVRENCIC – V80 FUER GITHUB
+===========================================
+
+1. Zur Sicherheit vorab in deiner Lagerverwaltung im Menue Backups eine
+   Datensicherung pruefen/erstellen. Fuer einen Funktionstest eine KOPIE
+   der Lagerdatenbank verwenden. Eine GitHub-Codeaktualisierung ersetzt
+   die Datenbank nicht, dennoch ist die Sicherung empfehlenswert.
+
+2. Auf https://github.com/Oxijan86/lagerverwaltung gehen, Branch "main".
+
+3. Oben "Add file" -> "Upload files" anklicken.
+
+4. DIESE ZIP ZUERST ENTPACKEN. Alle entpackten Dateien und Ordner
+   (.github, .github-v80, README_V80.md) in das Repository hochladen.
+   Wenn GitHub versteckte Ordner nicht per Drag-and-drop uebernimmt,
+   im GitHub-Repo den Ordner .github/workflows und .github-v80
+   ueber "Add file -> Create new file" mit den relativen Dateipfaden
+   anlegen oder mittels GitHub Desktop hochladen.
+
+   GITHUB_HOCHLADEN.txt muss nicht ins Repository.
+
+5. "Commit changes" bestaetigen. Danach den Tab "Actions" aufrufen
+   und auf "Lagerverwaltung V80 - pruefen und installieren" klicken.
+   Der Workflow wird durch den Upload gestartet; alternativ ueber
+   "Run workflow" starten.
+
+6. WENN DER WORKFLOW GRUEN IST, wurde der Code im Repository auf
+   V80 aktualisiert. Erfolgt ein roter Fehler beim git push, unter
+   Settings -> Actions -> General -> Workflow permissions
+   "Read and write permissions" aktivieren und erneut starten.
+   Andere rote Fehler NICHT durch Umgehen der Tests beheben.
+
+7. Die GitHub-Pages-Webseite neu laden. Falls Android die installierte
+   PWA noch mit V79 anzeigt, die App ganz schliessen und erneut starten.
+   Wenn noetig die Website in Chrome aktualisieren, um den neuen
+   Service Worker zu uebernehmen. Nicht die Datenbank loeschen!
+
+8. Mit einer TESTDATENBANK pruefen, ob neue Artikel registriert werden
+   koennen, Untertickets korrekt erkannt werden und Entnahmen stimmen.
+
+Die neue V80-Software nutzt deine unveraenderten GitHub-V79-Bibliotheken.
+Das ist beabsichtigt: Die 50+ MB vendor-Dateien bleiben erhalten.
+
+WICHTIG ZU GITHUB PAGES:
+------------------------
+Ein Commit von "github-actions[bot]" stoesst nicht in jedem
+GitHub-Pages-Setup automatisch eine Neuveroeffentlichung an.
+Der V80-Workflow versucht deshalb auch einen Pages-Build ueber die API.
+Nach dem gruenen Workflow die Webseite pruefen: Sie muss "Version 80.0"
+anzeigen. Falls sie weiter "79.0" zeigt, auf GitHub im Repository
+README_V80.md ueber das Stiftsymbol bearbeiten und eine kleine Aenderung
+(z.B. Leerzeile) als eigenen Commit speichern. Ein persoenlicher Commit
+anstelle des Actions-Bot-Commits loest die Pages-Veroeffentlichung aus.
