@@ -1,0 +1,8 @@
+const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');
+const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
+test('V80 versions consistency',()=>{assert.match(read('index.html'),/id="appVersion">80\.0/);assert.match(read('local_backend.js'),/version:'80\.0'/);assert.equal(JSON.parse(read('package.json')).version,'80.0.0');assert.match(read('manifest.webmanifest'),/V80/)});
+test('PWA cache updates V80 parser',()=>{const sw=read('service-worker.js');assert.match(sw,/lv80-pdf-machine-creation-1/);assert.match(sw,/service_pdf_v80\.js/)});
+test('Unknown articles have registration and safe initial stock',()=>{const ui=read('service_pdf_ui.js');assert.match(ui,/Neues Material registrieren/);assert.match(ui,/Anfangsbestand/);assert.match(ui,/\$\('pdf80Initial'\)\.value='0'/);assert.match(ui,/\/api\/article\/create/);assert.match(ui,/createNew\(i,j\)/)});
+test('Per-position ticket and machine persisted with movements',()=>{const b=read('service_pdf_backend.js');assert.match(b,/service_pdf_machine_usage/);assert.match(b,/machine_code/);assert.match(b,/x\.ticket/);assert.match(b,/x\.machine/)});
+test('Stock search includes machine and technical code',()=>{assert.match(read('local_backend.js'),/pdf_machine_codes/);assert.match(read('v68_core.js'),/pdf_machine_codes/);assert.match(read('index.html'),/Serviceberichte:/)});
+test('Mobile menu allows scrolling to backup menu',()=>{assert.match(read('index.html'),/#mainNav\.open\{max-height:/);assert.match(read('index.html'),/show\('backup'/)});

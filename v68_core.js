@@ -8,7 +8,7 @@
   return String(value??'').toLocaleLowerCase('de-DE').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
  }
  function articleSearchText(article){
-  return normalizeSearchText([article?.article_no,article?.description,article?.location,article?.machine,...(article?.machines||[])].filter(Boolean).join(' '));
+  return normalizeSearchText([article?.article_no,article?.description,article?.location,article?.machine,...(article?.machines||[]),...(article?.pdf_machines||[]),...(article?.pdf_machine_codes||[])].filter(Boolean).join(' '));
  }
  function filterStockArticles(articles,query,previewLimit=5){
   const q=normalizeSearchText(query);

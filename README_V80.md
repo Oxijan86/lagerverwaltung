@@ -1,19 +1,30 @@
-# Lagerverwaltung Lovrencic V80
+# Lagerverwaltung Lovrencic – Version 80.0
 
-## Funktionen
+**Fertige Programmdateien zum Hochladen auf GitHub Pages.** Basis ist die am 02.11.2026 auf GitHub veröffentlichte Version 79.0. Die Dateien sind bereits aktualisiert. Es wird kein Installer, kein Patch-Skript und kein GitHub-Actions-Workflow benötigt.
 
-- PDF-Serviceberichte mit Hauptticket und Untertickets: Positionstabellen werden jeweils eigenstaendig erkannt, den Tickets und Maschinen zugeordnet und mit der technischen Produkt-ID verknuepft.
-- Bei unklarer Zuordnung bleibt die Maschine bewusst frei; Materialpositionen werden vor dem Buchen geprueft.
-- Unbekannte Artikel lassen sich direkt in der PDF-Vorschau registrieren (Nummer und Beschreibung uebernommen; Einheit, Soll-/Mindestbestand, Anfangsbestand und Lagerort manuell pruefen).
-- Anfangsbestand startet mit **0** und wird nur bei ausdruecklicher Bestaetigung als reale Einbuchung erfasst.
-- Die PDF-Positionen koennen danach auf Basis des geprueften Bestands als Entnahme gebucht werden.
-- Die Suche im Lagerbestand beruecksichtigt Maschinenbezeichnungen und technische Typkennungen aus bestaetigten Service-PDF-Buchungen.
-- Vorhandene Datenbankdateien werden nicht ueberschrieben, Stammdaten-Maschinenbeziehungen nicht automatisch veraendert.
+## Neuerungen
 
-## Deployment
+- Kombinierte RONDO-Serviceberichte: Positionstabellen des Haupttickets und der Untertickets werden den Tickets in der Reihenfolge der PDF zugeordnet. Abweichende Tabellenanzahlen ergeben bewusst keine unsichere Unterticket-Maschinenzuordnung.
+- Technische Kennung (z. B. PMML113.B, SRL550.A) und Maschinenbezeichnung werden getrennt erkannt und pro PDF-Materialposition gespeichert.
+- Nach einer **bestätigten** PDF-Materialentnahme lassen sich Ersatzteile im Lagerbestand über den Namen und die technische Typkennung der erkannten Maschine finden.
+- Fehlende Artikel lassen sich im PDF-Import über **„Neues Material registrieren“** anlegen. Artikelnummer und Bezeichnung werden übernommen, Einheit, Lagerort, Sollbestand und Mindestbestand bleiben bearbeitbar.
+- Der Anfangsbestand bei der Neuanlage ist standardmäßig **0** und muss ausdrücklich bestätigt werden. Ohne vorhandenen Bestand erfolgt keine Entnahme.
+- Neue DB-Tabelle `service_pdf_machine_usage` wird bei Programmstart automatisch angelegt. Alte Datenbanken bleiben erhalten.
+- Die mobile Navigation ist scrollbar, damit „Backups“, „Stammdaten“ und „Hilfe“ erreichbar sind.
+- Version 80.0 wird in der Oberfläche und durch `/api/info` gemeldet; PWA-Manifest und Service-Worker-Cache aktualisiert.
 
-Das Upload-Paket enthaelt die vollstaendige *V80-Einspielroutine*, nicht noch einmal die 56 MB der bereits auf GitHub vorhandenen Bibliotheken. Das GitHub-Workflow installiert die Aenderungen in den bestehenden Repository-Dateien, fuehrt Tests aus und commitet die aktualisierten Dateien auf `main`. Falls GitHub Actions keine Schreibberechtigung erhalten, muss diese unter Repository Settings > Actions > General > Workflow permissions auf Read and write gesetzt werden. Im Workflow wird `permissions: contents: write` explizit angefordert.
+## Hochladen
 
-Nach dem erfolgreichen Workflow ist **das gesamte Repository eine vollstaendige und lauffaehige V80-GitHub-Version**. Bei Fehlern erfolgt kein automatischer Commit. Keinesfalls darf dieses Upload-Paket als komplett neue Website ohne den alten Dateibestand verwendet werden.
+Im bestehenden GitHub-Repository `Oxijan86/lagerverwaltung` können Sie mit **Add file → Upload files** die entpackten Dateien aus `Lagerverwaltung_Lovrencic_V80_Direktupload.zip` hochladen. Gleichnamige Dateien ersetzen, sonstige Dateien (insbesondere `vendor/`, `hilfe/`, `icons/`) stehen lassen. Commit bestätigen. **Keine ZIP-Datei als einzelne Datei hochladen.**
 
-Die Upload-Anleitung steht in `GITHUB_HOCHLADEN.txt`.
+Die Vollversion enthält darüber hinaus die bereits vorhandenen Bibliotheken und Dokumentationsdateien. Sie ist als vollständige Archivkopie gedacht; für ein bestehendes Repository ist das kleinere Direktuploadpaket einfacher und genauso funktionsfähig.
+
+## Testen
+
+- Node.js: `npm test` – automatisierte Tests
+- Node.js: `npm run test:syntax` – JavaScript-Syntax und Versionskonsistenz
+- RONDO-PDF-Auswertung mit echtem sechsseitigem Benutzerbeispiel: 6 Materialtabellen, 5 Untertickets, 33 Materialpositionen und 9 ausgeschlossene Zeit-/Reisekostenpositionen.
+
+**Hinweis zu Daten:** Ohne explizite Benutzerbestätigung führt eine PDF-Vorschau keine Bestandsbuchung aus. Vor produktivem Einsatz sollte die Neuanlage mit einer Kopie der Lagerdatenbank getestet werden.
+
+**Praktische Grenze:** Der automatisierte Browser-Rauchtest konnte hier nicht beendet werden, weil Chromium HTTP-Zugriffe auf die lokale Testadresse durch eine Umgebungsrichtlinie blockiert. Die Quelltext-, Syntax- und Parserprüfungen waren erfolgreich; ein echter E2E-Test mit produktiver Datenbank ist nicht enthalten.

@@ -1,6 +1,12 @@
 (function(root){'use strict';root.LVServicePDFBackend={create(d){
  const C=root.LVServicePDFCore,{run,rows,transaction,articles,persist,audit,stamp,backup,guard,databaseId,validate,book}=d,previews=new Map();let queue=Promise.resolve(),retryDatabase='';
- function init(){run(`CREATE TABLE IF NOT EXISTS service_pdf_imports(file_hash TEXT NOT NULL,content_hash TEXT NOT NULL,position_key TEXT NOT NULL,filename TEXT NOT NULL,ticket TEXT NOT NULL DEFAULT '',article_id INTEGER NOT NULL,movement_id INTEGER NOT NULL,quantity REAL NOT NULL,snapshot_json TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(file_hash,position_key))`);run('CREATE INDEX IF NOT EXISTS service_pdf_content ON service_pdf_imports(content_hash,position_key)')}
+ function init(){run(`CREATE TABLE IF NOT EXISTS service_pdf_imports(file_hash TEXT NOT NULL,content_hash TEXT NOT NULL,position_key TEXT NOT NULL,filename TEXT NOT NULL,ticket TEXT NOT NULL DEFAULT '',article_id INTEGER NOT NULL,movement_id INTEGER NOT NULL,quantity REAL NOT NULL,snapshot_json TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(file_hash,position_key))`);run('CREATE INDEX IF NOT EXISTS service_pdf_content ON service_pdf_imports(content_hash,position_key)');
+  run(`CREATE TABLE IF NOT EXISTS service_pdf_machine_usage(
+    movement_id INTEGER PRIMARY KEY,article_id INTEGER NOT NULL,file_hash TEXT NOT NULL,
+    position_key TEXT NOT NULL,ticket TEXT NOT NULL DEFAULT '',
+    machine TEXT NOT NULL DEFAULT '',machine_code TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL)`);
+  run('CREATE INDEX IF NOT EXISTS service_pdf_machine_article ON service_pdf_machine_usage(article_id)') }
  async function hash(value){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
  function previous(doc,key){return rows('SELECT * FROM service_pdf_imports WHERE (file_hash=? OR content_hash=? OR content_hash=?) AND position_key=?',[doc.file_hash,doc.content_hash,doc.legacy_content_hash||doc.content_hash,key])[0]||null}
  function history(){
@@ -20,7 +26,7 @@
    if(seen.has(source.file_hash))continue;seen.add(source.file_hash);
    if(!Array.isArray(source.pages)||source.pages.some(p=>!Array.isArray(p.items)||p.items.length>30000||p.items.some(x=>String(x.str||'').length>5000)))throw Error('PDF-Inhalt ist zu umfangreich oder ungültig.');
    const parsed=C.parseDocument(source);if(parsed.items.length>2000)throw Error('Ein Bericht enthält mehr als 2000 Materialpositionen. Bitte aufteilen.');
-   documents.push({file_hash:source.file_hash,content_hash:await hash(parsed.canonical),legacy_content_hash:await hash(parsed.legacy_canonical),filename:String(source.filename||'Servicebericht.pdf').slice(0,240),metadata:parsed.metadata,items:parsed.items,excluded:parsed.excluded,warnings:parsed.warnings,dates:parsed.dates,table_count:parsed.table_count});
+   documents.push({file_hash:source.file_hash,content_hash:await hash(parsed.canonical),legacy_content_hash:await hash(parsed.legacy_canonical),filename:String(source.filename||'Servicebericht.pdf').slice(0,240),metadata:parsed.metadata,items:parsed.items,excluded:parsed.excluded,warnings:parsed.warnings,dates:parsed.dates,table_count:parsed.table_count,subtickets:parsed.subtickets||[]});
   }
   if(expected!==databaseId())throw Error('Die Lagerdatei wurde während des Einlesens gewechselt. Bitte erneut einlesen.');
   const id=crypto.randomUUID(),v={id,database_id:databaseId(),documents};while(previews.size>=4)previews.delete(previews.keys().next().value);previews.set(id,v);return view(v);
@@ -38,9 +44,14 @@
    const u=a.unit; // The catalog owns units; PDF units never alter the numeric quantity.
    if(C.serviceReason(no,a.description,u))throw Error('Zeit-, Kilometer- und Kostenpositionen können nicht als Materialentnahme gebucht werden.');
    const meta=metadata.get(doc.file_hash)||{},movement_date=C.date(patch.movement_date||meta.movement_date||source.movement_date);if(!movement_date)throw Error(`Leistungsdatum für ${no} fehlt oder ist ungültig.`);
-   const customer=C.clean(meta.customer??doc.metadata.customer),machine=C.clean(meta.machine??doc.metadata.machine),ticket=C.clean(meta.ticket??doc.metadata.ticket);if(!customer)throw Error(`Kunde für ${doc.filename} fehlt. Bitte ergänzen.`);
+   const customer=C.clean(meta.customer??doc.metadata.customer),
+      machine=C.clean(Object.prototype.hasOwnProperty.call(patch,'machine')?patch.machine:
+        Object.prototype.hasOwnProperty.call(source,'machine')?source.machine:meta.machine??doc.metadata.machine),
+      ticket=C.clean(Object.prototype.hasOwnProperty.call(patch,'ticket')?patch.ticket:
+        Object.prototype.hasOwnProperty.call(source,'ticket')?source.ticket:meta.ticket??doc.metadata.ticket),
+      machine_code=C.clean(Object.prototype.hasOwnProperty.call(patch,'machine_code')?patch.machine_code:(source.machine_code||''));if(!customer)throw Error(`Kunde für ${doc.filename} fehlt. Bitte ergänzen.`);
    if(customer.length>300||machine.length>300||ticket.length>100||String(p.note||'').length>2000)throw Error('Kunden-, Maschinen- oder Bemerkungsangabe ist zu lang.');
-   const plan={doc,source,article_id:a.id,article_no:a.article_no,quantity,unit:u,movement_date,customer,machine,ticket};plans.push(plan);grouped.set(a.id,{article_id:a.id,article_no:a.article_no,quantity:(grouped.get(a.id)?.quantity||0)+quantity});
+   const plan={doc,source,article_id:a.id,article_no:a.article_no,quantity,unit:u,movement_date,customer,machine,ticket,machine_code};plans.push(plan);grouped.set(a.id,{article_id:a.id,article_no:a.article_no,quantity:(grouped.get(a.id)?.quantity||0)+quantity});
   }
   for(const x of plans){if(checkedDocs.has(x.doc.file_hash))continue;checkedDocs.add(x.doc.file_hash);const dates=plans.filter(y=>y.doc.file_hash===x.doc.file_hash).map(y=>y.movement_date),matches=C.historyMatches(past,x.customer,dates,x.doc);if(matches.length&&metadata.get(x.doc.file_hash)?.history_ack!==C.historyKey(matches))throw Error(`Für ${x.customer} und dieses Leistungsdatum sind bereits Entnahmen gespeichert. Bitte Vorschau aktualisieren und den Hinweis auf einen möglichen erneuten Import bestätigen.`)}
   if(plans.length)validate([...grouped.values()],'OUT',{technician:p.technician});
@@ -53,9 +64,12 @@
   await backup('Sicherheitsbackup','Vor Servicebericht-PDF-Entnahme');await guard();prepared=prepare(v,p);
   transaction(()=>{
    for(const x of prepared.plans){
-    const note=[p.note||'',`RONDO-Servicebericht: ${x.doc.filename}`,x.ticket?`Ticket ${x.ticket}`:'',`PDF-Seite ${x.source.page}`,x.source.ocr?'Per OCR erkannt und geprüft':''].filter(Boolean).join('\n');
+    const note=[p.note||'',`RONDO-Servicebericht: ${x.doc.filename}`,x.ticket?`Ticket ${x.ticket}`:'',x.machine_code?`Technische Typkennung ${x.machine_code}`:'',`PDF-Seite ${x.source.page}`,x.source.ocr?'Per OCR erkannt und geprüft':''].filter(Boolean).join('\n');
     const movement=book([{article_id:x.article_id,article_no:x.article_no,quantity:x.quantity,position_key:x.source.position_key}],'OUT',{technician:p.technician,movement_date:x.movement_date,customer:x.customer,machine:x.machine,delivery_note:x.ticket,source:'RONDO-Servicebericht PDF',note})[0];
     run('INSERT INTO service_pdf_imports(file_hash,content_hash,position_key,filename,ticket,article_id,movement_id,quantity,snapshot_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',[x.doc.file_hash,x.doc.content_hash,x.source.position_key,x.doc.filename,x.ticket,x.article_id,movement.id,x.quantity,JSON.stringify({original:x.source,booked:{article_no:x.article_no,quantity:x.quantity,unit:x.unit,movement_date:x.movement_date,customer:x.customer,machine:x.machine}}),stamp()]);
+     if(x.machine||x.machine_code)run(`INSERT OR REPLACE INTO service_pdf_machine_usage
+       (movement_id,article_id,file_hash,position_key,ticket,machine,machine_code,created_at)
+       VALUES(?,?,?,?,?,?,?,?)`,[movement.id,x.article_id,x.doc.file_hash,x.source.position_key,x.ticket,x.machine,x.machine_code,stamp()]);
    }
    audit(p.technician||'Techniker','PDF-ENTNAHME','Servicebericht',v.id,`${prepared.plans.length} Materialpositionen aus geprüften RONDO-PDFs entnommen.`);
   });

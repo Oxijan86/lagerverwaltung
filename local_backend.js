@@ -374,10 +374,15 @@ function articles(q=''){
  }
  sql+=' GROUP BY a.id ORDER BY a.article_no';
  const list=rows(sql,p);
- for(const a of list){
-  const rel=machineRelationRows(a.id);a.machine_ids=rel.map(x=>Number(x.id));a.machines=rel.map(x=>x.name);
-  if(rel.length)a.machine=a.machines.join(', ');
- }
+  const pdfMachineByArticle=new Map();
+  if(tableExists('service_pdf_machine_usage'))for(const use of rows(`SELECT article_id,machine,machine_code FROM service_pdf_machine_usage WHERE machine<>'' OR machine_code<>''`)){
+    let values=pdfMachineByArticle.get(Number(use.article_id));if(!values){values={machines:new Set(),codes:new Set()};pdfMachineByArticle.set(Number(use.article_id),values)}
+    if(use.machine)values.machines.add(use.machine);if(use.machine_code)values.codes.add(use.machine_code);
+  }
+  for(const a of list){const rel=machineRelationRows(a.id);a.machine_ids=rel.map(x=>Number(x.id));a.machines=rel.map(x=>x.name);
+    if(rel.length)a.machine=a.machines.join(', ');
+    const pdf=pdfMachineByArticle.get(Number(a.id));a.pdf_machines=pdf?[...pdf.machines]:[];a.pdf_machine_codes=pdf?[...pdf.codes]:[];
+  }
  return list;
 }
 
@@ -1253,7 +1258,7 @@ async function route(url,opt={}){
   return response(await Inventory.handle(action,input,opt));
  }
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'79.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'80.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});

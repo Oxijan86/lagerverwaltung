@@ -1,10 +1,10 @@
 {
-  "name": "lagerverwaltung-lovrencic-v79",
+  "name": "lagerverwaltung-lovrencic-v80",
   "private": true,
-  "version": "79.0.0",
+  "version": "80.0.0",
   "scripts": {
-    "test": "node --test tests/v78.test.cjs tests/v79.test.cjs",
-    "test:syntax": "node tests/check-build.cjs"
+    "test": "node --test tests_v80/*.js tests_v80/*.cjs",
+    "test:syntax": "node tests_v80/check_syntax.cjs"
   },
   "devDependencies": {
     "sql.js": "1.10.3",
