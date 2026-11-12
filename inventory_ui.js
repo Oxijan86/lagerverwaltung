@@ -5,10 +5,30 @@
  const pageSize=30;
  function message(text,ok=true){window.msg($('inv75Msg'),text,ok)}
  function key(){return data?`lv75-inventory:${data.database_id}:${data.session.id}`:''}
+ const V84=window.LVInventoryV84Core;
+ function contextKey(){return data?`lv84-counting-place:${data.database_id}:${data.session.id}`:''}
+ function manualCloud(){try{return localStorage.getItem('lv84_inventory_cloud_manual')!=='0'}catch{return true}}
+ function context(){return {warehouse_id:Number($('inv84Warehouse')?.value)||null,location:String($('inv84Location')?.value||'').trim(),apply:!!$('inv84Apply')?.checked}}
+ function saveContext(){if(!data)return;try{localStorage.setItem(contextKey(),JSON.stringify(context()))}catch{}}
+ function loadContext(){
+  const w=$('inv84Warehouse'),l=$('inv84Location'),apply=$('inv84Apply');if(!w||!l||!apply||!data)return;
+  let saved={};try{saved=JSON.parse(localStorage.getItem(contextKey())||'{}')||{}}catch{}
+  w.value=[...w.options].some(o=>o.value===String(saved.warehouse_id||''))?String(saved.warehouse_id||''):'';
+  l.value=saved.location||'';apply.checked=saved.apply!==false;contextMessage();
+  const manual=$('inv84ManualCloud');if(manual)manual.checked=manualCloud();
+ }
+ function contextMessage(){
+  const out=$('inv84ContextInfo');if(!out||!data)return;
+  const c=context(),known=c.location&&data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===c.location.toLocaleLowerCase('de-DE'));
+  out.textContent=c.location&&!known?`„${c.location}“ ist noch kein gespeicherter Lagerort. Bitte zuerst „Lagerort anlegen“ wählen.`:
+   c.apply?(c.location?`Neue Zählungen werden „${c.location}“ zugeordnet.`:c.warehouse_id?'Neue Zählungen übernehmen das gewählte Lager.':'Bitte einen Zählbereich auswählen.'):'Automatische Lagerortübernahme ausgeschaltet.';
+  out.className=c.location&&!known?'small inv75-warning':'small';
+  const btn=$('inv84AddLocation');if(btn)btn.hidden=!c.location||!!known;
+ }
  function cache(){if(!data)return;try{if(pending.size)localStorage.setItem(key(),JSON.stringify({version:data.session.version,items:[...pending.values()]}));else localStorage.removeItem(key())}catch{message('Lokale Wiederherstellungskopie konnte nicht gespeichert werden. Bitte jetzt zwischenspeichern.',false)}}
  function payload(extra={}){return {id:data.session.id,version:data.session.version,database_id:data.database_id,...extra}}
  async function post(action,body){return window.api('/api/inventory-v75/'+action,{method:'POST',body:JSON.stringify(body)})}
- function adopt(result){$('inv75ReviewBox').hidden=true;data=result;dbid=result.database_id;referenceOptions();status();render()}
+ function adopt(result){const oldId=data?.session?.id;$('inv75ReviewBox').hidden=true;data=result;dbid=result.database_id;referenceOptions();if(oldId!==result.session.id)loadContext();else contextMessage();status();render()}
  function status(){
   if(!data){$('inv75Work').hidden=true;return}
   $('inv75Work').hidden=false;
@@ -21,13 +41,15 @@
   $('inv75Review').disabled=done||busy||errorState||data.durable===false;
   document.querySelectorAll('#inv75Rows input,#inv75Rows select').forEach(el=>el.disabled=done||busy);
   ['inv75Session','inv75Name','inv75NewWarehouse','inv75NewLocation','inv75Warehouse'].forEach(id=>$(id).disabled=busy);
+  ['inv84Warehouse','inv84Location','inv84Apply','inv84AddLocation'].forEach(id=>{if($(id))$(id).disabled=busy||done});
   document.querySelectorAll('#inventory75 button[onclick="LVInventory.create()"],#inventory75 button[onclick="LVInventory.select()"],#inv75Finalize').forEach(el=>el.disabled=busy||(el.id==='inv75Finalize'&&(done||!!data.stats.conflicts||!data.stats.counted)));
  }
  function referenceOptions(){
   if(!data&&!index)return;const refs=data||index;
-  for(const id of ['inv75Warehouse','inv75WarehouseFilter']){
-   const el=$(id),old=el.value;el.innerHTML=`<option value="">${id==='inv75Warehouse'?'Ohne übergeordnetes Lager':'Alle Lager'}</option>`+refs.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('');el.value=el.dataset.ready?old:(id==='inv75Warehouse'?refs.default_warehouse_id||'':'');el.dataset.ready='1';
+  for(const id of ['inv75Warehouse','inv75WarehouseFilter','inv84Warehouse']){
+   const el=$(id),old=el.value;el.innerHTML=`<option value="">${id==='inv75Warehouse'?'Ohne übergeordnetes Lager':id==='inv84Warehouse'?'Lager auswählen':'Alle Lager'}</option>`+refs.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('');el.value=el.dataset.ready?old:(id==='inv75Warehouse'?refs.default_warehouse_id||'':'');el.dataset.ready='1';
   }
+  const datalist=$('inv84LocationOptions');if(datalist)datalist.innerHTML=refs.locations.map(l=>`<option value="${esc(l.name)}"></option>`).join('');
  }
  function matching(){
   if(!data)return [];const q=$('inv75Search').value.trim().toLocaleLowerCase('de-DE'),filter=$('inv75Filter').value,warehouse=$('inv75WarehouseFilter').value;
@@ -49,7 +71,7 @@
    const options='<option value="">Ohne Lagerort</option>'+[...choices.keys()].map(name=>`<option value="${esc(name)}" ${name===x.location?'selected':''}>${esc(name)}</option>`).join('');
    return `<article class="inv75-row ${x.counted_stock!==null?'inv75-counted':''} ${x.stale?'inv75-conflict':''}">
     <div><b>${esc(x.article_no)}</b><div>${esc(x.description)}</div><span class="small">${esc(x.unit)} · Bestand bei Beginn: ${esc(x.base_stock)}</span>${x.stale?`<div class="inv75-warning">Bestandsstand geändert${x.missing?' / Artikel nicht mehr aktiv':''}. Bitte erneut prüfen.</div>${!x.missing?`<button class="secondary" onclick="LVInventory.rebase(${x.article_id})">Bestandsstand aktualisieren und neu zählen</button>`:''}`:''}</div>
-    <label>Gezählt (${esc(x.unit)})<input id="inv75-count-${x.article_id}" type="text" inputmode="decimal" autocomplete="off" value="${esc(x.counted_stock??'')}" ${disabled} oninput="LVInventory.edit(${x.article_id},'counted_stock',this.value)"><span class="small">Leer = noch nicht gezählt · 0 = leerer Bestand</span></label>
+    <div><label>Gezählt (${esc(x.unit)})<input id="inv75-count-${x.article_id}" type="text" inputmode="decimal" autocomplete="off" value="${esc(x.counted_stock??'')}" ${disabled} oninput="LVInventory.edit(${x.article_id},'counted_stock',this.value)"><span class="small">Leer = noch nicht gezählt · 0 = leerer Bestand</span></label><div class="inv84-add-row"><input id="inv84-add-${x.article_id}" aria-label="Weitere gefundene Menge für ${esc(x.article_no)}" placeholder="Weitere Menge" inputmode="decimal" autocomplete="off" ${disabled} onkeydown="if(event.key==='Enter'){event.preventDefault();LVInventory.addCount(${x.article_id})}"><button type="button" class="secondary" ${disabled} onclick="LVInventory.addCount(${x.article_id})">+ Hinzufügen</button></div><div id="inv84-result-${x.article_id}" class="small" aria-live="polite"></div></div>
     <label>Lager<select id="inv75-warehouse-${x.article_id}" ${disabled} onchange="LVInventory.warehouseChanged(${x.article_id},this.value)">${LVWarehouses.warehouses(x.warehouse_id)}</select></label>
     <label>Lagerort (optional)<input id="inv75-location-${x.article_id}" list="inv75-location-options-${x.article_id}" value="${esc(x.location||'')}" ${disabled} placeholder="Lagerort wählen oder neuen eingeben" onchange="LVInventory.locationChangedInline(${x.article_id},this.value)"><datalist id="inv75-location-options-${x.article_id}">${[...choices.keys()].map(name=>`<option value="${esc(name)}"></option>`).join('')}</datalist><span class="small">Auch einen neuen Lagerort direkt eintippen.</span></label>
     <label>Notiz<input id="inv75-note-${x.article_id}" value="${esc(x.note)}" maxlength="2000" ${disabled} oninput="LVInventory.edit(${x.article_id},'note',this.value)"></label>
@@ -88,7 +110,7 @@
    }
   }catch{message('Lokale Wiederherstellungskopie konnte nicht geladen werden.',false)}
   try{localStorage.setItem('lv75-last-inventory:'+dbid,id)}catch{}
-  page=0;adopt(data);$('inv75Session').value=id;
+  page=0;adopt(data);loadContext();$('inv75Session').value=id;
  }
  async function list(){index=await window.api('/api/inventory-v75/index');dbid=index.database_id;referenceOptions();const old=$('inv75Session').value;$('inv75Session').innerHTML='<option value="">Inventur auswählen</option>'+index.sessions.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} · ${s.counted}/${s.total} · ${s.status==='draft'?'In Arbeit':s.status==='completed'?'Abgeschlossen':'Abgebrochen'}</option>`).join('');$('inv75Session').value=old;return index}
  async function guarded(fn){if(busy)return;busy=true;status();try{return await fn()}catch(e){message(e.message,false)}finally{busy=false;status()}}
@@ -104,15 +126,66 @@
   async create(){return guarded(async()=>{
    if(!await flush())return;
    const title=$('inv75Name').value.trim();if(!title)return message('Bitte einen Inventurnamen eingeben.',false);
-   const result=await post('create',{id:crypto.randomUUID(),name:title,database_id:dbid});pending.clear();page=0;errorState=false;$('inv75Search').value='';$('inv75Filter').value='all';$('inv75WarehouseFilter').value='';adopt(result);await list();$('inv75Session').value=result.session.id;try{localStorage.setItem('lv75-last-inventory:'+dbid,result.session.id)}catch{}
+   const result=await post('create',{id:crypto.randomUUID(),name:title,database_id:dbid});pending.clear();page=0;errorState=false;$('inv75Search').value='';$('inv75Filter').value='all';$('inv75WarehouseFilter').value='';adopt(result);loadContext();await list();$('inv75Session').value=result.session.id;try{localStorage.setItem('lv75-last-inventory:'+dbid,result.session.id)}catch{}
    message('Inventur gestartet. Leere Felder sind ungezählt und werden nicht als Nullbestand behandelt.');
   })},
   select(){return guarded(async()=>{await load($('inv75Session').value);if(data)$('inv75Session').value=data.session.id})},
+  cloudPaused(){return manualCloud()&&!!data&&data.session.status==='draft'},
+  cloudPreferenceChanged(checked){try{localStorage.setItem('lv84_inventory_cloud_manual',checked?'1':'0')}catch{};window.LVSyncUI81?.refresh?.(false).catch?.(console.warn)},
+  async syncCloud(){if(!await flush())return;await window.LVSyncUI81.sync()},
+  searchFocus(input){if(!input)return;input.select();},
+  clearSearch(){const el=$('inv75Search');el.value='';this.filter();el.focus()},
+  contextWarehouseChanged(value){
+   if(!data)return;
+   const c=context(),location=c.location&&data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===c.location.toLocaleLowerCase('de-DE'));
+   if(location?.warehouse_id&&Number(location.warehouse_id)!==Number(value))$('inv84Location').value='';
+   saveContext();contextMessage();
+  },
+  contextLocationChanged(value){
+   if(!data)return;const location=data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===String(value||'').trim().toLocaleLowerCase('de-DE'));
+   if(location){$('inv84Location').value=location.name;if(location.warehouse_id)$('inv84Warehouse').value=String(location.warehouse_id)}
+   saveContext();contextMessage();
+  },
+  contextToggle(){saveContext();contextMessage()},
+  async addContextLocation(){return guarded(async()=>{
+   if(!data||!await flush())return;
+   const c=context(),name=c.location;if(!name)return message('Bitte zuerst einen Lagerort eingeben.',false);
+   const known=data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===name.toLocaleLowerCase('de-DE'));
+   if(known){this.contextLocationChanged(known.name);return}
+   if(!confirm(`Lagerort „${name}“ neu anlegen und für die nächsten Zählungen verwenden?`))return;
+   const result=await post('location',{name,warehouse_id:c.warehouse_id||data.default_warehouse_id||null,database_id:dbid});
+   data.locations=result.locations||data.locations;data.warehouses=result.warehouses||data.warehouses;
+   LVWarehouses.setRefs(result);referenceOptions();if(result.created?.warehouse_id)$('inv84Warehouse').value=String(result.created.warehouse_id);
+   $('inv84Location').value=result.created.name;saveContext();contextMessage();message(`Lagerort „${result.created.name}“ angelegt. Neue Zählungen übernehmen ihn automatisch.`);
+  })},
+  addCount(id){
+   if(!data||data.session.status!=='draft'||busy)return;
+   const row=data.items.find(x=>Number(x.article_id)===Number(id)),el=$('inv84-add-'+id),result=$('inv84-result-'+id);if(!row||!el)return;
+   let amount;
+   try{amount=V84.addCount(row.counted_stock,el.value,row.unit)}catch(e){message(e.message,false);el.focus();return}
+   const countInput=$('inv75-count-'+id);
+   if(!amount.wasCounted){try{V84.countContext(row,context(),data.locations)}catch(e){message(e.message,false);return}}
+   this.edit(id,'counted_stock',String(amount.total));
+   if(String(row.counted_stock)!==String(amount.total))return;
+   const chosen=context();if(amount.wasCounted&&chosen.apply&&chosen.location&&chosen.location!==row.location){
+    if(result)result.textContent='Achtung: Dieser Artikel wurde bereits an einem anderen Lagerort gezählt. Der bisherige Lagerort bleibt erhalten.';
+   }
+   if(countInput)countInput.value=String(amount.total).replace('.',',');
+   el.value='';if(result)result.textContent=`${amount.old.toLocaleString('de-DE')} + ${amount.delta.toLocaleString('de-DE')} = ${amount.total.toLocaleString('de-DE')} ${row.unit||''}${amount.wasCounted&&chosen.apply&&chosen.location&&chosen.location!==row.location?' · Bisheriger Lagerort beibehalten':''}`;
+   message(`${row.article_no}: ${amount.delta.toLocaleString('de-DE')} zusätzlich gezählt; neuer Gesamtzählstand ${amount.total.toLocaleString('de-DE')}. Noch keine Lagerbuchung.`);
+   el.focus();
+  },
   edit(id,field,value){
    if(!data||data.session.status!=='draft')return;
    $('inv75ReviewBox').hidden=true;
-   const row=data.items.find(x=>x.article_id===id);if(!row)return;row[field]=value===''&&field==='counted_stock'?null:value;
-   pending.set(id,{...(pending.get(id)||{article_id:id}),[field]:row[field]});if(field==='location'){const loc=data.locations.find(l=>l.name===value);if(loc?.warehouse_id){row.warehouse_id=loc.warehouse_id;pending.get(id).warehouse_id=loc.warehouse_id;const w=$('inv75-warehouse-'+id);if(w)w.value=loc.warehouse_id}}cache();status();clearTimeout(timer);timer=setTimeout(()=>flush(),750);
+   const row=data.items.find(x=>x.article_id===id);if(!row)return;
+   const firstCount=field==='counted_stock'&&(row.counted_stock===null||String(row.counted_stock).trim()==='')&&String(value).trim()!=='';
+   let place=null;
+   if(firstCount){try{place=V84.countContext(row,context(),data.locations)}catch(e){message(e.message,false);const el=$('inv75-count-'+id);if(el)el.value=row.counted_stock??'';return}}
+   row[field]=value===''&&field==='counted_stock'?null:value;
+   pending.set(id,{...(pending.get(id)||{article_id:id}),[field]:row[field]});
+   if(place){row.warehouse_id=place.warehouse_id;row.location=place.location;Object.assign(pending.get(id),place);const w=$('inv75-warehouse-'+id),l=$('inv75-location-'+id);if(w)w.value=place.warehouse_id??'';if(l)l.value=place.location;}
+   if(field==='location'){const loc=data.locations.find(l=>l.name===value);if(loc?.warehouse_id){row.warehouse_id=loc.warehouse_id;pending.get(id).warehouse_id=loc.warehouse_id;const w=$('inv75-warehouse-'+id);if(w)w.value=loc.warehouse_id}}cache();status();clearTimeout(timer);timer=setTimeout(()=>flush(),750);
   },
   async locationChangedInline(id,value){
    if(!data||busy)return;

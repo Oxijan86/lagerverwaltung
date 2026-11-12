@@ -1,9 +1,9 @@
 {
-  "name": "lagerverwaltung-lovrencic-v83",
+  "name": "lagerverwaltung-lovrencic-v84",
   "private": true,
-  "version": "83.0.0",
+  "version": "84.0.0",
   "scripts": {
-    "test": "node --test tests_v80/*.js tests_v80/*.cjs tests_v81/*.test.cjs tests_v82/*.test.cjs tests_v83/*.test.cjs",
+    "test": "node --test tests_v80/*.js tests_v80/*.cjs tests_v81/*.test.cjs tests_v82/*.test.cjs tests_v83/*.test.cjs tests_v84/*.test.cjs",
     "test:syntax": "node tests_v80/check_syntax.cjs"
   },
   "devDependencies": {

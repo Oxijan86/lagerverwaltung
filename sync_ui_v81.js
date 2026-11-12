@@ -13,7 +13,11 @@
   if(e.message){e.message.textContent=st.errorMessage||(!st.cloudConnected?'Kein Cloud-Ordner verbunden. Die Daten bleiben lokal gespeichert.':'');e.message.hidden=!e.message.textContent;}
   if(e.review)e.review.hidden=!failure;
   if(e.grant)e.grant.hidden=st.errorCode!=='permission_required'&&st.errorCode!=='permission_denied';
-  if(showPrompt&&unsynced)syncOpen(true);
+  // V84: Bei laufender Inventur keine Pop-up-Flut nach jeder lokal gespeicherten Zaehleinheit.
+  // Gelb/Rot im Header bleibt sichtbar und manuell synchronisieren bleibt moeglich.
+  const countingManual=!!window.LVInventory?.cloudPaused?.();
+  if(countingManual)syncOpen(false);
+  else if(showPrompt&&unsynced)syncOpen(true);
   if(!unsynced&&!failure)syncOpen(false);
   return st;
  }
@@ -25,7 +29,8 @@
     if(e.message){e.message.hidden=false;e.message.textContent='Bitte zuerst einen Cloud-Synchronisationsordner verbinden.'}
     if(typeof window.show==='function')await window.show('sync');return;
    }
-   await window.LVSync.sync(false);
+   const syncResult=await window.LVSync.sync(false);
+   if(syncResult?.reloaded){await refresh(false);window.location.reload();return}
    let result=await window.LVSync.verifyFolder();
    if(!result.verified){
     // A new booking may have been saved while the first snapshot was being written.

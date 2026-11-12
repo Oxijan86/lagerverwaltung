@@ -1,0 +1,12 @@
+Lagerverwaltung Lovrencic V84 – fertiges GitHub-Uploadpaket
+
+1. Vor dem Update unbedingt die aktuelle lager.db als Sicherheitskopie herunterladen.
+2. ZIP herunterladen und auf dem PC ENTpacken.
+3. Auf https://github.com/Oxijan86/lagerverwaltung im Branch main gehen.
+4. Add file -> Upload files; die Dateien aus dem entpackten Paket MIT Ordnerstruktur hochladen.
+5. Gleichnamige Dateien ersetzen, alle anderen bisherigen Dateien stehen lassen.
+6. Commit changes. GitHub-Pages-Veröffentlichung kontrollieren und die PWA neu laden, bis Version 84.0 angezeigt wird.
+7. Neue Inventurfunktionen und Cloud-Synchronisierung zuerst mit einer Kopie der Datenbank testen.
+
+WICHTIG: Nicht die ZIP selbst ins Repository hochladen. Kein Installer oder Workflow erforderlich.
+Das Direktpaket enthält kumulativ alle Änderungen seit der V80-Referenz, also auch die benötigten Komponenten aus V81–V83.
