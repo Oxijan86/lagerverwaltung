@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V80 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V82 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -158,6 +158,41 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 @media(max-width:800px){
  #mainNav.open{max-height:min(60dvh, 540px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 }
+
+/* V82: mobile Hilfe mit durchsuchbaren Schritt-fuer-Schritt-Anleitungen */
+#help .help-layout{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:12px;align-items:start}
+#help .help-sidebar{position:sticky;top:80px;max-height:calc(100dvh - 96px);overflow:auto}
+#help .help-search-label{display:block;font-weight:700;font-size:14px;margin-bottom:8px}
+#help .help-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center}
+#help .help-search-row input{min-width:0;min-height:44px}
+#help .help-topic-list{display:grid;gap:5px;margin-top:10px}
+#help .help-topic-button{display:block;width:100%;min-width:0;white-space:normal;text-align:left;padding:10px 12px;line-height:1.4;border:1px solid #dae2e8;background:#f8fafc;overflow-wrap:anywhere}
+#help .help-topic-button:hover,#help .help-topic-button.selected{background:#e4eff8;color:#173e5e;border-color:#93b8d4}
+#help .help-reading-card{min-width:0;overflow-wrap:anywhere}
+#help .help-reading-actions{display:flex;justify-content:flex-end}
+#help .help-content{min-width:0;font-size:15px;line-height:1.65;overflow-wrap:anywhere}
+#help .help-content h1{font-size:23px;line-height:1.25;margin-top:0}
+#help .help-content h2{font-size:19px;line-height:1.3;margin-top:22px}
+#help .help-content h3{font-size:17px;line-height:1.3}
+#help .help-content li{margin:8px 0;padding-left:3px}
+#help .help-content ol,#help .help-content ul{padding-left:25px}
+#help .help-content code{overflow-wrap:anywhere;white-space:break-spaces}
+#help .help-content pre{max-width:100%;overflow:auto;white-space:pre-wrap;word-break:break-word}
+#help #helpContent{scroll-margin-top:75px}
+@media(max-width:900px){
+ #help .help-layout{grid-template-columns:minmax(0,1fr)}
+ #help .help-sidebar{position:static;max-height:none;overflow:visible}
+ #help .help-topic-list{max-height: min(38dvh, 320px);overflow-y:auto;overscroll-behavior:contain}
+ #help .help-quicklinks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ #help .help-quicklinks button{min-width:0;white-space:normal;line-height:1.35}
+}
+@media(max-width:450px){#help .help-quicklinks{grid-template-columns:minmax(0,1fr)}#help .help-content h1{font-size:21px}#help .help-content{font-size:15px}}
+
+/* V82: einzelne Archivfelder auch auf dem Smartphone gezielt auswaehlen */
+.lv82-field-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.lv82-field-choice{display:flex;gap:8px;align-items:center;background:#f8fafc;border:1px solid #d9e0e6;border-radius:8px;padding:8px;min-height:44px;overflow-wrap:anywhere}
+.lv82-field-choice input{width:22px;height:22px;flex:0 0 22px}
+@media(max-width:650px){.lv82-field-list{grid-template-columns:minmax(0,1fr)}}
 </style></head><body>
 
 
@@ -371,7 +406,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">80.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">82.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span><button id="headerSyncStatus" type="button" class="lv81-status pending" onclick="LVSyncUI81.sync()" title="Synchronisierungsstatus / jetzt synchronisieren">⚪ Lokal gespeichert</button></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('inventory75',this)">📋 Inventur</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this);loadConsumables().catch(e=>msg(consumableMsg,e.message,false))">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -567,7 +602,8 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div class="toolbar"><button id="companyImportCreateAll" class="secondary" disabled onclick="selectAllCompanyUnknownForCreation()">Alle unbekannten Artikel auf Anlegen stellen</button></div>
 <p class="small">Einzelne Positionen lassen sich danach wieder auf Ignorieren stellen. Angelegt und gebucht wird erst mit „Geprüften Vorgang bestätigen“.</p>
 <div id="companyImportSelectionMsg" class="small" aria-live="polite"></div>
-<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Status</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Dateimenge</th><th>App-Bestand</th><th>Geplante Änderung</th><th>Unbekannter Artikel</th><th>Fehler</th></tr></thead><tbody id="companyImportRows"></tbody></table></div>
+<div class="toolbar lv81-company-filter"><label>Positionen anzeigen<select id="companyImportFilter" onchange="renderCompanyImportRows(true)"><option value="all">Alle Positionen</option><option value="changed">Nur Bestandsänderungen</option><option value="new">Nur neue Artikel</option><option value="errors">Nur Fehler</option><option value="processed">Bereits verarbeitet</option></select></label><label>Artikel suchen<input id="companyImportSearch" placeholder="Artikelnummer / Bezeichnung" oninput="renderCompanyImportRows(true)"></label><span id="companyImportPageInfo" class="small"></span><button type="button" class="secondary" onclick="companyImportPage(-1)">Zurück</button><button type="button" class="secondary" onclick="companyImportPage(1)">Weiter</button></div>
+<div class="tablewrap lv81-company-table" style="margin-top:12px"><table><thead><tr><th>Status</th><th>Artikelnummer</th><th>Bezeichnung</th><th>Dateimenge</th><th>App-Bestand</th><th>Geplante Änderung</th><th>Unbekannter Artikel</th><th>Fehler</th></tr></thead><tbody id="companyImportRows"></tbody></table></div>
 <div id="companyImportErrors"></div>
 </div>
 
@@ -717,7 +753,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <div><span class="small">Letzte Synchronisierung</span><br><b id="syncLast">Noch nie</b></div>
 <div><span class="small">Fortlaufende Nummer lokal</span><br><b id="syncLocalRevision">–</b></div>
 <div><span class="small">Fortlaufende Nummer Cloud</span><br><b id="syncCloudRevision">–</b></div>
-<div><span class="small">Automatische Synchronisierung</span><br><b id="syncAutoState">–</b><div class="small" style="margin-top:6px">Automatische Synchronisierung läuft nach jeder Buchung, sobald der Cloud-Ordner für diese Sitzung freigegeben ist. Eine Rückfrage erscheint nur bei einem echten Parallelkonflikt.</div></div>
+<div><span class="small">Automatische Synchronisierung</span><br><b id="syncAutoState">–</b><div class="small" style="margin-top:6px">Nach jeder lokalen Änderung wird die Synchronisierung angeboten. Beim Klick auf „Jetzt synchronisieren“ werden beide Revisionsstände geprüft. Unabhängige Änderungen erfordern einen Vergleich.</div></div>
 </div>
 <div id="storageModeExplanation" class="message" style="display:block;margin-top:14px"></div>
 </div>
@@ -732,9 +768,9 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <div id="cloudModeActions" class="card" style="display:none">
 <h3>☁ Cloud-Modus</h3>
-<p>Im Cloud-Modus werden sichere lokale Änderungen automatisch in die verbundene lager.db geschrieben. Vor jedem Schreiben und danach wird die Datei geprüft. Der lokale OneDrive-/Ordnerzugriff bietet jedoch keine serverseitige Compare-and-Swap-Garantie; echte Paralleländerungen werden soweit sichtbar blockiert, können bei exakt gleichzeitigem Schreiben aber technisch nicht vollständig ausgeschlossen werden.</p>
+<p>Im Cloud-Modus werden lokale Änderungen erst nach deiner Bestätigung in die verbundene lager.db geschrieben. Vor jedem Schreiben und danach wird die Datei geprüft. Der lokale OneDrive-/Ordnerzugriff bietet jedoch keine serverseitige Compare-and-Swap-Garantie; echte Paralleländerungen werden soweit sichtbar blockiert, können bei exakt gleichzeitigem Schreiben aber technisch nicht vollständig ausgeschlossen werden.</p>
 <div class="toolbar">
-<button class="primary" onclick="LVSync.sync()">Jetzt synchronisieren</button>
+<button class="primary" onclick="LVSyncUI81.sync()">Jetzt synchronisieren</button><button class="secondary" onclick="LVSyncUI81.review()">Unterschiede vergleichen</button><button class="secondary" onclick="LVSyncUI82.list();show('sync')">Konfliktarchiv</button>
 <button class="secondary" id="syncReauthorizeButton" onclick="LVStorageMode.reauthorize()" style="display:none">🔐 Ordnerzugriff erneut freigeben</button>
 <button class="secondary" onclick="LVSync.load()">Stand aus Cloud laden</button>
 <button class="secondary" onclick="LVSync.save()">Lokalen Stand in Cloud speichern</button>
@@ -746,7 +782,11 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <button class="secondary" onclick="LVSync.exportDb()">SQLite-Datei exportieren</button>
 
 </div><p class="small">Export und Import bleiben in beiden Modi verfügbar.</p></div>
-<div class="card low"><h3>Konfliktschutz</h3><p>Jeder Kollege sollte eine eigene Datenbank und einen eigenen Cloud-Ordner verwenden. Dieselbe Datenbank darf auf PC und Smartphone nicht gleichzeitig bearbeitet werden.</p></div>
+<div class="card" id="lv82ArchiveCard"><h3>🗂 Konfliktarchiv und nachträgliche Übernahmen</h3>
+<p>Auch bei einer bewussten Entscheidung für einen Datenstand bleiben die anderen Änderungen erhalten. Unterschiede bei Kunden, Tickets, Maschinen, Löschungen und Buchungen können später einzeln überprüft werden. Eine unklare Änderung bleibt gesperrt.</p>
+<div class="toolbar"><button type="button" class="secondary" onclick="LVSyncUI82.list()">Archiv aktualisieren</button><button type="button" class="secondary" onclick="LVSyncUI81.review()">Aktuelle Cloud vergleichen</button></div>
+<div id="lv82ArchiveList" aria-live="polite">Konfliktarchiv wird geladen …</div><p id="lv82ArchiveHint" class="small"></p></div>
+<div class="card low"><h3>Konfliktschutz</h3><p>Cloud-Änderungen anderer Geräte werden vor jedem Schreibvorgang geprüft. Bei getrennten Änderungen beider Geräte zeigt „Unterschiede vergleichen“ die Buchungen und Bestände an. Zusammenführen ist nur mit einer bestätigten gemeinsamen Ausgangsdatenbank und vollständig aufgelösten Konflikten möglich. Die Browser-Ordneranbindung bietet keine serverseitige Sperre gegen exakt gleichzeitiges Schreiben.</p></div>
 </section>
 
 <section id="backup" class="view"><h2>Backups</h2>
@@ -788,15 +828,25 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 </section>
 
-<section id="help" class="view"><h2>Hilfe</h2>
-<div class="split" style="grid-template-columns:280px 1fr">
-<div class="card">
-<input id="helpSearch" placeholder="Titel und Inhalte durchsuchen" oninput="filterHelpTopics()">
-<div id="helpTopics" style="margin-top:12px"></div>
+<section id="help" class="view"><h2>❓ Hilfe – Schritt für Schritt</h2>
+<p class="small">Alle Funktionen verständlich erklärt. Wähle einen Bereich oder suche nach Artikel, Excel, PDF, Kunde, Löschung oder Synchronisierung.</p>
+<div class="help-quicklinks toolbar" aria-label="Häufig gesuchte Hilfethemen">
+ <button class="primary" type="button" onclick="openHelpTopic('19-datenimport-uebersicht.md')">📥 Daten importieren</button>
+ <button class="secondary" type="button" onclick="openHelpTopic('07-csv-center.md')">📊 SAP-Excel / CSV</button>
+ <button class="secondary" type="button" onclick="openHelpTopic('18-servicebericht-pdf.md')">📄 Servicebericht-PDF</button>
+ <button class="secondary" type="button" onclick="openHelpTopic('23-konfliktarchiv-v82.md')">☁ Cloud-Konflikte</button>
 </div>
-<div class="card">
-<div id="helpContent"><h3>Hilfethema auswählen</h3><p>Wähle links ein Thema aus.</p></div>
-</div>
+<div class="help-layout">
+ <div class="card help-sidebar">
+  <label for="helpSearch" class="help-search-label">Hilfethemen durchsuchen</label>
+  <div class="help-search-row"><input id="helpSearch" type="search" autocomplete="off" placeholder="z. B. CSV, PDF, Kunde" oninput="filterHelpTopics()"><button class="secondary" type="button" onclick="clearHelpSearch()" aria-label="Hilfesuche zurücksetzen">Alle</button></div>
+  <p id="helpResultCount" class="small" aria-live="polite"></p>
+  <div id="helpTopics" class="help-topic-list" role="navigation" aria-label="Hilfethemen"></div>
+ </div>
+ <div class="card help-reading-card">
+  <div class="help-reading-actions"><button type="button" class="secondary" onclick="document.getElementById('helpSearch').scrollIntoView({behavior:'smooth',block:'start'})">↑ Zur Themenliste</button></div>
+  <div id="helpContent" tabindex="-1" aria-live="polite"><h3>Hilfethema auswählen</h3><p>Wähle oben ein Thema aus.</p></div>
+ </div>
 </div>
 </section>
 <section id="audit" class="view"><h2>Audit-Protokoll</h2><p class="small">Jede neue Buchung wird positionsgenau mit Kunde, Artikel, Menge, Maschine, Techniker, Quelle und weiteren Angaben protokolliert.</p><div class="tablewrap"><table><thead><tr><th>Zeit</th><th>Benutzer</th><th>Aktion</th><th>Objekt</th><th>ID</th><th>Buchungsart</th><th>Artikel</th><th>Menge</th><th>Kunde</th><th>Maschine</th><th>Details (vollständig)</th></tr></thead><tbody id="auditrows"></tbody></table></div></section>
@@ -903,11 +953,46 @@ window.LVAdminSession = window.LVAdminSession || {
 };
 </script>
 
+<style>
+/* V81 Sync-Erinnerung und konfliktgepruefter Vergleich */
+.lv81-status{font-size:12px;border:1px solid transparent;border-radius:999px;padding:5px 10px;cursor:pointer;max-width:260px;text-align:left}.lv81-status.pending{background:#fff1c2;color:#704f00;border-color:#e2b543}.lv81-status.synced{background:#d8f4e3;color:#14532d;border-color:#86d49c}.lv81-status.error{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+#lv81SyncPrompt[hidden],#lv81MergeOverlay[hidden],#lv81SyncPrompt [hidden]{display:none!important}
+#lv81SyncPrompt{position:fixed;right:16px;bottom:18px;z-index:10000;width:min(430px,calc(100vw - 24px));box-sizing:border-box;background:white;color:#17202a;border:2px solid #e7ba4c;box-shadow:0 10px 40px #0004;border-radius:14px;padding:16px;display:block}
+#lv81SyncPrompt .toolbar button{min-height:44px;flex:1}#lv81SyncPrompt .message{display:block;margin:10px 0 2px}
+#lv81MergeOverlay{position:fixed;inset:0;z-index:11000;background:#1b293ecc;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+.lv81-merge-dialog{background:white;border-radius:14px;padding:20px;box-sizing:border-box;width:min(1040px,100%);max-height:calc(100vh - 32px);overflow:auto}.lv81-table-scroll{max-height:240px;overflow:auto;border:1px solid #ddd;border-radius:9px}.lv81-table-scroll table{min-width:540px}.lv81-table-scroll td{overflow-wrap:anywhere}.lv81-conflict-row{display:grid;grid-template-columns:2fr 1fr;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #eee}.lv81-company-filter>*{min-width:130px}.lv81-company-filter label{flex:1;max-width:330px}
+@media(max-width:700px){#lv81SyncPrompt{bottom:10px;right:10px;padding:12px;max-height:55vh;overflow:auto}.lv81-merge-dialog{padding:12px;max-height:calc(100vh - 16px)}.lv81-conflict-row{display:block}.lv81-conflict-row select{margin-top:7px}.lv81-company-table{overflow:visible}.lv81-company-table table,.lv81-company-table tbody,.lv81-company-table tr,.lv81-company-table td{display:block!important;min-width:0!important;width:100%!important;box-sizing:border-box}.lv81-company-table thead{display:none}.lv81-company-table tr{border:1px solid #dae2e8;border-radius:10px;padding:10px;margin:8px 0;background:white}.lv81-company-table td{padding:5px 6px!important;border:0!important;display:grid!important;grid-template-columns:120px minmax(0,1fr)!important;gap:10px!important}.lv81-company-table td::before{font-weight:600;color:#526171}.lv81-company-table td:nth-child(1)::before{content:'Status'}.lv81-company-table td:nth-child(2)::before{content:'Artikel'}.lv81-company-table td:nth-child(3)::before{content:'Bezeichnung'}.lv81-company-table td:nth-child(4)::before{content:'Dateimenge'}.lv81-company-table td:nth-child(5)::before{content:'Bestand'}.lv81-company-table td:nth-child(6)::before{content:'Änderung'}.lv81-company-table td:nth-child(7)::before{content:'Neu'}.lv81-company-table td:nth-child(8)::before{content:'Fehler'}}
+</style>
+<div id="lv81SyncPrompt" hidden role="status" aria-live="polite"><h3 style="margin:0 0 8px">☁ Änderungen lokal gespeichert</h3><p id="lv81SyncText">Möchtest du mit dem Cloud-Ordner synchronisieren?</p><div id="lv81SyncMessage" class="message error" hidden></div><div class="toolbar"><button id="lv81SyncNow" class="primary" type="button" onclick="LVSyncUI81.sync()">Jetzt synchronisieren</button><button id="lv81SyncLater" class="secondary" type="button" onclick="LVSyncUI81.later()">Später synchronisieren</button></div><div class="toolbar"><button id="lv81SyncGrant" class="secondary" hidden onclick="LVSyncUI81.grant()">Ordner erneut freigeben</button><button id="lv81SyncReview" class="secondary" hidden onclick="LVSyncUI81.showView()">Datenkonflikt vergleichen</button></div></div>
+<div id="lv81MergeOverlay" hidden role="dialog" aria-modal="true" aria-label="Vergleich lokaler und Cloud-Datenstände"><div class="lv81-merge-dialog"><h2>🔍 Datenstände vergleichen</h2><p>Hier werden Unterschiede zwischen lokaler Datenbank und Cloud angezeigt. Keine Änderung wird automatisch überschrieben.</p><div id="lv81MergeBody"></div><div class="toolbar" style="margin-top:14px"><button type="button" class="secondary" onclick="LVSyncUI81.closeReview()">Schließen</button><button type="button" class="secondary" onclick="LVSyncUI82.chooseCloud()">Cloud als Arbeitsstand auswählen (Lokal archivieren)</button>
+<button type="button" class="secondary" onclick="LVSyncUI82.keepLocal()">Lokal weiterarbeiten (Cloud archivieren)</button>
+<button id="lv81MergeConfirm" type="button" class="primary" disabled onclick="LVSyncUI81.merge()">Geprüfte Änderungen zusammenführen</button></div></div></div>
+<style>
+/* V82 – Langfristig erhaltener Originalvergleich und sichere manuelle Nachübernahme */
+#lv82ArchiveOverlay[hidden]{display:none!important}
+#lv82ArchiveOverlay{position:fixed;z-index:12500;inset:0;background:#1e293bc9;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box}
+.lv82-dialog{box-sizing:border-box;background:#fff;color:#1a2533;border-radius:13px;padding:18px;width:min(1060px,100%);max-height:calc(100vh - 24px);overflow:auto}
+.lv82-archive-item{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid #dae2e8;padding:12px 4px}
+.lv82-archive-item button{width:auto;min-width:160px}.lv82-recover-row{border:1px solid #cfd7e2;border-radius:10px;margin:12px 0;padding:13px;background:white}.lv82-recover-row.blocked{border-left:4px solid #b42318;background:#fff9f7}.lv82-recover-heading{display:flex;gap:12px;align-items:start}.lv82-recover-heading input{width:22px;height:22px;flex:none;margin:0}.lv82-recover-heading div{flex:1}.lv82-warning{color:#a42618}
+.lv82-scroll{overflow:auto;margin-top:8px}.lv82-fields{min-width:520px;font-size:13px}.lv82-fields td{overflow-wrap:anywhere;white-space:pre-wrap;max-width:300px}.lv82-field-edit{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.lv82-extra{margin-top:12px}.lv82-extra summary{cursor:pointer}.lv82-dialog .toolbar{position:relative}.lv82-selected{font-weight:600}
+@media(max-width:650px){.lv82-dialog{padding:10px;max-height:calc(100vh - 10px)}.lv82-archive-item{display:block}.lv82-archive-item button{margin-top:10px;width:100%}.lv82-field-edit{grid-template-columns:1fr}.lv82-dialog .toolbar button{min-height:44px;flex:1}}
+</style>
+<div id="lv82ArchiveOverlay" hidden role="dialog" aria-modal="true" aria-label="Gesicherte Konflikte und nachträgliche Übernahme"><div class="lv82-dialog">
+<h2 id="lv82ArchiveTitle">🗂 Konfliktarchiv</h2>
+<p>Originale sind archiviert. Änderungen werden nur in deine <strong>lokale</strong> Datenbank übernommen – die Cloud wird nicht automatisch überschrieben. Vorher wird erneut gesichert und geprüft.</p>
+<div class="formgrid"><label>Änderungen aus <select id="lv82ArchiveSource" onchange="LVSyncUI82.details()"><option value="local">ursprünglich lokalem Stand</option><option value="cloud">ursprünglichem Cloud-Stand</option></select></label><label>Filtern <select id="lv82ArchiveFilter" onchange="LVSyncUI82.renderRows()"><option value="all">Alle Unterschiede</option><option value="ready">Sicher nachprüfbar</option><option value="deleted">Löschungen</option><option value="blocked">Gesperrte Änderungen</option></select></label></div>
+<div class="toolbar"><input id="lv82ArchiveSearch" placeholder="Kunde, Artikel, Maschine oder Ticket suchen" oninput="LVSyncUI82.renderRows()"></div><div id="lv82ArchiveStatus" class="message"></div>
+<div id="lv82ArchiveRows"></div><p id="lv82ArchiveSelected" class="lv82-selected">0 Änderungen ausgewählt</p>
+<div class="toolbar"><button type="button" class="secondary" onclick="LVSyncUI82.download('local')">Original lokal herunterladen</button><button type="button" class="secondary" onclick="LVSyncUI82.download('cloud')">Original Cloud herunterladen</button><button type="button" class="secondary" onclick="LVSyncUI82.download('base')">Gemeinsame Basis herunterladen</button></div>
+<div class="toolbar"><button type="button" class="secondary" onclick="LVSyncUI82.close()">Schließen</button><button id="lv82ArchiveApply" type="button" class="primary" onclick="LVSyncUI82.apply()">Ausgewählte Änderungen lokal übernehmen</button></div>
+</div></div>
 <script src="app_rules.js"></script>
 <script src="auth_core.js"></script>
 <script src="transaction_core.js"></script>
 <script src="help_core.js"></script>
 <script src="sync_core.js"></script>
+<script src="sync_merge_v81.js"></script>
+<script src="sync_merge_v82.js"></script>
 <script src="v66_core.js"></script>
 <script src="v67_core.js"></script>
 <script src="v68_core.js"></script>
@@ -923,6 +1008,8 @@ window.LVAdminSession = window.LVAdminSession || {
 <script src="service_pdf_backend.js"></script>
 <script src="service_pdf_ui.js"></script>
 <script src="local_backend.js"></script>
+<script src="sync_ui_v81.js"></script>
+<script src="sync_ui_v82.js"></script>
 <script>
 let arts=[],deliveryp=[],servicep=[],csvp=[],deliveryUnknown=[],serviceUnknown=[],csvUnknown=[],historyData=[],inventoryData=[],md={},lastImportFilename='',appDateFormat='DD.MM.YYYY',helpFiles=[],companyImportState={filename:'',content_base64:'',operation_id:'',nonce:'',items:[],errors:[],mode:'inventory'};
 const ignoredUnknown={delivery:new Set(),service:new Set()};
@@ -999,8 +1086,8 @@ async function loadAppInfo(){
   infoMovements.textContent=d.movements;
   document.title='Lagerverwaltung Lovrencic – Version '+d.version;
  }catch(e){
-  appVersion.textContent='80.0';
-  infoVersion.textContent='80.0';
+  appVersion.textContent='82.0';
+  infoVersion.textContent='82.0';
  }
 }
 let dashboardLowItems=[];
@@ -1368,7 +1455,8 @@ async function createUnknown(source){
 
 
 function companyImportModeChanged(){
- companyImportState.mode=companyImportMode.value;
+ companyImportState.mode=companyImportMode.value;companyImportState.actions={};
+ if(document.getElementById('companyImportFilter'))companyImportFilter.value='all';
  const inv=companyImportMode.value==='inventory';
  companyImportWarning.className='message '+(inv?'ok':'error');
  companyImportWarning.style.display='block';
@@ -1396,9 +1484,32 @@ async function loadCompanyImportFile(input){
  companyImportCommit.disabled=true;companyImportCreateAll.disabled=true;companyImportSelectionMsg.textContent='';companyImportState.operation_id='';companyImportRows.innerHTML='';
  try{
   const bytes=new Uint8Array(await f.arrayBuffer());let binary='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
-  companyImportState={...companyImportState,filename:f.name,content_base64:btoa(binary),operation_id:'',nonce:'',items:[],errors:[],mode:companyImportMode.value};
-  await previewCompanyImport();companyImportFile.value='';if(mode==='inbook'){showBookingCompleted('IN',{count:d.booked||0,source:'Firmenlisten-Import',target:'csv',resetText:'Die Dateiauswahl wurde geleert. Die Tabelle zeigt den abgeschlossenen Vorgang zur Kontrolle.'});msg(companyImportMsg,'Einbuchung abgeschlossen. '+(d.booked||0)+' Buchung(en) gespeichert. Dateiauswahl geleert.',true)}
+  companyImportState={...companyImportState,filename:f.name,content_base64:btoa(binary),operation_id:'',nonce:'',items:[],errors:[],mode:companyImportMode.value,actions:{}};
+  await previewCompanyImport();companyImportFile.value='';
  }catch(e){msg(companyImportMsg,e.message,false)}
+}
+let companyImportPageIndex=0;
+function companyImportPage(delta){companyImportPageIndex=Math.max(0,companyImportPageIndex+delta);renderCompanyImportRows(false)}
+function rememberCompanyImportAction(index,value){const x=companyImportState.items[Number(index)];if(!x)return;(companyImportState.actions||(companyImportState.actions={}))[x.position_key]=value}
+function renderCompanyImportRows(reset=false){
+ if(reset)companyImportPageIndex=0;
+ const all=companyImportState.items||[],filter=document.getElementById('companyImportFilter')?.value||'all',query=(document.getElementById('companyImportSearch')?.value||'').trim().toLowerCase();
+ const filtered=all.map((x,i)=>({...x,originalIndex:i})).filter(x=>{
+  if(query&&!`${x.article_no} ${x.description}`.toLowerCase().includes(query))return false;
+  if(filter==='changed')return !x.processed&&!x.error&&Math.abs(Number(x.planned_change||0))>1e-9;
+  if(filter==='new')return x.status==='unknown'&&!x.processed;
+  if(filter==='errors')return !!x.error;
+  if(filter==='processed')return !!x.processed;
+  return true;
+ });
+ const pageSize=50, pages=Math.max(1,Math.ceil(filtered.length/pageSize));companyImportPageIndex=Math.min(companyImportPageIndex,pages-1);
+ const visible=filtered.slice(companyImportPageIndex*pageSize,(companyImportPageIndex+1)*pageSize);
+ companyImportRows.innerHTML=visible.map(x=>{
+  const selected=(companyImportState.actions||{})[x.position_key]||'ignore';
+  const select=x.status==='unknown'&&!x.processed&&!x.error?`<select data-company-action="${x.originalIndex}" onchange="rememberCompanyImportAction(${x.originalIndex},this.value)"><option value="ignore">Ignorieren</option><option value="create" ${selected==='create'?'selected':''}>Anlegen</option></select>`:'—';
+  return `<tr data-line="${Number(x.line||0)}"><td>${esc(companyStatusLabel(x))}</td><td>${esc(x.article_no)}</td><td>${esc(x.description||'')}</td><td>${n(x.quantity)}</td><td>${x.app_stock===null?'—':n(x.app_stock)}</td><td>${esc(companyPlannedText(x))}</td><td>${select}</td><td>${esc(x.error||'')}</td></tr>`;
+ }).join('')||'<tr><td colspan="8">Keine passenden Materialzeilen.</td></tr>';
+ const counter=document.getElementById('companyImportPageInfo');if(counter)counter.textContent=`${filtered.length} Treffer · Seite ${companyImportPageIndex+1} von ${pages}`;
 }
 function companyStatusLabel(x){
  if(x.processed)return '✓ Bereits verarbeitet';
@@ -1419,22 +1530,17 @@ function updateCompanyImportCreateAll(){
 }
 function selectAllCompanyUnknownForCreation(){
  if(companyImportCreateAll.disabled)return;
- let count=0;
- document.querySelectorAll('#companyImportRows [data-company-action]').forEach(s=>{
-  const item=companyImportState.items[Number(s.dataset.companyAction)];
-  if(item?.status==='unknown'&&!item.processed&&!item.error){s.value='create';count++}
- });
- companyImportSelectionMsg.textContent=`${count} unbekannte Artikel stehen auf Anlegen. Einzelne Positionen können weiterhin geändert werden.`;
+ const list=companyImportState.items.filter(x=>x.status==='unknown'&&!x.processed&&!x.error);
+ companyImportState.actions=companyImportState.actions||{};
+ for(const x of list)companyImportState.actions[x.position_key]='create';
+ renderCompanyImportRows(false);
+ companyImportSelectionMsg.textContent=`${list.length} neue Artikel auf Anlegen gestellt. Einzelne Positionen können wieder ignoriert werden.`;
 }
 function renderCompanyImportPreview(d){
- const previousActions=new Map();
- document.querySelectorAll('[data-company-action]').forEach(s=>{const item=companyImportState.items[Number(s.dataset.companyAction)];if(item)previousActions.set(item.position_key,s.value)});
- companyImportState.operation_id=d.operation_id||companyImportState.operation_id;companyImportState.items=d.items||[];companyImportState.errors=d.errors||[];
- companyImportRows.innerHTML=companyImportState.items.map((x,i)=>{
-  const select=x.status==='unknown'&&!x.processed&&!x.error?`<select data-company-action="${i}"><option value="ignore">Ignorieren</option><option value="create" ${previousActions.get(x.position_key)==='create'?'selected':''}>Anlegen</option></select>`:'—';
-  return `<tr data-line="${Number(x.line||0)}"><td>${esc(companyStatusLabel(x))}</td><td>${esc(x.article_no)}</td><td>${esc(x.description||'')}</td><td>${n(x.quantity)}</td><td>${x.app_stock===null?'—':n(x.app_stock)}</td><td>${esc(companyPlannedText(x))}</td><td>${select}</td><td>${esc(x.error||'')}</td></tr>`
- }).join('')||'<tr><td colspan="8">Keine gültigen Materialzeilen erkannt.</td></tr>';
- companyImportErrors.innerHTML=companyImportState.errors.length?`<div class="message error" style="display:block">${companyImportState.errors.map(e=>`Zeile ${Number(e.line||0)} · ${esc(e.article_no||'')}: ${esc(e.error||'Fehler')}`).join('<br>')}</div>`:'';
+  companyImportState.operation_id=d.operation_id||companyImportState.operation_id;companyImportState.items=d.items||[];companyImportState.errors=d.errors||[];
+  companyImportState.actions=companyImportState.actions||{};
+  renderCompanyImportRows(true);
+companyImportErrors.innerHTML=companyImportState.errors.length?`<div class="message error" style="display:block">${companyImportState.errors.map(e=>`Zeile ${Number(e.line||0)} · ${esc(e.article_no||'')}: ${esc(e.error||'Fehler')}`).join('<br>')}</div>`:'';
  const pending=companyImportState.items.filter(x=>!x.processed&&!x.error).length;
  companyImportCommit.disabled=!pending||companyImportState.errors.length>0;
  const processed=companyImportState.items.filter(x=>x.processed).length,unknown=companyImportState.items.filter(x=>x.status==='unknown'&&!x.processed).length;
@@ -1460,8 +1566,12 @@ async function startNewCompanyImportOperation(){
 async function commitCompanyImport(){
  if(!companyImportState.operation_id)return msg(companyImportMsg,'Bitte die Datei zuerst prüfen.',false);
  const mode=companyImportMode.value;
+ if(mode==='inbook'){
+  const sum=companyImportState.items.filter(x=>!x.processed&&!x.error).reduce((t,x)=>t+Number(x.quantity||0),0);
+  if(!confirm(`Achtung: Im Modus EINBUCHUNG werden ${companyImportState.items.length} Positionen geprüft und insgesamt ${sum} Einheiten als Zugang bewertet. Eine vollständige Bestandsliste darf nicht als Wareneingang gebucht werden. Möchtest du fortfahren?`))return;
+ }
  if(mode==='inventory'&&!await ensureAdminPassword())return;
- const actions={};document.querySelectorAll('[data-company-action]').forEach(s=>{const item=companyImportState.items[Number(s.dataset.companyAction)];if(item)actions[item.position_key||`${item.line}:${item.article_no}`]=s.value});
+ const actions={...(companyImportState.actions||{})};
  companyImportCreateAll.disabled=true;
  try{
   const d=await api('/api/company-import/commit',{method:'POST',body:JSON.stringify({mode,operation_id:companyImportState.operation_id,items:companyImportState.items,unknown_actions:actions,internal_location:companyImportInternalLocation.value,technician:companyImportTechnician.value||md.default_technician||'Techniker',movement_date:td()})});
@@ -2518,7 +2628,7 @@ window.LVStorageMode={
   }catch(e){if(e.name!=='AbortError')msg(storageModeMsg,e.message,false)}
  },
  async reauthorize(){
-  try{await LVSync.reauthorize();msg(syncMsg,'Ordnerzugriff wurde erneut freigegeben.',true);await this.refresh();await LVSync.sync(true)}
+  try{await LVSync.reauthorize();msg(syncMsg,'Ordnerzugriff wurde erneut freigegeben. Bitte Synchronisierung bei Bedarf bewusst starten.',true);await this.refresh()}
   catch(e){msg(syncMsg,e.message,false)}
  },
  async enableLocal(){
@@ -2564,29 +2674,53 @@ async function saveDateFormat(){
 }
 
 
+function helpTopicTitle(x){
+ const heading=String(x.content||'').match(/^#\s+(.+)$/m);
+ return heading?heading[1].trim():String(x.title||x.file||'Hilfe');
+}
 function renderHelpTopics(list){
- helpTopics.innerHTML=(list||[]).map(x=>`<button type="button" class="secondary help-topic-button" data-help-file="${esc(x.file)}" onclick="openHelpTopic('${esc(x.file)}')">${esc(x.title)}</button>`).join('')||'<p class="small">Keine Hilfethemen gefunden.</p>';
+ const selected=helpContent.dataset.loaded||'';
+ helpTopics.innerHTML=(list||[]).map(x=>`<button type="button" class="secondary help-topic-button${x.file===selected?' selected':''}" data-help-file="${esc(x.file)}" aria-current="${x.file===selected?'page':'false'}" onclick="openHelpTopic('${esc(x.file)}')">${esc(helpTopicTitle(x))}</button>`).join('')||'<p class="small">Keine Hilfethemen gefunden. Suche zurücksetzen oder einen anderen Begriff eingeben.</p>';
 }
 async function loadHelpList(){
  try{
-  const list=await api('/api/help/list');
-  helpFiles=await Promise.all(list.map(async x=>{try{const c=await api('/api/help/content?file='+encodeURIComponent(x.file));return {...x,content:c.content||''}}catch{return {...x,content:''}}}));
-  renderHelpTopics(helpFiles);filterHelpTopics();
-  if(helpFiles.length&&!helpContent.dataset.loaded)await openHelpTopic(helpFiles[0].file);
+  if(!helpFiles.length){
+   const list=await api('/api/help/list');
+   helpFiles=await Promise.all(list.map(async x=>{try{const c=await api('/api/help/content?file='+encodeURIComponent(x.file));return {...x,content:c.content||''}}catch{return {...x,content:''}}}));
+  }
+  filterHelpTopics();
+  if(helpFiles.length&&!helpContent.dataset.loaded)await openHelpTopic(helpFiles[0].file,false);
  }catch(e){helpContent.innerHTML=`<div class="message error" style="display:block">${esc(e.message)}</div>`}
 }
 function filterHelpTopics(){
- const q=(helpSearch.value||'').trim().toLowerCase();
+ const q=(helpSearch.value||'').trim();
  const filtered=LVHelpCore.filterTopics(helpFiles,q);
  renderHelpTopics(filtered);
- if(q&&!filtered.length)helpContent.innerHTML='<div class="message error" style="display:block">Kein Hilfethema gefunden.</div>';
+ if(window.helpResultCount)helpResultCount.textContent=`${filtered.length} von ${helpFiles.length} Hilfethemen${q?' gefunden':''}`;
+ if(!filtered.length){
+  helpContent.innerHTML='<p role="status">Keine Hilfethemen gefunden. Suche ändern oder <b>Alle</b> wählen.</p>';
+  return;
+ }
+ const selected=helpContent.dataset.loaded||'';
+ if(!filtered.some(x=>x.file===selected) || !helpContent.querySelector('.help-content'))openHelpTopic(filtered[0].file,false);
 }
-async function openHelpTopic(file){
+function clearHelpSearch(){
+ helpSearch.value='';filterHelpTopics();helpSearch.focus();
+}
+let helpOpenRequest=0;
+async function openHelpTopic(file,scroll=true){
+ const request=++helpOpenRequest;
  const found=helpFiles.find(x=>x.file===file);
  try{
   const content=found?.content||(await api('/api/help/content?file='+encodeURIComponent(file))).content;
+  if(request!==helpOpenRequest)return;
   helpContent.dataset.loaded=file;helpContent.innerHTML=renderMarkdown(content||'# Nicht gefunden');
- }catch(e){helpContent.innerHTML=`<div class="message error" style="display:block">${esc(e.message)}</div>`}
+  renderHelpTopics(LVHelpCore.filterTopics(helpFiles,helpSearch.value||''));
+  if(scroll&&window.innerWidth<=900){
+   helpContent.scrollIntoView({behavior:'smooth',block:'start'});
+   helpContent.focus({preventScroll:true});
+  }
+ }catch(e){if(request===helpOpenRequest)helpContent.innerHTML=`<div class="message error" style="display:block">${esc(e.message)}</div>`}
 }
 function renderMarkdown(md){return LVHelpCore.renderMarkdown(md)}
 function promptCodeFromButton(button){return button.closest('.prompt-box')?.querySelector('.prompt-code')||null}
@@ -2845,12 +2979,6 @@ async function lvForceStartupCheck(reason='resume',forceDialog=false){
  lvStartupCheckRunning=true;
  try{
   const state=await LVStartupState.get();
-  if(state.cloudConnected&&state.cloudAccessible&&state.comparison==='local_newer_safe'){
-   await LVSync.sync(true);
-   lvClearCloudAcknowledgement();
-   await LVStorageMode.refresh();
-   return;
-  }
   if(state.cloudConnected&&state.cloudAccessible&&state.comparison==='cloud_newer'&&!state.localDirty){
    await LVStartupState.loadCloud();
    await LVStartupState.confirm('cloud');
@@ -2916,16 +3044,6 @@ window.LVStartup={
     await LVStartupState.confirm('cloud');
     sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
     return true;
-   }
-   if(this.data.cloudConnected&&this.data.cloudAccessible&&this.data.comparison==='local_newer_safe'){
-    await LVSync.sync(true);
-    lvClearCloudAcknowledgement();
-    this.data=await LVStartupState.get();
-    if(this.data.comparison==='identical'){
-     await LVStartupState.confirm('cloud');
-     sessionStorage.setItem('lv_startup_confirmed_at',String(Date.now()));
-     return true;
-    }
    }
    if(this.data.cloudConnected&&this.data.cloudAccessible&&this.data.comparison==='cloud_newer'&&!this.data.localDirty){
     await LVStartupState.loadCloud();
@@ -3045,6 +3163,7 @@ window.LVStartup={
   }
  },
  async useCloud(){
+  if(this.data?.localDirty&&!confirm('Nicht synchronisierte lokale Änderungen vorhanden. Vor dem Laden der Cloud wird der lokale Stand gesichert. Trotzdem Cloud-Stand laden?'))return;
   if(this.data?.cloudStatus==='permission_denied'){
    return this.reauthorizeCloud();
   }

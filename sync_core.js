@@ -93,7 +93,8 @@
   // Unmittelbar vor dem tatsächlichen Schreibzugriff nochmals prüfen.
   const prewrite=await adapter.inspect();
   validateWriteGuard({local,cloud:prewrite,meta,force,allowCreateMissing});
-  if(force&&prewrite.status===CloudStatus.OK&&backupCloud)await backupCloud(prewrite);
+  if(initial.status===CloudStatus.OK&&prewrite.status===CloudStatus.OK&&initial.state.revision_id!==prewrite.state.revision_id)throw new SyncError('concurrent_cloud_change','Cloud wurde während der Vorbereitung geändert. Kein Schreibzugriff.');
+  if(prewrite.status===CloudStatus.OK&&backupCloud&&prewrite.state.revision_id!==candidate.state.revision_id)await backupCloud(prewrite);
 
   await adapter.write(candidate.bytes,{create:prewrite.status===CloudStatus.MISSING&&allowCreateMissing});
   // Nach dem Schreiben zwingend erneut lesen und prüfen.

@@ -65,7 +65,7 @@
   transaction(()=>{
    for(const x of prepared.plans){
     const note=[p.note||'',`RONDO-Servicebericht: ${x.doc.filename}`,x.ticket?`Ticket ${x.ticket}`:'',x.machine_code?`Technische Typkennung ${x.machine_code}`:'',`PDF-Seite ${x.source.page}`,x.source.ocr?'Per OCR erkannt und geprüft':''].filter(Boolean).join('\n');
-    const movement=book([{article_id:x.article_id,article_no:x.article_no,quantity:x.quantity,position_key:x.source.position_key}],'OUT',{technician:p.technician,movement_date:x.movement_date,customer:x.customer,machine:x.machine,delivery_note:x.ticket,source:'RONDO-Servicebericht PDF',note})[0];
+    const movement=book([{article_id:x.article_id,article_no:x.article_no,quantity:x.quantity,position_key:x.source.position_key}],'OUT',{technician:p.technician,movement_date:x.movement_date,customer:x.customer,machine:x.machine,delivery_note:x.ticket,ticket:x.ticket,machine_code:x.machine_code,source:'RONDO-Servicebericht PDF',note})[0];
     run('INSERT INTO service_pdf_imports(file_hash,content_hash,position_key,filename,ticket,article_id,movement_id,quantity,snapshot_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',[x.doc.file_hash,x.doc.content_hash,x.source.position_key,x.doc.filename,x.ticket,x.article_id,movement.id,x.quantity,JSON.stringify({original:x.source,booked:{article_no:x.article_no,quantity:x.quantity,unit:x.unit,movement_date:x.movement_date,customer:x.customer,machine:x.machine}}),stamp()]);
      if(x.machine||x.machine_code)run(`INSERT OR REPLACE INTO service_pdf_machine_usage
        (movement_id,article_id,file_hash,position_key,ticket,machine,machine_code,created_at)
