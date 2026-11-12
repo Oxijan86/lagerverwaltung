@@ -1,0 +1,12 @@
+LAGERVERWALTUNG LOVRENCIC V83 – DIREKT AUF GITHUB HOCHLADEN
+
+1. ZIP-Datei entpacken (nicht die ZIP selbst hochladen).
+2. https://github.com/Oxijan86/lagerverwaltung öffnen.
+3. Add file > Upload files.
+4. Alle entpackten Dateien inkl. Unterordner auswählen.
+5. Gleichnamige alte Dateien ersetzen, andere Dateien NICHT löschen.
+6. Commit changes.
+7. Nach der GitHub-Pages-Aktualisierung sollte in der App V83.0 angezeigt werden.
+
+WICHTIG: Zuvor lager.db exportieren. Neue Imports zunächst mit einer Testdatenbank testen.
+Ein OneDrive-Ordner bestätigt den lokalen Dateischreibvorgang, nicht die Übertragung an OneDrive-Server.

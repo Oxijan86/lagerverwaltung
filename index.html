@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head>
 <meta name="theme-color" content="#245b48">
-<meta name="description" content="Lagerverwaltung Lovrencic V82 PWA">
+<meta name="description" content="Lagerverwaltung Lovrencic V83 PWA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.svg"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lagerverwaltung Lovrencic</title>
 <style>
@@ -193,6 +193,13 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 .lv82-field-choice{display:flex;gap:8px;align-items:center;background:#f8fafc;border:1px solid #d9e0e6;border-radius:8px;padding:8px;min-height:44px;overflow-wrap:anywhere}
 .lv82-field-choice input{width:22px;height:22px;flex:0 0 22px}
 @media(max-width:650px){.lv82-field-list{grid-template-columns:minmax(0,1fr)}}
+/* V83: Buchungsbeleg, Schnelllinks und mobiler Lagerort */
+.lv83-article-link{border:0;background:transparent;color:#1d5f91;font-weight:700;text-decoration:underline;cursor:pointer;min-height:42px;padding:5px;text-align:left;font:inherit}
+.lv83-article-link:focus-visible{outline:3px solid #f5aa2a;border-radius:4px}
+#mb83Card input[type=file]{max-width:100%}#mb83Card[hidden],#mb83Preview[hidden]{display:none!important}
+.mb83-table td input{min-width:80px;width:100%;box-sizing:border-box}.mb83-table td:first-child input{width:24px;height:24px;min-width:24px}.mb83-table td:nth-child(2){min-width:150px}.mb83-warning{background:#fffaf0}
+#inventory75 .inv75-row input[list]{min-height:44px}
+@media(max-width:700px){#mb83Card .mb83-table table,#mb83Card .mb83-table tbody,#mb83Card .mb83-table tr,#mb83Card .mb83-table td{display:block;width:100%;min-width:0!important;box-sizing:border-box}#mb83Card .mb83-table thead{display:none}#mb83Card .mb83-table tr{border:1px solid #d9e0e6;border-radius:10px;margin:10px 0;padding:8px}#mb83Card .mb83-table td{display:grid;grid-template-columns:110px minmax(0,1fr);gap:7px;padding:7px!important;border:0}#mb83Card .mb83-table td::before{font-weight:600;color:#506071}#mb83Card .mb83-table td:nth-child(1)::before{content:'Entnehmen?'}#mb83Card .mb83-table td:nth-child(2)::before{content:'Artikelnummer'}#mb83Card .mb83-table td:nth-child(3)::before{content:'Menge'}#mb83Card .mb83-table td:nth-child(4)::before{content:'Bestand'}#mb83Card .mb83-table td input{grid-column:2}}
 </style></head><body>
 
 
@@ -406,7 +413,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <div style="display:flex;align-items:center;gap:10px">
-<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">82.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span><button id="headerSyncStatus" type="button" class="lv81-status pending" onclick="LVSyncUI81.sync()" title="Synchronisierungsstatus / jetzt synchronisieren">⚪ Lokal gespeichert</button></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
+<button id="mobileMenuButton" class="mobile-menu-button" onclick="toggleMobileMenu()">☰ Menü</button><div><h1 style="margin:0">📦 Lagerverwaltung Lovrencic – Version <span id="appVersion">83.0</span></h1><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px"><div id="headerDatabaseUpdated" class="header-db-updated" style="font-size:12px;opacity:.9">DB: –</div><span id="headerStorageMode" class="mode-badge local">🏠 Lokal</span><button id="headerSyncStatus" type="button" class="lv81-status pending" onclick="LVSyncUI81.sync()" title="Synchronisierungsstatus / jetzt synchronisieren">⚪ Lokal gespeichert</button></div></div></div><button class="secondary" style="margin-right:14px;white-space:nowrap" onclick="LVLogout.open()">⏻ Abmelden / schließen</button></header><div class="shell"><nav id="mainNav">
 <div class="nav-group-label">Übersicht</div><button class="active" onclick="show('dash',this)">🏠 Dashboard</button><button onclick="show('articles',this)">📦 Lagerbestand</button><div class="nav-group-label">Buchen</div><button onclick="show('newmaterial',this)">➕ Neues Material</button><button onclick="show('inventory75',this)">📋 Inventur</button><button onclick="show('in',this)">➕ Einbuchung</button><button onclick="show('out',this)">➖ Entnahme</button><button onclick="show('req',this);loadConsumables().catch(e=>msg(consumableMsg,e.message,false))">📋 Materialanforderung</button><div class="nav-group-label">Auswertung</div><button onclick="show('csv',this)">↕ CSV-Center</button><button onclick="show('hist',this)">◉ Buchungen</button><button onclick="show('audit',this)">🛡 Audit</button><div class="nav-group-label">System</div><button onclick="show('master',this)">⚙ Stammdaten</button><button onclick="show('sync',this);LVStorageMode.refresh()">☁ Dateisynchronisierung</button><button onclick="show('backup',this);LVBackup.refresh();refreshDatabaseStatus()">🗄 Backups</button><button onclick="show('help',this)">❓ Hilfe</button></nav><main>
 <section id="dash" class="view active"><h2>Dashboard</h2><div class="grid"><div class="card kpi">Aktive Artikel<b id="ka">–</b></div><div class="card kpi">Unterbestand<b id="kl">–</b></div><div class="card kpi">Heute<b id="kt">–</b></div><div class="card kpi">Buchungen<b id="km">–</b></div></div>
 <div class="split" style="margin-top:14px"><div class="card"><h3>Artikel unter Mindestbestand</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Ist</th><th>Soll</th><th>Mindest.</th><th>Aktion</th></tr></thead><tbody id="dashLow"></tbody></table></div><div id="dashLowMsg" class="message"></div><div class="dashboard-low-actions"><button id="dashLowMore" class="secondary" type="button" onclick="renderDashboardLow(true)" style="display:none">Alle anzeigen</button></div></div><div class="card"><h3>Häufigste Entnahmen</h3><div class="tablewrap"><table><thead><tr><th>Artikel</th><th>Bezeichnung</th><th>Menge</th></tr></thead><tbody id="dashTop"></tbody></table></div></div></div>
@@ -503,6 +510,28 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 <tbody id="recentInRows"></tbody></table></div></div></section>
 
 <section id="out" class="view"><h2>Entnahme</h2><div id="bookingDone-out" class="booking-done" hidden role="status" aria-live="polite" tabindex="-1"></div>
+<div class="card" id="mb83Card"><h3>📄 Materialbuchungsbeleg aus PDF oder Foto entnehmen</h3>
+<p>Materialbuchungsbelege aus SAP/RONDO als <b>PDF, JPG oder PNG</b> auslesen. Auch mehrere Fotos desselben Belegs können zusammen ausgewählt werden. <b>Materialanforderungen sind keine Entnahmebelege</b> und werden zurückgewiesen.</p>
+<div class="formgrid"><label>Belegdateien (Seiten desselben Belegs)<input type="file" id="mb83Files" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" multiple><span class="small">Bei fotografierten oder gescannten Seiten wird OCR verwendet. Jede erkannte Menge und Artikelnummer prüfen.</span></label>
+<div class="toolbar" style="align-items:center"><button type="button" class="primary" id="mb83Read" onclick="LVMaterialBookingV83.read()">Beleg auslesen</button></div></div>
+<div id="mb83Msg" role="status" aria-live="polite" class="message"></div>
+<div id="mb83Preview" hidden>
+<div id="mb83DocumentKind" class="message"></div>
+<div class="formgrid"><label>Materialbelegnummer (falls vorhanden)<input id="mb83Voucher" maxlength="50" placeholder="Belegnummer"></label>
+<label>Buchungsrichtung<select id="mb83Direction" onchange="LVMaterialBookingV83.check()"><option value="OUT">Entnahme / Warenausgang</option><option value="IN">Einbuchung / Wareneingang</option></select><span id="mb83DirectionWarning" class="small"></span></label>
+<label>Buchungsdatum<input id="mb83Date" type="date" onchange="LVMaterialBookingV83.check()"></label>
+<label>Kunde (für Nachverfolgung erforderlich)<input id="mb83Customer" maxlength="300" oninput="LVMaterialBookingV83.check()" placeholder="Kundenname ergänzen"></label>
+<label>Ticket / Unterticket (optional)<input id="mb83Ticket" maxlength="100"></label>
+<label>Maschine (optional)<input id="mb83Machine" maxlength="300"></label>
+<label>Techniker<select id="mb83Technician" onchange="LVMaterialBookingV83.check()"></select></label></div>
+<div class="toolbar"><button type="button" class="secondary" onclick="LVMaterialBookingV83.markKnown()">Bekannte Positionen auswählen</button><button type="button" class="secondary" onclick="document.querySelectorAll('#mb83Rows input[type=checkbox]').forEach(x=>{if(x.checked)x.click()})">Alle abwählen</button></div>
+<div class="tablewrap mb83-table"><table><thead><tr><th>Entnehmen?</th><th>Artikelnummer</th><th>Menge</th><th>Artikel / Bestand / Prüfhinweise</th></tr></thead><tbody id="mb83Rows"></tbody></table></div>
+<p class="small" id="mb83Summary" aria-live="polite"></p>
+<label class="pdf77-check"><input id="mb83Reviewed" type="checkbox" onchange="LVMaterialBookingV83.check()">Ich bestätige: Dies ist ein Materialbuchungsbeleg, keine Materialanforderung. Ich habe jede ausgewählte Position und die Menge mit dem Original verglichen.</label>
+<button id="mb83Commit" class="danger" type="button" disabled onclick="LVMaterialBookingV83.commit()">Geprüfte Materialpositionen entnehmen</button>
+<p class="small">Bereits aus demselben Beleg gebuchte Positionen werden nicht erneut gebucht. Bei neuer Fotoaufnahme mit identischer Belegnummer, aber anderem Dateiinhalt, wird eine erneute Buchung zur Sicherheit blockiert.</p>
+</div></div>
+
 <div class="card" id="pdf77Card"><h3>RONDO-Servicebericht direkt aus PDF importieren</h3>
 <p>Vollständige Serviceberichte auswählen. Nur die Materialpositionen werden zur Prüfung vorgeschlagen. Arbeitszeit, Reisezeit und Kilometer werden ausgeschlossen. Die Verarbeitung erfolgt auf diesem Gerät; es ist kein M365-Umweg nötig.</p>
 <div class="formgrid"><label>Servicebericht-PDFs (mehrere möglich)<input id="pdf77Files" type="file" accept=".pdf,application/pdf" multiple><span class="small">Bis zu 20 PDFs, je höchstens 25 MB und 80 Seiten.</span></label><label>Techniker<select id="pdf77Technician" onchange="LVServicePDF.changed()"></select></label><label>Bemerkung für die Entnahmen<input id="pdf77Note" maxlength="2000" oninput="LVServicePDF.changed()"></label></div>
@@ -658,7 +687,7 @@ button,input,select,textarea{font:inherit}button.primary,button.secondary,button
 </table></div>
 </div>
 </section>
-<section id="master" class="view"><h2>Stammdaten</h2><div id="lockbox" class="adminlocked"><h3>🔒 Stammdaten gesperrt</h3>
+<section id="master" class="view"><h2>Stammdaten</h2><details class="card" id="lv83SpecialFunctions"><summary><b>⚙ Sonderfunktionen (klassisch)</b></summary><h3>Excel-Entnahme (klassisch)</h3><p>Frühere Excel-Entnahme bleibt erhalten: Artikelnummer und Menge aus einer XLSX-Datei einlesen und vor jeder Entnahme prüfen. Die Buchung erfolgt über dieselben Sicherheitsprüfungen wie der Materialbuchungsbeleg.</p><div class="toolbar"><input id="lv83LegacyExcel" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button class="secondary" type="button" onclick="LVMaterialBookingV83.readExcel()">Excel-Entnahme laden</button></div><div id="lv83ExcelMsg" role="status" class="message"></div></details><div id="lockbox" class="adminlocked"><h3>🔒 Stammdaten gesperrt</h3>
 <div id="normalUnlockArea"><p>Zur Bearbeitung von Lagerorten, Maschinen, Technikern und der vollständigen Lagerliste ist das Passwort erforderlich.</p><div class="toolbar"><input id="adminpw" type="password" placeholder="Passwort"><button class="primary" onclick="unlockAdmin()">Stammdaten freischalten</button></div></div>
 <div id="firstPasswordArea" style="display:none"><div class="message error">Für diese Datenbank wurde noch kein Administratorpasswort eingerichtet. Bitte lege jetzt ein Passwort fest.</div><div class="formgrid"><label>Neues Passwort<input id="firstPwNew" type="password" minlength="6"></label><label>Passwort wiederholen<input id="firstPwRepeat" type="password" minlength="6"></label></div><button class="primary" onclick="createFirstAdminPassword()">Passwort speichern und Stammdaten öffnen</button></div>
 <div id="unlockmsg" class="message"></div></div><div id="adminarea" style="display:none"><div class="split"><div class="card"><h3>Lagerort anlegen</h3><input id="locname" placeholder="z. B. Regal A1"><input id="locdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('location')">Speichern</button></div><div class="card"><h3>Maschine anlegen</h3><input id="machname" placeholder="z. B. Rondostar 3000"><input id="machdesc" placeholder="Beschreibung"><button class="primary" onclick="addMaster('machine')">Speichern</button></div><div class="card"><h3>Techniker anlegen</h3><input id="techname" placeholder="Name"><button class="primary" onclick="addMaster('technician')">Speichern</button></div></div><div id="mastermsg" class="message"></div>
@@ -1005,6 +1034,8 @@ window.LVAdminSession = window.LVAdminSession || {
 <script src="service_pdf_core.js"></script>
 <script src="service_pdf_v80.js"></script>
 <script src="service_pdf_reader.js"></script>
+<script src="material_booking_v83_core.js"></script>
+<script src="material_booking_v83_ui.js"></script>
 <script src="service_pdf_backend.js"></script>
 <script src="service_pdf_ui.js"></script>
 <script src="local_backend.js"></script>
@@ -1086,20 +1117,20 @@ async function loadAppInfo(){
   infoMovements.textContent=d.movements;
   document.title='Lagerverwaltung Lovrencic – Version '+d.version;
  }catch(e){
-  appVersion.textContent='82.0';
-  infoVersion.textContent='82.0';
+  appVersion.textContent='83.0';
+  infoVersion.textContent='83.0';
  }
 }
 let dashboardLowItems=[];
 function renderDashboardLow(showAll=false){
  const list=showAll?dashboardLowItems:dashboardLowItems.slice(0,8);
- dashLow.innerHTML=list.map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td><input class="level-input" id="dash-target-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.target_stock,x.unit)}" oninput="markLevelDraft('dash',${x.id})" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><input class="level-input" id="dash-min-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.minimum_stock,x.unit)}" oninput="markLevelDraft('dash',${x.id})" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><button class="secondary level-save" onclick="saveArticleLevels(${x.id},'dash')">Speichern</button><div id="dash-level-status-${x.id}" class="level-saved"></div></td></tr>`).join('')||'<tr><td colspan="6">Kein Unterbestand</td></tr>';
+ dashLow.innerHTML=list.map(x=>`<tr><td><button type="button" class="lv83-article-link" onclick="openStockArticleV83(${Number(x.id)})" title="Artikel im Lagerbestand bearbeiten">${esc(x.article_no)}</button></td><td>${esc(x.description)}</td><td>${n(x.stock)}</td><td><input class="level-input" id="dash-target-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.target_stock,x.unit)}" oninput="markLevelDraft('dash',${x.id})" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><input class="level-input" id="dash-min-${x.id}" type="number" min="0" step="${isWholeNumberUnit(x.unit)?'1':'0.01'}" value="${displayStockValue(x.minimum_stock,x.unit)}" oninput="markLevelDraft('dash',${x.id})" onchange="normalizeRowLevels('dash',${x.id},'${esc(x.unit)}')"></td><td><button class="secondary level-save" onclick="saveArticleLevels(${x.id},'dash')">Speichern</button><div id="dash-level-status-${x.id}" class="level-saved"></div></td></tr>`).join('')||'<tr><td colspan="6">Kein Unterbestand</td></tr>';
  dashLowMore.style.display=!showAll&&dashboardLowItems.length>8?'inline-flex':'none';restoreLevelDrafts();
 }
 async function dash(){
  let d=await api('/api/dashboard');ka.textContent=d.articles;kl.textContent=d.low_stock;kt.textContent=d.today;km.textContent=d.movements;
  dashboardLowItems=d.low_stock_all||d.low_stock_items||[];renderDashboardLow(false);
- dashTop.innerHTML=(d.top_out||[]).map(x=>`<tr><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('')||'<tr><td colspan="3">Noch keine Entnahmen</td></tr>';
+ dashTop.innerHTML=(d.top_out||[]).map(x=>`<tr><td><button type="button" class="lv83-article-link" onclick="openStockArticleNoV83(${JSON.stringify(x.article_no)})">${esc(x.article_no)}</button></td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td></tr>`).join('')||'<tr><td colspan="3">Noch keine Entnahmen</td></tr>';
  dashRecent.innerHTML=(d.recent||[]).map(x=>`<tr><td>${esc(formatAppDate(x.movement_date))}</td><td>${x.movement_type==='IN'?'Einbuchung':'Entnahme'}</td><td>${esc(x.article_no)}</td><td>${esc(x.description)}</td><td>${n(x.quantity)}</td><td>${esc(x.technician)}</td></tr>`).join('')||'<tr><td colspan="6">Noch keine Buchungen</td></tr>'
 }
 async function loadArticles(){
@@ -1777,7 +1808,7 @@ async function changeRequestStockMode(){
 async function loadReq(){
  const generation=++requestLoadGeneration,mode=requestStockMode.value==='target'?'target':'minimum';requestStockMode.disabled=true;
  try{await loadConsumables();const a=await api('/api/material-request?mode='+mode);if(generation!==requestLoadGeneration)return;
- rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td data-label="Export"><input type="checkbox" checked aria-label="Artikel ${esc(x.article_no)} exportieren"></td><td data-label="Artikel">${esc(x.article_no)}</td><td data-label="Bezeichnung">${esc(x.description)}${stockLevelBadge(x)}</td><td data-label="Istbestand">${n(x.stock)}</td><td data-label="Soll / Mindest"><b>${n(x.order_target??Number(x.target_stock||0))}</b><div class="small">Mindest: ${n(x.minimum_stock)}</div></td><td data-label="Bestellmenge"><input aria-label="Bestellmenge ${esc(x.article_no)}" type="number" min="0.000001" step="any" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';loadedRequestStockMode=mode;requestUserEdited=false;
+ rrows.innerHTML=a.map(x=>`<tr data-id="${x.id}"><td data-label="Export"><input type="checkbox" checked aria-label="Artikel ${esc(x.article_no)} exportieren"></td><td data-label="Artikel"><button type="button" class="lv83-article-link" onclick="openStockArticleV83(${Number(x.id)})" title="Artikel im Lagerbestand bearbeiten">${esc(x.article_no)}</button></td><td data-label="Bezeichnung">${esc(x.description)}${stockLevelBadge(x)}</td><td data-label="Istbestand">${n(x.stock)}</td><td data-label="Soll / Mindest"><b>${n(x.order_target??Number(x.target_stock||0))}</b><div class="small">Mindest: ${n(x.minimum_stock)}</div></td><td data-label="Bestellmenge"><input aria-label="Bestellmenge ${esc(x.article_no)}" type="number" min="0.000001" step="any" value="${x.suggested_quantity}"></td></tr>`).join('');reqPreview.innerHTML='';loadedRequestStockMode=mode;requestUserEdited=false;
  msg(rmsg,a.length+' Artikel '+(mode==='target'?'unter Sollbestand':'unter Mindestbestand')+' vorgeschlagen. Bestellmenge = Sollbestand minus Istbestand.',true);
  }catch(e){if(generation===requestLoadGeneration){requestStockMode.value=loadedRequestStockMode;msg(rmsg,'Vorschläge konnten nicht geladen werden: '+e.message,false)}}finally{if(generation===requestLoadGeneration)requestStockMode.disabled=false}
 }
@@ -2304,6 +2335,28 @@ function scheduleLiveStockSearch(){
  if(stockArticleCache.length){renderStockArticlesFromCache();return}
  liveStockSearchTimer=setTimeout(()=>loadArticles().catch(e=>console.warn('Sofortsuche konnte nicht ausgeführt werden:',e)),0);
 }
+async function openStockArticleV83(id){
+ const articleId=Number(id);if(!Number.isSafeInteger(articleId)||articleId<=0)return;
+ const known=(stockArticleCache||[]).find(a=>Number(a.id)===articleId);
+ const no=known?.article_no||(dashboardLowItems||[]).find(a=>Number(a.id)===articleId)?.article_no||'';
+ const nav=[...document.querySelectorAll('#mainNav button')].find(b=>b.getAttribute('onclick')?.includes("show('articles'"));
+ await show('articles',nav);
+ if(!document.getElementById('articles')?.classList.contains('active'))return;
+ stockLevelFilter.value='all';if(no)search.value=no;
+ await loadArticles();
+ stockDetailsState.set(articleId,true);renderStockArticlesFromCache();
+ await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+ const row=document.getElementById('stock-row-'+articleId);if(!row)return;
+ row.scrollIntoView({behavior:'smooth',block:'center'});row.classList.add('stock-search-selected');
+ setTimeout(()=>row.classList.remove('stock-search-selected'),2000);
+ const field=document.getElementById('stock-min-'+articleId);if(field&&window.matchMedia('(min-width:701px)').matches)field.focus({preventScroll:true});
+}
+async function openStockArticleNoV83(articleNo){
+ const all=stockArticleCache?.length?stockArticleCache:await api('/api/articles');
+ const found=all.find(a=>String(a.article_no||'').toUpperCase()===String(articleNo||'').toUpperCase());
+ if(found)await openStockArticleV83(found.id);
+}
+
 async function jumpToStockArticle(id){
  closeStockKeyboard();
  renderStockArticlesFromCache();

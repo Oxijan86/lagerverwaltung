@@ -26,7 +26,14 @@
     if(typeof window.show==='function')await window.show('sync');return;
    }
    await window.LVSync.sync(false);
-   await refresh(false);
+   let result=await window.LVSync.verifyFolder();
+   if(!result.verified){
+    // A new booking may have been saved while the first snapshot was being written.
+    // Retry only via the normal guarded sync, never by forcing cloud overwrite.
+    try{await window.LVSync.sync(false);result=await window.LVSync.verifyFolder()}catch(e){/* conflict/permission stays visible */}
+   }
+   await refresh(!result.verified);
+   if(!result.verified&&e.message){e.message.hidden=false;e.message.textContent='Ordnerdatei geprüft; mindestens eine neuere lokale Änderung wartet noch. Bitte erneut synchronisieren oder Datenstände vergleichen.';}
   }catch(err){await refresh(true);if(e.message){e.message.hidden=false;e.message.textContent=err.message||String(err)}}
   finally{busy=false;if(e.btn)e.btn.disabled=false}
  }

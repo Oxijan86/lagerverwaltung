@@ -51,7 +51,7 @@
     <div><b>${esc(x.article_no)}</b><div>${esc(x.description)}</div><span class="small">${esc(x.unit)} · Bestand bei Beginn: ${esc(x.base_stock)}</span>${x.stale?`<div class="inv75-warning">Bestandsstand geändert${x.missing?' / Artikel nicht mehr aktiv':''}. Bitte erneut prüfen.</div>${!x.missing?`<button class="secondary" onclick="LVInventory.rebase(${x.article_id})">Bestandsstand aktualisieren und neu zählen</button>`:''}`:''}</div>
     <label>Gezählt (${esc(x.unit)})<input id="inv75-count-${x.article_id}" type="text" inputmode="decimal" autocomplete="off" value="${esc(x.counted_stock??'')}" ${disabled} oninput="LVInventory.edit(${x.article_id},'counted_stock',this.value)"><span class="small">Leer = noch nicht gezählt · 0 = leerer Bestand</span></label>
     <label>Lager<select id="inv75-warehouse-${x.article_id}" ${disabled} onchange="LVInventory.warehouseChanged(${x.article_id},this.value)">${LVWarehouses.warehouses(x.warehouse_id)}</select></label>
-    <label>Lagerort (optional)<select id="inv75-location-${x.article_id}" ${disabled} onchange="LVInventory.edit(${x.article_id},'location',this.value)">${options}</select></label>
+    <label>Lagerort (optional)<input id="inv75-location-${x.article_id}" list="inv75-location-options-${x.article_id}" value="${esc(x.location||'')}" ${disabled} placeholder="Lagerort wählen oder neuen eingeben" onchange="LVInventory.locationChangedInline(${x.article_id},this.value)"><datalist id="inv75-location-options-${x.article_id}">${[...choices.keys()].map(name=>`<option value="${esc(name)}"></option>`).join('')}</datalist><span class="small">Auch einen neuen Lagerort direkt eintippen.</span></label>
     <label>Notiz<input id="inv75-note-${x.article_id}" value="${esc(x.note)}" maxlength="2000" ${disabled} oninput="LVInventory.edit(${x.article_id},'note',this.value)"></label>
    </article>`;
   }).join('')||'<p>Keine passenden Artikel gefunden.</p>';
@@ -113,6 +113,25 @@
    $('inv75ReviewBox').hidden=true;
    const row=data.items.find(x=>x.article_id===id);if(!row)return;row[field]=value===''&&field==='counted_stock'?null:value;
    pending.set(id,{...(pending.get(id)||{article_id:id}),[field]:row[field]});if(field==='location'){const loc=data.locations.find(l=>l.name===value);if(loc?.warehouse_id){row.warehouse_id=loc.warehouse_id;pending.get(id).warehouse_id=loc.warehouse_id;const w=$('inv75-warehouse-'+id);if(w)w.value=loc.warehouse_id}}cache();status();clearTimeout(timer);timer=setTimeout(()=>flush(),750);
+  },
+  async locationChangedInline(id,value){
+   if(!data||busy)return;
+   const row=data.items.find(x=>Number(x.article_id)===Number(id));if(!row)return;
+   const name=String(value||'').trim();if(!name){this.edit(id,'location','');return}
+   const known=data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===name.toLocaleLowerCase('de-DE'));
+   if(known){this.edit(id,'location',known.name);return}
+   if(!confirm(`Neuen Lagerort „${name}“ direkt anlegen und bei diesem Artikel auswählen?`)){
+    const el=$('inv75-location-'+id);if(el)el.value=row.location||'';return;
+   }
+   try{
+    // Save current drafts first. Warehouse creation changes the shared masterdata.
+    if(!await flush())throw Error('Bitte zuerst die Inventur-Zwischenspeicherung abschließen.');
+    const result=await post('location',{name,warehouse_id:row.warehouse_id||data.default_warehouse_id||null,database_id:dbid});
+    data.locations=result.locations||data.locations;data.warehouses=result.warehouses||data.warehouses;
+    LVWarehouses.setRefs(result);
+    this.edit(id,'location',result.created.name);
+    message(`Neuer Lagerort „${result.created.name}“ angelegt und beim Artikel ausgewählt.`);
+   }catch(e){message(e.message,false);const el=$('inv75-location-'+id);if(el)el.value=row.location||''}
   },
   warehouseChanged(id,value){const row=data.items.find(x=>x.article_id===id);if(!row)return;const loc=data.locations.find(l=>l.name===row.location);this.edit(id,'warehouse_id',Number(value)||null);if(loc?.warehouse_id&&Number(loc.warehouse_id)!==Number(value))this.edit(id,'location','');render()},
   filter(){page=0;render()},page(delta){page=Math.max(0,page+delta);render()},save:flush,
