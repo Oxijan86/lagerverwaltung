@@ -8,7 +8,7 @@
  const ARTICLE_SKIP=new Set(['id','warehouse_id','machine']);
  const MOVE_SKIP=new Set(['id','article_id','sync_uuid']);
  const AUDIT_SKIP=new Set(['id','sync_uuid']);
- const AUX_TABLES=['inventory_warehouses','locations','machines','machine_aliases','machine_merge_history','technicians','vehicles','consumables','inventory_sessions','inventory_counts','app_settings'];
+ const AUX_TABLES=['inventory_warehouses','locations','machines','machine_aliases','machine_merge_history','technicians','vehicles','consumables','inventory_sessions','inventory_counts','stock_bins_v86','stock_bin_moves_v86','inventory_company_v86','app_settings'];
  function dbRows(db,table){
   try {const e=db.exec(`SELECT * FROM ${table}`)[0];return e?e.values.map(vals=>Object.fromEntries(e.columns.map((k,i)=>[k,vals[i]]))):[];}catch{return []}
  }
@@ -19,6 +19,11 @@
   return rows.map(row=>{
    const r={...row};delete r.id;
    if(table==='locations' && 'warehouse_id' in r){r.warehouse_name=refs.warehouses[String(r.warehouse_id)]||'';delete r.warehouse_id}
+   if(table==='stock_bins_v86' || table==='stock_bin_moves_v86'){
+    r.article_no=refs.articles[String(r.article_id)]||r.article_no||'';delete r.article_id;
+    for(const p of ['warehouse_id','source_warehouse_id','target_warehouse_id'])if(p in r){r[p+'_name']=refs.warehouses[String(r[p])]||'';delete r[p]}
+    if(table==='stock_bins_v86'){delete r.bin_key;}
+   }
    if(table==='inventory_counts'){
     r.article_no=refs.articles[String(r.article_id)]||r.article_no||'';delete r.article_id;
     for(const p of ['warehouse_id','base_warehouse_id'])if(p in r){r[p+'_name']=refs.warehouses[String(r[p])]||'';delete r[p]}

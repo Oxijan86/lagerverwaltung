@@ -1,7 +1,15 @@
 (function(){'use strict';
  const $=id=>document.getElementById(id),Core=window.LVMaterialBookingCore83;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let parsed=null,articles=new Map(),fileHash='',working=false,files=[];
+ let parsed=null,articles=new Map(),fileHash='',working=false,files=[],classicExcel=false;
+ function attachCard(){const panel=$('mb83Card'),target=$(classicExcel?'out':'in');if(!panel||!target)return;
+  if(classicExcel){target.insertBefore(panel,$('pdf77Card')||null)}
+  else target.insertBefore(panel,$('deliveryImportCard')||null);
+  const label=panel.querySelector('h3');if(label)label.textContent=classicExcel?'📊 Excel-Entnahme (klassisch) – Positionen prüfen':'📄 Materialbuchungsbeleg aus PDF oder Foto einbuchen';
+  $('mb83Direction').value=classicExcel?'OUT':'IN';
+  const direction=$('mb83Direction').closest('label');if(direction)direction.hidden=!classicExcel;
+  const commit=$('mb83Commit');if(commit)commit.textContent=classicExcel?'Geprüfte Excel-Positionen entnehmen':'Geprüfte Materialpositionen einbuchen';
+ }
  function msg(t,ok=true){const el=$('mb83Msg');if(el){el.textContent=t;el.className='message '+(ok?'ok':'error');el.style.display='block'}}
  async function hashBytes(bytes){const data=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(data)].map(x=>x.toString(16).padStart(2,'0')).join('')}
  function article(no){return articles.get(String(no||'').trim().toUpperCase())||null}
@@ -23,8 +31,8 @@
  function render(){if(!parsed)return;$('mb83Preview').hidden=false;const kind=parsed.kind;
   $('mb83DocumentKind').textContent=kind==='request'?'⛔ Materialanforderung erkannt. Keine Lagerbuchung möglich.':kind==='voucher'?'✓ Materialbuchungsbeleg erkannt. Buchungsrichtung und jede Position prüfen.':'⚠ Belegtyp nicht sicher erkannt. Automatische Buchung gesperrt.';
   $('mb83DocumentKind').className='message '+(kind==='voucher'?'ok':'error');$('mb83DocumentKind').style.display='block';
-  $('mb83Voucher').value=parsed.metadata.voucher||('DATEI-'+fileHash.slice(0,24));$('mb83Date').value=parsed.metadata.date||new Date().toLocaleDateString('en-CA');$('mb83Direction').value=parsed.metadata.direction;
-  $('mb83DirectionWarning').textContent=parsed.metadata.direction==='IN'?'SAP-Umlagerung zum Lager 1010/1025 erkannt: vermutlich Wareneingang. Für eine Entnahme musst du die Richtung ausdrücklich ändern.':'Prüfe, ob die ausgewählten Materialien tatsächlich aus deinem Lager entnommen wurden.';
+  $('mb83Voucher').value=parsed.metadata.voucher||('DATEI-'+fileHash.slice(0,24));$('mb83Date').value=parsed.metadata.date||new Date().toLocaleDateString('en-CA');$('mb83Direction').value=classicExcel?'OUT':'IN';
+  $('mb83DirectionWarning').textContent=classicExcel?'Klassische Excel-Entnahme – jede Position prüfen.':parsed.metadata.direction==='OUT'?'Achtung: Der Beleg weist möglicherweise einen Abgang aus. Nur tatsächlich erhaltene Ware als Zugang buchen.':'Materialbuchungsbeleg – jede eingegangene Menge prüfen.';
   $('mb83Reviewed').checked=false;
   $('mb83Rows').innerHTML=parsed.items.map((it,i)=>`<tr id="mb83-row-${i}" data-index="${i}"><td><input type="checkbox" data-select aria-label="Position ${esc(it.position)} auswählen"></td><td><span class="small">Pos. ${esc(it.position)}</span><input data-no value="${esc(it.article_no)}" aria-label="Artikelnummer Position ${esc(it.position)}"></td><td><input data-qty inputmode="decimal" value="${it.quantity===null?'':esc(it.quantity)}" aria-label="Menge Position ${esc(it.position)}"> <span class="small">${esc(it.unit)}</span></td><td><div>${esc(it.description)}</div><span class="small" data-status></span></td></tr>`).join('');
   $('mb83Rows').querySelectorAll('input').forEach(el=>el.addEventListener('input',check));
@@ -34,7 +42,7 @@
   const worker=await window.Tesseract.createWorker('deu+eng',1,{workerPath:new URL('vendor/tesseract/worker.min.js',document.baseURI).href,corePath:new URL('vendor/tesseract/core/',document.baseURI).href,langPath:new URL('vendor/tesseract/lang/',document.baseURI).href});
   try{const out=await worker.recognize(file);return out.data.text||''}finally{await worker.terminate()}
  }
- async function read(){if(working)return;working=true;$('mb83Read').disabled=true;$('mb83Preview').hidden=true;try{
+ async function read(){if(working)return;classicExcel=false;attachCard();working=true;$('mb83Read').disabled=true;$('mb83Preview').hidden=true;try{
    files=[...$('mb83Files').files||[]];if(!files.length)throw Error('Bitte mindestens eine PDF- oder Bilddatei auswählen.');if(files.length>8)throw Error('Bitte höchstens acht Seiten gleichzeitig auswählen.');
    const docs=[],blobs=[];let page=0;for(const f of files){if(f.size>25*1024*1024)throw Error(`${f.name} ist größer als 25 MB.`);const bytes=await f.arrayBuffer();blobs.push(new Uint8Array(bytes));
     msg(`Seite ${++page} von ${files.length} wird gelesen …`);
@@ -54,7 +62,7 @@
  function markKnown(){if(!parsed)return;for(let i=0;i<parsed.items.length;i++){const r=rowEl(i);r.querySelector('[data-select]').checked=r.dataset.valid==='1'}check()}
  async function commit(){if(working||!parsed)return;check();if($('mb83Commit').disabled)return;
   const items=parsed.items.map((it,i)=>{const el=rowEl(i);return el.querySelector('[data-select]').checked?{position_key:'pos:'+it.position,article_no:el.querySelector('[data-no]').value.trim().toUpperCase(),quantity:Core.amount(el.querySelector('[data-qty]').value),position:it.position}:null}).filter(Boolean);
-  const dir=$('mb83Direction').value;const verb=dir==='IN'?'einbuchen':'entnehmen';if(!confirm(`${items.length} Position(en) aus Beleg ${$('mb83Voucher').value} wirklich ${verb}? Bitte Buchungsrichtung und Mengen prüfen.`))return;
+  const dir=classicExcel?'OUT':'IN';const verb=dir==='IN'?'einbuchen':'entnehmen';if(!confirm(`${items.length} Position(en) aus Beleg ${$('mb83Voucher').value} wirklich ${verb}? Bitte Buchungsrichtung und Mengen prüfen.`))return;
   working=true;$('mb83Commit').disabled=true;try{
    const result=await window.api('/api/material-booking-v83/commit',{method:'POST',body:JSON.stringify({items,direction:dir,voucher:$('mb83Voucher').value.trim(),file_hash:fileHash,customer:$('mb83Customer').value.trim(),ticket:$('mb83Ticket').value.trim(),machine:$('mb83Machine').value.trim(),technician:$('mb83Technician').value,movement_date:$('mb83Date').value,reviewed:$('mb83Reviewed').checked,kind:parsed.kind})});
    msg(`${result.booked} Positionen ${dir==='IN'?'eingebucht':'entnommen'}, ${result.already_processed} bereits gebucht und übersprungen.`,true);
@@ -64,6 +72,7 @@
  }
 
  async function readExcel(){
+  classicExcel=true;attachCard();
   const input=$('lv83LegacyExcel'),f=input?.files?.[0];if(!f){window.msg($('lv83ExcelMsg'),'Bitte eine XLSX-Datei auswählen.',false);return}
   if(!/\.xlsx$/i.test(f.name)||f.size>10*1024*1024){window.msg($('lv83ExcelMsg'),'Nur XLSX bis 10 MB zulässig.',false);return}
   try{
@@ -88,7 +97,7 @@
    fileHash=await hashBytes(bytes);parsed={kind:'voucher',metadata:{voucher:'EXCEL-'+fileHash.slice(0,24),date:'',direction:'OUT',movement:'Klassische Excel-Entnahme',destination1025:false},items,warnings:[]};
    const list=await window.api('/api/articles');articles=new Map(list.map(a=>[String(a.article_no).toUpperCase(),a]));
    const master=await window.api('/api/masterdata');$('mb83Technician').innerHTML=(master.technicians||[]).map(t=>`<option>${esc(t.name)}</option>`).join('');$('mb83Technician').value=master.default_technician||'';
-   await window.show('out');render();$('mb83Direction').value='OUT';$('mb83DirectionWarning').textContent='Excel-Entnahme: Bitte jede Position und Menge vor dem Ausbuchen bestätigen.';check();
+   attachCard();await window.show('out');render();$('mb83Direction').value='OUT';$('mb83DirectionWarning').textContent='Excel-Entnahme: Bitte jede Position und Menge vor dem Ausbuchen bestätigen.';check();
    window.msg($('lv83ExcelMsg'),`${items.length} Excel-Positionen zur Entnahmevorschau übernommen.`,true);
   }catch(e){window.msg($('lv83ExcelMsg'),e.message,false)}
  }

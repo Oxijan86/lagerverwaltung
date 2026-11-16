@@ -1,0 +1,14 @@
+Lagerverwaltung Lovrencic V86.0 - GitHub hochladen
+
+1. Die aktuelle lager.db vor dem Update sichern und in der laufenden Inventur alles lokal speichern.
+2. Datenstand von PC und Smartphone vor dem Update abgleichen; im Zweifel zuerst Sicherheitskopien beider Staende erstellen.
+3. Lagerverwaltung_Lovrencic_V86_Direktupload_GitHub.zip entpacken.
+4. GitHub > Oxijan86/lagerverwaltung > Add file > Upload files.
+5. Alle Dateien aus dem entpackten ZIP inklusive Unterordnern hochladen, bestehende Dateien ersetzen und committen.
+6. Kein Python-, Batch- oder GitHub-Action-Workflow notwendig.
+7. Auf GitHub Pages neu laden, ggf. PWA beenden/neu starten und Version 86.0 pruefen.
+8. Erste Mehrlagerort-Umlagerung und Inventurabschluss NUR mit Testdatenbank testen, danach Original vorsichtig nutzen.
+
+Die neue Rubrik heisst „Lagerorte & Umlagerung“. Materialbuchungsbelege sind unter Einbuchung, Serviceberichte weiterhin unter Entnahme. Die klassische Excel-Entnahme liegt unter Stammdaten > Sonderfunktionen.
+
+Weitere Details: README_V86.md und Hilfe-Themen 32, 33, 34.

@@ -23,12 +23,14 @@
  function matches(row,{query='',status='all',warehouse='',location='',exactLookup=true}={}){
   if(!row)return false;
   const q=norm(query),loc=norm(location),actualLoc=norm(row.location);
-  const txt=norm([row.article_no,row.description,row.barcode,row.location,row.warehouse_name].join(' '));
+  const positions=(row.stock_bins?.length?row.stock_bins:[{warehouse_id:row.warehouse_id,location:row.location}]);
+  const txt=norm([row.article_no,row.description,row.barcode,row.location,row.warehouse_name,...positions.map(p=>p.location)].join(' '));
   if(q&&!q.split(/\s+/).every(w=>txt.includes(w)))return false;
   const counted=!isUncounted(row);
   if(status==='open'&&counted||status==='counted'&&!counted||status==='conflict'&&!row.stale)return false;
   const exact=!!q&&exactLookup&&(norm(row.article_no)===q||norm(row.barcode)===q);
-  return exact||(!warehouse||String(row.warehouse_id||'')===String(warehouse))&&(!location||(location===NONE?!actualLoc:actualLoc===loc));
+  const inRequestedPlace=positions.some(p=>(!warehouse||String(p.warehouse_id||'')===String(warehouse))&&(!location||(location===NONE?!norm(p.location):norm(p.location)===loc)));
+  return exact||inRequestedPlace;
  }
  return {NONE,norm,isUncounted,locationsForWarehouse,suggestedPlace,matches};
 });
