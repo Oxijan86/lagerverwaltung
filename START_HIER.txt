@@ -1,0 +1,11 @@
+Lagerverwaltung Lovrencic – V88.0 OCR-Reparatur (Build-Paket)
+
+1) Dieses ZIP vollständig auf deinem Windows-PC entpacken.
+2) Doppelklick auf V88_erstellen_Windows.bat (Python 3 muss installiert sein).
+3) Das Skript bezieht vier aktuelle Originaldateien LESEND aus deinem öffentlichen GitHub-Repository und patcht nur die OCR-Funktionen. Keine Änderung im GitHub-Konto.
+4) Nach erfolgreichem Test entsteht im gleichen Ordner die Datei V88_ZUM_GITHUB_HOCHLADEN.zip.
+5) Deren Inhalt (die Ersatzdateien) im GitHub-Repository hochladen. Vorher lager.db sichern.
+
+Die Änderungen wurden NICHT auf GitHub hochgeladen, da der verbundene GitHub-Zugang keine Schreibberechtigung für dieses Repository hat.
+
+Die Original-PDF mit 72 Seiten dient als Referenz, enthält aber KEINE gezählten Bestände.
