@@ -1,4 +1,4 @@
-/* Lagerverwaltung Lovrencic V88.4 – gespeicherte Zwischenstände oder abgeschlossene
+/* Lagerverwaltung Lovrencic V88.6 – gespeicherte Zwischenstände oder abgeschlossene
  * Inventuren jederzeit in die Original-RONDO-PDF zurückschreiben.
  * Ein Export liest nur; einzig vor dem Export der AKTUELLEN offenen Inventur
  * wird der Inventur-Zwischenstand gesichert. KEIN Inventurabschluss.
@@ -31,7 +31,7 @@
   for(const row of lines){
    const key=String(row.key??(row.page+':'+row.position));
    const material=clean(row.article_no);
-   if(!material||row.verified===false){uncertain.push({key,material:row.article_no||'',reason:'Materialnummer noch nicht geprüft'});continue}
+   if(!material||row.verified===false||row.review_action==='defer'){uncertain.push({key,material:row.article_no||'',reason:'Materialnummer noch nicht geprüft'});continue}
    if(times.get(material)>1){repeated.push({key,material:row.article_no,reason:'Material mehrfach im PDF; keine Gesamtzählung doppelt ausdrucken'});continue}
    const inv=match.get(material);
    if(!inv||!counted(inv.counted_stock)){missing.push({key,material:row.article_no||'',reason:'Noch nicht gezählt'});continue}
@@ -70,7 +70,7 @@
       <label>Zähler / Techniker <input id="lv884PdfCounter" type="text" maxlength="100" autocomplete="name" value="${label(defaultTechnician)}" placeholder="Name des Technikers" required></label>
       <label>Datum <input type="text" value="${formatTodayDE()}" readonly aria-label="Datum des heutigen Tages"></label>
     </div>
-    <p class="lv87-hint">Zähler und heutiges Datum werden auf jeder Seite in die Original-RONDO-Vorlage geschrieben. Die Signatur bleibt frei.</p>
+    <p class="lv87-hint">Zählmengen werden links neben ST/M auf die freie Linie gesetzt. Originaltext und Belege bleiben vollständig erhalten. Zähler und Datum stehen auf ihren Linien, Signatur bleibt frei.</p>
     <p id="lv884PdfInfo" class="lv87-hint">Fehlende Zählwerte bleiben leer. Nullbestände (0) werden ausdrücklich als 0 gedruckt.</p>
     <div class="lv87-flex"><button id="lv884PdfStart" type="button" class="primary">PDF mit bisherigen Zählwerten erzeugen</button><button id="lv884PdfCancel" type="button" class="secondary" hidden>Erstellung abbrechen</button></div>
     <div id="lv884PdfStatus" class="lv87-status" role="status">Die PDF-Erstellung verändert KEINE Lagerbestände. Erst „Inventur verbindlich abschließen“ übernimmt Bestände.</div>`, 'Ausgefüllte RONDO-PDF erzeugen');
