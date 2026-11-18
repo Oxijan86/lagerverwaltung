@@ -1,9 +1,9 @@
-/* Lagerverwaltung Lovrencic V88.0 – vollständiges Update des bestehenden V86/V87-Repos.
+/* Lagerverwaltung Lovrencic V88.1 – vollständiges Update des bestehenden V86/V87-Repos.
  * Das bisherige index.html wird beim Abruf um die bereits im Repo befindlichen
  * V87-Module und um die V88-OCR-Prüfung ergänzt. Die DB bleibt unverändert.
  */
 'use strict';
-const CACHE_NAME='lv88-2026-11-18-ocr-2pass-v1';
+const CACHE_NAME='lv88-1-2026-11-18-ocr-whiterepair-v1';
 const FILES=[
  './','index.html','manifest.webmanifest','v87_core.js','v87_pdf.js','v87_ui.js','v88_ocr.js',
  'inventory_core.js','inventory_ui.js','inventory_v84_core.js','inventory_v85_core.js',
@@ -30,7 +30,7 @@ function injectHtml(html){
  const extra=ADDONS.filter(([src])=>!new RegExp('<script\\b[^>]*\\bsrc=["\\\']'+src.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'["\\\']','i').test(out))
    .map(([src])=>'<script src="'+src+'" defer></script>').join('\n');
  // Nicht direkt im head einhängen: Das vollständige V86-App-Gerüst muss vorliegen.
- return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.0: unveränderte V86-Funktionen + V87 + V88 -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
+ return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.1: unveränderte V86-Funktionen + V87 + V88 -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
 }
 function patchV87Ui(source){
  const orig=String(source);
@@ -58,6 +58,23 @@ function patchV87Ui(source){
   if(!out.includes(before))return orig;
   out=out.replace(before,after);
  }
+ // In Chrome/Android a fresh <input type=file> cannot preserve its selection.
+ // Save the File object in memory so the user can retry without selecting again.
+ const readHead="async function readPdf(file,mode='annual'){";
+ if(out.includes(readHead) && !out.includes('lv88LastReadPdf')){
+  out=out.replace(readHead,"let lv88LastReadPdf=null;\n"+readHead);
+  const oldCheck="if(!file)return alert('Bitte zuerst die RONDO-PDF auswählen.');if(scanBusy)return;";
+  const newCheck="if(!file)file=lv88LastReadPdf;if(!file)return alert('Bitte zuerst die RONDO-PDF auswählen.');if(scanBusy)return;lv88LastReadPdf=file;";
+  if(out.includes(oldCheck))out=out.replace(oldCheck,newCheck);
+  const oldRetry="$('lv87Resume').onclick=()=>readPdf($('lv87ChooseFile').files[0],stagingMode)";
+  if(out.includes(oldRetry))out=out.replace(oldRetry,"$('lv87Resume').onclick=()=>readPdf($('lv87ChooseFile').files[0]||lv88LastReadPdf,stagingMode)");
+ }
+ // Der Browser darf die Dateiauswahl nicht automatisch vorbefüllen;
+ // deshalb zeigen wir ausdrücklich an, dass die letzte Datei intern gemerkt bleibt.
+ out=out.replace('Du kannst die PDF erneut auswählen. Bereits erkannte Seiten werden beim gleichen Dokument wiederverwendet.',
+   'Die zuletzt ausgewählte PDF bleibt für einen erneuten Versuch verfügbar. Du kannst alternativ eine andere PDF auswählen. Bereits erkannte Seiten werden bei derselben Datei wiederverwendet.');
+ out=out.replace('id="lv87Resume" class="primary">Fortsetzen',
+   'id="lv87Resume" class="primary">PDF erneut versuchen');
  const guard="if(pdf.numPages<1||pdf.numPages>100)throw Error('PDF muss zwischen 1 und 100 Seiten enthalten.');";
  if(out.includes(guard))out=out.replace(guard,guard+"if(pdf.numPages!==72)throw Error('Diese RONDO-Inventurliste muss 72 Seiten umfassen. Bitte das richtige Dokument auswählen.');");
  return '/* LV88_V87_UI_PATCH */\n'+out;

@@ -1,29 +1,28 @@
-# Lagerverwaltung Lovrencic – Version 88.0
+# Lagerverwaltung Lovrencic – Version 88.1 (OCR-Korrektur)
 
-**Release:** 18. November 2026  
-**Repository:** `Oxijan86/lagerverwaltung`  
-**Basiert auf:** GitHub-Hauptzweig mit den bereits vorhandenen V87.1-Modulen
+**Stand:** 18.11.2026  
+**Basis:** V88.0 und bereits vorhandene Dateien aus V87.1.  
+**Release-Typ:** direkt hochladbare Aktualisierung des bestehenden GitHub-Repositories.
 
-## Direkt hochzuladende Dateien
+## Reparatur des Smartphone-PDF-Imports
 
-| Datei | Funktion |
-|---|---|
-| `service-worker.js` | Neuer PWA-Cache, Nachladen von V87/V88, geschützte Anpassung der vorhandenen V87-PDF-Verarbeitung zur Laufzeit |
-| `v88_ocr.js` | Zweiter OCR-Erkennungsweg, Bildprüfung, sichere Zuordnung und Bestandsschutz |
-| `manifest.webmanifest` | Versionsanzeige V88.0 |
-| `test_v88.cjs` | Automatisierte Regressionstests |
-| `README_GITHUB_UPLOAD_V88.txt` | Uploadanleitung und Grenzen |
-| `CHANGED_FILES_V88.md` | Diese Versionsdokumentation |
-| `TESTERGEBNIS_V88.md` | Prüfnachweis |
+1. **Verfrühter Abbruch entfernt:** V88.0 hat bei einer grob auf 96 × 132 Pixel verkleinerten Vorschau die Meldung „Die gescannte Seite ist leer/fast weiß“ ausgelöst. V88.1 erkennt dies nur noch als Verdachtsmoment. **Die OCR läuft trotzdem an.**
+2. **Feinere Bildprüfung:** Die Stichprobe umfasst nun 256 × 352 Pixel und erkennt auch hellere Grautöne. Sie ist nicht mehr die alleinige Import-Sperre.
+3. **Zwei Erkennungsversuche:** Bei unvollständigem Text wird zusätzlich die kontrastverstärkte Variante verarbeitet. V88.1 wählt den plausibleren Datensatz, ohne Artikelnummern zu erfinden.
+4. **Kein unnötiges erneutes Auswählen:** Bei einem erneuten Versuch hält der Dialog die zuletzt ausgewählte Datei nur im Arbeitsspeicher, solange die Seite geöffnet ist. Alternativ lässt sich eine andere Datei wählen.
+5. **Sicherer Abbruch bleibt erhalten:** Werden trotz beider OCR-Läufe keine Artikelpositionen erkannt, stoppt der ursprüngliche Scanner mit einer technischen Fehlermeldung. Keine unbestätigten Artikel-/Bestandsbuchungen.
+6. **PWA-Aktualisierung:** Neues Cache-Kennzeichen und Versionsanzeige 88.1.
 
-## Sicherheitsverhalten
+## Austauschdateien
 
-- Vorhandene Datensätze werden nicht gelöscht, migriert oder automatisch umgebucht.
-- PDF-OCR liest ausschließlich die RONDO-Inventurliste mit 72 Seiten; andere PDFs werden im bestehenden V87-Lesemodul durch den V88-Patch zurückgewiesen.
-- Die 719 erwarteten Positionen müssen vollständig und eindeutig sein. Fehlerhafte oder unsichere Zeilen bedürfen einer manuellen Prüfung.
-- Eine ungezählte Menge ist **null**, nicht die Zahl **0**.
-- Der RONDO-Abgleich und das Ausfüllen der Original-PDF aus V87 bleiben erhalten.
+- `v88_ocr.js` – Verhindert den falschen „weiße Seite“-Abbruch.
+- `service-worker.js` – Lädt V88.1 und hält beim erneuten Versuch die ausgewählte PDF fest.
+- `manifest.webmanifest` – Version 88.1.
+- `test_v88.cjs` – regressionstests inklusive früherer 88.0-Prüfungen.
+- `README_GITHUB_UPLOAD_V88.txt` – Anleitung.
+- `CHANGED_FILES_V88.md` – dieser Text.
+- `TESTERGEBNIS_V88.md` – Testergebnis.
 
-## Technischer Hinweis
+## Grenzen
 
-Das Update ersetzt die große `index.html` nicht und erfordert keinen separaten lokalen Build-Prozess. Bei durch den neuen Service Worker bedienten HTML-Navigationen werden die im bestehenden Repository vorhandenen `v87_core.js`, `v87_pdf.js`, `v87_ui.js` und der neue `v88_ocr.js` in dieser Reihenfolge geladen. Der bestehende V87-Scanner bekommt beim Ausliefern eine begrenzte, überprüfbare Quellcodekorrektur für seitenweise Datensicherung und strikte Dokumentkontrolle. Der GitHub-Hauptstand wird durch diese Paket-Erstellung nicht verändert.
+Der reale gescannte RONDO-Beleg und ein vollständiger Import auf dem Android-Smartphone waren bei dieser Korrektur nicht als Testmaterial verfügbar. Die Korrektur beseitigt den **vorzeitigen Heuristik-Abbruch**; sie garantiert nicht, dass alle 719 Materialpositionen ohne manuelle Korrektur erkannt werden. Die Sichtprüfung vor der Übernahme bleibt verpflichtend. Keine Migration oder Löschung der bestehenden Datenbank.

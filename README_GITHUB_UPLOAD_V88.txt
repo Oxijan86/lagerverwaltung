@@ -1,4 +1,4 @@
-LAGERVERWALTUNG LOVRENCIC – VERSION 88.0
+LAGERVERWALTUNG LOVRENCIC – VERSION 88.1
 Direktupload für das BESTEHENDE GitHub-Repository Oxijan86/lagerverwaltung
 Stand: 18.11.2026
 
@@ -16,7 +16,7 @@ SO LÄDST DU VERSION 88 HOCH
 5. "Commit changes" ausführen. Vorhandene Dateien mit gleichem Namen werden ersetzt.
 6. GitHub Pages aktualisieren lassen. Die App danach zweimal neu laden,
    damit der aktualisierte Service Worker die V88-Module aktiviert.
-7. Prüfen, ob im Programm Version 88.0 erscheint.
+7. Prüfen, ob im Programm Version 88.1 erscheint.
 
 WICHTIG: KEINE BROWSERSEITENDATEN / INDEXEDDB LÖSCHEN!
 Dadurch könnten lokale Lagerdaten und noch nicht synchronisierte Änderungen
@@ -36,7 +36,9 @@ NEU IN V88
 - Zweiter OCR-Lauf bei schwacher oder unvollständiger Erkennung:
   kontrastverstärkt, bei passenden Geräten höher aufgelöst, mit Speichergrenze.
 - Positions- und Artikelnummernprüfung (Text + räumliche OCR gegenprüfen).
-- Defekte/leere PDF-Renderings werden erkannt und der Import wird abgebrochen.
+- Die Bild-Vorprüfung blockiert den Import nicht mehr fälschlich bei hellen Seiten.
+- Wenn beide OCR-Durchgänge keine Position erkennen, wird der Import sicher abgebrochen.
+- Wiederholter Versuch mit derselben PDF möglich, ohne die Datei neu auszuwählen.
 - Unsichere Zeilen werden für eine manuelle Prüfung markiert;
   keine stillschweigend erfundenen Materialien.
 - Schutz vor doppelten Seitenpositionen, falschen Reihen und ungezählten Mengen.
@@ -54,7 +56,7 @@ Syntax: node --check service-worker.js
         node --check v88_ocr.js
 Automatische Tests: node --test test_v88.cjs
 
-11/11 automatisierte Tests bestanden. Der vollständige reale Import aller 72
+Regressionstests siehe TESTERGEBNIS_V88.md. Der vollständige reale Import aller 72
 Seiten auf einem Android-Smartphone konnte hier nicht ausgeführt werden.
 Die Automatik ersetzt deshalb KEINE Sichtkontrolle der Prüfansicht vor der
 Artikelübernahme. Die Anwendung importiert keine unklaren Mengen ungefragt.

@@ -69,10 +69,10 @@ test('Bounding Boxes werden nach Skalierung wieder auf Originalbild bezogen',()=
  assert.equal(o.data.blocks[0].paragraphs[0].lines[0].words[0].bbox.y0,25);
 });
 test('Service-Worker-Cache und Manifest tragen V88 und alle Update-Dateien sind vorhanden',()=>{
- assert.match(SW.CACHE_NAME,/lv88/);
+ assert.match(SW.CACHE_NAME,/lv88-1/);
  for(const f of ['service-worker.js','manifest.webmanifest','v88_ocr.js'])assert.ok(fs.statSync(path.join(__dirname,f)).size>100);
  const manifest=JSON.parse(fs.readFileSync(path.join(__dirname,'manifest.webmanifest')));
- assert.match(manifest.name,/V88/);
+ assert.match(manifest.name,/V88\.1/);
 });
 test('V87-Quellcode wird ohne zusätzliche Benutzerschritte für V88 erweitert',()=>{
  const src=`async function scan(file,onProgress=()=>{}){
@@ -110,4 +110,59 @@ test('719 Positionen der RONDO-Liste ohne stilles Hochzählen abbildbar',()=>{
  assert.equal(rows.length,719);
  assert.equal(rows.filter(r=>OCR.isCounted(r)).length,0);
  assert.ok(result.every(p=>!p.warnings.length));
+});
+
+
+test('V88.1: weisse Seiten-Vorschau sperrt OCR nicht mehr vorzeitig',async()=>{
+ const vm=require('node:vm');
+ const code=fs.readFileSync(path.join(__dirname,'v88_ocr.js'),'utf8');
+ const plainPixels=new Uint8ClampedArray(256*352*4);plainPixels.fill(255);
+ const doc={
+  getElementById:()=>null,querySelector:()=>null,addEventListener:()=>{},
+  createElement:(tag)=>({width:256,height:352,getContext:()=>({
+   drawImage:()=>{},fillRect:()=>{},putImageData:()=>{},
+   getImageData:()=>({data:plainPixels})
+  })})
+ };
+ const base={parseOcrPage:()=>({page:1,positions:[]}),parseRondoSpatial:()=>[]};
+ let recognitionCalls=0;
+ const worker={recognize:async()=>{recognitionCalls++;return {data:{text:'',confidence:0,blocks:[]}}}};
+ const fake={document:doc,addEventListener:()=>{},navigator:{deviceMemory:4},
+   LV87Core:base,Tesseract:{createWorker:async()=>worker},console:{warn:()=>{}}};
+ fake.globalThis=fake;
+ vm.runInNewContext(code,fake,{filename:'v88_ocr.js'});
+ const wrapped=await fake.Tesseract.createWorker('deu+eng');
+ const source={width:1000,height:1400};
+ const result=await wrapped.recognize(source,{}, {text:true});
+ assert.ok(recognitionCalls>=1,'Echter OCR-Lauf muss trotz heller Vorschau starten');
+ assert.equal(result.data.text,'');
+ assert.match(result.data._lv88_imageWarning,/Bildprüfung sieht kaum Schrift/);
+});
+
+test('V88.1: der Service Worker merkt sich die PDF-Datei fuer einen Retry',()=>{
+ const example=`async function scan(file,onProgress=()=>{}){
+ const hash='x',bytes=new Uint8Array();let pdf=null,worker=null;
+ try{pdf={numPages:72};if(pdf.numPages<1||pdf.numPages>100)throw Error('PDF muss zwischen 1 und 100 Seiten enthalten.');
+ const previous=await getPdf().catch(()=>null),pages=(previous?.hash===hash&&Array.isArray(previous.pages))?previous.pages.filter(x=>Array.isArray(x.positions)&&x.positions.length>0):[];
+ for(let n=1;n<=pdf.numPages;n++){if(pages.some(x=>x.page===n&&x.positions?.length>=(n===pdf.numPages?9:10)))continue;
+ await storePdf({hash,filename:file.name,bytes,pages,edited:previous?.hash===hash?previous.edited:undefined,updated:new Date().toISOString()});}
+ return pages;
+ }finally{if(worker)await worker.terminate().catch(()=>{});if(pdf)await task.destroy()}
+ }
+ async function readPdf(file,mode='annual'){
+ if(!file)return alert('Bitte zuerst die RONDO-PDF auswählen.');if(scanBusy)return;
+ $('lv87Resume').onclick=()=>readPdf($('lv87ChooseFile').files[0],stagingMode)
+ }`;
+ const transformed=SW.patchV87Ui(example);
+ assert.match(transformed,/let lv88LastReadPdf=null/);
+ assert.match(transformed,/if\(!file\)file=lv88LastReadPdf/);
+ assert.match(transformed,/files\[0\]\|\|lv88LastReadPdf/);
+ assert.equal(SW.patchV87Ui(transformed),transformed);
+});
+
+test('V88.1: volle Bildwarnung ist ein Hinweis, keine OCR-Sperre',()=>{
+ const source=fs.readFileSync(path.join(__dirname,'v88_ocr.js'),'utf8');
+ assert.doesNotMatch(source,/if\(!quality\.ok\)throw Error/);
+ assert.match(source,/if\(!quality\.ok\)/);
+ assert.match(source,/Texterkennung wird trotzdem durchgeführt/);
 });

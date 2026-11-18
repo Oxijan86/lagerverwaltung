@@ -1,4 +1,4 @@
-/* Lagerverwaltung Lovrencic V88.0 – RONDO-OCR-Schutzschicht.
+/* Lagerverwaltung Lovrencic V88.1 – RONDO-OCR-Schutzschicht.
  * Keine Datenbankmigration, keine Bestandsbuchung durch OCR.
  * Ein fehlerhafter/unklarer Scan bleibt zwingend in der manuellen Prüfansicht.
  */
@@ -99,17 +99,17 @@
       const w=canvas.width,h=canvas.height;
       if(!w||!h)return {ok:false,reason:'Die PDF-Seite wurde leer gerendert.'};
       const probe=root.document.createElement('canvas');
-      probe.width=96;probe.height=132;
+      probe.width=256;probe.height=352;
       const ctx=probe.getContext('2d',{willReadFrequently:true});
       ctx.drawImage(canvas,0,0,probe.width,probe.height);
       const pixels=ctx.getImageData(0,0,probe.width,probe.height).data;
       let dark=0,total=0;
       for(let i=0;i<pixels.length;i+=4){total++;
-        if(pixels[i]*0.299+pixels[i+1]*0.587+pixels[i+2]*0.114<183)dark++;
+        if(pixels[i]*0.299+pixels[i+1]*0.587+pixels[i+2]*0.114<236)dark++;
       }
       probe.width=probe.height=0;
       const share=total?dark/total:0;
-      return share<0.001?{ok:false,reason:'Die gescannte Seite ist leer/fast weiß (oder nicht sichtbar gerendert).'}:
+      return share<0.00015?{ok:false,reason:'Bildprüfung sieht kaum Schrift (möglicherweise schwacher Scan oder fehlerhafte Vorschau).'}:
         share>0.80?{ok:false,reason:'Die Seite ist ungewöhnlich dunkel. Bitte die PDF überprüfen.'}:{ok:true,darkRatio:share};
     }catch{return {ok:true,reason:'Bildanalyse nicht verfügbar; OCR-Prüfung erfolgt weiterhin.'}}
   }
@@ -186,7 +186,14 @@
       const recognize=worker.recognize.bind(worker);
       worker.recognize=async function(image,options,outputs){
         const quality=qualityOfCanvas(image);
-        if(!quality.ok)throw Error(quality.reason+' Originalseite kontrollieren. Kein Lagerbestand wurde geändert.');
+        // V88.1: die verkleinerte Stichprobe ist NICHT beweiskräftig.
+        // Auch eine fast weiße Vorschau muss zuerst der echten OCR übergeben werden.
+        // Nur der bestehende Scanner darf nach beiden OCR-Läufen ohne erkannte
+        // Materialposition abbrechen; eine bloße Helligkeitsheuristik niemals.
+        if(!quality.ok){
+          annotateStatus('Bildprüfung unsicher – Texterkennung wird trotzdem durchgeführt. '+quality.reason);
+          root.console?.warn?.('V88.1: Unklare PDF-Bildvorschau, OCR wird fortgesetzt:',quality.reason);
+        }
         const cfg={...(outputs||{}),text:true,tsv:true,blocks:true};
         let first=await recognize(image,options||{},cfg),second=null,enhanced=null,secondDimensions=null;
         const base=rateOcr(first,root.LV87Core.parseOcrPage,1,image);
@@ -202,6 +209,7 @@
           }finally{if(enhanced){enhanced.width=0;enhanced.height=0}}
         }
         const chosen=chooseOcr(first,second,root.LV87Core.parseOcrPage,1,image,secondDimensions);
+        if(chosen?.data && !quality.ok)chosen.data._lv88_imageWarning=quality.reason;
         if(chosen===second && secondDimensions)rescaleOcrBboxes(second,image.width/secondDimensions.width,image.height/secondDimensions.height);
         return chosen;
       };
@@ -216,16 +224,16 @@
     if(el){
       if(el._lv87Observer?.disconnect)el._lv87Observer.disconnect();
       el._lv87Observer={disconnect(){}};
-      el.textContent='88.0';
+      el.textContent='88.1';
       if(!el._lv88Observer && typeof root.MutationObserver==='function'){
-        const observer=new root.MutationObserver(()=>{if(el.textContent!=='88.0')el.textContent='88.0'});
+        const observer=new root.MutationObserver(()=>{if(el.textContent!=='88.1')el.textContent='88.1'});
         observer.observe(el,{childList:true,characterData:true,subtree:true});
         el._lv88Observer=observer;
       }
     }
-    root.document.title='Lagerverwaltung Lovrencic V88.0';
+    root.document.title='Lagerverwaltung Lovrencic V88.1';
     const description=root.document.querySelector('meta[name="description"]');
-    if(description)description.content='Lagerverwaltung Lovrencic V88.0 PWA';
+    if(description)description.content='Lagerverwaltung Lovrencic V88.1 PWA';
   }
   function install(){
     if(!root.document)return;
