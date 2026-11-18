@@ -1,0 +1,27 @@
+LAGERVERWALTUNG LOVRENCIC V87 – GITHUB UPLOAD
+==========================================
+
+Dieses Archiv enthält die direkt austauschbaren NEUEN DATEIEN für
+https://github.com/Oxijan86/lagerverwaltung
+
+Es ist KEIN Installer, KEIN GitHub-Actions-Patch und KEIN eigenständiger
+Voll-Export des Repositorys. Grundlage ist deine existierende V86.
+
+1. ZIP herunterladen und entpacken.
+2. Auf GitHub dein Repository Oxijan86/lagerverwaltung öffnen.
+3. Add file > Upload files auf dem main-Zweig wählen.
+4. ALLE entpackten Dateien DIREKT ins Hauptverzeichnis ziehen.
+   Gleichnamige Dateien ersetzen, übrige Dateien BEHALTEN.
+5. Commit changes bestätigen.
+6. GitHub Pages-Veröffentlichung abwarten, anschließend PWA neu öffnen.
+7. Vor echter Inventur zuerst Backup und Funktionstest mit Testdaten machen.
+
+Nicht die ZIP selbst hochladen.
+Nicht alle alten Dateien löschen.
+
+Enthalten: service_pdf_v80.js (Ladepunkt), v87_core.js, v87_pdf.js,
+v87_ui.js, service-worker.js, manifest.webmanifest, Hilfe und Tests.
+
+WICHTIG: Für einen vollständigen eigenständigen Quellcode-Snapshot
+muss weiterhin das bestehende GitHub-Repository inklusive der unveränderten
+Dateien kopiert werden. Das hier ist das übliche DIREKT-UPLOAD-Update.

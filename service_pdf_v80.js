@@ -80,3 +80,14 @@
  core.parseDocument=function(doc){return classify(doc,original(doc));};
  return {classify,technicalType,machineFromSubject,ticketsFromLines};
 });
+
+/* V87 direct GitHub upload entry. Existing V80/V86 functions above are unchanged. */
+(function(){
+ const modules=['v87_core.js','v87_pdf.js','v87_ui.js'];let chain=Promise.resolve();
+ for(const module of modules){chain=chain.then(()=>new Promise((resolve,reject)=>{
+  const el=document.createElement('script');el.src=new URL(module,document.baseURI).href;
+  el.async=false;el.onload=resolve;el.onerror=()=>reject(Error('V87 Modul fehlt: '+module));
+  document.head.appendChild(el);
+ }));}
+ chain.catch(e=>{console.error('Lagerverwaltung V87',e);const box=document.createElement('div');box.className='message error';box.style.cssText='position:fixed;z-index:2200;top:10px;left:10px;right:10px;padding:12px';box.textContent='V87 konnte nicht vollständig geladen werden: '+e.message;document.body.appendChild(box)});
+})();
