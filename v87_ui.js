@@ -87,6 +87,25 @@
  }
  async function digest(bytes){const h=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');}
  async function loadScripts(url){if(window.Tesseract)return;await new Promise((resolve,reject)=>{let el=document.createElement('script');el.src=new URL(url,document.baseURI).href;el.onload=resolve;el.onerror=()=>reject(Error('OCR-Bibliothek konnte nicht geladen werden.'));document.head.appendChild(el)})}
+ function readOcrWords(result,width,height){
+  const words=[];
+  function append(word){const b=word?.bbox;if(!b)return;words.push({
+   text:String(word.text||'').trim(),left:Number(b.x0)/width,top:Number(b.y0)/height,
+   width:(Number(b.x1)-Number(b.x0))/width,height:(Number(b.y1)-Number(b.y0))/height,
+   confidence:Number(word.confidence??word.conf??100)
+  })}
+  for(const block of result?.data?.blocks||[])for(const para of block.paragraphs||[])for(const line of para.lines||[])for(const word of line.words||[])append(word);
+  // In some Tesseract builds blocks are omitted even when requested. TSV is a
+  // second, independent structured-word representation.
+  if(!words.length&&typeof result?.data?.tsv==='string'){
+   const lines=result.data.tsv.trim().split(/\r?\n/),head=lines.shift()?.split('\t')||[],ix=Object.fromEntries(head.map((x,i)=>[x,i]));
+   for(const line of lines){const c=line.split('\t');if(c[+ix.level]!=='5')continue;const value=(c.slice(ix.text).join('\t')||'').trim();if(!value)continue;
+    const left=Number(c[ix.left]),top=Number(c[ix.top]),w=Number(c[ix.width]),h=Number(c[ix.height]);
+    if([left,top,w,h].every(Number.isFinite))words.push({text:value,left:left/width,top:top/height,width:w/width,height:h/height,confidence:Number(c[ix.conf])});
+   }
+  }
+  return words.filter(w=>w.text&&Number.isFinite(w.left)&&Number.isFinite(w.top));
+ }
  async function scan(file,onProgress=()=>{}){
   if(!file||!/\.pdf$/i.test(file.name)||file.size>28*1024*1024)throw Error('Bitte eine RONDO-PDF unter 28 MB auswählen.');
   const bytes=await file.arrayBuffer(),hash=await digest(bytes),p=await import(new URL('vendor/pdfjs/pdf.min.mjs',document.baseURI).href);
@@ -97,16 +116,22 @@
    await loadScripts('vendor/tesseract/tesseract.min.js');
    worker=await window.Tesseract.createWorker('deu+eng',1,{workerPath:new URL('vendor/tesseract/worker.min.js',document.baseURI).href,
     corePath:new URL('vendor/tesseract/core/',document.baseURI).href,langPath:new URL('vendor/tesseract/lang/',document.baseURI).href});
-   const previous=await getPdf().catch(()=>null),pages=(previous?.hash===hash&&Array.isArray(previous.pages))?[...previous.pages]:[];
+   const previous=await getPdf().catch(()=>null),pages=(previous?.hash===hash&&Array.isArray(previous.pages))?previous.pages.filter(x=>Array.isArray(x.positions)&&x.positions.length>0):[];
    for(let n=1;n<=pdf.numPages;n++){
     if(scanCancelled)throw Error('Texterkennung wurde abgebrochen. Bisher erkannte Seiten bleiben gespeichert.');
-    if(pages.some(x=>x.page===n&&x.positions?.length>=1)){onProgress(`Seite ${n} von ${pdf.numPages}: vorhandene geprüfte Erkennung wiederverwendet`);continue}
+    if(pages.some(x=>x.page===n&&x.positions?.length>=(n===pdf.numPages?9:10))){onProgress(`Seite ${n} von ${pdf.numPages}: vollständig erkannte Seite wiederverwendet`);continue}
     onProgress(`Seite ${n} von ${pdf.numPages}: Texterkennung läuft …`);
     const page=await pdf.getPage(n),vp=page.getViewport({scale:2.15}),cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);
     await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-    const result=await worker.recognize(cv,{}, {text:true,blocks:true});const words=[];
-    for(const block of result.data.blocks||[])for(const para of block.paragraphs||[])for(const line of para.lines||[])for(const word of line.words||[]){if(!word.bbox)continue;words.push({text:word.text,y:page.getViewport({scale:1}).height-word.bbox.y1/2.15})}
-    const data=Core.parseOcrPage(result.data.text,n,words);pages.push(data);pages.sort((a,b)=>a.page-b.page);
+    const result=await worker.recognize(cv,{}, {text:true,blocks:true,tsv:true});
+    const words=readOcrWords(result,cv.width,cv.height);
+    const data=Core.parseOcrPage(result.data.text||'',n,words);
+    if(!data.positions.length){
+     const diagnostic=`Seite ${n}: Die OCR erkannte ${words.length} Wortpositionen und ${(result.data.text||'').length} Textzeichen, aber keine Artikelposition. `;
+     throw Error(diagnostic+'Der Import wurde zum Schutz deiner Lagerdaten gestoppt. Bitte die PDF-Erkennung prüfen, statt alle 72 Seiten leer zu übernehmen.');
+    }
+    const oldIndex=pages.findIndex(x=>x.page===n);if(oldIndex>=0)pages.splice(oldIndex,1);
+    pages.push(data);pages.sort((a,b)=>a.page-b.page);
     await storePdf({hash,filename:file.name,bytes,pages,edited:previous?.hash===hash?previous.edited:undefined,updated:new Date().toISOString()});
     cv.width=0;cv.height=0;page.cleanup();
    }
@@ -149,7 +174,7 @@
     <div class="lv87-grid"><label>Seite<input id="lv87AddPage" type="number" min="1" max="${state.pages.length}"></label><label>Position<input id="lv87AddPos" type="number" min="1" max="10"></label>
     <label>Materialnummer<input id="lv87AddNo" autocomplete="off"></label><label>Bezeichnung<input id="lv87AddDesc"></label></div>
     <button class="secondary" id="lv87AddRow" type="button">Position ergänzen</button></details>
-   <div class="lv87-flex"><button class="primary" id="lv87CommitRows">Geprüfte Firmenartikel übernehmen</button><button class="secondary" id="lv87CsvReport">Abgleich als CSV herunterladen</button></div>
+   <div class="lv87-flex"><button class="primary" id="lv87CommitRows" ${!state.rows.length?'disabled':''}>Geprüfte Firmenartikel übernehmen</button><button class="secondary" id="lv87CsvReport">Abgleich als CSV herunterladen</button></div>
    <div id="lv87ScanStatus" role="status" class="lv87-status"></div>`,'RONDO-Artikel prüfen');
   $('lv87ReviewFilter').value=reviewFilter;$('lv87ReviewFilter').onchange=e=>{reviewFilter=e.target.value;reviewPage=0;renderReview().catch(console.error)};
   $('lv87Prev').onclick=()=>{reviewPage--;renderReview().catch(console.error)};$('lv87Next').onclick=()=>{reviewPage++;renderReview().catch(console.error)};
@@ -336,7 +361,7 @@
    <p><b>Abweichungen:</b> Neu auf RONDO-PDF, nur in der App, Bestandsdifferenz. Die PDF enthält keine SAP-Sollmenge; fehlende Artikel sind keine automatisch erkannten physischen Fehlmengen.</p>`;
   section.insertBefore(d,section.firstChild);
  }
- function version(){const e=$('appVersion');if(e){e.textContent='87.0';if(!e._lv87Observer){const watcher=new MutationObserver(()=>{if(e.textContent!=='87.0')e.textContent='87.0'});watcher.observe(e,{childList:true,subtree:true,characterData:true});e._lv87Observer=watcher}}document.title=document.title.replace(/V\d+(?:\.\d+)?/,'V87');const meta=document.querySelector('meta[name="description"]');if(meta)meta.content='Lagerverwaltung Lovrencic V87 PWA';}
+ function version(){const e=$('appVersion');if(e){e.textContent='87.1';if(!e._lv87Observer){const watcher=new MutationObserver(()=>{if(e.textContent!=='87.1')e.textContent='87.1'});watcher.observe(e,{childList:true,subtree:true,characterData:true});e._lv87Observer=watcher}}document.title=document.title.replace(/V\d+(?:\.\d+)?/,'V87.1');const meta=document.querySelector('meta[name="description"]');if(meta)meta.content='Lagerverwaltung Lovrencic V87.1 PWA';}
  function observeInventoryCompletion(){if(!window.LVInventory||window.LVInventory._lv87Done)return;
   const original=window.LVInventory.finalize;window.LVInventory.finalize=async function(...args){const before=this.current()?.session?.status;const res=await original.apply(this,args);const after=this.current()?.session?.status;
    if(before==='draft'&&after==='completed'){state.database_id=await dbId();if(getFlags()?.mode==='pdf'){flagSave({completed:true});await refreshReminder();alert('Erstinventur abgeschlossen: Die gezählten Mengen sind jetzt dein Anfangsbestand. Du kannst anschließend die ausgefüllte RONDO-PDF für die Firma erzeugen.')}}return res};window.LVInventory._lv87Done=true;

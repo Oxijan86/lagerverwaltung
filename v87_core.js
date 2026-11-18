@@ -8,6 +8,46 @@
  function cleanNo(s){return String(s||'').trim().replace(/[|;,]/g,'').replace(/^[^A-Z0-9]+/i,'').replace(/[^A-Z0-9_\/-]+$/i,'').toUpperCase();}
  function validNo(s){return /^(?=.*[0-9])[A-Z0-9][A-Z0-9_\/-]{3,24}$/.test(String(s||''));}
  function normalizeUnit(s){return /^(?:M|MTR|METER)$/i.test(String(s||'').trim())?'m':/^(?:L|LTR|LITER)$/i.test(String(s||'').trim())?'L':'Stk.';}
+ /* V87.1: RONDO forms have a stable column layout even when OCR emits each
+    column separately. Read word coordinates before relying on OCR line order.
+    The x/y values here are fractions of the *rendered page*, not PDF points. */
+ function parseRondoSpatial(words,pageNum,beleg='',defaultLocation='1025'){
+  const tokens=(words||[]).map(w=>({
+    text:String(w.text??w.str??'').trim(),left:Number(w.left),top:Number(w.top),
+    width:Number(w.width||0),height:Number(w.height||0),confidence:Number(w.confidence??w.conf??100)
+   })).filter(w=>w.text&&Number.isFinite(w.left)&&Number.isFinite(w.top)&&w.left>=0&&w.left<=1&&w.top>=0&&w.top<=1);
+  if(tokens.length<12)return [];
+  const mid=w=>w.top+w.height/2;
+  const slots=[];
+  for(let pos=1;pos<=10;pos++){
+   const approximate=.3128+(pos-1)*.05405;
+   const markers=tokens.filter(w=>w.left>.068&&w.left<.135&&Math.abs(mid(w)-approximate)<.031&&w.text.replace(/[. :,]/g,'')===String(pos));
+   markers.sort((a,b)=>Math.abs(mid(a)-approximate)-Math.abs(mid(b)-approximate));
+   // Existing RONDO print layout supplies an estimate if a tiny position marker was missed.
+   const y=markers.length?mid(markers[0]):approximate;
+   const codes=tokens.filter(w=>w.left>=.137&&w.left<.49&&Math.abs(mid(w)-y)<.0125&&w.text.length>=4).map(w=>({w,number:cleanNo(w.text)}))
+    .filter(x=>validNo(x.number));
+   // No fabricated IDs: an unreadable code means this position stays missing.
+   if(!codes.length)continue;
+   codes.sort((a,b)=>Math.abs(mid(a.w)-y)-Math.abs(mid(b.w)-y) || b.number.length-a.number.length);
+   const code=codes[0];
+   const names=tokens.filter(w=>w.left>=.135&&w.left<.505&&mid(w)>y+.007&&mid(w)<y+.031&&
+      !/^(?:noch|nicht|gez[aä]hlt|\(?nicht\)?|fr)$/i.test(w.text) && !/^(?:ST|M|L)$/i.test(w.text) && w.confidence>=-1)
+      .sort((a,b)=>mid(a)-mid(b)||a.left-b.left);
+   const clusters=[];
+   for(const w of names){let group=clusters.find(g=>Math.abs(g.cy-mid(w))<.008);if(!group){group={cy:mid(w),words:[]};clusters.push(group)}group.words.push(w)}
+   const description=clusters.sort((a,b)=>a.cy-b.cy).map(g=>g.words.sort((a,b)=>a.left-b.left).map(w=>w.text).join(' ')).join(' ').replace(/\s+/g,' ').trim();
+   const loc=tokens.filter(w=>w.left>.59&&w.left<.71&&Math.abs(mid(w)-y)<.016&&/^\d{3,6}$/.test(w.text)).sort((a,b)=>Math.abs(mid(a)-y)-Math.abs(mid(b)-y))[0];
+   const unit=tokens.filter(w=>w.left>.74&&w.left<.87&&mid(w)>y+.012&&mid(w)<y+.045&&/^(?:ST|M|L)$/i.test(w.text)).sort((a,b)=>Math.abs(mid(a)-(y+.033))-Math.abs(mid(b)-(y+.033)))[0];
+   const suspicious=/[!|()]/.test(code.w.text)||code.w.confidence<55||/^I\d/i.test(code.w.text)||/^O\d/i.test(code.w.text);
+   slots.push({page:pageNum,position:pos,article_no:code.number,description,
+    unit:normalizeUnit(unit?.text||'ST'),location:loc?.text||defaultLocation,
+    y:null,verified:!!description&&!suspicious,
+    warning:suspicious?'Artikelnummer bitte prüfen (Texterkennung unsicher)':!description?'Bezeichnung fehlt':'',
+    counted_stock:null});
+  }
+  return slots;
+ }
  function parseOcrPage(text,pageNum,words=[]){
   const raw=String(text||'').replace(/\r/g,'').split('\n');
   let beleg=(String(text||'').match(/Inventurbeleg\s*([0-9]{6,12})/i)||[])[1]||'';
@@ -36,7 +76,16 @@
       y,verified:validNo(number)&&!!description&&!suspicious,warning:!validNo(number)||suspicious?'Artikelnummer unsicher':!description?'Bezeichnung fehlt':'',
       counted_stock:null});
   }
+  const spatial=parseRondoSpatial(words,pageNum,beleg,location);
+  // Spatial IDs take precedence; OCR running text can be column-wise and unreliable.
   const distinct=new Map();for(const row of positionHits)if(!distinct.has(row.position))distinct.set(row.position,row);
+  for(const row of spatial){
+   const old=distinct.get(row.position);
+   if(old&&old.article_no!==row.article_no){row.verified=false;row.warning='Artikelnummer mit der RONDO-Vorlage abgleichen';}
+   if(old?.description&&old.description.length>row.description.length&&old.article_no===row.article_no)row.description=old.description;
+   if(!row.description)row.verified=false;
+   distinct.set(row.position,row);
+  }
   return {page:pageNum,beleg,positions:[...distinct.values()].sort((a,b)=>a.position-b.position),
    warnings:distinct.size<9?[`Auf Seite ${pageNum} wurden nur ${distinct.size} Positionen erkannt. Bitte PDF kontrollieren.`]:[]};
  }
@@ -83,5 +132,5 @@
   }return result;
  }
  function normCount(s,unit){const v=String(s??'').trim().replace(',','.');if(!/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(v))throw Error('Ungültige Zählmenge.');const n=Number(v);if(!Number.isFinite(n)||n<0)throw Error('Ungültige Zählmenge.');if(/^(?:stk\.?|stück)$/i.test(unit)&&!Number.isInteger(n))throw Error('Bitte eine ganze Stückzahl eingeben.');return n;}
- return {norm,normNo,cleanNo,validNo,parseOcrPage,checkRows,compare,countStats,validateTransfer,normCount};
+ return {norm,normNo,cleanNo,validNo,parseOcrPage,parseRondoSpatial,checkRows,compare,countStats,validateTransfer,normCount};
 });

@@ -1,0 +1,31 @@
+LAGERVERWALTUNG LOVRENCIC V87.1 – REPARATUR RONDO-INVENTUR-PDF
+================================================================
+
+WAS WIRD BEHOBEN?
+Bei der RONDO-Inventurliste wurden 72 Seiten erkannt, aber 0 Artikel.
+V87.1 liest auch Wortpositionen im Seitenlayout und kann die leer
+gebliebene Fehl-Erkennung aus dem Browser-Speicher neu einlesen.
+
+GITHUB-DIREKTUPLOAD (wie gewohnt, kein Installationsskript)
+1. Diese ZIP-Datei entpacken.
+2. GitHub-Repository Oxijan86/lagerverwaltung öffnen.
+3. "Add file" -> "Upload files" wählen.
+4. Diese vier Programmdateien aus dem Paket in das Repository hochladen
+   und die gleichnamigen Dateien ersetzen:
+     v87_core.js
+     v87_ui.js
+     service-worker.js
+     manifest.webmanifest
+5. Optional die beiden mitgelieferten Informationsdateien hochladen.
+6. Änderungen mit "Commit changes" bestätigen.
+7. App einmal vollständig neu laden; auf Smartphone ggf. als PWA
+   schließen/neu öffnen, damit der neue Service-Worker aktiv wird.
+8. Die RONDO-PDF erneut importieren. Es ist keine Datenbankmigration nötig.
+
+WICHTIG
+- Keine Datenbank löschen oder neu erstellen.
+- Falls die Artikelprüfung weiterhin 0 Positionen zeigt, nicht importieren.
+- Ein leerer Artikelimport wird jetzt in der Software gesperrt.
+- Für produktive Daten die bestehende lager.db vorher sichern.
+- Texterkennung auf einigen echten PDF-Seiten geprüft; vollständiger
+  72-Seiten-Browser-Endtest ist weiterhin offen.
