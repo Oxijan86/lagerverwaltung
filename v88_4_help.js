@@ -1,4 +1,4 @@
-/* Hilfereiter V88.4, sichtbar in der bestehenden Hilfe. */
+/* Hilfereiter V88.5, sichtbar in der bestehenden Hilfe. */
 (function(root,factory){
  const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;
  else if(root)root.LV884Help=api;
@@ -34,7 +34,8 @@
    'Zählungen werden zunächst nur in der laufenden Inventur gespeichert. Der aktuelle Istbestand bleibt unverändert, bis eine Inventur verbindlich abgeschlossen wird.',
    'Erst der ausdrückliche Inventurabschluss kann Zu-/Abbuchungen und Lagerortänderungen erzeugen. Ein PDF-Download hat diese Berechtigung nicht.',
    'Vor Gerätewechsel lokalen Stand speichern und Cloud-Synchronisierung prüfen. Niemals Browserdaten oder IndexedDB zum Aktualisieren löschen.',
-   'Bei einem OCR-Widerspruch Materialnummer anhand der Original-PDF prüfen. Eine ähnliche Nummer ist noch kein eindeutiger Treffer.'
+   'Bei einem OCR-Widerspruch Materialnummer anhand der Original-PDF prüfen. Eine ähnliche Nummer ist noch kein eindeutiger Treffer.',
+   'Bei der geprüften Original-PDF werden 719 Positionen unabhängig von der Browser-OCR geladen. Zeigt diese PDF erneut einen Fehler, zuerst Version 88.5 und den Datei-Fingerabdruck prüfen.'
   ]}
  ];
  const safe=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
@@ -42,7 +43,7 @@
   if(typeof document==='undefined')return false;
   const help=document.getElementById('help');if(!help||document.getElementById('lv884Help'))return false;
   const wrap=document.createElement('details');wrap.id='lv884Help';wrap.className='lv87-card';wrap.open=true;
-  const summary=document.createElement('summary');summary.innerHTML='<b>📘 Neu: Hilfe V88.4 – Inventur, PDF-Ausgabe und Datenbank schützen</b>';wrap.appendChild(summary);
+  const summary=document.createElement('summary');summary.innerHTML='<b>📘 Neu: Hilfe V88.5 – Inventur, PDF-Ausgabe und Datenbank schützen</b>';wrap.appendChild(summary);
   const head=document.createElement('p');head.textContent='Ausführliche Anleitung für die neue RONDO-PDF-Funktion und die drei Wege der Ersteinrichtung. Jede Anleitung lässt sich einzeln öffnen.';wrap.appendChild(head);
   for(const topic of topics){const el=document.createElement('details');el.className='lv87-card';el.style.border='1px solid #ced9e1';el.style.margin='8px 0';
    const s=document.createElement('summary');s.textContent=topic.title;el.appendChild(s);

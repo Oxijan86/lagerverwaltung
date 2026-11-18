@@ -43,7 +43,7 @@ test('Script-Reihenfolge: Setup-Helfer vor V87-UI und normalem PDF/OCR',()=>{
  assert.ok(html.indexOf('v88_2_catalog.js')<html.indexOf('v88_3_setup.js'));
  assert.ok(html.indexOf('v88_3_setup.js')<html.indexOf('v87_ui.js'));
  assert.equal(SW.injectHtml(html),html);
- assert.match(SW.CACHE_NAME,/lv88-4/);
+ assert.match(SW.CACHE_NAME,/lv88-5/);
 });
 test('Quellcode-Patch stellt beim ersten Einrichten drei Startwege dar',()=>{
  // Realitätsnaher Ausschnitt aus V87.1. Scanner-Zeilen erzwingen denselben Patching-Pfad.
@@ -87,9 +87,9 @@ test('Original-RONDO-Import von V88.2 ist weiterhin unverändert vorhanden',asyn
 test('Version und PWA-Cache stimmen überein',()=>{
  const root=__dirname;
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.webmanifest'),'utf8'));
- assert.match(manifest.name,/88\.4/);
- assert.match(fs.readFileSync(path.join(root,'v88_ocr.js'),'utf8'),/88\.4/);
- assert.match(fs.readFileSync(path.join(root,'service-worker.js'),'utf8'),/lv88-4/);
+ assert.match(manifest.name,/88\.5/);
+ assert.match(fs.readFileSync(path.join(root,'v88_ocr.js'),'utf8'),/88\.5/);
+ assert.match(fs.readFileSync(path.join(root,'service-worker.js'),'utf8'),/lv88-5/);
 });
 
 const Review=require('./v88_3_review.js');
@@ -179,13 +179,13 @@ test('Hilfe erklärt drei Startwege, Zwischenstand, nachträglichen Download und
  const text=Help.topics.flatMap(t=>[t.title,...t.body]).join(' ').toLowerCase();
  for(const term of ['ohne import','sapui5','rondo','zwischenstand','abgeschlossen','bestände','sicherung'])assert.ok(text.includes(term),term);
 });
-test('Service-Worker lädt PDF und Hilfe vor der V87-UI sowie Versionsstand 88.4',()=>{
+test('Service-Worker lädt PDF und Hilfe vor der V87-UI sowie Versionsstand 88.5',()=>{
  const html=SW.injectHtml('<html><body>Inventur</body></html>');
  for(const f of ['v88_4_export.js','v88_4_help.js']){
   assert.ok(html.includes(f));assert.ok(html.indexOf(f)<html.indexOf('v87_ui.js'));
  }
- assert.match(SW.CACHE_NAME,/lv88-4/);
- const core=fs.readFileSync(path.join(__dirname,'v88_ocr.js'),'utf8');assert.ok(core.includes('88.4'));
+ assert.match(SW.CACHE_NAME,/lv88-5/);
+ const core=fs.readFileSync(path.join(__dirname,'v88_ocr.js'),'utf8');assert.ok(core.includes('88.5'));
 });
 test('Service-Worker Quelltext ersetzt alten Export durch V88.4 sicher ohne doppelte Buchung',()=>{
  const stub=`async function scan(file,onProgress=()=>{}){let pdf=null,worker=null;try{\nconst previous=await getPdf().catch(()=>null),pages=(previous?.hash===hash&&Array.isArray(previous.pages))?previous.pages.filter(x=>Array.isArray(x.positions)&&x.positions.length>0):[];\nif(pages.some(x=>x.page===n&&x.positions?.length>=(n===pdf.numPages?9:10)))continue;\nawait storePdf({hash,filename:file.name,bytes,pages,edited:previous?.hash===hash?previous.edited:undefined,updated:new Date().toISOString()});\n}finally{if(worker)await worker.terminate().catch(()=>{});if(pdf)await task.destroy()}}\n`+

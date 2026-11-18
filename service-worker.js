@@ -1,11 +1,11 @@
-/* Lagerverwaltung Lovrencic V88.4 – vollständiges Update des bestehenden V86/V87-Repos.
+/* Lagerverwaltung Lovrencic V88.5 – stabiler Original-PDF-Import des bestehenden V86/V87-Repos.
  * Das bisherige index.html wird beim Abruf um die bereits im Repo befindlichen
  * V87-Module und um die V88-OCR-Prüfung ergänzt. Die DB bleibt unverändert.
  */
 'use strict';
-const CACHE_NAME='lv88-4-2026-11-18-counter-date-v2';
+const CACHE_NAME='lv88-5-2026-11-18-deterministic-import-v1';
 const FILES=[
- './','index.html','manifest.webmanifest','v87_core.js','v87_pdf.js','v88_2_catalog.js','v88_3_setup.js','v88_3_review.js','v88_4_export.js','v88_4_help.js','v87_ui.js','v88_ocr.js',
+ './','index.html','manifest.webmanifest','v87_core.js','v87_pdf.js','v88_2_catalog.js','v88_3_setup.js','v88_3_review.js','v88_4_export.js','v88_4_help.js','v88_5_import.js','v87_ui.js','v88_ocr.js',
  'inventory_core.js','inventory_ui.js','inventory_v84_core.js','inventory_v85_core.js',
  'inventory_company_v86.js','service_pdf_core.js','service_pdf_reader.js','service_pdf_ui.js',
  'service_pdf_backend.js','local_backend.js','app_rules.js','auth_core.js','sync_core.js',
@@ -14,7 +14,8 @@ const FILES=[
  'material_booking_v83_core.js','material_booking_v83_ui.js','stock_bins_v86.js',
  'stock_bins_v86_ui.js',
  'vendor/pdfjs/pdf.min.mjs','vendor/pdfjs/pdf.worker.min.mjs',
- 'vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js'
+ 'vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js',
+ 'v88_5_import.js?v=88.5','v87_ui.js?v=88.5','v88_2_catalog.js?v=88.5'
 ];
 const ADDONS=[
  ['vendor/tesseract/tesseract.min.js','Tesseract'],
@@ -25,17 +26,22 @@ const ADDONS=[
  ['v88_3_review.js','LV883Review'],
  ['v88_4_export.js','LV884Export'],
  ['v88_4_help.js','LV884Help'],
+ ['v88_5_import.js','LV885Import'],
  ['v87_ui.js','LV87'],
  ['v88_ocr.js','LV88OCR']
 ];
 function injectHtml(html){
  let out=String(html);
  if(!/<\/body\s*>/i.test(out))return out;
+ if(out.includes('Lagerverwaltung V88.5:')&&out.includes('data-lv88-boot='))return out;
+ // Eine alte Offline-Antwort kann bereits ein V88.1/V88.4-Scriptpaket enthalten.
+ // Dieses vollständig ersetzen; sonst bliebe die neue PDF-Einleselogik unsichtbar.
+ out=out.replace(/<!--\s*Lagerverwaltung V88[\s\S]*?-->\s*<span data-lv88-boot=\"1\" hidden><\/span>[\s\S]*?(?=<\/body\s*>)/i,'');
  if(out.includes('data-lv88-boot='))return out;
  const extra=ADDONS.filter(([src])=>!new RegExp('<script\\b[^>]*\\bsrc=["\\\']'+src.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'["\\\']','i').test(out))
-   .map(([src])=>'<script src="'+src+'" defer></script>').join('\n');
+   .map(([src])=>'<script src="'+src+'?v=88.5" defer></script>').join('\n');
  // Nicht direkt im head einhängen: Das vollständige V86-App-Gerüst muss vorliegen.
- return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.4: unveränderte V86-Funktionen + V87 + V88 -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
+ return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.5: Datenbestand unverändert, deterministischer PDF-Katalog -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
 }
 function patchV87Ui(source){
  const orig=String(source);
@@ -223,11 +229,38 @@ function patchV87Pdf(source){
  let out=orig;for(const [before,after] of changes)out=out.replace(before,after);
  return '/* LV884_PDF_GEOMETRY_PATCH */\n'+out;
 }
+/* V88.5: Diese Ergänzung wird AUCH angewendet, wenn der Browser noch eine
+ * bereits durch V88.1/V88.4 veränderte v87_ui.js aus einem alten Cache hat.
+ * Auf den V88.4-Patch-Marker allein ist kein Verlass.
+ */
+function patchV885Ui(source){
+ let out=patchV87Ui(source);
+ if(out.includes('/* LV885_SAFE_FILE_CATALOG */'))return out;
+ const anchor='async function scan(file,onProgress=()=>{}){';
+ if(!out.includes(anchor))return out;
+ const code=`
+  /* LV885_SAFE_FILE_CATALOG */
+  if(!window.LV885Import?.scan){
+   // Fallback für ältere gecachte Startseiten: neuen Importer nachladen.
+   await new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src=new URL('v88_5_import.js?v=88.5',document.baseURI).href;
+    s.onload=()=>window.LV885Import?.scan?resolve():reject(Error('V88.5 Importer ist nicht aktiviert.'));
+    s.onerror=()=>reject(Error('V88.5 Importer konnte nicht geladen werden. Bitte Online-Verbindung überprüfen und Anwendung erneut öffnen.'));
+    document.head.appendChild(s);
+   });
+  }
+  const _lv885Recognized=await window.LV885Import.scan(file,onProgress);
+  if(_lv885Recognized)return _lv885Recognized;
+ `;
+ return out.replace(anchor,anchor+code);
+}
+
 async function shapeResponse(response,pathname,navigation){
  if(!response||!response.ok)return response;
  if(navigation)return withV88Html(response);
  if(!pathname.endsWith('/v87_ui.js')&&!pathname.endsWith('/v87_pdf.js'))return response;
- const code=pathname.endsWith('/v87_pdf.js')?patchV87Pdf(await response.text()):patchV87Ui(await response.text());
+ const code=pathname.endsWith('/v87_pdf.js')?patchV87Pdf(await response.text()):patchV885Ui(await response.text());
  const headers=new Headers(response.headers);headers.delete('content-length');
  headers.set('content-type','application/javascript; charset=utf-8');
  return new Response(code,{status:response.status,statusText:response.statusText,headers});
@@ -278,4 +311,4 @@ if(typeof self!=='undefined'&&self.addEventListener){
   })());
  });
 }
-if(typeof module==='object'&&module.exports)module.exports={injectHtml,patchV87Ui,patchV87Pdf,FILES,CACHE_NAME};
+if(typeof module==='object'&&module.exports)module.exports={injectHtml,patchV87Ui,patchV885Ui,patchV87Pdf,FILES,CACHE_NAME};
