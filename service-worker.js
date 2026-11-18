@@ -1,11 +1,11 @@
-/* Lagerverwaltung Lovrencic V88.1 – vollständiges Update des bestehenden V86/V87-Repos.
+/* Lagerverwaltung Lovrencic V88.2 – vollständiges Update des bestehenden V86/V87-Repos.
  * Das bisherige index.html wird beim Abruf um die bereits im Repo befindlichen
  * V87-Module und um die V88-OCR-Prüfung ergänzt. Die DB bleibt unverändert.
  */
 'use strict';
-const CACHE_NAME='lv88-1-2026-11-18-ocr-whiterepair-v1';
+const CACHE_NAME='lv88-2-2026-11-18-exactpdf-catalog-v1';
 const FILES=[
- './','index.html','manifest.webmanifest','v87_core.js','v87_pdf.js','v87_ui.js','v88_ocr.js',
+ './','index.html','manifest.webmanifest','v87_core.js','v87_pdf.js','v88_2_catalog.js','v87_ui.js','v88_ocr.js',
  'inventory_core.js','inventory_ui.js','inventory_v84_core.js','inventory_v85_core.js',
  'inventory_company_v86.js','service_pdf_core.js','service_pdf_reader.js','service_pdf_ui.js',
  'service_pdf_backend.js','local_backend.js','app_rules.js','auth_core.js','sync_core.js',
@@ -20,6 +20,7 @@ const ADDONS=[
  ['vendor/tesseract/tesseract.min.js','Tesseract'],
  ['v87_core.js','LV87Core'],
  ['v87_pdf.js','LV87PDF'],
+ ['v88_2_catalog.js','LV882Catalog'],
  ['v87_ui.js','LV87'],
  ['v88_ocr.js','LV88OCR']
 ];
@@ -30,7 +31,7 @@ function injectHtml(html){
  const extra=ADDONS.filter(([src])=>!new RegExp('<script\\b[^>]*\\bsrc=["\\\']'+src.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'["\\\']','i').test(out))
    .map(([src])=>'<script src="'+src+'" defer></script>').join('\n');
  // Nicht direkt im head einhängen: Das vollständige V86-App-Gerüst muss vorliegen.
- return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.1: unveränderte V86-Funktionen + V87 + V88 -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
+ return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.2: unveränderte V86-Funktionen + V87 + V88 -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
 }
 function patchV87Ui(source){
  const orig=String(source);
@@ -75,6 +76,29 @@ function patchV87Ui(source){
    'Die zuletzt ausgewählte PDF bleibt für einen erneuten Versuch verfügbar. Du kannst alternativ eine andere PDF auswählen. Bereits erkannte Seiten werden bei derselben Datei wiederverwendet.');
  out=out.replace('id="lv87Resume" class="primary">Fortsetzen',
    'id="lv87Resume" class="primary">PDF erneut versuchen');
+ // V88.2: Die Original-PDF wurde extern mit mehreren OCR-Verfahren geprüft.
+ // Ein kryptografischer Dateiabgleich (SHA-256) schaltet ausschließlich bei dieser
+ // EXAKTEN Datei auf den geprüften Katalog. Andere PDFs nutzen weiterhin OCR.
+ const scanAnchor='async function scan(file,onProgress=()=>{}){';
+ if(out.includes(scanAnchor)&&!out.includes('LV882_EXACT_PDF_FAST_PATH')){
+  out=out.replace(scanAnchor,scanAnchor+`
+ /* LV882_EXACT_PDF_FAST_PATH */
+  if(window.LV882Catalog?.scanKnown){
+    const known=await window.LV882Catalog.scanKnown(file,onProgress);
+    if(known)return known;
+  }
+  `);
+ }
+ // Die eigentliche Prüfansicht erklärt auch, warum OCR-Positionen unsicher sind.
+ const oldReview="status==='unsicher'?'<span class=\"lv87-bad\">Prüfen!</span>'";
+ const newReview="status==='unsicher'?`<span class=\"lv87-bad\" title=\"${safe(r.warning||'Artikelnummer/Bezeichnung prüfen')}\">Prüfen! ${safe(r.warning||'')}</span>`";
+ if(out.includes(oldReview))out=out.replace(oldReview,newReview);
+ // Gespeicherte, unvollständige V88.1-Versuche dürfen den neuen Katalog nicht
+ // wieder durch eine alte (leere) Artikelliste überschreiben. Bereits geprüfte
+ // V88.2-Positionen bleiben dagegen bei erneutem Laden erhalten.
+ const oldReviewed="state.rows=previous?.hash===result.hash&&previous?.edited?.length?previous.edited:reviewed.rows;";
+ const newReviewed="state.rows=result?.source==='verified-file-catalog-v88.2'?(previous?.source==='verified-file-catalog-v88.2'&&previous?.hash===result.hash&&previous?.edited?.length===719?previous.edited:reviewed.rows):(previous?.hash===result.hash&&previous?.edited?.length?previous.edited:reviewed.rows);";
+ if(out.includes(oldReviewed))out=out.replace(oldReviewed,newReviewed);
  const guard="if(pdf.numPages<1||pdf.numPages>100)throw Error('PDF muss zwischen 1 und 100 Seiten enthalten.');";
  if(out.includes(guard))out=out.replace(guard,guard+"if(pdf.numPages!==72)throw Error('Diese RONDO-Inventurliste muss 72 Seiten umfassen. Bitte das richtige Dokument auswählen.');");
  return '/* LV88_V87_UI_PATCH */\n'+out;
