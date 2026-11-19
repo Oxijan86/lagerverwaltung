@@ -59,11 +59,11 @@ test('Erstentwurf beim Weitertippen bindet ursprünglichen Fundort',()=>{
 });
 test('Versionsdateien laden den Ortskern vor Inventur und Fokus-Schutz',()=>{
  const html=SW.injectHtml('<html><body>App<script src="inventory_ui.js"></script></body></html>');
- assert.match(html,/Lagerverwaltung V88\.15/);
- assert.ok(html.indexOf('v88_11_location_core.js?v=88.15')<html.indexOf('v87_ui.js?v=88.15'));
- assert.ok(html.indexOf('v88_11_location_core.js?v=88.15')<html.indexOf('v88_10_inventory_focus.js?v=88.15'));
+ assert.match(html,/Lagerverwaltung V88\.16/);
+ assert.ok(html.indexOf('v88_11_location_core.js?v=88.16')<html.indexOf('v87_ui.js?v=88.16'));
+ assert.ok(html.indexOf('v88_11_location_core.js?v=88.16')<html.indexOf('v88_10_inventory_focus.js?v=88.16'));
  assert.ok(SW.FILES.includes('v88_11_location_core.js'));
- assert.match(SW.CACHE_NAME,/lv88-15-/);
+ assert.match(SW.CACHE_NAME,/lv88-16-/);
 });
 test('Inventurabschluss verwendet tatsächlich gezählte positive Ortsmengen für Hauptlagerort',()=>{
  const raw="if(x.location!==x.current_location||x.warehouse_id!==x.current_warehouse_id){run('UPDATE articles SET location=?,warehouse_id=? WHERE id=?',[x.location,x.warehouse_id,x.article_id]);locations++}";

@@ -6,19 +6,19 @@ const vm=require('node:vm');
 const SW=require('./service-worker.js');
 const htmlFixture='<html><head><title>Test</title></head><body><div id="inventory75"></div><script src="inventory_ui.js"></script><script>window.appBooted=!!window.LVInventory</script></body></html>';
 
-test('V88.15: erforderlicher Lagerort-Kern synchron VOR inventory_ui.js geladen, nicht im Footer',()=>{
+test('V88.16: erforderlicher Lagerort-Kern synchron VOR inventory_ui.js geladen, nicht im Footer',()=>{
  const html=SW.injectHtml(htmlFixture);
- const pre=html.indexOf('<script src="v88_11_location_core.js?v=88.15"></script>');
+ const pre=html.indexOf('<script src="v88_11_location_core.js?v=88.16"></script>');
  const entry=html.indexOf('<script src="inventory_ui.js"></script>');
  assert.ok(pre>0 && entry>pre, 'Location core must be loaded synchronously before legacy inventory_ui.js');
- assert.ok(html.indexOf('v88_7_inventory_guard.js?v=88.15')>pre && html.indexOf('v88_7_inventory_guard.js?v=88.15')<entry);
+ assert.ok(html.indexOf('v88_7_inventory_guard.js?v=88.16')>pre && html.indexOf('v88_7_inventory_guard.js?v=88.16')<entry);
  assert.equal((html.match(/src="v88_11_location_core\.js/g)||[]).length,1,'dependency should only load once');
  assert.equal((html.match(/src="v88_7_inventory_guard\.js/g)||[]).length,1,'click guard should only load once');
- assert.match(html,/Lagerverwaltung V88\.15:/);
- assert.match(SW.CACHE_NAME,/^lv88-15-/);
+ assert.match(html,/Lagerverwaltung V88\.16:/);
+ assert.match(SW.CACHE_NAME,/^lv88-16-/);
 });
 
-test('V88.15: urspruenglicher LVInventory-is-not-defined Ablauf vorgefuehrt und durch Lade-Reihenfolge verhindert',()=>{
+test('V88.16: urspruenglicher LVInventory-is-not-defined Ablauf vorgefuehrt und durch Lade-Reihenfolge verhindert',()=>{
  const html=SW.injectHtml(htmlFixture);
  const scripts=[...html.matchAll(/<script src="([^"]+)"[^>]*><\/script>/g)].map(m=>m[1].split('?')[0]);
  const early=scripts.slice(0,scripts.indexOf('inventory_ui.js'));
@@ -34,7 +34,7 @@ test('V88.15: urspruenglicher LVInventory-is-not-defined Ablauf vorgefuehrt und 
  assert.equal(typeof fixed.LV8811LocationCore.correctTotal,'function');
 });
 
-test('V88.15: bei zwei laufenden Inventuren NIE stillschweigend eine auswaehlen oder neu anlegen',async()=>{
+test('V88.16: bei zwei laufenden Inventuren NIE stillschweigend eine auswaehlen oder neu anlegen',async()=>{
  const logs=[];
  const selector={scrollIntoView:()=>logs.push('scroll'),value:''};
  const overlay={hidden:false};

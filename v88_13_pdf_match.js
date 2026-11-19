@@ -48,18 +48,24 @@
  }
  function positionKey(row){return String(row?.key??String(row?.page)+':'+String(row?.position));}
  function matches(row,article){return no(row?.article_no)!==''&&no(row.article_no)===no(article?.article_no);}
- function summarize(lines,inventoryItems){
+ function summarize(lines,inventoryItems,{includeMatched=false,referenceRows=[]}={}){
   const items=(inventoryItems||[]).filter(a=>a?.article_no);
   const index=new Map(items.map(i=>[no(i.article_no),i]));
+  const reference=new Map((referenceRows||[]).map(r=>[positionKey(r),r]));
   const used=new Map();for(const row of lines||[]){const k=no(row.article_no);if(row.verified!==false&&row.review_action!=='defer'&&index.has(k))used.set(k,(used.get(k)||0)+1);}
   const blank=[];
   for(const row of lines||[]){
    const linked=index.get(no(row.article_no));
+   const ref=reference.get(positionKey(row));
+   const referenceMismatch=!!ref&&!row.manual_link&&no(ref.article_no)!==no(row.article_no);
    const suspicious=!!linked&&!!String(row.description||'').trim()&&!!String(linked.description||'').trim()&&textScore(row.description,linked.description)<0.32&&!row.manual_link;
    const already=!suspicious&&linked&&linked.counted_stock!==null&&linked.counted_stock!==undefined&&String(linked.counted_stock).trim()!==''&&row.verified!==false&&row.review_action!=='defer'&&used.get(no(row.article_no))===1;
-   if(already)continue;
-   const options=candidates(row,items,{max:5,countedOnly:true}).filter(x=>used.get(no(x.article.article_no))===undefined || (matches(row,x.article)&&row.verified===false));
-   blank.push({key:positionKey(row),row,options,kind:suspicious?'Bezeichnung passt nicht zur Artikelnummer':row.review_action==='defer'?'zurueckgestellt':row.verified===false?'ungeprueft':linked?'doppelte-nummer':'nicht-zugeordnet'});
+   if(already&&!includeMatched&&!referenceMismatch)continue;
+   const options=candidates(row,items,{max:7,countedOnly:!referenceMismatch}).filter(x=>used.get(no(x.article.article_no))===undefined || matches(row,x.article));
+   // Der OCR-Referenzkatalog kann I/1 verwechseln. Er ist NIEMALS
+   // ausschlaggebender als ein eindeutig bekannter Lagerartikel mit Zaehlung.
+   // Die Vorschlaege bleiben nach Nummern- und Beschreibungsaehnlichkeit sortiert.
+   blank.push({key:positionKey(row),row,options,kind:referenceMismatch?'OCR-Katalog und Artikelnummer stimmen nicht ueberein – I/1 manuell pruefen':suspicious?'Bezeichnung passt nicht zur Artikelnummer':row.review_action==='defer'?'zurueckgestellt':row.verified===false?'ungeprueft':already?'bereits-zugeordnet':linked?'ungezaehlt oder doppelt':'nicht-zugeordnet',reference_no:ref?.article_no||''});
   }
   blank.sort((a,b)=>(b.options[0]?.score||0)-(a.options[0]?.score||0)||Number(a.row.page)-Number(b.row.page)||Number(a.row.position)-Number(b.row.position));
   return blank;

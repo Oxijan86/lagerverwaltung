@@ -49,7 +49,7 @@ test('A running inventory is ALWAYS resumed; a new one needs explicit choice',()
 });
 test('Service worker boot installs the safe exporter + inventory guard',()=>{
  const html=SW.injectHtml('<html><body><h1>Unchanged app</h1><script src="inventory_ui.js"></script></body></html>');
- assert.match(html,/v88_6_pdf\.js\?v=88\.15/);assert.match(html,/v88_4_export\.js\?v=88\.15/);assert.match(html,/v88_7_inventory_guard\.js\?v=88\.15/);
+ assert.match(html,/v88_6_pdf\.js\?v=88\.16/);assert.match(html,/v88_4_export\.js\?v=88\.16/);assert.match(html,/v88_7_inventory_guard\.js\?v=88\.16/);
  assert.equal(SW.injectHtml(html),html);
 });
 test('The old raster PDF function is delegated or stopped, never executed',()=>{
@@ -57,5 +57,5 @@ test('The old raster PDF function is delegated or stopped, never executed',()=>{
  const patched=SW.patchV886Pdf(s);assert.match(patched,/LV886_SAFE_PDF_DELEGATE/);assert.match(patched,/LV886PDF\.render/);
 });
 test('Version and help are updated together',()=>{
- for(const name of ['manifest.webmanifest','v88_ocr.js','v88_4_help.js'])assert.match(fs.readFileSync(require('node:path').join(__dirname,name),'utf8'),/88\.15/);
+ for(const name of ['manifest.webmanifest','v88_ocr.js','v88_4_help.js'])assert.match(fs.readFileSync(require('node:path').join(__dirname,name),'utf8'),/88\.16/);
 });

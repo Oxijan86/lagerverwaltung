@@ -9,8 +9,8 @@ function patchedFixture(){
  // Former fixture patches only V88.12; new function accepts it and upgrades.
  return SW.patchV8813InventoryUi(former());
 }
-test('V88.15 Folgeversion, RONDO-Matcher, PDF-Renderer und Module werden geladen',()=>{
- assert.match(SW.CACHE_NAME,/lv88-15/);
+test('V88.16 Folgeversion, RONDO-Matcher, PDF-Renderer und Module werden geladen',()=>{
+ assert.match(SW.CACHE_NAME,/lv88-16/);
  assert.ok(SW.FILES.includes('v88_13_pdf_match.js'));
  const html=SW.injectHtml('<html><body><script>function renderStockRows(list){return `<td data-label="Bezeichnung">${esc(a.description)}</td>`}</script></body></html>');
  assert.ok(html.includes('Inventur-Fundorte (noch kein Bestandsabschluss)'));

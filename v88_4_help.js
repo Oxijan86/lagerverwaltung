@@ -1,4 +1,4 @@
-/* Hilfereiter V88.15, sichtbar in der bestehenden Hilfe. */
+/* Hilfereiter V88.16, sichtbar in der bestehenden Hilfe. */
 (function(root,factory){
  const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;
  else if(root)root.LV884Help=api;
@@ -59,7 +59,7 @@
    '„Ausgefüllte RONDO-PDF erzeugen“ öffnen, abgeschlossene Inventur auswählen und PDF auch später nochmals erzeugen.',
    'Nicht dieselben Materialbewegungen ein zweites Mal buchen. Eine erneut erzeugte PDF verändert die Datenbank nicht.'
   ]},
-  {title:'Sicherer Cursorwechsel und automatische Lagerortzuordnung (V88.15)',body:[
+  {title:'Sicherer Cursorwechsel und automatische Lagerortzuordnung (V88.16)',body:[
    'Nach der Auswahl eines schon gezählten Artikels landet der Cursor IMMER im Feld „Weitere Menge“. Das gilt auch dann, wenn die ursprüngliche Artikelsuche noch versucht, das Feld „Gezählt“ zu öffnen.',
    'Bereits gespeicherte Mengen, einschließlich 0, sind schreibgeschützt. Eine bewusste Korrektur erfolgt ausschließlich über „Gesamtmenge korrigieren“ mit Bestätigung. Das bisherige Gesamtmengenfeld bleibt immer gesperrt; die Korrektur erfolgt nur im Dialog.',
    'Wähle oben einen Lagerort für deinen nächsten Fund. Die automatische Zuordnung wird damit aktiviert – du musst nicht zusätzlich „Lagerort hinzufügen“ anklicken, wenn dieser Lagerort bereits existiert.',
@@ -68,17 +68,17 @@
    'Wenn ein eingetippter Lagerort noch unbekannt ist, muss die Stammdatenanlage ausdrücklich bestätigt werden; die Anwendung erfindet keine Lagerorte.',
    'Bei einer fehlgeschlagenen Speicherung bleiben die Eingaben bestehen und der Cursor springt nicht zum nächsten Artikel. Die Lagerbestände ändern sich weiterhin erst beim verbindlichen Inventurabschluss.'
   ]},
-  {title:'Mehrfachzählung und mehrere Lagerorte (V88.15)',body:[
+  {title:'Mehrfachzählung und mehrere Lagerorte (V88.16)',body:[
    'Bei Artikelsuche wird ein noch ungezählter Artikel im Feld „Gezählt“ geöffnet. Ein bereits gezählter Artikel (auch mit 0) wird automatisch im Feld „Weitere Menge“ geöffnet.',
    'Gib die zusätzliche Menge ein und bestätige mit Enter. Sie wird zum bisherigen Gesamtzählstand addiert; danach springt der Cursor zurück zur Artikelsuche.',
    'Wähle vor der Zählung oben den tatsächlichen Zählbereich, also Lager und Lagerort/Sortimo-Kiste. Wird derselbe Artikel an einem weiteren Lagerort gefunden, wird diese Teilmenge diesem Lagerort zugeordnet, statt den alten Ort zu überschreiben.',
    'Beispiel: Fach A 5 Stück, Fach B 3 Stück → Gesamtzählstand 8 Stück; die beiden Zählorte werden getrennt geführt.',
    'Falls ein neuer Lagerort noch nicht im Stamm angelegt ist, wird die vorhandene Anlegebestätigung angezeigt. Der neue Lagerort wird als Stammdatum angelegt; die Zuordnung der gezählten Teilmengen wird erst beim verbindlichen Inventurabschluss bestandswirksam.',
    'Bei mehreren Lagerorten ohne ausgewählten aktuellen Zählbereich wird die zusätzliche Zählung gesperrt, damit eine falsche Lagerortzuordnung vermieden wird.',
-   'Das alte Feld „Gezählt“ ist nach der ersten Zählung vor versehentlicher Änderung geschützt. „Gesamtmenge korrigieren“ oeffnet nach der Bestaetigung einen separaten Mengen-Dialog. Ab V88.15 bleibt die Aufteilung bei einer Korrektur mit genau einem Zählort erhalten. Bei mehreren Zählorten ist eine bewusste Korrektur pro Lagerort erforderlich.',
+   'Das alte Feld „Gezählt“ ist nach der ersten Zählung vor versehentlicher Änderung geschützt. „Gesamtmenge korrigieren“ oeffnet nach der Bestaetigung einen separaten Mengen-Dialog. Ab V88.16 bleibt die Aufteilung bei einer Korrektur mit genau einem Zählort erhalten. Bei mehreren Zählorten ist eine bewusste Korrektur pro Lagerort erforderlich.',
    'Die Inventur wird nur zwischengespeichert. Keine Lagerbestände werden durch zusätzliche Zählungen oder PDF-Export verändert. Ein verbindlicher Inventurabschluss ist weiterhin notwendig.'
   ]},
-  {title:'Verbindlicher Erstlagerort und sichere Nachzählung (V88.15)',body:[
+  {title:'Verbindlicher Erstlagerort und sichere Nachzählung (V88.16)',body:[
    'Bei der ERSTEN Zählung muss oben der tatsächliche Zähl-Lagerort ausgewählt sein. Stückzahl und Fundort werden gemeinsam in der laufenden Inventur zwischengespeichert – nicht erst bei der nächsten Eingabe.',
    'Bei einem bereits gezählten Artikel öffnet die Suche weiterhin „Weitere Menge“. Ein neuer Fund wird automatisch dem AKTUELL ausgewählten Lagerort hinzugefügt; die ursprüngliche Zählmenge und der Erstlagerort werden nicht ersetzt.',
    'Beispiel Transportband: erst Fach A 5 Stück; dann Fach B 3 Stück. In der Inventur stehen Fach A 5, Fach B 3, gesamt 8. Ein weiterer Fund in Fach B erhöht ausschließlich Fach B.',
@@ -88,20 +88,20 @@
    'Ein bisher unbekannter Lagerort muss zur Stammdatenanlage ausdrücklich bestätigt werden; bei Eingabe im Zählbereich öffnet die App den vorhandenen Dialog selbstständig.',
    'Die Teilmengen bleiben Zwischenergebnisse der laufenden Inventur. Erst beim verbindlichen Inventurabschluss entstehen Änderungen an Lagerbeständen und Lagerort-Teilbeständen. Vorher auf korrekte Aufteilung prüfen.'
   ]},
-  {title:'Ungültige Zählmengen und sicheres Zwischenspeichern (V88.15)',body:[
+  {title:'Ungültige Zählmengen und sicheres Zwischenspeichern (V88.16)',body:[
    'Die Inventur prüft vor jedem Speichern, ob alle Zählmengen zur Einheit passen. Stückartikel wie Stk. akzeptieren nur ganze Zahlen, Meterartikel mit der Einheit m akzeptieren z. B. 4,7. Die Artikelbeschreibung allein ändert die Einheit nicht.',
    'Bei einer alten ungültigen Eingabe zeigt die App die betroffene Artikelnummer, Bezeichnung, Einheit und fehlerhafte Menge direkt im Inventurfenster. Gültige Zählungen werden trotzdem gespeichert; die problematische Eingabe bleibt sicher in der lokalen Wiederherstellungskopie.',
    'Mit „Lokale Eingaben als Sicherung herunterladen“ kannst du die ausstehenden Eingaben zusätzlich als JSON sichern. „Nur diese ungültige Zählung zurücksetzen“ erfordert eine Bestätigung und löscht nicht die Zählungen der anderen Artikel.',
    'Wenn der Artikel tatsächlich in Metern geführt werden muss, korrigiere seine Einheit bewusst im Artikelstamm nach Sicherung der Inventur. Keine automatische Umdeutung von Stk. in m, damit Bestandswerte nicht unbemerkt geändert werden.',
    'Kann die Lagerdatei wegen eines anderen Problems nicht gespeichert werden, bleibt die lokale Wiederherstellungskopie erhalten. Browserdaten und Datenbank nie zur Fehlerbehebung löschen.',
-   'Die zuvor sichtbare Fehlermeldung syncStatus is not defined beim Aufruf der Speicherstatusanzeige ist in V88.15 ebenfalls abgesichert.'
+   'Die zuvor sichtbare Fehlermeldung syncStatus is not defined beim Aufruf der Speicherstatusanzeige ist in V88.16 ebenfalls abgesichert.'
   ]},
   {title:'Bestandsschutz und Datensicherung',body:[
    'Zählungen werden zunächst nur in der laufenden Inventur gespeichert. Der aktuelle Istbestand bleibt unverändert, bis eine Inventur verbindlich abgeschlossen wird.',
    'Erst der ausdrückliche Inventurabschluss kann Zu-/Abbuchungen und Lagerortänderungen erzeugen. Ein PDF-Download hat diese Berechtigung nicht.',
    'Vor Gerätewechsel lokalen Stand speichern und Cloud-Synchronisierung prüfen. Niemals Browserdaten oder IndexedDB zum Aktualisieren löschen.',
    'Bei einem OCR-Widerspruch Materialnummer anhand der Original-PDF prüfen. Eine ähnliche Nummer ist noch kein eindeutiger Treffer.',
-   'Die unveränderte Original-PDF wird mittels SHA-256 erkannt: 719 Positionen aus 72 Seiten ohne Browser-OCR; ein anderes Dokument wird nicht mit dem gespeicherten Katalog verwechselt. Zeigt diese PDF erneut einen Fehler, zuerst Version 88.15 und den Datei-Fingerabdruck prüfen.'
+   'Die unveränderte Original-PDF wird mittels SHA-256 erkannt: 719 Positionen aus 72 Seiten ohne Browser-OCR; ein anderes Dokument wird nicht mit dem gespeicherten Katalog verwechselt. Zeigt diese PDF erneut einen Fehler, zuerst Version 88.16 und den Datei-Fingerabdruck prüfen.'
   ]}
  ];
  const safe=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
@@ -109,7 +109,7 @@
   if(typeof document==='undefined')return false;
   const help=document.getElementById('help');if(!help||document.getElementById('lv884Help'))return false;
   const wrap=document.createElement('details');wrap.id='lv884Help';wrap.className='lv87-card';wrap.open=true;
-  const summary=document.createElement('summary');summary.innerHTML='<b>📘 Neu: Hilfe V88.15 – Inventur, PDF-Ausgabe und Datenbank schützen</b>';wrap.appendChild(summary);
+  const summary=document.createElement('summary');summary.innerHTML='<b>📘 Neu: Hilfe V88.16 – Inventur, PDF-Ausgabe und Datenbank schützen</b>';wrap.appendChild(summary);
   const head=document.createElement('p');head.textContent='Ausführliche Anleitung für die neue RONDO-PDF-Funktion und die drei Wege der Ersteinrichtung. Jede Anleitung lässt sich einzeln öffnen.';wrap.appendChild(head);
   for(const topic of topics){const el=document.createElement('details');el.className='lv87-card';el.style.border='1px solid #ced9e1';el.style.margin='8px 0';
    const s=document.createElement('summary');s.textContent=topic.title;el.appendChild(s);
