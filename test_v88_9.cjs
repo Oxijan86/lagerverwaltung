@@ -55,11 +55,11 @@ test('Bei erster gezählter Null kann alter Ort bestehen, ohne Mengenverlust',()
 test('String-Entscheidung: 0 zählt als bereits gezählt',()=>{
  assert.equal(C.hasCount(0),true);assert.equal(C.hasCount('0'),true);assert.equal(C.hasCount(null),false);assert.equal(C.hasCount(''),false);
 });
-test('V88.14 injectHtml lädt Zählmodul vor PDF-UI',()=>{
+test('V88.15 injectHtml lädt Zählmodul vor PDF-UI',()=>{
  const html=sw.injectHtml('<html><body><p>App</p></body></html>');
- assert.ok(html.includes('v88_9_count_core.js?v=88.14'));assert.ok(html.indexOf('v88_9_count_core.js?v=88.14')<html.indexOf('v87_ui.js?v=88.14'));
+ assert.ok(html.includes('v88_9_count_core.js?v=88.15'));assert.ok(html.indexOf('v88_9_count_core.js?v=88.15')<html.indexOf('v87_ui.js?v=88.15'));
 });
-test('V88.14 Patch für Inventur UI ersetzt nur eindeutige API-Blöcke',()=>{
+test('V88.15 Patch für Inventur UI ersetzt nur eindeutige API-Blöcke',()=>{
  const fixture=`function renderRow(x,disabled,esc){return \`<input value="\${esc(x.counted_stock??'')}" \${disabled} oninput="change()"><button type="button" class="secondary" onclick="LVInventory.confirmCount(\${x.article_id})">✓ Bestätigen & weiter</button>\${x.bin_parts_json?\`<small>\${esc(x.bin_parts_json)}</small>\`:''}\`;}
  window.LVInventory={
   addBinPart(id){ oldPart(); },
@@ -75,20 +75,20 @@ test('V88.14 Patch für Inventur UI ersetzt nur eindeutige API-Blöcke',()=>{
  assert.ok(patched.includes('updateReferences(refs)'));
  assert.doesNotThrow(()=>new Function(patched));
 });
-test('V88.14 Patch für PDF-Suchauswahl unterscheidet Erst- und Mehrfachzählung',()=>{
+test('V88.15 Patch für PDF-Suchauswahl unterscheidet Erst- und Mehrfachzählung',()=>{
  const src=`function select(){requestAnimationFrame(()=>{$('inv75-count-'+row.article_id)?.focus();$('inv75-count-'+row.article_id)?.select();})}`;
  const out=sw.patchV889Focus(src);assert.ok(out.includes("'inv84-add-'"));assert.ok(out.includes("'inv75-count-'"));
  assert.ok(out.includes('LV889_EXISTING_FOCUS'));
 });
-test('V88.14 Service Worker lädt Inventory-Modul und patcht den Pfad',()=>{
+test('V88.15 Service Worker lädt Inventory-Modul und patcht den Pfad',()=>{
  assert.ok(sw.FILES.includes('v88_9_count_core.js'));
- assert.equal(sw.CACHE_NAME.startsWith('lv88-14-'),true);
+ assert.equal(sw.CACHE_NAME.startsWith('lv88-15-'),true);
 });
 
-test('Version V88.14 wird in App, Manifest und Hilfe angezeigt',()=>{
+test('Version V88.15 wird in App, Manifest und Hilfe angezeigt',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const root=__dirname;
- assert.match(fs.readFileSync(path.join(root,'v88_ocr.js'),'utf8'),/el\.textContent='88\.14'/);
- assert.match(fs.readFileSync(path.join(root,'manifest.webmanifest'),'utf8'),/V88\.14/);
- assert.match(fs.readFileSync(path.join(root,'v88_4_help.js'),'utf8'),/Mehrfachzählung und mehrere Lagerorte \(V88\.14\)/);
+ assert.match(fs.readFileSync(path.join(root,'v88_ocr.js'),'utf8'),/el\.textContent='88\.15'/);
+ assert.match(fs.readFileSync(path.join(root,'manifest.webmanifest'),'utf8'),/V88\.15/);
+ assert.match(fs.readFileSync(path.join(root,'v88_4_help.js'),'utf8'),/Mehrfachzählung und mehrere Lagerorte \(V88\.15\)/);
 });

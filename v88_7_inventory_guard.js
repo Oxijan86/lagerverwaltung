@@ -32,6 +32,11 @@
    const overlay=$('lv87Modal');if(overlay)overlay.hidden=true;
    await root.LVInventory.open();
    if(existing.length){
+    if(existing.length>1){
+     notify(`Es gibt ${existing.length} laufende Inventuren. Bitte oben bei „Gespeicherte Inventur“ ausdrücklich die richtige Inventur auswählen und dann „Ausgewählte Inventur öffnen“ klicken. Es wurde keine neue Inventur angelegt und keine laufende beendet.`);
+     $('inv75Session')?.scrollIntoView?.({block:'center'});
+     return {kind:'choose',count:existing.length};
+    }
     let data=root.LVInventory.current?.();
     if(!existing.some(x=>x.id===data?.session?.id)){
      const chosen=existing[0];

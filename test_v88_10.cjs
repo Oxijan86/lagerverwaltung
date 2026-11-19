@@ -105,13 +105,13 @@ test('Quell-Patch erhaelt Mengenlogik und aktiviert Lagerort automatisch',()=>{
 });
 test('Aktuelle HTML-Boot-Reihenfolge: Mengenlogik vor Suchfeld-Schutz',()=>{
  const html=sw.injectHtml('<html><body>App</body></html>');
- assert.match(html,/Lagerverwaltung V88.14/);
- assert.ok(html.indexOf('v88_9_count_core.js?v=88.14')<html.indexOf('v88_10_inventory_focus.js?v=88.14'));
- assert.ok(html.indexOf('v87_ui.js?v=88.14')<html.indexOf('v88_10_inventory_focus.js?v=88.14'));
+ assert.match(html,/Lagerverwaltung V88.15/);
+ assert.ok(html.indexOf('v88_9_count_core.js?v=88.15')<html.indexOf('v88_10_inventory_focus.js?v=88.15'));
+ assert.ok(html.indexOf('v87_ui.js?v=88.15')<html.indexOf('v88_10_inventory_focus.js?v=88.15'));
  assert.ok(sw.FILES.includes('v88_10_inventory_focus.js'));
 });
 test('Versionierung verhindert Wiederverwendung der alten SW-Datei',()=>{
- assert.match(sw.CACHE_NAME,/lv88-14-/);
- assert.match(fs.readFileSync(path.join(__dirname,'v88_ocr.js'),'utf8'),/el\.textContent='88\.14'/);
- assert.match(fs.readFileSync(path.join(__dirname,'manifest.webmanifest'),'utf8'),/V88\.14/);
+ assert.match(sw.CACHE_NAME,/lv88-15-/);
+ assert.match(fs.readFileSync(path.join(__dirname,'v88_ocr.js'),'utf8'),/el\.textContent='88\.15'/);
+ assert.match(fs.readFileSync(path.join(__dirname,'manifest.webmanifest'),'utf8'),/V88\.15/);
 });
