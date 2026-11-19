@@ -1,4 +1,4 @@
-/* Lagerverwaltung Lovrencic V88.6 – gespeicherte Zwischenstände oder abgeschlossene
+/* Lagerverwaltung Lovrencic V88.7 – gespeicherte Zwischenstände oder abgeschlossene
  * Inventuren jederzeit in die Original-RONDO-PDF zurückschreiben.
  * Ein Export liest nur; einzig vor dem Export der AKTUELLEN offenen Inventur
  * wird der Inventur-Zwischenstand gesichert. KEIN Inventurabschluss.
@@ -51,8 +51,38 @@
   const incomplete=print.blank?`${print.blank} Positionen bleiben im PDF unbeschriftet.`:'Alle Positionen haben Zählwerte.';
   return `${phase}. ${print.printed} von ${print.total} Positionen werden ausgefüllt. ${incomplete}`;
  }
+
+ /* V88.7: Fail-closed PDF exporter. The old LV87PDF canvas renderer is NOT
+  * an acceptable fallback, even if a stale service worker supplies it.
+  * This code always invokes the original-byte incremental PDF renderer.
+  */
+ const SAFE_SHA='a3f457120746435d4a0d8b81b4f808e6a122b448353c91de6d291cdcf16aa29b';
+ let safePdfLoading=null;
+ async function verifiedRenderer(){
+  const w=typeof window!=='undefined'?window:globalThis;
+  if(w.LV886PDF?.KNOWN_SHA===SAFE_SHA&&typeof w.LV886PDF.render==='function')return w.LV886PDF;
+  if(!w.document)throw Error('Verlustfreier PDF-Export nicht geladen (V88.7 erforderlich).');
+  if(!safePdfLoading)safePdfLoading=new Promise((resolve,reject)=>{
+   const node=w.document.createElement('script');
+   node.src=new URL('v88_6_pdf.js?v=88.7',w.document.baseURI).href;
+   node.async=false;
+   node.onload=()=>w.LV886PDF?.KNOWN_SHA===SAFE_SHA&&typeof w.LV886PDF.render==='function'
+    ?resolve(w.LV886PDF):reject(Error('Sicherer PDF-Exporter wurde geladen, aber nicht aktiviert.'));
+   node.onerror=()=>reject(Error('Sicherer PDF-Exporter konnte nicht geladen werden. Verbindung/Cache prüfen.'));
+   w.document.head.appendChild(node);
+  }).catch(e=>{safePdfLoading=null;throw e});
+  return safePdfLoading;
+ }
+ async function checkOriginalPrefix(blob,raw){
+  if(!(blob instanceof Blob))throw Error('PDF-Ausgabe fehlt.');
+  const original=raw instanceof Uint8Array?raw:raw instanceof ArrayBuffer?new Uint8Array(raw):ArrayBuffer.isView(raw)?new Uint8Array(raw.buffer,raw.byteOffset,raw.byteLength):null;
+  if(!original||blob.size<original.length+1000)throw Error('Original-PDF konnte nicht verlustfrei eingebettet werden. Download abgebrochen.');
+  const beginning=new Uint8Array(await blob.slice(0,original.length).arrayBuffer());
+  for(let i=0;i<original.length;i++)if(beginning[i]!==original[i])throw Error('Originalseiten fehlen oder wurden verändert. Es wird KEINE fehlerhafte PDF heruntergeladen.');
+  return true;
+ }
  async function run(ctx){
-  if(!ctx||typeof ctx.getStored!=='function'||typeof ctx.api!=='function'||!ctx.pdf)throw Error('RONDO-PDF-Ausgabe nicht richtig eingerichtet.');
+  if(!ctx||typeof ctx.getStored!=='function'||typeof ctx.api!=='function'||!ctx.core)throw Error('RONDO-PDF-Ausgabe nicht richtig eingerichtet.');
   const stored=await ctx.getStored();if(!stored?.bytes)throw Error('Die Original-RONDO-PDF fehlt. Bitte die PDF erneut importieren.');
   const lines=stored.edited?.length?stored.edited:ctx.core.checkRows(stored.pages).rows;
   if(!lines?.length)throw Error('Die PDF enthält noch keine gespeicherten Materialpositionen.');
@@ -102,7 +132,9 @@
     // Auch ein noch leerer Zwischenstand darf als Kopie mit Zähler und Datum gedruckt werden.
     const beforePrint=snapshot?.session?.status;
     status.textContent=`${result.printed} Zählwerte werden in die Original-PDF geschrieben – ${beforePrint==='completed'?'abgeschlossene Inventur':'Zwischenstand, keine Bestandsbuchung'} …`;
-    const blob=await ctx.pdf.render(stored.bytes,lines,result.quantities,msg=>{status.textContent=msg+' · Es werden keine Lagerbestände geändert.'},()=>stopped,metadata);
+    const renderer=await verifiedRenderer();
+    const blob=await renderer.render(stored.bytes,lines,result.quantities,msg=>{status.textContent=msg+' · Es werden keine Lagerbestände geändert.'},()=>stopped,metadata);
+    await checkOriginalPrefix(blob,stored.bytes);
     if(stopped)throw Error('PDF-Ausgabe abgebrochen. Keine Bestände verändert.');
     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename(beforePrint,snapshot.session.name);document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
     status.textContent=`PDF erzeugt: ${result.printed}/${result.total} Positionen ausgefüllt${result.blank?' · '+result.blank+' bleiben leer':''}. ${beforePrint==='completed'?'Inventur war bereits abgeschlossen.':'Lagerbestände bleiben bis zum Inventurabschluss unverändert.'}`;
@@ -111,5 +143,5 @@
   };
   return {sessions:sessions.length,selected:chosen};
  }
- return {clean,counted,formatTodayDE,printMeta,buildPrintData,filename,planStatus,run};
+ return {clean,counted,formatTodayDE,printMeta,buildPrintData,filename,planStatus,run,verifiedRenderer,checkOriginalPrefix};
 });
