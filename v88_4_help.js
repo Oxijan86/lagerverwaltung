@@ -1,4 +1,4 @@
-/* Hilfereiter V88.7, sichtbar in der bestehenden Hilfe. */
+/* Hilfereiter V88.8, sichtbar in der bestehenden Hilfe. */
 (function(root,factory){
  const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;
  else if(root)root.LV884Help=api;
@@ -10,6 +10,13 @@
    'Bei einer bereits vorhandenen lager.db zuerst diese öffnen – eine Neu-Einrichtung erzeugt sonst einen getrennten Datenbestand.',
    'SAPUI5-Export: gleiche fünf Spalten wie im CSV-Center. Die Firmenmengen werden nach Prüfung einmalig als Anfangsbestand eingetragen. Keine zusätzliche Einbuchung.',
    'RONDO-PDF: Artikelstamm nach OCR-Prüfung anlegen. Die Belege enthalten keine tatsächlichen Zählmengen. Anschließend Inventur beginnen und Materialien zählen.'
+  ]},
+  {title:'Abweichender Technikername beim PDF-Artikelimport',body:[
+   'Sind die RONDO-Artikel geprüft und wird der verwendete Technikername in einer neuen Datenbank nicht erkannt, erscheint ein Hinweis mit dem übergebenen Namen und den in der Datenbank hinterlegten Technikern.',
+   'Du kannst den Hinweis bewusst über OK ignorieren und die geprüften RONDO-Artikel trotzdem übernehmen; bei Abbrechen bleibt die Prüfung erhalten.',
+   'Diese Ausnahme gilt NUR für den Artikelstammimport OHNE Zählmengen und OHNE Anfangsbestände. Der gewählte Name wird für diese Artikelanlagen protokolliert; er wird nicht automatisch als aktiver Techniker angelegt.',
+   'Für Einbuchungen, Ausbuchungen, SAP-Bestandsübernahmen und den Inventurabschluss sind weiterhin gültige Techniker und die bisher erforderlichen Freigaben nötig.',
+   'Zurückgestellte/ungeprüfte Artikel bleiben unberührt. Beim Import wird keine laufende Inventur abgebrochen.'
   ]},
   {title:'Artikelnummern schnell prüfen',body:[
    'Unsichere OCR-Positionen in der jeweiligen Zeile korrigieren, direkt „Diese Zeile geprüft“ wählen.',
@@ -43,7 +50,7 @@
    'Erst der ausdrückliche Inventurabschluss kann Zu-/Abbuchungen und Lagerortänderungen erzeugen. Ein PDF-Download hat diese Berechtigung nicht.',
    'Vor Gerätewechsel lokalen Stand speichern und Cloud-Synchronisierung prüfen. Niemals Browserdaten oder IndexedDB zum Aktualisieren löschen.',
    'Bei einem OCR-Widerspruch Materialnummer anhand der Original-PDF prüfen. Eine ähnliche Nummer ist noch kein eindeutiger Treffer.',
-   'Die unveränderte Original-PDF wird mittels SHA-256 erkannt: 719 Positionen aus 72 Seiten ohne Browser-OCR; ein anderes Dokument wird nicht mit dem gespeicherten Katalog verwechselt. Zeigt diese PDF erneut einen Fehler, zuerst Version 88.7 und den Datei-Fingerabdruck prüfen.'
+   'Die unveränderte Original-PDF wird mittels SHA-256 erkannt: 719 Positionen aus 72 Seiten ohne Browser-OCR; ein anderes Dokument wird nicht mit dem gespeicherten Katalog verwechselt. Zeigt diese PDF erneut einen Fehler, zuerst Version 88.8 und den Datei-Fingerabdruck prüfen.'
   ]}
  ];
  const safe=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
@@ -51,7 +58,7 @@
   if(typeof document==='undefined')return false;
   const help=document.getElementById('help');if(!help||document.getElementById('lv884Help'))return false;
   const wrap=document.createElement('details');wrap.id='lv884Help';wrap.className='lv87-card';wrap.open=true;
-  const summary=document.createElement('summary');summary.innerHTML='<b>📘 Neu: Hilfe V88.7 – Inventur, PDF-Ausgabe und Datenbank schützen</b>';wrap.appendChild(summary);
+  const summary=document.createElement('summary');summary.innerHTML='<b>📘 Neu: Hilfe V88.8 – Inventur, PDF-Ausgabe und Datenbank schützen</b>';wrap.appendChild(summary);
   const head=document.createElement('p');head.textContent='Ausführliche Anleitung für die neue RONDO-PDF-Funktion und die drei Wege der Ersteinrichtung. Jede Anleitung lässt sich einzeln öffnen.';wrap.appendChild(head);
   for(const topic of topics){const el=document.createElement('details');el.className='lv87-card';el.style.border='1px solid #ced9e1';el.style.margin='8px 0';
    const s=document.createElement('summary');s.textContent=topic.title;el.appendChild(s);
