@@ -12,18 +12,18 @@ test('Real 72-page RONDO original still matches the established SHA',t=>{
  assert.equal(C.pages().length,72);
  assert.equal(C.pages().reduce((n,p)=>n+p.positions.length,0),719);
 });
-test('V88.10 install includes technician dialog BEFORE RONDO UI script',()=>{
+test('V88.12 install includes technician dialog BEFORE RONDO UI script',()=>{
  const html=SW.injectHtml('<html><body>App</body></html>');
- assert(html.indexOf('v88_8_technician.js?v=88.10')<html.indexOf('v87_ui.js?v=88.10'));
- assert.match(html,/v88_6_pdf.js\?v=88\.10/);
+ assert(html.indexOf('v88_8_technician.js?v=88.12')<html.indexOf('v87_ui.js?v=88.12'));
+ assert.match(html,/v88_6_pdf.js\?v=88\.12/);
  assert.equal(SW.injectHtml(html),html);
- assert.match(SW.CACHE_NAME,/88-10/);
+ assert.match(SW.CACHE_NAME,/88-12/);
 });
-test('V88.7 cached HTML is replaced by V88.10, not loaded twice',()=>{
+test('V88.7 cached HTML is replaced by V88.12, not loaded twice',()=>{
  const old=SW.injectHtml('<html><body>App</body></html>')
-  .replace(/V88\.10/g,'V88.7').replace(/88\.10/g,'88.7');
+  .replace(/V88\.12/g,'V88.7').replace(/88\.12/g,'88.7');
  const current=SW.injectHtml(old);
- assert.match(current,/v88_8_technician\.js\?v=88\.10/);
+ assert.match(current,/v88_8_technician\.js\?v=88\.12/);
  assert.doesNotMatch(current,/<script src="v87_ui\.js\?v=88\.7/);
  assert.equal((current.match(/<script src="v87_ui\.js/g)||[]).length,1);
 });
@@ -96,6 +96,6 @@ test('No bypass for bookings or non-technician errors',async()=>{
  }finally{if(old===undefined)delete global.confirm;else global.confirm=old}
 });
 test('Help and version are aligned',()=>{
- for(const name of ['manifest.webmanifest','v88_ocr.js','v88_4_help.js'])assert.match(fs.readFileSync(path.join(__dirname,name),'utf8'),/V88\.10|88\.10/);
+ for(const name of ['manifest.webmanifest','v88_ocr.js','v88_4_help.js'])assert.match(fs.readFileSync(path.join(__dirname,name),'utf8'),/V88\.12|88\.12/);
  assert.match(fs.readFileSync(path.join(__dirname,'v88_4_help.js'),'utf8'),/Abweichender Technikername/);
 });

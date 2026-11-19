@@ -1,4 +1,4 @@
-/* Lagerverwaltung Lovrencic V88.10: Eingabeschutz und Zaehlort-Automatik.
+/* Lagerverwaltung Lovrencic V88.11: Eingabeschutz und Zaehlort-Automatik.
    Als separater Runtime-Schutz, damit alle Wege zur Artikelauswahl sicher sind,
    auch wenn andere Module ein bereits gezaehltes Feld fokussieren.
    Keine Lagerbuchung, keine automatische Korrektur bestaetigter Mengen. */
@@ -17,7 +17,7 @@
   return match?Number(match[1]):null;
  };
  const getDoc=()=>root.document;
- function isProtected(id){const row=getRow(id);return !!row&&countPresent(row.counted_stock)&&!unlocked.has(Number(id));}
+ function isProtected(id){const row=getRow(id);return !!row&&countPresent(row.counted_stock)&&!unlocked.has(Number(id))&&!root.LV8811LocationCore?.isDraft?.(id);}
  function focusAddition(id){
   const el=getDoc()?.getElementById('inv84-add-'+id);
   if(!el||el.disabled||el.hidden)return false;
@@ -66,7 +66,9 @@
  }
  function handleFocusOut(event){
   const id=fromCountInput(event.target);
-  if(id===null||!unlocked.has(id))return;
+  if(id===null)return;
+  if(root.LV8811LocationCore?.isDraft?.(id)){root.LV8811LocationCore.markDraft(id,false);protectInput(event.target);return;}
+  if(!unlocked.has(id))return;
   unlocked.delete(id);
   protectInput(event.target);
  }
