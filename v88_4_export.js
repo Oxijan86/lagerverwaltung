@@ -257,6 +257,15 @@
   matchSearch.addEventListener('input',matchRender);
   $('lv8816ShowAll').addEventListener('change',matchRender);
   matchLoad();
+  /* LV8817_BULK_OCR_PANEL: reine Vorschau, bestaetigte Sammelzuordnung,
+     und separate archivierbare OCR-Fehlartikel in der aktuellen Datenbank. */
+  if(typeof window!=='undefined'&&window.LV8817BulkUI){
+   window.LV8817BulkUI.mount({root:content,api:ctx.api,select,inventory:ctx.inventory,
+    matchCore,validate:ctx.core.validNo,referenceRows,
+    lines:()=>lines,setLines:revised=>{lines=revised;matchRender()},
+    snapshot:()=>matchSnapshot,saveMappings:ctx.saveMappings,reloadSnapshot:matchLoad});
+  }
+  else console.warn('V88.17: Sammelzuordnungsmodul nicht geladen; keine Datenbankaktion gestartet.');
   const reportButton=$('lv8814ReportDownload'),reportStatus=$('lv8814ReportStatus');
   reportButton.onclick=async()=>{
    if(busy)return;reportButton.disabled=true;

@@ -10,11 +10,11 @@ const lines=reference.map(r=>({...r,verified:!!r.verified}));
 const target=lines.find(r=>r.page===4&&r.position===6);
 const copied=()=>lines.map(r=>r===target?{...r,article_no:'I1000339',verified:true}: {...r});
 const inventory=()=>({session:{id:'save1',status:'draft',version:2},database_id:'same-db',items:[{...wrong},{...right}]});
-test('V88.16: Export-Schutzmodul wird geladen und der alte Rasterweg nicht mehr ungehindert angeklickt',()=>{
+test('V88.17: Export-Schutzmodul wird geladen und der alte Rasterweg nicht mehr ungehindert angeklickt',()=>{
  const html=SW.injectHtml('<html><body><script src="inventory_ui.js"></script></body></html>');
- assert.ok(html.indexOf('v88_6_pdf.js?v=88.16')<html.indexOf('v88_16_export_guard.js?v=88.16'));
- assert.ok(html.indexOf('v88_4_export.js?v=88.16')<html.indexOf('v88_16_export_guard.js?v=88.16'));
- assert.ok(html.includes('v88_11_location_core.js?v=88.16'));
+ assert.ok(html.indexOf('v88_6_pdf.js?v=88.17')<html.indexOf('v88_16_export_guard.js?v=88.17'));
+ assert.ok(html.indexOf('v88_4_export.js?v=88.17')<html.indexOf('v88_16_export_guard.js?v=88.17'));
+ assert.ok(html.includes('v88_11_location_core.js?v=88.17'));
  assert.ok(SW.FILES.includes('v88_16_export_guard.js'));
  assert.match(fs.readFileSync('./v88_16_export_guard.js','utf8'),/stopImmediatePropagation/);
  assert.match(fs.readFileSync('./v88_16_export_guard.js','utf8'),/LV884Export\.run/);

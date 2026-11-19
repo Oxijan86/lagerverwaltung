@@ -38,7 +38,7 @@ test('Abgesicherte Cloud-Anzeige referenziert kein undefiniertes syncStatus mehr
  const html=SW.injectHtml('<html><body><script>async function refresh(){await syncStatus();}</script></body></html>');
  assert.match(html,/if\(typeof window\.syncStatus==='function'\)await window\.syncStatus\(\)/);
  assert.doesNotMatch(html,/\bawait syncStatus\(\)/);
- assert.match(html,/v88_12_save_guard\.js\?v=88\.16/);
+ assert.match(html,/v88_12_save_guard\.js\?v=88\.17/);
 });
 test('Patches sichern PDF-Ausgabe, Lagerorte und Mengen weiterhin ab',()=>{
  const sw=fs.readFileSync(__dirname+'/service-worker.js','utf8');
@@ -46,7 +46,7 @@ test('Patches sichern PDF-Ausgabe, Lagerorte und Mengen weiterhin ab',()=>{
  assert.match(sw,/patchV8816InventoryCore\(text\)/);
  assert.match(sw,/patchV886Pdf\(text\)/);
  assert.match(sw,/patchV8813Backend\(text\)/);
- assert.match(SW.CACHE_NAME,/lv88-16/);
+ assert.match(SW.CACHE_NAME,/lv88-17/);
 });
 function patchedFixture(){
  let src=fs.readFileSync(__dirname+'/test_source_inventory_ui.js','utf8');
@@ -78,7 +78,7 @@ function patchedFixture(){
  src=src.replace('  contextToggle(){saveContext();contextMessage()},','  contextToggle(){saveContext();contextMessage()},\n  recovery(){window.__backup=true;},\n  save:flush,');
  return SW.patchV8812InventoryUi(src);
 }
-test('V88.16 UI-Patch auf Realform der V88.11-Zählfunktion ist syntaktisch gültig',()=>{
+test('V88.17 UI-Patch auf Realform der V88.11-Zählfunktion ist syntaktisch gültig',()=>{
  const js=patchedFixture();assert.match(js,/LV8812_SAFE_DRAFTS/);assert.match(js,/LV8812_REPAIR_INVALID_COUNT/);
  assert.doesNotThrow(()=>new Function(js));
 });

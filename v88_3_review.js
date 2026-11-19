@@ -127,6 +127,28 @@
    for(const i of keys)approve(rows[i],rows,i,validate);
    runUpdate();
   });batch.disabled=eligible===0;
+  /* LV8817_IMPORT_BULK_I1: Sammelkorrektur auch IN DER OCR-Prueftabelle.
+     Die Materialnummern werden nur nach ausdruecklicher Bestaetigung berichtigt.
+     Noch KEINE Stammdatenanlage, Inventurmenge oder Bestandsbuchung. */
+  const pairs=[];
+  for(let i=0;i<rows.length;i++){
+   const row=rows[i],oldNo=code(row?.article_no);if(!oldNo.startsWith('1')||oldNo.length<5||row.review_action==='defer')continue;
+   const matching=articles.filter(a=>code(a.article_no)==='I'+oldNo.slice(1)&&a.active!==0&&a.active!==false&&
+     String(a.description||'').normalize('NFKC').toUpperCase().replace(/[^\p{L}\p{N}]/gu,'')===String(row.description||'').normalize('NFKC').toUpperCase().replace(/[^\p{L}\p{N}]/gu,''));
+   if(matching.length!==1)continue;
+   if(rows.some((r,j)=>j!==i&&r.review_action!=='defer'&&code(r.article_no)===code(matching[0].article_no)))continue;
+   pairs.push({i,row,to:matching[0]});
+  }
+  btn(`I/1: ${pairs.length} Artikelnummern gesammelt prüfen`,()=>{
+   if(!pairs.length)return alert('Keine eindeutig gleich benannten I/1-Paare in dieser Prüfliste. Weitere Fälle einzeln zuordnen.');
+   const draft=rows.map(x=>({...x}));
+   try{for(const p of pairs)adopt(draft[p.i],p.to,draft,p.i,validate)}
+   catch(e){return alert('Sammelprüfung abgebrochen: '+e.message+' – keine Nummer wurde geändert.');}
+   const lines=pairs.map(p=>`${p.row.page}/${p.row.position}: ${p.row.article_no} -> ${p.to.article_no} (${p.row.description})`);
+   if(!confirm(`${pairs.length} PDF-Artikelnummern mit gleicher Bezeichnung und führendem I statt 1 prüfen und gesammelt übernehmen?\n\n${lines.slice(0,15).join('\n')}${lines.length>15?'\n... und '+(lines.length-15)+' weitere':''}\n\nNUR durchführen, wenn diese I-Nummern laut Original-PDF korrekt sind. Es werden ausschließlich die geprüften PDF-Zeilen geändert. Bereits gezählte Lagerartikel, ihre Bestände und Stammdaten bleiben unverändert.`))return;
+   for(const p of pairs)Object.assign(rows[p.i],draft[p.i]);
+   runUpdate();
+  });
   btn('⚠ Nur offene / unsichere Zeilen',()=>onFilter?.('unsicher'));
   const tableWrap=table.closest('.lv87-page');tableWrap?.parentNode?.insertBefore(toolbar,tableWrap);
   const visibleRows=[...body.querySelectorAll('tr')];
