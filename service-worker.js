@@ -1,4 +1,4 @@
-/* Lagerverwaltung Lovrencic V88.17 – sicherer Import, Prüf-Rückstellung und Original-PDF-Overlay und sichere Inventurfortsetzung des bestehenden V86/V87-Repos.
+/* Lagerverwaltung Lovrencic V88.18 – sicherer Import, Prüf-Rückstellung und Original-PDF-Overlay und sichere Inventurfortsetzung des bestehenden V86/V87-Repos.
  * Das bisherige index.html wird beim Abruf um die bereits im Repo befindlichen
  * V87-Module und um die V88-OCR-Prüfung ergänzt. Die DB bleibt unverändert.
  */
@@ -15,7 +15,7 @@ const FILES=[
  'stock_bins_v86_ui.js',
  'vendor/pdfjs/pdf.min.mjs','vendor/pdfjs/pdf.worker.min.mjs',
  'vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js',
- 'v88_16_export_guard.js?v=88.17','v88_17_bulk_core.js?v=88.17','v88_17_bulk_ui.js?v=88.17','v88_13_pdf_match.js?v=88.17','v88_5_import.js?v=88.17','v88_6_pdf.js?v=88.17','v88_7_inventory_guard.js?v=88.17','v88_8_technician.js?v=88.17','v88_4_export.js?v=88.17','v87_pdf.js?v=88.17','v87_ui.js?v=88.17','v88_2_catalog.js?v=88.17'
+ 'v88_16_export_guard.js?v=88.18','v88_17_bulk_core.js?v=88.18','v88_17_bulk_ui.js?v=88.18','v88_13_pdf_match.js?v=88.18','v88_5_import.js?v=88.18','v88_6_pdf.js?v=88.18','v88_7_inventory_guard.js?v=88.18','v88_8_technician.js?v=88.18','v88_4_export.js?v=88.18','v87_pdf.js?v=88.18','v87_ui.js?v=88.18','v88_2_catalog.js?v=88.18'
 ];
 const ADDONS=[
  ['vendor/tesseract/tesseract.min.js','Tesseract'],
@@ -45,30 +45,30 @@ function injectHtml(html){
  // Materialstammdaten zeigen sofort bestaetigte Inventur-Fundorte; nicht als echten Lagerbestand ausgeben.
  const label='<td data-label="Bezeichnung">${esc(a.description)}</td>';
  if(out.includes(label))out=out.replace(label,`<td data-label="Bezeichnung">\${esc(a.description)}\${a.inventory_count_locations?.length?\`<div class="small" style="margin-top:4px;color:#155a72"><b>Inventur-Fundorte (noch kein Bestandsabschluss):</b> \${esc(a.inventory_count_locations.join(' · '))}</div>\`:''}</td>`);
- // V88.17: a missing global syncStatus must not break other settings saves.
+ // V88.18: a missing global syncStatus must not break other settings saves.
  out=out.replace(/await\s+syncStatus\s*\(\s*\)\s*;/g,"if(typeof window.syncStatus==='function')await window.syncStatus();");
  if(!/<\/body\s*>/i.test(out))return out;
- if(out.includes('Lagerverwaltung V88.17:')&&out.includes('data-lv88-boot='))return out;
+ if(out.includes('Lagerverwaltung V88.18:')&&out.includes('data-lv88-boot='))return out;
  // Eine alte Offline-Antwort kann bereits ein V88.1/V88.4-Scriptpaket enthalten.
  // Dieses vollständig ersetzen; sonst bliebe die neue PDF-Einleselogik unsichtbar.
  out=out.replace(/<!--\s*Lagerverwaltung V88[\s\S]*?-->\s*<span data-lv88-boot=\"1\" hidden><\/span>[\s\S]*?(?=<\/body\s*>)/i,'');
  if(out.includes('data-lv88-boot=')){
   // Eine alte bereits gepatchte Offline-Startseite darf nie wieder den
   // gefährlichen alten PDF-Export ohne Schutzschicht starten.
-  if(!out.includes('v88_16_export_guard.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_16_export_guard.js?v=88.17" defer></script>\n</body>');
-  if(!out.includes('v88_17_bulk_core.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_17_bulk_core.js?v=88.17" defer></script>\n<script src="v88_17_bulk_ui.js?v=88.17" defer></script>\n</body>');
+  if(!out.includes('v88_16_export_guard.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_16_export_guard.js?v=88.18" defer></script>\n</body>');
+  if(!out.includes('v88_17_bulk_core.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_17_bulk_core.js?v=88.18" defer></script>\n<script src="v88_17_bulk_ui.js?v=88.18" defer></script>\n</body>');
   return out;
  }
- // V88.17: inventory_ui.js is a synchronous script in the legacy index.html.
+ // V88.18: inventory_ui.js is a synchronous script in the legacy index.html.
  // It requires LV8811LocationCore immediately at evaluation time. Loading
  // that dependency in deferred footer ADDONS is TOO LATE and leaves
  // window.LVInventory undefined, breaking inventory resume and startup.
  const inventoryScript=/<script\b[^>]*\bsrc=["']inventory_ui\.js(?:\?[^"']*)?["'][^>]*><\/script>/i;
- if(inventoryScript.test(out))out=out.replace(inventoryScript,match=>'<script src="v88_11_location_core.js?v=88.17"></script>\n<script src="v88_7_inventory_guard.js?v=88.17"></script>\n'+match);
+ if(inventoryScript.test(out))out=out.replace(inventoryScript,match=>'<script src="v88_11_location_core.js?v=88.18"></script>\n<script src="v88_7_inventory_guard.js?v=88.18"></script>\n'+match);
  const extra=ADDONS.filter(([src])=>!new RegExp('<script\\b[^>]*\\bsrc=["\\\']'+src.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'["\\\']','i').test(out))
-   .map(([src])=>'<script src="'+src+'?v=88.17" defer></script>').join('\n');
+   .map(([src])=>'<script src="'+src+'?v=88.18" defer></script>').join('\n');
  // Nicht direkt im head einhängen: Das vollständige V86-App-Gerüst muss vorliegen.
- return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.17: Datenbestand unverändert, verlustfreier PDF-Export und geprüfter PDF-Import -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
+ return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.18: Datenbestand unverändert, verlustfreier PDF-Export und geprüfter PDF-Import -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
 }
 function patchV87Ui(source){
  const orig=String(source);
@@ -204,7 +204,21 @@ function patchV87Ui(source){
      const originals=snapshot.edited?.length?snapshot.edited:Core.checkRows(snapshot.pages).rows;
      if(updatedRows.some((r,i)=>Number(r.page)!==Number(originals[i].page)||Number(r.position)!==Number(originals[i].position)))throw Error('Seiten- oder Positionsreihenfolge verändert. Keine Zuordnung gespeichert.');
      const changes=updatedRows.filter((r,i)=>r.article_no!==originals[i].article_no||r.verified!==originals[i].verified||r.review_action!==originals[i].review_action);
-     if(changes.length!==1)throw Error('Es darf nur eine PDF-Position je Bestätigung geändert werden.');
+     // LV8818_SNAPSHOT_BATCH: eine gepruefte Stapelauswahl oder ein reiner
+     // Zwischenstand wird atomar als EIN PDF-Snapshot gesichert. Die Reihenfolge
+     // bleibt fix; kein Artikelstamm und keine Inventurmenge wird veraendert.
+     for(const [i,r] of updatedRows.entries()){
+      if(r.article_no!==originals[i].article_no&&r.manual_link!==true)throw Error('PDF-Nummer ohne ausdrueckliche manuelle Verknuepfung: Seite '+r.page+'.');
+      if(r.review_action==='defer'&&r.verified!==false)throw Error('Zurueckgestellte Position muss als ungeprueft markiert sein.');
+     }
+     // Nur NEUE Zuordnungen gegen aktive andere PDF-Zeilen prüfen.
+     // Ursprüngliche OCR-Dubletten dürfen eine reine Zwischenstandssicherung
+     // nicht blockieren; sie bleiben ausdrücklich weiterhin zu prüfen.
+     for(const r of changes){
+      if(r.review_action==='defer'||r.verified===false)continue;
+      const n=Core.normNo(r.article_no);
+      if(n&&updatedRows.some(other=>other!==r&&other.review_action!=='defer'&&other.verified!==false&&Core.normNo(other.article_no)===n))throw Error('Eine neu zugeordnete Materialnummer wird bereits an einer anderen PDF-Position verwendet: '+r.article_no);
+     }
      const update={...snapshot,edited:updatedRows.map(x=>({...x})),updated:new Date().toISOString()};
      await storePdf(update);
      if(state.fileHash===snapshot.hash)state.rows=updatedRows.map(x=>({...x}));
@@ -283,7 +297,7 @@ function patchV885Ui(source){
    // Fallback für ältere gecachte Startseiten: neuen Importer nachladen.
    await new Promise((resolve,reject)=>{
     const s=document.createElement('script');
-    s.src=new URL('v88_5_import.js?v=88.17',document.baseURI).href;
+    s.src=new URL('v88_5_import.js?v=88.18',document.baseURI).href;
     s.onload=()=>window.LV885Import?.scan?resolve():reject(Error('V88.5 Importer ist nicht aktiviert.'));
     s.onerror=()=>reject(Error('V88.5 Importer konnte nicht geladen werden. Bitte Online-Verbindung überprüfen und Anwendung erneut öffnen.'));
     document.head.appendChild(s);
@@ -295,30 +309,30 @@ function patchV885Ui(source){
  return out.replace(anchor,anchor+code);
 }
 
-/* V88.17: Markierungen "Später zuordnen" bleiben in der gespeicherten
+/* V88.18: Markierungen "Später zuordnen" bleiben in der gespeicherten
  * PDF-Prüfliste. Nur eindeutig bestätigte Positionen werden angelegt.
  */
 function patchV886Ui(source){
  let out=patchV885Ui(source);
  if(out.includes('/* LV886_DEFERRED_IMPORT */'))return out;
  const start='async function commitRows(){\n  const rows=state.rows;';
- if(!out.includes(start))throw Error('V88.17: Commit-Stelle in v87_ui.js wurde verändert. Kein unsicheres Update.');
+ if(!out.includes(start))throw Error('V88.18: Commit-Stelle in v87_ui.js wurde verändert. Kein unsicheres Update.');
  out=out.replace(start,`async function commitRows(){
   /* LV886_DEFERRED_IMPORT */
   const deferred=state.rows.filter(x=>x.review_action==='defer');
   const rows=state.rows.filter(x=>x.review_action!=='defer');
   if(!rows.length)throw Error('Noch keine Artikelposition zur Übernahme freigegeben. Zurückgestellte Artikel bleiben gespeichert.');`);
  const all="const all=state.rows.map((r,i)=>({r,i,status:rowStatus(r,cmp)}));";
- if(!out.includes(all))throw Error('V88.17: Prüfansicht konnte nicht sicher aktualisiert werden.');
+ if(!out.includes(all))throw Error('V88.18: Prüfansicht konnte nicht sicher aktualisiert werden.');
  out=out.replace(all,"const all=state.rows.map((r,i)=>({r,i,status:r.review_action==='defer'?'deferred':rowStatus(r,cmp)}));");
  const errors="const data=await window.api('/api/articles'),cmp=Core.compare(state.rows,data),errors=state.rows.filter(x=>!Core.validNo(x.article_no)||!x.description||x.verified===false);";
- if(!out.includes(errors))throw Error('V88.17: Prüfzählung nicht gefunden.');
+ if(!out.includes(errors))throw Error('V88.18: Prüfzählung nicht gefunden.');
  out=out.replace(errors,"const data=await window.api('/api/articles'),cmp=Core.compare(state.rows,data),errors=state.rows.filter(x=>x.review_action!=='defer'&&(!Core.validNo(x.article_no)||!x.description||x.verified===false));");
  const option='<option value="unsicher">Unsicher</option>';
- if(!out.includes(option))throw Error('V88.17: Prüf-Filter fehlt.');
+ if(!out.includes(option))throw Error('V88.18: Prüf-Filter fehlt.');
  out=out.replace(option,option+'<option value="deferred">Später zuordnen</option>');
  const done="state.verified=true;";
- if(!out.includes(done))throw Error('V88.17: Prüfstatus fehlt.');
+ if(!out.includes(done))throw Error('V88.18: Prüfstatus fehlt.');
  out=out.replace(done,"state.verified=state.rows.every(x=>x.review_action!=='defer'&&x.verified===true);");
  const msg="const msgText=`${total} neue Artikel registriert. ${fresh.appOnly.length} Artikel sind ausschließlich in deiner App vorhanden. Bitte prüfen. Mengen wurden noch nicht übernommen.`;";
  if(out.includes(msg))out=out.replace(msg,"const msgText=`${total} neue Artikel registriert. ${deferred.length} Positionen für später zurückgestellt (unverändert gespeichert). ${fresh.appOnly.length} Artikel sind ausschließlich in deiner App vorhanden. Mengen wurden noch nicht übernommen.`;");
@@ -333,16 +347,16 @@ function patchV886Pdf(source){
  if(out.includes('/* LV886_SAFE_PDF_DELEGATE */'))return out;
  const pattern=/async function render\(originalBytes,rows,quantities,onProgress=\(\)=>\{\},cancelled=\(\)=>false(?:,meta=\{\})?\)\{/;
  const match=pattern.exec(out);
- if(!match)throw Error('V88.17: PDF-Renderfunktion unbekannt. Kein riskanter Weißseitenexport.');
+ if(!match)throw Error('V88.18: PDF-Renderfunktion unbekannt. Kein riskanter Weißseitenexport.');
  const replacement=match[0]+`
   /* LV886_SAFE_PDF_DELEGATE */
-  if(!window.LV886PDF?.render)throw Error('Verlustfreier RONDO-PDF-Export V88.17 ist nicht geladen. Bitte Version 88.16 aktualisieren.');
+  if(!window.LV886PDF?.render)throw Error('Verlustfreier RONDO-PDF-Export V88.18 ist nicht geladen. Bitte Version 88.16 aktualisieren.');
   return window.LV886PDF.render(originalBytes,rows,quantities,onProgress,cancelled,typeof meta!=='undefined'?meta:{});
  `;
  return out.replace(match[0],replacement);
 }
 
-/* V88.17: Bei reiner Artikelanlage darf ein anderer Zähler-/Technikername
+/* V88.18: Bei reiner Artikelanlage darf ein anderer Zähler-/Technikername
  * NUR nach ausdrücklicher Rückfrage fortgeführt werden. Andere API-Wege
  * (Einbuchung, SAP-Mengen, Inventurabschluss) bleiben unverändert.
  */
@@ -350,7 +364,7 @@ function patchV888Ui(source){
  const orig=patchV886Ui(source);
  if(orig.includes('/* LV888_TECH_CONFIRM_UI */'))return orig;
  const before="const post=(url,d)=>window.api(url,{method:'POST',body:JSON.stringify(d)});";
- if(!orig.includes(before))throw Error('V88.17: Import-API-Aktion nicht gefunden; kein unsicheres Update.');
+ if(!orig.includes(before))throw Error('V88.18: Import-API-Aktion nicht gefunden; kein unsicheres Update.');
  return orig.replace(before,"/* LV888_TECH_CONFIRM_UI */ const post=(url,d)=>window.LV888Technician?window.LV888Technician.post(url,d,window.api):window.api(url,{method:'POST',body:JSON.stringify(d)});");
 }
 function patchV888Backend(source){
@@ -358,12 +372,12 @@ function patchV888Backend(source){
  if(orig.includes('/* LV888_TECH_BACKEND */'))return orig;
  const route="if(p==='/api/articles/create-import'||p==='/api/import/create-and-book'){";
  const start=orig.indexOf(route);
- if(start<0)throw Error('V88.17: Artikelimport-Endpunkt nicht gefunden.');
+ if(start<0)throw Error('V88.18: Artikelimport-Endpunkt nicht gefunden.');
  const end=orig.indexOf("const operationId=String(d.operation_id||'').trim()",start);
- if(end<0||end-start>1600)throw Error('V88.17: erwartete Validierungsstelle nicht gefunden.');
+ if(end<0||end-start>1600)throw Error('V88.18: erwartete Validierungsstelle nicht gefunden.');
  const section=orig.slice(start,end);
  const before="if(!technician||!validTech.includes(technician))throw Error('Techniker ist nicht gültig.');";
- if(!section.includes(before))throw Error('V88.17: Technikerprüfung nicht in erwarteter Form gefunden.');
+ if(!section.includes(before))throw Error('V88.18: Technikerprüfung nicht in erwarteter Form gefunden.');
  const replacement=`/* LV888_TECH_BACKEND */
   // Ausnahme nur nach bestätigtem Warnhinweis; nur Artikelstammdaten,
   // NIE Ein-/Ausbuchung oder SAP-Bestandsimport/Inventurabschluss.
@@ -378,19 +392,19 @@ function patchV888Backend(source){
 }
 
 
-/* V88.17: Getroffene Artikel springen direkt in die zusätzliche Menge.
+/* V88.18: Getroffene Artikel springen direkt in die zusätzliche Menge.
  * Die bisherige Menge wird niemals im normalen Scan-Ablauf ausgewählt.
  */
 function patchV889Focus(source){
  const orig=String(source);
  if(orig.includes('/* LV889_EXISTING_FOCUS */'))return orig;
  const old="requestAnimationFrame(()=>{$('inv75-count-'+row.article_id)?.focus();$('inv75-count-'+row.article_id)?.select();})";
- if(!orig.includes(old))throw Error('V88.17: Erwartete Artikelauswahl nicht gefunden. Bitte App-Dateien prüfen.');
+ if(!orig.includes(old))throw Error('V88.18: Erwartete Artikelauswahl nicht gefunden. Bitte App-Dateien prüfen.');
  const next="requestAnimationFrame(()=>{/* LV889_EXISTING_FOCUS */ const entry=window.LVInventory?.current?.()?.items.find(x=>Number(x.article_id)===Number(row.article_id));const counted=entry&&entry.counted_stock!==null&&entry.counted_stock!==undefined&&String(entry.counted_stock).trim()!=='';const field=$((counted?'inv84-add-':'inv75-count-')+row.article_id);field?.focus();field?.select();})";
  return orig.replace(old,next);
 }
 function patchV889Ui(source){return patchV889Focus(patchV888Ui(source));}
-/* V88.17: UI-Patch an der bestehenden V86-Inventur, OHNE Datenbankmigration.
+/* V88.18: UI-Patch an der bestehenden V86-Inventur, OHNE Datenbankmigration.
  * Teilzählungen werden über die vorhandenen Inventur-Zwischenstände gespeichert.
  */
 function patchV889InventoryUi(source){
@@ -399,12 +413,12 @@ function patchV889InventoryUi(source){
  let out=orig;
  const start=out.indexOf('  addBinPart(id){');
  const end=out.indexOf('  updateReferences(refs){',start);
- if(start<0||end<start||end-start>5500)throw Error('V88.17: Bin-Teilmengen-Funktion wurde verändert. Bitte App-Dateien prüfen.');
+ if(start<0||end<start||end-start>5500)throw Error('V88.18: Bin-Teilmengen-Funktion wurde verändert. Bitte App-Dateien prüfen.');
  out=out.slice(0,start)+`  addBinPart(id){return this.addCount(id);},
 `+out.slice(end);
  const begin=out.indexOf('  addCount(id){');
  const finish=out.indexOf('  edit(id,field,value){',begin);
- if(begin<0||finish<begin||finish-begin>5500)throw Error('V88.17: Weitere-Menge-Funktion wurde verändert. Bitte App-Dateien prüfen.');
+ if(begin<0||finish<begin||finish-begin>5500)throw Error('V88.18: Weitere-Menge-Funktion wurde verändert. Bitte App-Dateien prüfen.');
  const block=String.raw`  /* LV889_INVENTORY_ADD */
   async addCount(id){
    if(!data||data.session.status!=='draft'||busy)return;
@@ -428,7 +442,7 @@ function patchV889InventoryUi(source){
      selected=V84.countContext(row,context(),data.locations);
     }
     calculated=V84.addCount(row.counted_stock,entered,row.unit);
-    if(!window.LV889CountCore?.plan)throw Error('Inventur-Zusatzmodul V88.17 fehlt. Bitte die App neu laden.');
+    if(!window.LV889CountCore?.plan)throw Error('Inventur-Zusatzmodul V88.18 fehlt. Bitte die App neu laden.');
     plan=window.LV889CountCore.plan(row,calculated,selected);
    }catch(e){message(e.message,false);field?.focus();return}
    // Nur die laufende Inventur wird geändert. Kein INSERT in den echten Lagerbestand.
@@ -447,13 +461,13 @@ function patchV889InventoryUi(source){
  // Bereits gezählte Mengen gegen versehentliches Überschreiben sichern;
  // bewusste manuelle Korrektur bleibt ausdrücklich möglich.
  const countInput='value="${esc(x.counted_stock??\'\')}" ${disabled} oninput=';
- if(!out.includes(countInput))throw Error('V88.17: Gezähltes-Menge-Feld nicht gefunden.');
+ if(!out.includes(countInput))throw Error('V88.18: Gezähltes-Menge-Feld nicht gefunden.');
  out=out.replace(countInput, 'value="${esc(x.counted_stock??\'\')}" ${disabled} ${x.counted_stock!==null?\'readonly title="Bereits gezählt – für Korrektur Freigabe wählen"\':\'\'} oninput=');
  const nextBtn='<button type="button" class="secondary" onclick="LVInventory.confirmCount(${x.article_id})">✓ Bestätigen & weiter</button>';
- if(!out.includes(nextBtn))throw Error('V88.17: Schaltfläche Bestätigen & weiter nicht gefunden.');
+ if(!out.includes(nextBtn))throw Error('V88.18: Schaltfläche Bestätigen & weiter nicht gefunden.');
  out=out.replace(nextBtn,nextBtn+`\${x.counted_stock!==null?\`<button type="button" class="secondary" onclick="LVInventory.correctTotal(\${x.article_id})">Gesamtmenge korrigieren</button>\`:' '}`.replace(/\\/g,''));
  const inventoryObject=' window.LVInventory={';
- if(!out.includes(inventoryObject))throw Error('V88.17: Inventur-API nicht gefunden.');
+ if(!out.includes(inventoryObject))throw Error('V88.18: Inventur-API nicht gefunden.');
  out=out.replace(inventoryObject,inventoryObject+String.raw`
   correctTotal(id){
    const row=data?.items.find(x=>Number(x.article_id)===Number(id));
@@ -464,13 +478,13 @@ function patchV889InventoryUi(source){
    message('Korrektur freigegeben. Nach Eingabe bitte ausdrücklich „Bestätigen & weiter“ wählen.');
   },`);
  const oldSummary='${esc(x.bin_parts_json)}';
- if(!out.includes(oldSummary))throw Error('V88.17: Teilmengenanzeige nicht gefunden.');
+ if(!out.includes(oldSummary))throw Error('V88.18: Teilmengenanzeige nicht gefunden.');
  out=out.replace(oldSummary,'${esc(window.LV889CountCore?.describe(x.bin_parts_json)||x.bin_parts_json)}');
  return out;
 }
 
 
-/* V88.17: Einen explizit ausgewaehlten Zaehlort automatisch aktivieren.
+/* V88.18: Einen explizit ausgewaehlten Zaehlort automatisch aktivieren.
  * Die addCount-Mengenverteilung aus V88.9 bleibt erhalten; mehrere Orte
  * werden auf Basis des aktiven Kontexts automatisch getrennt gespeichert.
  */
@@ -478,21 +492,21 @@ function patchV8810InventoryUi(source){
  let out=patchV889InventoryUi(source);
  if(out.includes('/* LV8810_LOCATION_AUTO_APPLY */'))return out;
  const marker="contextLocationChanged(value){";
- if(!out.includes(marker))throw Error('V88.17: Zaehlort-Auswahl konnte nicht sicher angebunden werden.');
+ if(!out.includes(marker))throw Error('V88.18: Zaehlort-Auswahl konnte nicht sicher angebunden werden.');
  // Direkt nach normaler Standortauswahl (bekannt oder neu) darf nicht noch
  // eine separate Checkbox erforderlich sein.
  const old="   saveContext();contextMessage();\n  },\n  contextToggle()";
- if(!out.includes(old))throw Error('V88.17: Erwartete Zaehlort-Speicherstelle fehlt.');
+ if(!out.includes(old))throw Error('V88.18: Erwartete Zaehlort-Speicherstelle fehlt.');
  out=out.replace(old,"   /* LV8810_LOCATION_AUTO_APPLY */ if(String($('inv84Location')?.value||'').trim())$('inv84Apply').checked=true;\n   saveContext();contextMessage();\n  },\n  contextToggle()");
  const before="    try{selected=V84.countContext(row,context(),data.locations)}";
- if(!out.includes(before))throw Error('V88.17: Zaehlort-Leseweg fehlt.');
+ if(!out.includes(before))throw Error('V88.18: Zaehlort-Leseweg fehlt.');
  // Auch bei einer aelteren gespeicherten Einstellung 'Automatik aus' eine
  // vom Nutzer aktiv ausgewaehlte Position nicht unbemerkt ignorieren.
  out=out.replace(before,"    if(String($('inv84Location')?.value||'').trim()&&!context().apply){$('inv84Apply').checked=true;saveContext();contextMessage();}\n    try{selected=V84.countContext(row,context(),data.locations)}");
  return out;
 }
 
-/* V88.17: Die erste Zaehlung wird atomar mit ihrem tatsaechlichen Fundort
+/* V88.18: Die erste Zaehlung wird atomar mit ihrem tatsaechlichen Fundort
  * gespeichert; spaetere Funde duerfen einen alten Stammdaten-Lagerort
  * niemals ungeprueft als ersten Zaehlort ausgeben.
  */
@@ -500,10 +514,10 @@ function patchV8811InventoryUi(source){
  let out=patchV8810InventoryUi(source);
  if(out.includes('/* LV8811_FIRST_LOCATION_ATOMIC */'))return out;
  const anchor=' const V84=window.LVInventoryV84Core, V85=window.LVInventoryV85Core;';
- if(!out.includes(anchor))throw Error('V88.17: Inventur-Kernreferenz fehlt.');
- out=out.replace(anchor,anchor+"\n const LV11=window.LV8811LocationCore; if(!LV11)throw Error('V88.17: Lagerort-Schutzmodul nicht geladen.');");
+ if(!out.includes(anchor))throw Error('V88.18: Inventur-Kernreferenz fehlt.');
+ out=out.replace(anchor,anchor+"\n const LV11=window.LV8811LocationCore; if(!LV11)throw Error('V88.18: Lagerort-Schutzmodul nicht geladen.');");
  const first='  addBinPart(id){return this.addCount(id);},';
- if(!out.includes(first))throw Error('V88.17: Ersatz fuer Teilmengenfunktion fehlt.');
+ if(!out.includes(first))throw Error('V88.18: Ersatz fuer Teilmengenfunktion fehlt.');
  const methods=String.raw`  /* LV8811_FIRST_LOCATION_ATOMIC */
   _lv11WriteCount(id,total,parts,primary){
    const row=data?.items.find(x=>Number(x.article_id)===Number(id));
@@ -580,12 +594,12 @@ function patchV8811InventoryUi(source){
  // Zusatzzahlung ohne Unterbrechung der existierenden Inventur als EIN
  // atomarer Aenderungssatz (Menge und Ortsliste zusammen) speichern.
  const beforePlan='plan=window.LV889CountCore.plan(row,calculated,selected);';
- if(!out.includes(beforePlan))throw Error('V88.17: Zusatzmengen-Planer nicht gefunden.');
+ if(!out.includes(beforePlan))throw Error('V88.18: Zusatzmengen-Planer nicht gefunden.');
  out=out.replace(beforePlan,'plan=LV11.addition(row,entered,selected);');
  const beforeSave=`   this.edit(id,'counted_stock',String(calculated.total));
    if(String(row.counted_stock)!==String(calculated.total))return;
    if(plan.parts.length)this.edit(id,'bin_parts_json',JSON.stringify(plan.parts));`;
- if(!out.includes(beforeSave))throw Error('V88.17: bestehende Additionsspeicherung nicht gefunden.');
+ if(!out.includes(beforeSave))throw Error('V88.18: bestehende Additionsspeicherung nicht gefunden.');
  out=out.replace(beforeSave,'   if(!this._lv11WriteCount(id,plan.total,plan.parts))return;');
  // Die Meldung darf nicht mehr aus einem alten Feld kommen.
  out=out.replace('plan.newPlace?', 'plan.addedNewPlace?');
@@ -593,7 +607,7 @@ function patchV8811InventoryUi(source){
  // Erst-Erfassung und Korrektur zweier verschiedener Lagerorte muessen die
  // alte Default-Ort-Umschreibung in edit() umgehen.
  const editHead="  edit(id,field,value){\n   if(!data||data.session.status!=='draft')return;";
- if(!out.includes(editHead))throw Error('V88.17: geschuetzter Edit-Einstieg fehlt.');
+ if(!out.includes(editHead))throw Error('V88.18: geschuetzter Edit-Einstieg fehlt.');
  out=out.replace(editHead,editHead+String.raw`
    if(field==='counted_stock'){
     const current=data.items.find(x=>Number(x.article_id)===Number(id));
@@ -612,9 +626,9 @@ function patchV8811InventoryUi(source){
  const confirmHead='  async confirmCount(id){';
  const confirmStart=out.indexOf(confirmHead);
  const confirmEnd=out.indexOf('  useContextFor(id){',confirmStart);
- if(confirmStart<0||confirmEnd<confirmStart)throw Error('V88.17: Mengenbestaetigung fehlt.');
+ if(confirmStart<0||confirmEnd<confirmStart)throw Error('V88.18: Mengenbestaetigung fehlt.');
  const confirmBlock=out.slice(confirmStart,confirmEnd);
- if(!confirmBlock.includes('if(!await flush())return;'))throw Error('V88.17: Mengenbestaetigung speichert nicht wie erwartet.');
+ if(!confirmBlock.includes('if(!await flush())return;'))throw Error('V88.18: Mengenbestaetigung speichert nicht wie erwartet.');
  out=out.slice(0,confirmStart)+confirmBlock.replace('if(!await flush())return;',
   'if(!await flush())return;LV11.markDraft(id,false);window.LV8810InventoryFocus?.protectAll?.();')+out.slice(confirmEnd);
  // Mehrere Lagerorte: nicht die gesamte Summe korrigieren und damit
@@ -622,39 +636,39 @@ function patchV8811InventoryUi(source){
  const correctBegin=out.indexOf('  correctTotal(id){');
  const correctEnd=out.indexOf('  ',correctBegin+3);
  const correctText=out.slice(correctBegin,out.indexOf('  },',correctBegin)+5);
- if(!correctText.includes('if(!confirm('))throw Error('V88.17: ausdrueckliche Mengenkorrektur fehlt.');
+ if(!correctText.includes('if(!confirm('))throw Error('V88.18: ausdrueckliche Mengenkorrektur fehlt.');
  const corrected=correctText.replace("   if(!confirm(","   if(LV11.parseParts(row.bin_parts_json).length>1){message('Mehrere Lagerorte: Bitte die Menge am jeweiligen Lagerort korrigieren, nicht die Gesamtsumme überschreiben.',false);return;}\n   if(!confirm(")
  .replace('Bei einer Änderung gehen bisherige Teilmengen je Lagerort verloren und müssen neu erfasst werden.', 'Der erste Zählort bleibt erhalten.');
  out=out.replace(correctText,corrected);
  // Status und Korrekturwerkzeug erscheinen direkt am Artikel. Ein noch
  // ungepruefter Erstlagerort ist unuebersehbar, nie als korrekt dargestellt.
  const display="${x.bin_parts_json?`<p class=\"small\">Teilmengen: ${esc(window.LV889CountCore?.describe(x.bin_parts_json)||x.bin_parts_json)}</p>`:''}";
- if(!out.includes(display))throw Error('V88.17: Lagerort-Teilmengenanzeige nicht gefunden.');
+ if(!out.includes(display))throw Error('V88.18: Lagerort-Teilmengenanzeige nicht gefunden.');
  out=out.replace(display,display+"${x.counted_stock!==null?`<div class=\"lv87-card\"><b>${esc(LV11.status(x))}</b><div class=\"lv87-flex\"><button type=\"button\" class=\"secondary\" ${disabled} onclick=\"LVInventory.changeFirstLocation(${x.article_id})\">Erstlagerort festlegen / korrigieren</button><button type=\"button\" class=\"secondary\" ${disabled} onclick=\"LVInventory.correctPartQuantity(${x.article_id})\">Menge am aktuellen Lagerort korrigieren</button></div></div>`:''}");
- // V88.17: Ein ausgewählter NEUER Zählbereich darf niemals als alter
+ // V88.18: Ein ausgewählter NEUER Zählbereich darf niemals als alter
  // Erstlagerort direkt am schon gezählten Artikel erscheinen.
  const preview='const suggestion=manualPlaceOverrides.has(x.article_id)?null:V85.suggestedPlace(x,context(),data.locations);';
- if(!out.includes(preview))throw Error('V88.17: Anzeige der Lagerortvorschläge verändert.');
+ if(!out.includes(preview))throw Error('V88.18: Anzeige der Lagerortvorschläge verändert.');
  out=out.replace(preview,`const suggestion=LV11.hasCount(x.counted_stock)?null:(manualPlaceOverrides.has(x.article_id)?null:V85.suggestedPlace(x,context(),data.locations));
    const lv11FirstPlace=LV11.hasCount(x.counted_stock)&&x.bin_parts_json?(()=>{try{return LV11.parseParts(x.bin_parts_json)[0]||null}catch{return null}})():null;`);
  const shown='const shownLocation=suggestion?suggestion.location:x.location;\n   const shownWarehouse=suggestion?suggestion.warehouse_id:x.warehouse_id;';
- if(!out.includes(shown))throw Error('V88.17: Lagerort-Anzeige konnte nicht geschützt werden.');
+ if(!out.includes(shown))throw Error('V88.18: Lagerort-Anzeige konnte nicht geschützt werden.');
  out=out.replace(shown,`const shownLocation=lv11FirstPlace?lv11FirstPlace.location:(suggestion?suggestion.location:x.location);
    const shownWarehouse=lv11FirstPlace?lv11FirstPlace.warehouse_id:(suggestion?suggestion.warehouse_id:x.warehouse_id);`);
  // Direkte Lagerort-Stammdaten sind nach einer ersten Zählung gesperrt.
  const warehouseSelect='id="inv75-warehouse-${x.article_id}" ${disabled} onchange=';
- if(!out.includes(warehouseSelect))throw Error('V88.17: Zeilen-Lagerauswahl nicht gefunden.');
+ if(!out.includes(warehouseSelect))throw Error('V88.18: Zeilen-Lagerauswahl nicht gefunden.');
  out=out.replace(warehouseSelect,'id="inv75-warehouse-${x.article_id}" ${disabled} ${LV11.hasCount(x.counted_stock)?\'disabled title="Erstlagerort geschützt – über die Korrektur ändern"\':\'\'} onchange=');
  const locationInput='id="inv75-location-${x.article_id}" list=';
- if(!out.includes(locationInput))throw Error('V88.17: Zeilen-Lagerort nicht gefunden.');
+ if(!out.includes(locationInput))throw Error('V88.18: Zeilen-Lagerort nicht gefunden.');
  out=out.replace(locationInput,'id="inv75-location-${x.article_id}" ${LV11.hasCount(x.counted_stock)?\'readonly title="Erstlagerort geschützt – über die Korrektur ändern"\':\'\'} list=');
  const rowOverride='onclick="LVInventory.useContextFor(${x.article_id})"';
- if(!out.includes(rowOverride))throw Error('V88.17: altes Übertragen des Zählorts nicht gefunden.');
+ if(!out.includes(rowOverride))throw Error('V88.18: altes Übertragen des Zählorts nicht gefunden.');
  out=out.replace(rowOverride,'${LV11.hasCount(x.counted_stock)?\'disabled title="Bei gezählten Artikeln nicht den Erstlagerort überschreiben"\':\'\'} onclick="LVInventory.useContextFor(${x.article_id})"');
  // Schutz nicht nur in der Optik, sondern auch beim direkten UI-Methodenaufruf.
  const locHandler='   const row=data.items.find(x=>Number(x.article_id)===Number(id));if(!row)return;';
  const locHandlerStart=out.indexOf('  async locationChangedInline(id,value){');
- if(locHandlerStart<0||!out.slice(locHandlerStart,locHandlerStart+250).includes(locHandler))throw Error('V88.17: Lagerortänderungsschutz fehlt.');
+ if(locHandlerStart<0||!out.slice(locHandlerStart,locHandlerStart+250).includes(locHandler))throw Error('V88.18: Lagerortänderungsschutz fehlt.');
  out=out.slice(0,locHandlerStart)+out.slice(locHandlerStart).replace(locHandler,locHandler+String.raw`
    if(LV11.hasCount(row.counted_stock)){
     const p=LV11.parseParts(row.bin_parts_json)[0];const input=$('inv75-location-'+id);
@@ -662,19 +676,19 @@ function patchV8811InventoryUi(source){
     message('Erstlagerort ist geschützt. Für weitere Funde oben den Zählbereich wählen. Ändern nur über „Erstlagerort festlegen / korrigieren“.',false);return;
    }`);
  const warehouseHandler='warehouseChanged(id,value){const row=data.items.find(x=>x.article_id===id);if(!row)return;';
- if(!out.includes(warehouseHandler))throw Error('V88.17: Zeilen-Lagerwechsel nicht gefunden.');
+ if(!out.includes(warehouseHandler))throw Error('V88.18: Zeilen-Lagerwechsel nicht gefunden.');
  out=out.replace(warehouseHandler,warehouseHandler+"if(LV11.hasCount(row.counted_stock)){message('Erstlager ist geschützt. Bitte über die Korrektur ändern.',false);render();return;}");
  const contextHandler='  useContextFor(id){\n   const row=data?.items.find(x=>Number(x.article_id)===Number(id));if(!row)return;';
- if(!out.includes(contextHandler))throw Error('V88.17: Kontextübernahme nicht gefunden.');
+ if(!out.includes(contextHandler))throw Error('V88.18: Kontextübernahme nicht gefunden.');
  out=out.replace(contextHandler,contextHandler+"\n   if(LV11.hasCount(row.counted_stock)){message('Der Erstlagerort ist geschützt. Für zusätzliche Funde den Zählbereich oben nutzen.',false);return;}");
  // Der Nutzer hat einen neuen Lagerort eingetippt: wie bei weiteren Mengen
  // die bestehende Stammdatenanlage anbieten, ohne extra Button.
  const locStart=out.indexOf('  contextLocationChanged(value){');
  const locEnd=out.indexOf('  contextToggle(){',locStart);
- if(locStart<0||locEnd<locStart)throw Error('V88.17: Lagerortwahl nicht gefunden.');
+ if(locStart<0||locEnd<locStart)throw Error('V88.18: Lagerortwahl nicht gefunden.');
  let locCode=out.slice(locStart,locEnd);
  const tail='   saveContext();contextMessage();';
- if(!locCode.includes(tail))throw Error('V88.17: Lagerortwahl-Speicherung fehlt.');
+ if(!locCode.includes(tail))throw Error('V88.18: Lagerortwahl-Speicherung fehlt.');
  locCode=locCode.replace(tail,tail+"\n   if(String(value||'').trim()&&!location){this.addContextLocation().catch(e=>message(e.message,false));}");
  out=out.slice(0,locStart)+locCode+out.slice(locEnd);
  return out;
@@ -684,7 +698,7 @@ function patchV8811InventoryCore(source){
  const orig=String(source);
  if(orig.includes('/* LV8811_PRIMARY_FROM_COUNT */'))return orig;
  const old="if(x.location!==x.current_location||x.warehouse_id!==x.current_warehouse_id){run('UPDATE articles SET location=?,warehouse_id=? WHERE id=?',[x.location,x.warehouse_id,x.article_id]);locations++}";
- if(!orig.includes(old))throw Error('V88.17: Inventur-Abschluss-Lagerortschutz nicht gefunden.');
+ if(!orig.includes(old))throw Error('V88.18: Inventur-Abschluss-Lagerortschutz nicht gefunden.');
  const next=`/* LV8811_PRIMARY_FROM_COUNT */
       const _lv11Parts=x.bin_parts_json?parseParts(x.bin_parts_json,x.unit):[];
       const _lv11Primary=_lv11Parts.find(p=>p.quantity>0)||_lv11Parts[0]||{location:x.location,warehouse_id:x.warehouse_id};
@@ -692,7 +706,7 @@ function patchV8811InventoryCore(source){
  return orig.replace(old,next);
 }
 
-/* V88.17: preflight with article number and unit BEFORE any inventory save.
+/* V88.18: preflight with article number and unit BEFORE any inventory save.
    Valid rows can be stored even while an invalid draft remains safely retained.
    This changes only inventory_ui.js (no database schema or stock postings). */
 function patchV8812InventoryUi(source){
@@ -700,14 +714,14 @@ function patchV8812InventoryUi(source){
  if(out.includes('/* LV8812_SAFE_DRAFTS */'))return out;
  const start=out.indexOf(' async function flush(){');
  const end=out.indexOf(' async function load(id,discard=false)',start);
- if(start<0||end<start||end-start>4800)throw Error('V88.17: sichere Speicherroutine wurde verändert; keine riskante Umstellung.');
+ if(start<0||end<start||end-start>4800)throw Error('V88.18: sichere Speicherroutine wurde verändert; keine riskante Umstellung.');
  let block=out.slice(start,end);
  const declaration='const sent=[...pending.values()].map(x=>({...x})),captured=new Map(sent.map(x=>[x.article_id,JSON.stringify(x)]));';
- if(!block.includes(declaration))throw Error('V88.17: erwartete Entwurfszuordnung fehlt.');
+ if(!block.includes(declaration))throw Error('V88.18: erwartete Entwurfszuordnung fehlt.');
  block=block.replace(declaration,`/* LV8812_SAFE_DRAFTS */
   const _lv12Raw=[...pending.values()].map(x=>({...x}));
   const _lv12Guard=window.LV8812SaveGuard;
-  if(!_lv12Guard)throw Error('V88.17 Speicherprüfung fehlt. Bitte die Anwendung aktualisieren.');
+  if(!_lv12Guard)throw Error('V88.18 Speicherprüfung fehlt. Bitte die Anwendung aktualisieren.');
   const _lv12Scan=_lv12Guard.inspect(_lv12Raw,data.items);
   const sent=_lv12Scan.valid;
   if(_lv12Scan.invalid.length&&!sent.length){
@@ -717,7 +731,7 @@ function patchV8812InventoryUi(source){
   }
   const captured=new Map(sent.map(x=>[x.article_id,JSON.stringify(x)]));`);
  const success="cache();errorState=false;message('Zwischenstand gespeichert. Bestände wurden noch nicht verändert.');\n    return true;";
- if(!block.includes(success))throw Error('V88.17: Speicherrückmeldung wurde verändert.');
+ if(!block.includes(success))throw Error('V88.18: Speicherrückmeldung wurde verändert.');
  block=block.replace(success,`cache();errorState=!!_lv12Scan.invalid.length;
     if(_lv12Scan.invalid.length){
      message(_lv12Guard.describe(_lv12Scan.invalid)+' Andere gültige Zählungen sind gespeichert. Bitte nur die markierten Eingaben berichtigen.',false);
@@ -728,14 +742,14 @@ function patchV8812InventoryUi(source){
  out=out.slice(0,start)+block+out.slice(end);
  // Persistent, explicit explanation while the user types or navigates back.
  const statusHead="$('inv75Saved').className=pending.size?'small inv75-dirty':'small';";
- if(!out.includes(statusHead))throw Error('V88.17: Anzeige des Inventur-Speicherstands fehlt.');
+ if(!out.includes(statusHead))throw Error('V88.18: Anzeige des Inventur-Speicherstands fehlt.');
  out=out.replace(statusHead,statusHead+`
   window.LV8812SaveGuard?.render(document,window.LV8812SaveGuard.inspect([...pending.values()],data.items).invalid,{
    repair:id=>window.LVInventory.repairInvalidCount(id),
    backup:()=>window.LVInventory.recovery()
   });`);
  const before='  recovery(){';
- if(!out.includes(before))throw Error('V88.17: bestehende lokale Sicherung fehlt.');
+ if(!out.includes(before))throw Error('V88.18: bestehende lokale Sicherung fehlt.');
  const repair=String.raw`  /* LV8812_REPAIR_INVALID_COUNT */
   async repairInvalidCount(id){
    if(!data||data.session.status!=='draft'||busy)return;
@@ -761,7 +775,7 @@ function patchV8812InventoryUi(source){
  return out;
 }
 
-/* V88.17: Gesamtmengen-Korrektur ohne entsperrbaren Fokus/readonly-Status.
+/* V88.18: Gesamtmengen-Korrektur ohne entsperrbaren Fokus/readonly-Status.
    Der neue Wert wird im Prompt abgefragt, validiert und nach zweiter Bestaetigung atomar gespeichert. */
 function patchV8813InventoryUi(source){
  let out=patchV8812InventoryUi(source);
@@ -789,21 +803,21 @@ function patchV8813InventoryUi(source){
  let begin=out.indexOf('  correctTotal(id){'),changes=0;
  while(begin>=0){
   const end=out.indexOf('  },',begin);
-  if(end<begin||end-begin>2200)throw Error('V88.17: Gesamtmengen-Korrektur unerwartet; keine unsichere Freigabe.');
+  if(end<begin||end-begin>2200)throw Error('V88.18: Gesamtmengen-Korrektur unerwartet; keine unsichere Freigabe.');
   out=out.slice(0,begin)+replacement+out.slice(end+4);
   changes++;begin=out.indexOf('  correctTotal(id){',begin+replacement.length);
  }
- if(!changes)throw Error('V88.17: Gesamtmengen-Korrektur fehlt.');
+ if(!changes)throw Error('V88.18: Gesamtmengen-Korrektur fehlt.');
  return out;
 }
-/* V88.17: bestaetigte Zaehllagerorte schon beim Sichern in den Artikelstamm schreiben.
+/* V88.18: bestaetigte Zaehllagerorte schon beim Sichern in den Artikelstamm schreiben.
    Fuer weitere Orte bleiben die bestaetigten Inventur-Fundorte ueber das Artikel-API sichtbar;
    KEINE Bestandsverteilung oder Mengenbuchung vor dem Inventurabschluss. */
 function patchV8813InventoryCore(source){
  let out=patchV8811InventoryCore(source);
  if(out.includes('/* LV8813_MASTER_LOCATION_ON_SAVE */'))return out;
  const before="transaction(()=>{for(const x of changes)run('UPDATE inventory_counts SET counted_stock=?,location=?,warehouse_id=?,note=?,bin_parts_json=? WHERE session_id=? AND article_id=?',[x.quantity,x.location,x.warehouse_id,x.note,x.partsRaw,s.id,x.article_id]);touch(s.id)});";
- if(!out.includes(before))throw Error('V88.17: erwartete Speichertransaktion der Inventur fehlt. Stammdaten unveraendert.');
+ if(!out.includes(before))throw Error('V88.18: erwartete Speichertransaktion der Inventur fehlt. Stammdaten unveraendert.');
  const next=`transaction(()=>{
    for(const x of changes){
     run('UPDATE inventory_counts SET counted_stock=?,location=?,warehouse_id=?,note=?,bin_parts_json=? WHERE session_id=? AND article_id=?',[x.quantity,x.location,x.warehouse_id,x.note,x.partsRaw,s.id,x.article_id]);
@@ -830,7 +844,7 @@ function patchV8813Backend(source){
  let out=patchV888Backend(source);
  if(out.includes('/* LV8813_DRAFT_LOCATION_READ */'))return out;
  const before="if(p==='/api/articles')return response(articles(q.q||'').map(publicArticle));";
- if(!out.includes(before))throw Error('V88.17: Material-API nicht gefunden. Keine veraenderten Artikelstammdaten angezeigt.');
+ if(!out.includes(before))throw Error('V88.18: Material-API nicht gefunden. Keine veraenderten Artikelstammdaten angezeigt.');
  const after=`if(p==='/api/articles'){
    /* LV8813_DRAFT_LOCATION_READ */
    const result=articles(q.q||'').map(publicArticle);
@@ -851,7 +865,7 @@ function patchV8813Backend(source){
   }`;
  out=out.replace(before,after);
  const insertBefore="if(p==='/api/articles/create-import'||p==='/api/import/create-and-book'){";
- if(!out.includes(insertBefore))throw Error('V88.17: OCR-Artikelkorrektur konnte nicht sicher angebunden werden.');
+ if(!out.includes(insertBefore))throw Error('V88.18: OCR-Artikelkorrektur konnte nicht sicher angebunden werden.');
  const route=String.raw`if(p==='/api/articles/ocr-repair/preview'||p==='/api/articles/ocr-repair/commit'){
   /* LV8813_OCR_MASTER_REPAIR: ausdrueckliche nachtraegliche Stammkorrektur.
      Nie neue Lagerbestandsbuchungen, nie stilles Zusammenfuehren von Zahlungen oder Lagerorten. */
@@ -918,7 +932,7 @@ function patchV8813Backend(source){
  return out;
 }
 
-/* V88.17: Ein bereits unter falscher OCR-Artikelnummer gezaehlter
+/* V88.18: Ein bereits unter falscher OCR-Artikelnummer gezaehlter
  * ENTWURFS-Zaehlstand kann nach Backup gezielt zum korrekten Artikel wandern.
  * Buchbestand, Artikelstamm, Bewegungen und sonstige Inventuren bleiben UNBERUEHRT.
  */
@@ -926,7 +940,7 @@ function patchV8816InventoryCore(source){
  let out=patchV8813InventoryCore(source);
  if(out.includes('/* LV8816_TRANSFER_COUNT */'))return out;
  const anchor=/\bconst s=draft\(d\);\s*(?=if\(name==='company-import'\)\{)/;
- if(!anchor.test(out))throw Error('V88.17: Inventur-Schutzposition fuer sichere OCR-Zaehlübertragung nicht gefunden.');
+ if(!anchor.test(out))throw Error('V88.18: Inventur-Schutzposition fuer sichere OCR-Zaehlübertragung nicht gefunden.');
  const replacement=String.raw`   const s=draft(d);
    if(name==='ocr-transfer-count'){
     /* LV8816_TRANSFER_COUNT */

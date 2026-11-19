@@ -52,7 +52,7 @@ test('CSV-Download ist Excel-kompatibel und entschärft Tabellenformel-Eingaben'
 test('Alte Offline-Vorlage laedt Ersatz-Importer ueber gueltige URL',()=>{
  const sw=require('./service-worker.js'); const src=sw.patchV885Ui('async function scan(file,onProgress=()=>{}){ return null; }');
  assert.doesNotMatch(src,/new URL\([^)]*,[^)]*,document\.baseURI/);
- assert.match(src,/new URL\('v88_5_import\.js\?v=88\.17',document\.baseURI\)/);
+ assert.match(src,/new URL\('v88_5_import\.js\?v=88\.18',document\.baseURI\)/);
 });
 test('Service Worker registriert Zusatzbericht vor PDF-Export',()=>{
  assert.match(SW.CACHE_NAME,/lv88-17/);

@@ -110,11 +110,21 @@
     <p id="lv884PdfInfo" class="lv87-hint">Fehlende Zählwerte bleiben leer. Nullbestände (0) werden ausdrücklich als 0 gedruckt.</p>
     <section id="lv8813MatchPanel" style="border:1px solid #a8b8c7;border-radius:10px;padding:10px;margin:12px 0">
       <h3 style="margin:0 0 8px">PDF-Positionen schnell zuordnen</h3>
-      <p class="lv87-hint">Die Anwendung schlägt passende bereits gezählte Artikel anhand von Artikelnummer und Bezeichnung vor. Nur bestätigte Zuordnungen werden gespeichert; es werden keine Bestände geändert.</p>
+      <p class="lv87-hint">Die Anwendung zeigt alle vorhandenen Artikel, auch ungezählte und mit Buchbestand 0. Eine Zuordnung ist keine Zählung und verändert keine Bestände. Bestätigte Verknüpfungen werden direkt gesichert.</p>
       <label style="display:block;margin:8px 0"><input id="lv8816ShowAll" type="checkbox"> Auch bereits zugeordnete PDF-Positionen anzeigen und bei Bedarf berichtigen (719 Positionen)</label>
       <label>PDF-Position oder Artikel suchen <input id="lv8813MatchSearch" placeholder="z. B. USB-Stick, 11000339, Seite 4" type="search" autocomplete="off" style="width:100%"></label>
       <div id="lv8813MatchStatus" class="lv87-hint" role="status">Zuordnungen werden geprüft ...</div>
-      <div id="lv8813MatchRows" style="max-height:40vh;overflow:auto"></div>
+      <div class="lv87-flex" style="margin:6px 0;gap:7px">
+       <button type="button" id="lv8818SaveProgress" class="secondary">💾 PDF-Prüfstand zwischenspeichern</button>
+       <button type="button" id="lv8818ExportProgress" class="secondary">📥 Prüfstand als JSON sichern</button>
+       <button type="button" id="lv8818ImportProgress" class="secondary">📤 JSON-Prüfstand einlesen</button>
+       <input type="file" id="lv8818ProgressFile" accept="application/json,.json" hidden>
+       <button type="button" id="lv8818Prev" class="secondary">◀ Zurück</button>
+       <span id="lv8818PageInfo" class="lv87-hint"></span>
+       <button type="button" id="lv8818Next" class="secondary">Weiter ▶</button>
+      </div>
+      <div id="lv8813MatchRows" style="max-height:46vh;overflow:auto"></div>
+      <p class="lv87-hint">Du kannst jederzeit aufhören und später über „Letzte PDF öffnen“ fortsetzen. Bestaetigte PDF-Zuordnungen und zurueckgestellte Positionen bleiben gespeichert. Die Inventur bleibt offen.</p>
     </section>
     <section style="border:1px solid #a8b8c7;border-radius:10px;padding:10px;margin:12px 0">
       <h3 style="margin:0 0 8px">Zusatzliste: Lagerartikel, die im RONDO-PDF fehlen</h3>
@@ -130,16 +140,25 @@
   /* LV8813_PDF_QUICK_ASSIGN: erst pruefen, dann ausdruecklich zuordnen. */
   const matchCore=typeof window!=='undefined'?window.LV8813PDFMatch:null;
   const matchRoot=$('lv8813MatchRows'),matchStatus=$('lv8813MatchStatus'),matchSearch=$('lv8813MatchSearch');
-  let matchItems=[],matchSnapshot=null;
+  let matchItems=[],matchSnapshot=null,matchPage=0;
+  const countedValue=v=>v!==null&&v!==undefined&&String(v).trim()!=='';
+  const byArticleCode=v=>matchCore?.no?.(v)||String(v||'').toUpperCase();
+  async function allMatchItems(snapshot){
+   const catalogue=await ctx.api('/api/articles');
+   const collected=new Map((catalogue||[]).filter(a=>a.active!==0&&a.active!==false).map(a=>[byArticleCode(a.article_no),{...a,article_id:Number(a.id),counted_stock:null,notInInventory:true}]));
+   for(const item of snapshot?.items||[])collected.set(byArticleCode(item.article_no),{...collected.get(byArticleCode(item.article_no)),...item,notInInventory:false});
+   return [...collected.values()];
+  }
   const txt=(el,str)=>{el.textContent=String(str??'');return el};
+  const rootPrompt=(label,initial)=>typeof window==='object'&&typeof window.prompt==='function'?window.prompt(label,initial):null;
   const node=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=String(text);return el};
   const setBusy=flag=>{busy=flag;submit.disabled=flag;select.disabled=flag;matchSearch.disabled=flag};
   async function matchLoad(){
-   if(!matchCore){matchStatus.textContent='Artikelvergleich V88.14 nicht geladen. Bitte die Anwendung aktualisieren.';return;}
+   if(!matchCore){matchStatus.textContent='Artikelvergleich V88.18 nicht geladen. Bitte die Anwendung aktualisieren.';return;}
    try{
     const id=select.value;matchSnapshot=await ctx.api('/api/inventory-v75/get?id='+encodeURIComponent(id));
     if(matchSnapshot?.database_id!==index.database_id)throw Error('Inventur gehört nicht zur gewählten Datenbank.');
-    matchItems=matchSnapshot.items||[];matchRender();
+    matchItems=await allMatchItems(matchSnapshot);matchPage=0;matchRender();
    }catch(e){matchStatus.textContent='Zuordnung konnte nicht geladen werden: '+e.message;}
   }
   function matchRender(){
@@ -147,26 +166,49 @@
    const all=matchCore.summarize(lines,matchItems,{includeMatched:$('lv8816ShowAll').checked,referenceRows}),q=matchCore.norm(matchSearch.value);
    const pageOnly=/^SEITE\s*(\d+)$/i.exec(matchSearch.value.trim());
    const relevant=pageOnly?all.filter(x=>Number(x.row.page)===Number(pageOnly[1])):q?all.filter(x=>matchCore.norm([x.row.page,x.row.position,x.row.article_no,x.reference_no,x.row.description,x.options.map(y=>y.article.article_no+' '+y.article.description).join(' ')].join(' ')).includes(q)):all;
-   matchStatus.textContent=`${all.length} ${$('lv8816ShowAll').checked?'PDF-Positionen (alle inklusive bereits zugeordnet)':'offene oder ungeprüfte PDF-Positionen'}; ${relevant.length} Treffer${relevant.length>18?' (erste 18 angezeigt)':''}. Leere Mengen können auch ungezaehlte Artikel bedeuten. OCR-I/1-Treffer bitte manuell bestaetigen.`;
+   const linked=lines.filter(r=>r.manual_link===true&&r.verified!==false&&r.review_action!=='defer').length;
+   const deferred=lines.filter(r=>r.review_action==='defer').length;
+   const perPage=35,pages=Math.max(1,Math.ceil(relevant.length/perPage));matchPage=Math.min(matchPage,pages-1);
+   matchStatus.textContent=`${linked} ausdrücklich zugeordnete PDF-Positionen, ${deferred} für später zurückgestellt · ${all.length} ${$('lv8816ShowAll').checked?'PDF-Positionen insgesamt':'noch offen oder zu prüfen'} · ${relevant.length} Suchtreffer. Alle Lagerartikel werden durchsucht, auch ungezählte. Buchbestand 0 bedeutet nicht automatisch 0 gezählt.`;
+   $('lv8818PageInfo').textContent=`Seite ${matchPage+1} / ${pages}`;
+   $('lv8818Prev').disabled=matchPage===0;$('lv8818Next').disabled=matchPage>=pages-1;
    matchRoot.replaceChildren();
-   if(!relevant.length){matchRoot.appendChild(node('p','lv87-hint','Keine Positionen gefunden. Für bereits zugeordnete Artikel bitte „Auch bereits zugeordnete PDF-Positionen anzeigen“ aktivieren.'));return;}
-   for(const item of relevant.slice(0,18)){
+   if(!relevant.length){matchRoot.appendChild(node('p','lv87-hint','Keine offenen Positionen. Für bereits bestätigte Artikel das Kästchen „Auch bereits zugeordnete ...“ aktivieren.'));return;}
+   for(const item of relevant.slice(matchPage*perPage,(matchPage+1)*perPage)){
     const row=item.row,wrap=node('div','lv87-card');wrap.style.cssText='margin:7px 0;padding:9px;border:1px solid #d1d9e0';
     const heading=node('div','',`Seite ${row.page}, Position ${row.position} · ${row.article_no||'(unleserlich)'} — ${row.description||'Ohne Beschreibung'}`);
     heading.style.fontWeight='600';wrap.appendChild(heading);
-    const label=node('p','lv87-hint',`Status: ${item.kind}${item.reference_no&&matchCore.no(item.reference_no)!==matchCore.no(row.article_no)?' · OCR-Referenz (I/1 moeglich): '+item.reference_no:''}. Mögliche Treffer sind nur Vorschläge, keine automatische Änderung.`);wrap.appendChild(label);
+    const label=node('p','lv87-hint',`Status: ${item.kind}${item.reference_no&&matchCore.no(item.reference_no)!==matchCore.no(row.article_no)?' · OCR-Referenz (I/1 möglich): '+item.reference_no:''}. Erst nach Bestätigung erfolgt eine Änderung. Noch nicht gezählt und Buchbestand 0 sind verschiedene Zustände.`);wrap.appendChild(label);
     const options=node('select','lv87-field');options.setAttribute('aria-label','Vorhandenen Artikel zur PDF-Position auswählen');options.style.cssText='width:100%;margin:4px 0;min-height:40px';
     const addOption=(a,label)=>{const opt=node('option','',label);opt.value=String(a?.article_no||'');options.appendChild(opt)};
     addOption(null,'Bitte vorhandenen Artikel wählen ...');
-    const byNo=new Set();for(const found of item.options){const a=found.article;if(byNo.has(a.article_no))continue;byNo.add(a.article_no);addOption(a,`${a.article_no} – ${a.description||''} (${a.counted_stock===null?'noch nicht gezählt':a.counted_stock} ${a.unit||''}; Buchbestand: ${a.current_stock??a.stock??a.base_stock??'unbekannt'}; ${found.reason})`);}
+    const byNo=new Set();for(const found of item.options){const a=found.article;if(byNo.has(a.article_no))continue;byNo.add(a.article_no);addOption(a,`${a.article_no} – ${a.description||''} (${countedValue(a.counted_stock)?'gezählt: '+a.counted_stock:'noch nicht gezählt'} ${a.unit||''}; Buchbestand: ${a.current_stock??a.stock??a.base_stock??'unbekannt'}; ${found.reason})`);}
     // V88.16: nie vorwaehlen. Auch bei grosser Aehnlichkeit MUSS der Benutzer bewusst einen Artikel auswaehlen.
     wrap.appendChild(options);
-    const search=node('input','lv87-field');search.type='search';search.placeholder='Anderen Artikel suchen (Nummer oder Bezeichnung)';search.style.cssText='width:100%;margin:4px 0;min-height:40px';
+    const search=node('input','lv87-field');search.type='search';search.placeholder='Gesamten Artikelstamm durchsuchen (auch ungezählte und 0-Bestand)';search.style.cssText='width:100%;margin:4px 0;min-height:40px';
     search.addEventListener('input',()=>{
-     const needle=matchCore.norm(search.value);const found=needle?matchItems.filter(a=>matchCore.norm((a.article_no||'')+' '+(a.description||'')).includes(needle)).slice(0,15):[];
+     const needle=matchCore.norm(search.value);const found=needle?matchItems.filter(a=>matchCore.norm((a.article_no||'')+' '+(a.description||'')).includes(needle)).slice(0,40):[];
      options.replaceChildren();addOption(null,found.length?'Passenden Lagerartikel auswählen ...':'Kein Treffer (Suche ändern)');
-     for(const a of found)addOption(a,`${a.article_no} – ${a.description} (${a.counted_stock===null?'noch nicht gezählt':a.counted_stock} ${a.unit||''}; Buchbestand: ${a.current_stock??a.stock??a.base_stock??'unbekannt'})`);
+     for(const a of found)addOption(a,`${a.article_no} – ${a.description} (${countedValue(a.counted_stock)?'gezählt: '+a.counted_stock:'noch nicht gezählt'} ${a.unit||''}; Buchbestand: ${a.current_stock??a.stock??a.base_stock??'unbekannt'})`);
     });wrap.appendChild(search);
+    // Ein Klick fuer tatsaechlich eindeutige Vorschlaege. Keine automatische
+    // Auswahl bei zwei plausiblen I/1-Treffern oder bereits doppelt verwendeten IDs.
+    const best=item.options[0],otherPlausible=best&&item.options.slice(1).some(x=>x.similarity>=0.80&&(x.exact||x.confusable)&&matchCore.no(x.article.article_no)!==matchCore.no(best.article.article_no));
+    const oneClick=best&&best.similarity>=0.92&&(best.exact||best.confusable)&&!otherPlausible&&row.review_action!=='defer'&&!row.manual_link;
+    if(oneClick){
+     const quick=node('button','secondary lv883-action','✓ Eindeutigen Vorschlag direkt bestätigen: '+best.article.article_no);quick.type='button';
+     quick.style.cssText='display:block;width:100%;margin:6px 0';
+     quick.onclick=async()=>{
+      quick.disabled=true;
+      try{
+       const revised=lines.map(x=>({...x}));
+       matchCore.assign(revised,item.key,best.article,ctx.core.validNo);
+       await ctx.saveMappings(revised);lines=revised;matchRender();
+       txt(status,'Artikel '+best.article.article_no+' bestätigt und PDF-Prüfstand gespeichert. Gezählt wird weiterhin separat; kein Inventurabschluss.');
+      }catch(e){txt(info,'Schnellbestätigung fehlgeschlagen: '+e.message);quick.disabled=false;}
+     };
+     wrap.appendChild(quick);
+    }
     const button=node('button','secondary lv883-action','✓ Diesen vorhandenen Artikel zuordnen');button.type='button';
     const info=node('span','lv87-hint','');info.style.display='block';
     button.onclick=async()=>{
@@ -221,7 +263,50 @@
       }
      }catch(e){txt(info,'Zuordnung nicht gespeichert: '+e.message);button.disabled=false;}
     };
-    wrap.appendChild(button);wrap.appendChild(info);matchRoot.appendChild(wrap);
+    // LV8818_REVIEW_ACTIONS: fehlende Artikel nur ohne Anfangsbestand anlegen,
+    // unklare Positionen fuer spaeter parken und sofort dauerhaft speichern.
+    const actions=node('div','lv87-flex');actions.style.cssText='gap:6px;margin-top:6px';
+    const defer=node('button','secondary lv883-action',row.review_action==='defer'?'↩ Zur Prüfung zurückholen':'⏭ Später zuordnen');defer.type='button';
+    defer.onclick=async()=>{
+     defer.disabled=true;try{
+      const revised=lines.map(x=>({...x}));const target=revised.find(x=>matchCore.positionKey(x)===item.key);
+      if(!target)throw Error('PDF-Position nicht mehr vorhanden.');
+      if(target.review_action==='defer'){delete target.review_action;target.verified=false;}
+      else {target.review_action='defer';target.verified=false;}
+      await ctx.saveMappings(revised);lines=revised;matchRender();txt(status,'Prüfstand gespeichert. Du kannst diese Position später erneut prüfen. Keine Inventur abgeschlossen.');
+     }catch(e){txt(info,'Zurückstellung nicht gespeichert: '+e.message);defer.disabled=false;}
+    };
+    const create=node('button','secondary lv883-action','+ Material fehlt: neu anlegen (Bestand 0)');create.type='button';
+    create.onclick=async()=>{
+     const entered=rootPrompt('Neue Materialnummer laut Original-PDF (I und 1 genau prüfen)',row.article_no||'');
+     if(entered===null)return;const articleNo=entered.trim().toUpperCase();
+     if(!ctx.core.validNo(articleNo))return txt(info,'Materialnummer ist ungültig. Keine Anlage.');
+     const known=matchItems.find(a=>byArticleCode(a.article_no)===byArticleCode(articleNo));
+     if(known)return txt(info,'Artikel '+articleNo+' ist bereits in der Datenbank. Bitte über die Suche den vorhandenen Artikel zuordnen.');
+     const description=rootPrompt('Bezeichnung des neuen Materials',row.description||'');
+     if(description===null)return;const title=description.trim();if(!title)return txt(info,'Materialbezeichnung fehlt.');
+     if(!ctx.confirm('Material '+articleNo+' – '+title+' als NEUEN Lagerartikel mit ANFANGSBESTAND 0 anlegen?\n\nDas ist KEINE Nullzählung. Die Inventur bleibt offen. Es werden KEINE Mengen gebucht.'))return;
+     create.disabled=true;
+     try{
+      const master=await ctx.api('/api/masterdata');const fresh=await ctx.api('/api/articles');
+      if(fresh.some(a=>byArticleCode(a.article_no)===byArticleCode(articleNo)))throw Error('Dieser Artikel wurde bereits angelegt. Bitte neu suchen.');
+      const operation='rondo-manual-8818-'+String(row.page)+'-'+String(row.position)+'-'+Date.now();
+      await ctx.api('/api/articles/create-import',{method:'POST',body:JSON.stringify({items:[{article_no:articleNo,description:title,unit:row.unit||'Stk.',location:'',initial_stock:0,target_stock:0,minimum_stock:0,position_key:'manual:'+item.key}],technician:master.default_technician||'Techniker',operation_id:operation})});
+      let snapshot=await ctx.api('/api/inventory-v75/get?id='+encodeURIComponent(select.value));
+      if(snapshot?.session?.status==='draft'){
+       if(ctx.inventory?.current?.()?.session?.id===select.value){if(!await ctx.inventory.save())throw Error('Der lokale Inventurzwischenstand konnte nicht gespeichert werden. Artikel ist angelegt, bitte später „Neue Artikel ergänzen“ verwenden.');snapshot=await ctx.api('/api/inventory-v75/get?id='+encodeURIComponent(select.value));}
+       snapshot=await ctx.api('/api/inventory-v75/refresh',{method:'POST',body:JSON.stringify({id:snapshot.session.id,version:snapshot.session.version,database_id:snapshot.database_id})});
+       if(ctx.inventory?.current?.()?.session?.id===select.value)ctx.inventory.updateFromExternal?.(snapshot);
+      }
+      await matchLoad();
+      const newArt=matchItems.find(a=>byArticleCode(a.article_no)===byArticleCode(articleNo));
+      if(!newArt)throw Error('Artikel wurde angelegt, aber die Anzeige konnte ihn noch nicht laden. Bitte Exportfenster erneut öffnen.');
+      const revised=lines.map(x=>({...x}));matchCore.assign(revised,item.key,newArt,ctx.core.validNo);
+      await ctx.saveMappings(revised);lines=revised;matchRender();
+      txt(status,'Neuer Artikel '+articleNo+' mit Anfangsbestand 0 angelegt und PDF-Position gespeichert. KEINE Nullzählung; bitte bei der Inventur kontrollieren.');
+     }catch(e){txt(info,'Neuanlage / Zuordnung nicht vollständig: '+e.message+'. Bestehende Inventur nicht überschreiben.');create.disabled=false;}
+    };
+    actions.append(defer,create);wrap.appendChild(button);wrap.appendChild(actions);wrap.appendChild(info);matchRoot.appendChild(wrap);
    }
   }
   /* LV8813_OCR_MASTER_REPAIR_UI: nachtraegliche Korrektur falsch angelegter Artikel. */
@@ -254,8 +339,58 @@
   };
   repairBox.append(oldInput,newInput,descInput,repairButton);
   matchRoot.parentElement.appendChild(repairBox);
-  matchSearch.addEventListener('input',matchRender);
-  $('lv8816ShowAll').addEventListener('change',matchRender);
+  matchSearch.addEventListener('input',()=>{matchPage=0;matchRender()});
+  $('lv8816ShowAll').addEventListener('change',()=>{matchPage=0;matchRender()});
+  $('lv8818Prev').onclick=()=>{matchPage=Math.max(0,matchPage-1);matchRender()};
+  $('lv8818Next').onclick=()=>{matchPage++;matchRender()};
+  $('lv8818SaveProgress').onclick=async()=>{
+   const btn=$('lv8818SaveProgress');btn.disabled=true;
+   try{await ctx.saveMappings(lines.map(x=>({...x})));txt(status,'PDF-Prüfstand wurde dauerhaft gespeichert. Bereits zugeordnete und zurückgestellte Positionen bleiben für später erhalten. Die Inventur bleibt offen.');}
+   catch(e){txt(status,'Prüfstand konnte nicht gespeichert werden: '+e.message)}finally{btn.disabled=false}
+  };
+  // LV8818_REVIEW_BACKUP: Der PDF-Pruefstand lebt in IndexedDB und NICHT
+  // in lager.db. Deshalb zusaetzlich eine manuell exportierbare JSON-Kopie.
+  const progressFields=['article_no','description','unit','verified','review_action','manual_link','ocr_original_no','ocr_original_description','linked_article_id','checked_at'];
+  const progressData=()=>({format:'RONDO-PDF-PRUEFSTAND',version:1,pdf_hash:stored.hash,
+   database_id:index.database_id,inventory_id:select.value,created_at:new Date().toISOString(),
+   positions:lines.map(row=>({key:matchCore.positionKey(row),
+    ...Object.fromEntries(progressFields.map(field=>[field,row[field]??null]))}))});
+  $('lv8818ExportProgress').onclick=async()=>{
+   try{
+    await ctx.saveMappings(lines.map(x=>({...x})));
+    const json=JSON.stringify(progressData(),null,2),blob=new Blob([json],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;
+    a.download='RONDO_PDF_Pruefstand_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+    txt(status,'PDF-Prüfstand gespeichert und JSON-Sicherung erstellt. Bitte außerhalb des Browserordners aufbewahren. Keine Inventur beendet.');
+   }catch(e){txt(status,'JSON-Prüfstand konnte nicht gesichert werden: '+e.message)}
+  };
+  $('lv8818ImportProgress').onclick=()=>$('lv8818ProgressFile').click();
+  $('lv8818ProgressFile').onchange=async event=>{
+   const file=event.target?.files?.[0];if(!file)return;
+   try{
+    if(file.size>2*1024*1024)throw Error('Prüfstandsdatei ist zu groß.');
+    const obj=JSON.parse(await file.text());
+    if(obj.format!=='RONDO-PDF-PRUEFSTAND'||obj.version!==1||obj.pdf_hash!==stored.hash||obj.database_id!==index.database_id)throw Error('Diese Sicherung gehört nicht zur selben RONDO-PDF und Datenbank. Keine Übernahme.');
+    if(!Array.isArray(obj.positions)||obj.positions.length!==lines.length)throw Error('Anzahl der PDF-Positionen weicht ab.');
+    const keys=new Set();
+    for(let i=0;i<lines.length;i++){
+     if(obj.positions[i]?.key!==matchCore.positionKey(lines[i])||keys.has(obj.positions[i].key))throw Error('PDF-Seiten-/Positionsfolge ist anders.');
+     keys.add(obj.positions[i].key);
+    }
+    if(!ctx.confirm('PDF-Prüfstand aus Sicherungsdatei wiederherstellen?\n\nVorhandene PDF-Zuordnungen werden durch die Zuordnungen dieser Datei ersetzt. Lagerartikel, Zählmengen und Buchbestände bleiben unverändert. Die Inventur bleibt offen.'))return;
+    const revised=lines.map((row,i)=>{
+     const from=obj.positions[i],out={...row};
+     for(const field of progressFields){if(Object.prototype.hasOwnProperty.call(from,field)){
+      if(from[field]===null){delete out[field]}else{out[field]=from[field]}
+     }}
+     return out;
+    });
+    await ctx.saveMappings(revised);lines=revised;matchPage=0;matchRender();
+    txt(status,'Gesicherter PDF-Prüfstand eingelesen und gespeichert. Keine Bestände oder Zählungen geändert.');
+   }catch(e){txt(status,'Prüfstand NICHT eingelesen: '+e.message)}
+   finally{event.target.value=''}
+  };
   matchLoad();
   /* LV8817_BULK_OCR_PANEL: reine Vorschau, bestaetigte Sammelzuordnung,
      und separate archivierbare OCR-Fehlartikel in der aktuellen Datenbank. */

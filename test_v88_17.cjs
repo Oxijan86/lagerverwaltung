@@ -15,11 +15,11 @@ const inventory=[
  {article_id:3,article_no:'I1000214',description:samples[2].description,counted_stock:1,stock:1,unit:'Stk.'},
  {article_id:4,article_no:'11000214',description:samples[3].description,counted_stock:null,stock:0,unit:'Stk.'}
 ];
-test('V88.17 registriert beide Sammelmodule in Abhaengigkeitsreihenfolge',()=>{
+test('V88.18 registriert beide Sammelmodule in Abhaengigkeitsreihenfolge',()=>{
  const a=SW.ADDONS||[];const p=SW.injectHtml('<html><body><script src="inventory_ui.js"></script></body></html>');
- assert.ok(p.includes('v88_17_bulk_core.js?v=88.17'));assert.ok(p.includes('v88_17_bulk_ui.js?v=88.17'));
- assert.ok(p.indexOf('v88_17_bulk_core.js?v=88.17')<p.indexOf('v88_17_bulk_ui.js?v=88.17'));
- assert.ok(p.indexOf('v88_17_bulk_ui.js?v=88.17')<p.indexOf('v88_4_export.js?v=88.17'));
+ assert.ok(p.includes('v88_17_bulk_core.js?v=88.18'));assert.ok(p.includes('v88_17_bulk_ui.js?v=88.18'));
+ assert.ok(p.indexOf('v88_17_bulk_core.js?v=88.18')<p.indexOf('v88_17_bulk_ui.js?v=88.18'));
+ assert.ok(p.indexOf('v88_17_bulk_ui.js?v=88.18')<p.indexOf('v88_4_export.js?v=88.18'));
  assert.ok(SW.FILES.includes('v88_17_bulk_core.js')&&SW.FILES.includes('v88_17_bulk_ui.js'));
  assert.ok(fs.readFileSync('./v88_4_export.js','utf8').includes('LV8817BulkUI.mount'));
 });

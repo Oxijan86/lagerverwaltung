@@ -13,7 +13,7 @@
   if(!anchor||!Bulk||!o.api||!o.matchCore)return false;
   if(anchor.querySelector('#lv8817BulkPanel'))return true;
   const panel=element('section',undefined,'lv87-card');panel.id='lv8817BulkPanel';panel.style.cssText='margin:12px 0;border:2px solid #94adb8;padding:12px';
-  panel.appendChild(element('h3','Sammelzuordnung: OCR-I/1 und identische Bezeichnung'));
+  panel.appendChild(element('h3','Sammelzuordnung: OCR-I/1, auch ungezaehlte Artikel'));
   panel.appendChild(element('p','Hier werden nur eindeutig gleiche Bezeichnungen und Nummern angezeigt, die sich ausschließlich am führenden I bzw. 1 unterscheiden. Die Auswahl ist ein Vorschlag und verändert keine Inventurzählung.','lv87-hint'));
   const status=element('p','Vorschläge können jetzt ermittelt werden.','lv87-hint'),table=element('div');table.style.cssText='max-height:350px;overflow:auto;margin:8px 0';
   const checked=new Map();let proposalRows=[];let locked=false;
@@ -42,7 +42,7 @@
     if(!root.confirm(`${chosen.length} PDF-Positionen gemeinsam zuordnen?\n\n${oldNumbers.slice(0,12).join('\n')}${oldNumbers.length>12?'\n… und '+(oldNumbers.length-12)+' weitere':''}\n\nNur die gespeicherte PDF-Zuordnung wird geändert. Keine Lagerbestände, Zählungen oder Stammdaten werden verändert.`))return;
     locked=true;set(status,'PDF-Zuordnungen werden dauerhaft gespeichert …');
     await o.saveMappings(next);o.setLines(next);checked.clear();
-    set(status,`${chosen.length} PDF-Positionen gespeichert. Zählwerte im PDF-Export folgen dem jeweils zugeordneten Lagerartikel. Dubletten im Artikelstamm bitte unten separat prüfen.`);
+    set(status,`${chosen.length} PDF-Positionen gespeichert. Zaehlergebnisse bleiben unveraendert; fehlende Zaehlergebnisse bleiben im PDF leer. Dubletten im Artikelstamm bitte unten separat prüfen.`);
     await renderProposals();
    }catch(e){set(status,'Keine Sammelzuordnung gespeichert: '+e.message)}finally{locked=false}
   });
