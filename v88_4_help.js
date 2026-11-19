@@ -1,4 +1,4 @@
-/* Hilfereiter V88.8, sichtbar in der bestehenden Hilfe. */
+/* Hilfereiter V88.9, sichtbar in der bestehenden Hilfe. */
 (function(root,factory){
  const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;
  else if(root)root.LV884Help=api;
@@ -45,12 +45,22 @@
    '„Ausgefüllte RONDO-PDF erzeugen“ öffnen, abgeschlossene Inventur auswählen und PDF auch später nochmals erzeugen.',
    'Nicht dieselben Materialbewegungen ein zweites Mal buchen. Eine erneut erzeugte PDF verändert die Datenbank nicht.'
   ]},
+  {title:'Mehrfachzählung und mehrere Lagerorte (V88.9)',body:[
+   'Bei Artikelsuche wird ein noch ungezählter Artikel im Feld „Gezählt“ geöffnet. Ein bereits gezählter Artikel (auch mit 0) wird automatisch im Feld „Weitere Menge“ geöffnet.',
+   'Gib die zusätzliche Menge ein und bestätige mit Enter. Sie wird zum bisherigen Gesamtzählstand addiert; danach springt der Cursor zurück zur Artikelsuche.',
+   'Wähle vor der Zählung oben den tatsächlichen Zählbereich, also Lager und Lagerort/Sortimo-Kiste. Wird derselbe Artikel an einem weiteren Lagerort gefunden, wird diese Teilmenge diesem Lagerort zugeordnet, statt den alten Ort zu überschreiben.',
+   'Beispiel: Fach A 5 Stück, Fach B 3 Stück → Gesamtzählstand 8 Stück; die beiden Zählorte werden getrennt geführt.',
+   'Falls ein neuer Lagerort noch nicht im Stamm angelegt ist, wird die vorhandene Anlegebestätigung angezeigt. Der neue Lagerort wird als Stammdatum angelegt; die Zuordnung der gezählten Teilmengen wird erst beim verbindlichen Inventurabschluss bestandswirksam.',
+   'Bei mehreren Lagerorten ohne ausgewählten aktuellen Zählbereich wird die zusätzliche Zählung gesperrt, damit eine falsche Lagerortzuordnung vermieden wird.',
+   'Das alte Feld „Gezählt“ ist nach der ersten Zählung vor versehentlicher Änderung geschützt. „Gesamtmenge korrigieren“ erlaubt nach einer gesonderten Bestätigung die bewusste Korrektur. Bei einer Änderung müssen frühere Lagerort-Teilmengen neu geprüft werden.',
+   'Die Inventur wird nur zwischengespeichert. Keine Lagerbestände werden durch zusätzliche Zählungen oder PDF-Export verändert. Ein verbindlicher Inventurabschluss ist weiterhin notwendig.'
+  ]},
   {title:'Bestandsschutz und Datensicherung',body:[
    'Zählungen werden zunächst nur in der laufenden Inventur gespeichert. Der aktuelle Istbestand bleibt unverändert, bis eine Inventur verbindlich abgeschlossen wird.',
    'Erst der ausdrückliche Inventurabschluss kann Zu-/Abbuchungen und Lagerortänderungen erzeugen. Ein PDF-Download hat diese Berechtigung nicht.',
    'Vor Gerätewechsel lokalen Stand speichern und Cloud-Synchronisierung prüfen. Niemals Browserdaten oder IndexedDB zum Aktualisieren löschen.',
    'Bei einem OCR-Widerspruch Materialnummer anhand der Original-PDF prüfen. Eine ähnliche Nummer ist noch kein eindeutiger Treffer.',
-   'Die unveränderte Original-PDF wird mittels SHA-256 erkannt: 719 Positionen aus 72 Seiten ohne Browser-OCR; ein anderes Dokument wird nicht mit dem gespeicherten Katalog verwechselt. Zeigt diese PDF erneut einen Fehler, zuerst Version 88.8 und den Datei-Fingerabdruck prüfen.'
+   'Die unveränderte Original-PDF wird mittels SHA-256 erkannt: 719 Positionen aus 72 Seiten ohne Browser-OCR; ein anderes Dokument wird nicht mit dem gespeicherten Katalog verwechselt. Zeigt diese PDF erneut einen Fehler, zuerst Version 88.9 und den Datei-Fingerabdruck prüfen.'
   ]}
  ];
  const safe=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
@@ -58,7 +68,7 @@
   if(typeof document==='undefined')return false;
   const help=document.getElementById('help');if(!help||document.getElementById('lv884Help'))return false;
   const wrap=document.createElement('details');wrap.id='lv884Help';wrap.className='lv87-card';wrap.open=true;
-  const summary=document.createElement('summary');summary.innerHTML='<b>📘 Neu: Hilfe V88.8 – Inventur, PDF-Ausgabe und Datenbank schützen</b>';wrap.appendChild(summary);
+  const summary=document.createElement('summary');summary.innerHTML='<b>📘 Neu: Hilfe V88.9 – Inventur, PDF-Ausgabe und Datenbank schützen</b>';wrap.appendChild(summary);
   const head=document.createElement('p');head.textContent='Ausführliche Anleitung für die neue RONDO-PDF-Funktion und die drei Wege der Ersteinrichtung. Jede Anleitung lässt sich einzeln öffnen.';wrap.appendChild(head);
   for(const topic of topics){const el=document.createElement('details');el.className='lv87-card';el.style.border='1px solid #ced9e1';el.style.margin='8px 0';
    const s=document.createElement('summary');s.textContent=topic.title;el.appendChild(s);
