@@ -92,17 +92,9 @@
   inv.correctTotal=wrapped;
  }
  function activateLocation(event){
-  const el=event.target;
-  if(el?.id!=='inv84Location'&&el?.id!=='inv84Warehouse')return;
-  const chosen=String(getDoc()?.getElementById('inv84Location')?.value||'').trim();
-  const warehouse=String(getDoc()?.getElementById('inv84Warehouse')?.value||'').trim();
-  if(!chosen&&!warehouse)return;
-  const checkbox=getDoc()?.getElementById('inv84Apply');
-  if(!checkbox||checkbox.checked)return;
-  checkbox.checked=true;
-  // Auf bekannte Input-Auswahl folgt die normale Kontextspeicherung durch
-  // inventory_ui.js; kein eigenes Stueck- oder Lagerkonto anlegen.
-  root.LVInventory?.contextToggle?.();
+  // V88.21.2: A location selection must NEVER re-enable automatic adoption.
+  // User can still explicitly assign one of the existing locations to a single article.
+  return;
  }
  let installed=false,observer=null;
  function install(){

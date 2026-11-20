@@ -1,3 +1,4 @@
+/* LV88_21_2: Inventurmengen auch ohne Zaehlbereich; keine automatische Buchung */
 /* LV88_21_1_PATCHED: counting location selector only, no automatic location creation. */
 /* LV88_21_PATCHED - Release 88.21. */
 /* LV88_20_PATCHED – release V88.20, safe migration from V88.19. */
@@ -6,7 +7,7 @@
  * V87-Module und um die V88-OCR-Prüfung ergänzt. Die DB bleibt unverändert.
  */
 'use strict';
-const CACHE_NAME='lv88-21-1-2026-11-20-count-context-r1';
+const CACHE_NAME='lv88-21-2-2026-11-20-count-location-r1';
 const FILES=[
  './','index.html','manifest.webmanifest','v87_core.js','v87_pdf.js','v88_2_catalog.js','v88_3_setup.js','v88_3_review.js','v88_4_export.js','v88_16_export_guard.js','v88_17_bulk_core.js','v88_17_bulk_ui.js','v88_4_help.js','v88_5_import.js','v88_6_pdf.js','v88_7_inventory_guard.js','v88_8_technician.js','v88_9_count_core.js','v88_11_location_core.js','v88_12_save_guard.js','v88_13_pdf_match.js','v88_14_report.js','v88_10_inventory_focus.js','v87_ui.js','v88_ocr.js','v88_20_core.js','v88_20_report.js','v88_20_assistant.js','v88_21_core.js','v88_21_ui.js',
  'inventory_core.js','inventory_ui.js','inventory_v84_core.js','inventory_v85_core.js',
@@ -18,7 +19,7 @@ const FILES=[
  'stock_bins_v86_ui.js',
  'vendor/pdfjs/pdf.min.mjs','vendor/pdfjs/pdf.worker.min.mjs',
  'vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js',
- 'v88_16_export_guard.js?v=88.21.1','v88_17_bulk_core.js?v=88.21.1','v88_17_bulk_ui.js?v=88.21.1','v88_13_pdf_match.js?v=88.21.1','v88_5_import.js?v=88.21.1','v88_6_pdf.js?v=88.21.1','v88_7_inventory_guard.js?v=88.21.1','v88_8_technician.js?v=88.21.1','v88_4_export.js?v=88.21.1','v87_pdf.js?v=88.21.1','v87_ui.js?v=88.21.1','v88_2_catalog.js?v=88.21.1'
+ 'v88_16_export_guard.js?v=88.21.2','v88_17_bulk_core.js?v=88.21.2','v88_17_bulk_ui.js?v=88.21.2','v88_13_pdf_match.js?v=88.21.2','v88_5_import.js?v=88.21.2','v88_6_pdf.js?v=88.21.2','v88_7_inventory_guard.js?v=88.21.2','v88_8_technician.js?v=88.21.2','v88_4_export.js?v=88.21.2','v87_pdf.js?v=88.21.2','v87_ui.js?v=88.21.2','v88_2_catalog.js?v=88.21.2'
 ];
 const ADDONS=[
  ['vendor/tesseract/tesseract.min.js','Tesseract'],
@@ -56,20 +57,20 @@ function injectHtml(html){
  // V88.19: a missing global syncStatus must not break other settings saves.
  out=out.replace(/await\s+syncStatus\s*\(\s*\)\s*;/g,"if(typeof window.syncStatus==='function')await window.syncStatus();");
  if(!/<\/body\s*>/i.test(out))return out;
- if(out.includes('Lagerverwaltung V88.21.1:')&&out.includes('data-lv88-boot='))return out;
+ if(out.includes('Lagerverwaltung V88.21.2:')&&out.includes('data-lv88-boot='))return out;
  // Eine alte Offline-Antwort kann bereits ein V88.1/V88.4-Scriptpaket enthalten.
  // Dieses vollständig ersetzen; sonst bliebe die neue PDF-Einleselogik unsichtbar.
  out=out.replace(/<!--\s*Lagerverwaltung V88[\s\S]*?-->\s*<span data-lv88-boot=\"1\" hidden><\/span>[\s\S]*?(?=<\/body\s*>)/i,'');
  if(out.includes('data-lv88-boot=')){
   // Old V88.20 offline HTML must load the new modules as well.
   if(!out.includes('v88_21_ui.js'))out=out.replace(/<\/body\s*>/i,
-   '<script src="v88_21_core.js?v=88.21.1" defer></script>\n<script src="v88_21_ui.js?v=88.21.1" defer></script>\n</body>');
+   '<script src="v88_21_core.js?v=88.21.2" defer></script>\n<script src="v88_21_ui.js?v=88.21.2" defer></script>\n</body>');
   if(!out.includes('v88_20_assistant.js'))out=out.replace(/<\/body\s*>/i,
-   '<script src="v88_20_core.js?v=88.21.1" defer></script>\n<script src="v88_20_report.js?v=88.21.1" defer></script>\n<script src="v88_20_assistant.js?v=88.21.1" defer></script>\n</body>');
+   '<script src="v88_20_core.js?v=88.21.2" defer></script>\n<script src="v88_20_report.js?v=88.21.2" defer></script>\n<script src="v88_20_assistant.js?v=88.21.2" defer></script>\n</body>');
   // Eine alte bereits gepatchte Offline-Startseite darf nie wieder den
   // gefährlichen alten PDF-Export ohne Schutzschicht starten.
-  if(!out.includes('v88_16_export_guard.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_16_export_guard.js?v=88.21.1" defer></script>\n</body>');
-  if(!out.includes('v88_17_bulk_core.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_17_bulk_core.js?v=88.21.1" defer></script>\n<script src="v88_17_bulk_ui.js?v=88.21.1" defer></script>\n</body>');
+  if(!out.includes('v88_16_export_guard.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_16_export_guard.js?v=88.21.2" defer></script>\n</body>');
+  if(!out.includes('v88_17_bulk_core.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_17_bulk_core.js?v=88.21.2" defer></script>\n<script src="v88_17_bulk_ui.js?v=88.21.2" defer></script>\n</body>');
   return out;
  }
  // V88.19: inventory_ui.js is a synchronous script in the legacy index.html.
@@ -77,11 +78,11 @@ function injectHtml(html){
  // that dependency in deferred footer ADDONS is TOO LATE and leaves
  // window.LVInventory undefined, breaking inventory resume and startup.
  const inventoryScript=/<script\b[^>]*\bsrc=["']inventory_ui\.js(?:\?[^"']*)?["'][^>]*><\/script>/i;
- if(inventoryScript.test(out))out=out.replace(inventoryScript,match=>'<script src="v88_11_location_core.js?v=88.21.1"></script>\n<script src="v88_7_inventory_guard.js?v=88.21.1"></script>\n'+match);
+ if(inventoryScript.test(out))out=out.replace(inventoryScript,match=>'<script src="v88_11_location_core.js?v=88.21.2"></script>\n<script src="v88_7_inventory_guard.js?v=88.21.2"></script>\n'+match);
  const extra=ADDONS.filter(([src])=>!new RegExp('<script\\b[^>]*\\bsrc=["\\\']'+src.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'["\\\']','i').test(out))
-   .map(([src])=>'<script src="'+src+'?v=88.21.1" defer></script>').join('\n');
+   .map(([src])=>'<script src="'+src+'?v=88.21.2" defer></script>').join('\n');
  // Nicht direkt im head einhängen: Das vollständige V86-App-Gerüst muss vorliegen.
- return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.21.1: Datenbestand unverändert, verlustfreier PDF-Export und geprüfter PDF-Import -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
+ return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.21.2: Datenbestand unverändert, verlustfreier PDF-Export und geprüfter PDF-Import -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
 }
 function patchV87Ui(source){
  const orig=String(source);
@@ -310,7 +311,7 @@ function patchV885Ui(source){
    // Fallback für ältere gecachte Startseiten: neuen Importer nachladen.
    await new Promise((resolve,reject)=>{
     const s=document.createElement('script');
-    s.src=new URL('v88_5_import.js?v=88.21.1',document.baseURI).href;
+    s.src=new URL('v88_5_import.js?v=88.21.2',document.baseURI).href;
     s.onload=()=>window.LV885Import?.scan?resolve():reject(Error('V88.5 Importer ist nicht aktiviert.'));
     s.onerror=()=>reject(Error('V88.5 Importer konnte nicht geladen werden. Bitte Online-Verbindung überprüfen und Anwendung erneut öffnen.'));
     document.head.appendChild(s);
@@ -990,12 +991,44 @@ function patchV8816InventoryCore(source){
  return out.replace(anchor,replacement);
 }
 
+/* V88.21.2: An inventory count is allowed without a selected counting location.
+   No implicit allocation, stock booking, warehouse creation, or unit mutation. */
+function patchV88212InventoryUi(source){
+ let out=patchV8813InventoryUi(source);
+ if(out.includes('/* LV88212_COUNT_LOCATION_OPTIONAL */'))return out;
+ const once=(needle,replacement,label)=>{
+  const first=out.indexOf(needle);
+  if(first<0||out.indexOf(needle,first+needle.length)>=0)throw Error('V88.21.2: unexpected inventory source ('+label+').');
+  out=out.slice(0,first)+replacement+out.slice(first+needle.length);
+ };
+ once('firstPlan=LV11.first(row,raw,chosen);',`/* LV88212_COUNT_LOCATION_OPTIONAL */
+    if(chosen){firstPlan=LV11.first(row,raw,chosen)}
+    else{firstPlan={total:LV11.amount(raw,row.unit),parts:[],firstPlace:null}}`, 'first count');
+ once("if(wasNew)message('Erstzählung am Lagerort „'+firstPlan.firstPlace.location+'“ gespeichert. Weitere Funde werden als eigene Teilmengen erfasst.');",
+      "if(wasNew)message(firstPlan.firstPlace?.location?'Erstzählung am Lagerort „'+firstPlan.firstPlace.location+'“ gespeichert.':'Erstzählung ohne Lagerort gespeichert. Du kannst den Fundort später unter „Einräumen nach dem Zählen“ festlegen.');",
+      'first count feedback');
+ once('plan=LV11.addition(row,entered,selected);',`/* LV88212_COUNT_ADD_OPTIONAL */
+    if(!String(row.bin_parts_json||'').trim()){
+     plan={total:calculated.total,parts:[],delta:calculated.delta,old:calculated.old,addedNewPlace:false};
+    }else{
+     if(!selected)throw Error('Für eine weitere Teilmenge eines bereits auf Lagerorte aufgeteilten Artikels bitte den tatsächlichen Fundort auswählen.');
+     plan=LV11.addition(row,entered,selected);
+    }`, 'additional quantity');
+ // Previous runtime overlays force the automation checkbox back on.
+ // Preserve the user's explicit preference; selecting a place stays possible.
+ once("if(String($('inv84Location')?.value||'').trim())$('inv84Apply').checked=true;",
+      '/* LV88212_NO_FORCED_AUTO */', 'context selector checkbox');
+ once("if(String($('inv84Location')?.value||'').trim()&&!context().apply){$('inv84Apply').checked=true;saveContext();contextMessage();}",
+      '/* LV88212_NO_FORCED_COUNT_AUTO */', 'additional-count checkbox');
+ return out;
+}
+
 async function shapeResponse(response,pathname,navigation){
  if(!response||!response.ok)return response;
  if(navigation)return withV88Html(response);
  if(!pathname.endsWith('/v87_ui.js')&&!pathname.endsWith('/v87_pdf.js')&&!pathname.endsWith('/local_backend.js')&&!pathname.endsWith('/inventory_ui.js')&&!pathname.endsWith('/inventory_core.js'))return response;
  const text=await response.text();
- const code=pathname.endsWith('/v87_pdf.js')?patchV886Pdf(text):pathname.endsWith('/v87_ui.js')?patchV889Ui(text):pathname.endsWith('/inventory_ui.js')?patchV8813InventoryUi(text):pathname.endsWith('/inventory_core.js')?patchV8816InventoryCore(text):patchV8813Backend(text);
+ const code=pathname.endsWith('/v87_pdf.js')?patchV886Pdf(text):pathname.endsWith('/v87_ui.js')?patchV889Ui(text):pathname.endsWith('/inventory_ui.js')?patchV88212InventoryUi(text):pathname.endsWith('/inventory_core.js')?patchV8816InventoryCore(text):patchV8813Backend(text);
  const headers=new Headers(response.headers);headers.delete('content-length');
  headers.set('content-type','application/javascript; charset=utf-8');
  return new Response(code,{status:response.status,statusText:response.statusText,headers});
@@ -1046,4 +1079,4 @@ if(typeof self!=='undefined'&&self.addEventListener){
   })());
  });
 }
-if(typeof module==='object'&&module.exports)module.exports={injectHtml,patchV87Ui,patchV885Ui,patchV886Ui,patchV87Pdf,patchV886Pdf,patchV888Ui,patchV888Backend,patchV889Focus,patchV889Ui,patchV889InventoryUi,patchV8810InventoryUi,patchV8811InventoryUi,patchV8811InventoryCore,patchV8812InventoryUi,patchV8813InventoryUi,patchV8813InventoryCore,patchV8816InventoryCore,patchV8813Backend,FILES,CACHE_NAME};
+if(typeof module==='object'&&module.exports)module.exports={injectHtml,patchV87Ui,patchV885Ui,patchV886Ui,patchV87Pdf,patchV886Pdf,patchV888Ui,patchV888Backend,patchV889Focus,patchV889Ui,patchV889InventoryUi,patchV8810InventoryUi,patchV8811InventoryUi,patchV8811InventoryCore,patchV8812InventoryUi,patchV8813InventoryUi,patchV88212InventoryUi,patchV8813InventoryCore,patchV8816InventoryCore,patchV8813Backend,FILES,CACHE_NAME};
