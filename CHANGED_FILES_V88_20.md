@@ -1,39 +1,29 @@
-# Lagerverwaltung Lovrencic V88.20 – Änderungsumfang
+# Lagerverwaltung Lovrencic V88.20 – Release
 
-**Auslieferungsart:** testfähiges Quellcode-Update zum manuellen GitHub-Upload. Die GitHub-Verbindung hat keine Schreibrechte (HTTP 403), daher weder Live-Commit noch automatische Freigabe.
+## Geänderte GitHub-Dateien
 
-## Installationsdateien
+1. `service-worker.js`: Cache/Versionskennung V88.20, V88.20-Module im korrekten Ladepfad; aktualisiert auch ältere Offline-HTML-Startseiten.
+2. `local_backend.js`: API-Version 88.20, sichere Sammelarchivierung und Wiederherstellung, technische Import-Nullbuchungen erlaubt ohne Bewegungsdaten zu löschen, gezählte Artikel geschützt. Eigene Tabellen für geräteübergreifenden PDF-Prüfstatus und I/1-Dublettenprüfung mit Konflikterkennung.
+3. `v88_4_export.js`: PDF-Einheit als Referenz, ergänzt den JSON-Prüfstand um `review_v8820` und `reviewed_at`.
+4. `sync_merge_v82.js`: neue Review-Tabellen in die Konflikterkennung aufgenommen (kein stilles Überschreiben).
+5. `v88_20_core.js`: Prüfentscheidungen, manuelle Nummernkorrektur, Verwechslungs-Vorschläge, offene Positionen.
+6. `v88_20_assistant.js`: Originalzeile mit Zoom und Ganzseitenansicht, Buchstaben-/Zahlenkorrektur, Zählwarnungen, Mehrfachauswahl, unabhängiger Dubletten-Prüfstatus, Archivierungsvorschau, Restore, Zusatzbericht.
+7. `v88_20_report.js`: separat gelistete *tatsächlich gezählte* Artikel ohne sichere Original-PDF-Position als PDF oder DOCX.
 
-Die beiden Installationswege (Windows PowerShell oder Python) verändern in einer entpackten Kopie des GitHub-Projekts genau sechs Programmdateien:
+## Grundsätze
 
-1. `local_backend.js` – neuer geschützter Archivierungs-Endpunkt mit Preview, Bestands-/Inventur-/Buchungssperren, Backup, Audit, erneuter Prüfung und transaktionaler Archivierung.
-2. `service-worker.js` – lädt die V88.20-Zusatzmodule und legt einen neuen PWA-Cache an.
-3. `v88_4_export.js` – beim PDF-Mengeneintrag gilt vorrangig die Einheit der Original-RONDO-PDF.
-4. `v88_20_core.js` – reine Prüf- und Entscheidungslogik für Artikelnummern und Sicherheitsregeln.
-5. `v88_20_report.js` – gezählte Zusatzartikel als PDF und Word-Dokument.
-6. `v88_20_assistant.js` – Anwenderoberfläche, Original-PDF-Ausschnitte, manuelle Artikelnummernkorrektur, Prüffortschritt, Sammelarchivierung und Hilfe.
+- Original-RONDO-PDF unverändert, kein automatischer Inventurabschluss.
+- Keine Nullwerte für ungezählte Positionen.
+- Keine automatische Übertragung von Zählwerten zwischen unterschiedlichen Artikel-IDs.
+- RONDO-PDF-Einheiten maßgeblich; Zahlen unverändert.
+- Vor Sammelarchivierung Backup, Audit und zweimalige Bestätigung.
+- Für fehlerhafte ungezählte Artikel werden bei Archivierung ausschließlich **leere** Draft-Inventurplatzhalter entfernt; gebuchte Mengen/Buchungen bleiben erhalten.
+- Prüfentscheidungen werden zusätzlich in `lager.db` gespeichert; gescannte Original-PDF bleibt im Browser.
 
-## Wichtige Schutzregeln
+## Testnachweise
 
-- Keine automatische Änderung der `lager.db` beim Installieren.
-- Neue Archivierung **entfernt keine Buchungen**. Sie setzt lediglich `articles.active=0` – nur bei Artikeln ohne Bestand, Anfangsbestand, Inventurzählungen, Buchungen, Lagerortbestände oder sonstige Verknüpfungen.
-- Bei Konflikten im PDF-Prüfstand wird nicht stillschweigend überschrieben.
-- PDF-Sichtprüfung verändert keine gezählten Mengen.
-- Kein Inventurabschluss durch diesen Assistenten.
-- Kein künstliches Nullsetzen ungeprüfter Positionen.
-- Die bekannte I/1-Verwechslung wird als Vorschlag behandelt, nicht blind gleichgesetzt.
+`test_v88_20_core.cjs`, `test_v88_20_report.cjs`, `test_v88_20_patch.py`,
+`test_v88_20_backend_real.cjs` (nur mit lokaler Sicherung der DB),
+`test_v88_20_browser.py` (Chrome UI mit isoliertem Datenbank-Stub).
 
-## Grenzen dieser Testversion
-
-- Die PDF-Prüfstände sind bislang browserlokal; Geräteübergreifende PDF-Review-Synchronisierung und ein vollständiger Browser-/Smartphone-Endtest fehlen.
-- Der echte GitHub-Branch konnte mangels Berechtigung nicht angelegt werden.
-- Die bestehende Einzel-Löschfunktion wird nicht verändert. Für sichere Mehrfachaktionen bitte ausschließlich die neue Archivierungsfunktion verwenden.
-- Das manuelle Prüfen am Originalbild bleibt bei scanbedingten OCR-Zweifeln erforderlich.
-
-## Tests
-
-- `test_v88_20_core.cjs`: Vorschläge, Status, manuelle I/1-Korrektur, Bestandsschutz, echte 0 vs. leer
-- `test_v88_20_report.cjs`: gezählt-only Auswahl, valide PDF
-- `test_v88_20_patch.py`: idempotente Quellcode-Patches, Backups, sechs Dateien, Node-Syntax, Einheitenkorrektur
-
-Diese Tests liefen erfolgreich in einer isolierten Umgebung. Kein Live-PWA-/Mehrgeräte-Test.
+Ein produktiver Zwei-Geräte-/GitHub-Pages-End-to-End-Test ist vor Ort erforderlich.

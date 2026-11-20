@@ -1,0 +1,37 @@
+ /* LV88_20_DUPLICATE_REVIEW_API: independent approval of I/1 pairs.
+    This NEVER deletes or archives; red technical blocks may still be marked reviewed. */
+ if(p==='/api/v88-20/duplicate-review'){
+  const table='rondo_duplicate_review_v8820';
+  const exists=Number(scalar("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",[table])||0)>0;
+  if(opt.method!=='POST'){
+   const list=exists?rows('SELECT pair_key,review_state,reviewed_at,notes FROM rondo_duplicate_review_v8820 ORDER BY pair_key'):[];
+   return response({ok:true,pairs:list,database_id:currentDbState().database_id});
+  }
+  const list=Array.isArray(d.items)?d.items:[];
+  if(!list.length||list.length>200)throw Error('Bitte 1 bis 200 I/1-Dubletten auswählen.');
+  const proposal=list.map(item=>{
+   const wrong=String(item.wrong_no||'').trim().toUpperCase();
+   const correct=String(item.correct_no||'').trim().toUpperCase();
+   if(!/^1[A-Z0-9_\/-]{3,24}$/.test(wrong)||correct!=='I'+wrong.slice(1))throw Error('Die gewählte Kombination ist keine eindeutige I/1-Dublette.');
+   const state=String(item.state||'');if(!['checked','later'].includes(state))throw Error('Ungültiger Prüfstatus.');
+   const notes=String(item.notes||'').slice(0,500);
+   const found=rows('SELECT article_no FROM articles WHERE article_no IN (?,?)',[wrong,correct]);
+   if(found.length!==2)throw Error('Ein Artikel der Dublette wurde zwischenzeitlich geändert: '+wrong);
+   return {key:wrong+'|'+correct,state,notes,expected:String(item.expected_reviewed_at||'')};
+  });
+  if(new Set(proposal.map(v=>v.key)).size!==proposal.length)throw Error('Dieselbe Dublette ist mehrfach ausgewählt.');
+  await assertInventoryWritable();
+  run('CREATE TABLE IF NOT EXISTS rondo_duplicate_review_v8820(pair_key TEXT PRIMARY KEY,review_state TEXT NOT NULL,reviewed_at TEXT NOT NULL,notes TEXT NOT NULL DEFAULT \'\')');
+  const previous=rows('SELECT pair_key,reviewed_at FROM rondo_duplicate_review_v8820');
+  const previousMap=new Map(previous.map(x=>[x.pair_key,x.reviewed_at]));
+  for(const item of proposal){if(String(previousMap.get(item.key)||'')!==item.expected)
+    throw Error('Diese Dublette wurde auf einem anderen Gerät geprüft. Bitte zuerst die aktuelle Liste laden.');}
+  const at=stamp();runTransaction(()=>{
+   for(const item of proposal){
+    run('INSERT OR REPLACE INTO rondo_duplicate_review_v8820(pair_key,review_state,reviewed_at,notes) VALUES(?,?,?,?)',[item.key,item.state,at,item.notes]);
+    audit(d.technician||setting('primary_technician','Techniker'),'DUBLETTEN-PRÜFUNG','Artikel',item.key,
+     'V88.20 '+item.state+' – ausdrücklich geprüft. Keine Änderung an Bestand oder Stammdaten. '+item.notes);
+   }
+  });
+  await persist();return response({ok:true,reviewed:proposal.length,reviewed_at:at,pairs:proposal.map(x=>({pair_key:x.key,review_state:x.state,reviewed_at:at,notes:x.notes}))});
+ }

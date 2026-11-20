@@ -28,12 +28,12 @@
  }
  function normalizeRow(row,update){
   const next={...row};
-  if(update.action==='later')return {...next,review_v8820:'later',reviewed_at:new Date().toISOString()};
+  if(update.action==='later')return {...next,review_v8820:'later',review_action:'defer',reviewed_at:new Date().toISOString()};
   if(!['confirmed','corrected'].includes(update.action))throw Error('Ungültige Prüfentscheidung.');
   const number=compact(update.article_no??row.article_no);
   if(!validArticle(number))throw Error('Bitte eine gültige Artikelnummer eingeben.');
-  next.article_no=number;next.review_v8820=update.action;next.reviewed_at=new Date().toISOString();
-  if(number!==compact(row.article_no)){next.manual_link=true;next.ocr_original_no=next.ocr_original_no||row.article_no;}
+  next.article_no=number;next.review_v8820=update.action;next.reviewed_at=new Date().toISOString();next.checked_at=next.reviewed_at;next.review_action='approved';
+  if(number!==compact(row.article_no)){next.manual_link=true;next.linked_article_id=null;next.ocr_original_no=next.ocr_original_no||row.article_no;}
   next.verified=true;
   // A PDF article number check must NEVER alter counting, movements or stock.
   return next;

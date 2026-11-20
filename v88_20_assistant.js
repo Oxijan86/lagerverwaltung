@@ -9,7 +9,7 @@
  const html=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const fmt=v=>Number(v||0).toLocaleString('de-DE',{maximumFractionDigits:4});
  const post=(path,body)=>root.api(path,{method:'POST',body:JSON.stringify(body)});
- const shell={snap:null,dbId:'',rows:[],articles:[],idx:0,filter:'pending',busy:false,full:false,scale:2.25,pdf:null,pdfHash:'',canvasKey:'',selected:new Set(),preview:null,visible:[],dataVersion:''};
+ const shell={snap:null,dbId:'',rows:[],articles:[],idx:0,filter:'pending',busy:false,full:false,scale:2.25,pdf:null,pdfHash:'',canvasKey:'',selected:new Set(),preview:null,visible:[],dataVersion:'',dbReviews:new Map(),duplicateReviews:new Map(),inventory:null};
  let installed=false;
  const css=document.createElement('style');css.textContent=`
  .lv8820-card{border:2px solid #86a8a0;border-radius:12px;background:#fff;color:#1b2723;padding:16px;margin:14px 0;box-sizing:border-box;max-width:100%}
@@ -46,6 +46,33 @@
  async function loadPDF(){const index=await root.api('/api/inventory-v75/index');shell.dbId=index.database_id||'current';
   shell.snap=await storedPdf();if(!shell.snap?.bytes||!shell.snap?.pages?.length)throw Error('Zuerst die Original-RONDO-PDF über die vorhandene RONDO-PDF-Importfunktion einlesen.');
   shell.rows=flat(shell.snap);shell.articles=await root.api('/api/articles');if(!Array.isArray(shell.articles))shell.articles=[];
+  const review=await root.api('/api/v88-20/pdf-review?hash='+encodeURIComponent(shell.snap.hash));
+  if(review.database_id!==shell.dbId)throw Error('Die Datenbank wurde gewechselt. Bitte die PDF-Prüfung neu öffnen.');
+  shell.dbReviews=new Map((review.positions||[]).map(r=>[r.position_key,r]));
+  shell.rows=shell.rows.map(r=>{const saved=shell.dbReviews.get(Core.rowKey(r));if(!saved)return r;
+   const original=r.ocr_original_no||r.article_no,number=Core.compact(saved.article_no);
+   return {...r,article_no:number,ocr_original_no:original,review_v8820:saved.review_state,
+    review_action:saved.review_state==='later'?'defer':'approved',reviewed_at:saved.reviewed_at,checked_at:saved.reviewed_at,
+    verified:saved.review_state==='later'?r.verified:true,
+    manual_link:number!==Core.compact(original)||!!r.manual_link,
+    linked_article_id:number!==Core.compact(r.article_no)?null:r.linked_article_id};});
+  if(shell.dbReviews.size){
+   const mirrored=await storedPdf(old=>{
+    const edited=flat(old).map(r=>{const v=shell.dbReviews.get(Core.rowKey(r));if(!v)return r;
+     const no=Core.compact(v.article_no),original=r.ocr_original_no||r.article_no,
+      matched=shell.articles.find(a=>Number(a.active)!==0&&Core.compact(a.article_no)===no);
+     return {...r,article_no:no,ocr_original_no:original,review_v8820:v.review_state,reviewed_at:v.reviewed_at,
+      review_action:v.review_state==='later'?'defer':'approved',checked_at:v.reviewed_at,
+      verified:v.review_state==='later'?r.verified:true,manual_link:no!==Core.compact(original)&&!!matched,
+      linked_article_id:matched?Number(matched.id):null};});
+    const reviews={...(old.review_v8820||{})};
+    for(const [key,v] of shell.dbReviews)reviews[key]={article_no:v.article_no,review_v8820:v.review_state,reviewed_at:v.reviewed_at};
+    return {...old,edited,review_v8820:reviews,updated:new Date().toISOString()};
+   });
+   shell.snap=mirrored;shell.rows=flat(mirrored);
+  }
+  const sessions=(await root.api('/api/inventory-v75/index')).sessions||[];
+  const draft=sessions.find(s=>s.status==='draft');shell.inventory=draft?await root.api('/api/inventory-v75/get?id='+encodeURIComponent(draft.id)):null;
   shell.pdf=null;shell.pdfHash='';shell.canvasKey='';shell.idx=0;const pending=Core.remaining(shell.rows);if(pending.length)shell.idx=pending[0].index;
  }
  function ensureModal(){let modal=$('lv8820Modal');if(modal)return modal;
@@ -72,6 +99,7 @@
    <div><h3>Artikel vergleichen</h3><p><b>OCR/ursprüngliche Nummer:</b> ${html(old)}</p><p><b>Aktuelle Nummer:</b> ${html(current)}</p><p class="lv8820-small">${html(row.description||'Keine Bezeichnung erkannt')} · Einheit aus RONDO-PDF: ${html(row.unit||'–')}</p>
    <label><b>Richtige Artikelnummer</b><input type="text" id="lv8820ManualNo" maxlength="48" autocomplete="off" spellcheck="false" value="${html(current)}" list="lv8820Suggest"><datalist id="lv8820Suggest"></datalist></label>
    <p class="lv8820-small">Bei unsicherer Erkennung die Nummer direkt aus dem Originalbild abtippen.</p><div id="lv8820Matches" class="lv8820-note"><b>Passende Stammdaten:</b><ul>${previewFor(row)}</ul></div>
+   <div id="lv8820CountInfo" class="lv8820-note" aria-live="polite"></div>
    <div class="lv8820-actions"><button id="lv8820Confirm" type="button" class="primary">Artikel prüfen und weiter</button><button id="lv8820Later" class="secondary" type="button">Später prüfen</button></div>
    <p class="lv8820-small">Die bestätigte PDF-Nummer wird gespeichert. Kein Lagerartikel wird angelegt, zusammengeführt oder gelöscht.</p></div></div>
    <div class="lv8820-actions"><label class="lv8820-small">Position suchen <input id="lv8820Jump" type="search" placeholder="z. B. I1000329 oder 4:5" style="max-width:250px"></label><button id="lv8820JumpGo" type="button">Finden</button></div>`;
@@ -81,11 +109,17 @@
   $('lv8820Confirm').onclick=()=>confirmRow().catch(e=>message(e.message,true));
   $('lv8820Later').onclick=()=>saveRow('later',row.article_no).catch(e=>message(e.message,true));
   $('lv8820JumpGo').onclick=()=>{const k=Core.compact($('lv8820Jump').value);const found=shell.rows.findIndex(x=>Core.compact(x.article_no)===k||Core.rowKey(x)===k);if(found<0)message('Artikel in dieser PDF nicht gefunden.',true);else showIndex(found)};
+  const info=$('lv8820CountInfo'),items=shell.inventory?.items||[];
+  const renderCountInfo=()=>{const value=Core.compact($('lv8820ManualNo').value),same=items.find(i=>Core.compact(i.article_no)===value),
+   related=items.filter(i=>Core.variants(value).includes(Core.compact(i.article_no))&&Core.compact(i.article_no)!==value&&i.counted_stock!==null&&i.counted_stock!==undefined);
+   const own=same?.counted_stock===null||same?.counted_stock===undefined?'Noch nicht gezählt':fmt(same.counted_stock)+' '+String(same.unit||'');
+   info.textContent='Inventur zur Eingabe: '+own+(related.length?' · ACHTUNG: Unter ähnlicher Artikelnummer bereits gezählt: '+related.map(i=>i.article_no+' = '+fmt(i.counted_stock)+' '+(i.unit||'')).join(', ')+'. Diese Mengen werden nicht automatisch verschoben.':'');};
+  renderCountInfo();
   const input=$('lv8820ManualNo'),list=$('lv8820Suggest');
   const refill=()=>{const value=Core.compact(input.value),matches=shell.articles.filter(a=>a.active!==0&&Core.compact(a.article_no).includes(value)).slice(0,25);
    list.innerHTML=matches.map(a=>`<option value="${html(a.article_no)}">${html(a.description)}</option>`).join('');
-   $('lv8820Matches').innerHTML='<b>Passende Stammdaten:</b><ul>'+previewFor({...row,article_no:value})+'</ul>'};
-  input.addEventListener('input',refill);refill();showPDF(row,page,position).catch(e=>{$('lv8820PdfImage').textContent='Originalausschnitt nicht verfügbar: '+e.message+' – Artikelnummer bitte nur nach Sichtkontrolle bestätigen.'});
+   $('lv8820Matches').innerHTML='<b>Passende Stammdaten:</b><ul>'+previewFor({...row,article_no:value})+'</ul>';renderCountInfo()};
+  input.addEventListener('input',refill);refill();showPDF(row,page,position).catch(e=>{const target=$('lv8820PdfImage');if(target)target.textContent='Originalausschnitt nicht verfügbar: '+e.message+' – Artikelnummer bitte nur nach Sichtkontrolle bestätigen.'});
  }
  async function saveRow(action,number){if(shell.busy)return;shell.busy=true;try{
   const base=shell.rows[shell.idx],original=Core.compact(base.article_no),changed=action==='later'?null:Core.compact(number);
@@ -94,12 +128,23 @@
   if(action!=='later'&&shell.rows.some((r,i)=>i!==shell.idx&&Core.compact(r.article_no)===upd.article_no)){
    if(!confirm('Diese Artikelnummer steht bereits an einer anderen PDF-Position. Beide Positionen behalten und nur die Nummer prüfen?'))return;
   }
-  const key=Core.rowKey(base),updated=await storedPdf(old=>{
+  const key=Core.rowKey(base),existing=shell.dbReviews.get(key);
+  const saved=await post('/api/v88-20/pdf-review',{hash:shell.snap.hash,key,
+   article_no:upd.article_no,state:upd.review_v8820,source_no:base.ocr_original_no||base.article_no,
+   expected_reviewed_at:existing?.reviewed_at||''});
+  shell.dbReviews.set(key,{position_key:key,article_no:saved.article_no,review_state:saved.state,reviewed_at:saved.reviewed_at});
+  const updated=await storedPdf(old=>{
    const list=flat(old),at=list.findIndex(r=>Core.rowKey(r)===key);if(at<0)throw Error('Die PDF-Position wurde zwischenzeitlich geändert.');
    // Protect concurrent edits of the SAME row; unrelated review progress is preserved.
    if(Core.compact(list[at].article_no)!==original||(String(list[at].reviewed_at||'')!==String(base.reviewed_at||'')))throw Error('Diese Position wurde in einem anderen Fenster geändert. Bitte neu öffnen und beide Prüfergebnisse vergleichen.');
    const full=Core.normalizeRow(list[at],{action:upd.review_v8820==='later'?'later':upd.review_v8820,article_no:upd.article_no});
-   list[at]=full;const review={...(old.review_v8820||{})};review[key]={review_v8820:full.review_v8820,reviewed_at:full.reviewed_at};
+   full.reviewed_at=saved.reviewed_at;full.checked_at=saved.reviewed_at;
+   if(upd.review_v8820!=='later'){
+    const exact=shell.articles.find(a=>Number(a.active)!==0&&Core.compact(a.article_no)===upd.article_no);
+    full.linked_article_id=exact?Number(exact.id):null;
+    full.manual_link=!!exact&&Core.compact(base.article_no)!==upd.article_no;
+   }
+   list[at]=full;const review={...(old.review_v8820||{})};review[key]={review_v8820:full.review_v8820,reviewed_at:full.reviewed_at,article_no:full.article_no};
    return {...old,edited:list,review_v8820:review,updated:new Date().toISOString()}
   });
   shell.snap=updated;shell.rows=flat(updated);message(action==='later'?'Position zurückgestellt.':'Artikelnummer geprüft und gespeichert.');nextOpen();
@@ -117,7 +162,7 @@
   await documentPage.render({canvasContext:source.getContext('2d'),viewport}).promise;
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');let srcY=0,srcH=source.height;
   if(!shell.full&&Number.isInteger(position)&&position>=1&&position<=10){const factor=viewport.height/841.68;
-   srcY=Math.round((264+(position-1)*45.4)*factor);srcH=Math.round(49*factor);srcY=Math.max(0,Math.min(srcY,source.height-1));srcH=Math.min(srcH,source.height-srcY)}
+   srcY=Math.round((253+(position-1)*45.4)*factor);srcH=Math.round(56*factor);srcY=Math.max(0,Math.min(srcY,source.height-1));srcH=Math.min(srcH,source.height-srcY)}
   canvas.width=source.width;canvas.height=srcH;ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,srcY,source.width,srcH,0,0,canvas.width,canvas.height);
   // Rendering can finish after the user changed the selected row.
   if(el!==$('lv8820PdfImage')||shell.rows[shell.idx]!==row)return;
@@ -128,30 +173,62 @@
   <p class="lv8820-small">Artikel auswählen, Schutzprüfung durchführen und nur nach Bestätigung archivieren. Gezählt, gebucht oder mit Bestand: gesperrt. Keine Buchungen werden gelöscht.</p>
   <label>Suchen <input type="search" id="lv8820ArchiveSearch" placeholder="Artikelnummer oder Bezeichnung"></label>
   <label><input type="checkbox" id="lv8820ArchiveSuspects" checked> Nur mögliche I/1-Fehlartikel anzeigen</label>
+  <label><input type="checkbox" id="lv8820ArchiveHideChecked"> Als geprüft markierte Dubletten ausblenden</label>
   <div id="lv8820ArchiveStatus" role="status" class="lv8820-status">Öffnen zum Laden.</div>
   <div class="lv8820-actions"><button type="button" id="lv8820ArchiveLoad" class="secondary">Artikel laden</button><button type="button" id="lv8820ArchiveAll" class="secondary">Sichtbare markieren</button><button type="button" id="lv8820ArchiveClear" class="secondary">Auswahl aufheben</button></div>
-  <div id="lv8820ArchiveList" class="lv8820-list"></div><div class="lv8820-actions"><button type="button" id="lv8820ArchiveCheck" class="primary">Auswahl auf Sicherheit prüfen</button></div><div id="lv8820ArchivePreview"></div>`;
+  <div id="lv8820ArchiveList" class="lv8820-list"></div><div class="lv8820-actions"><button type="button" id="lv8820MarkChecked" class="secondary">Markierte Dubletten als geprüft markieren</button><button type="button" id="lv8820MarkLater" class="secondary">Prüfung zurückstellen</button></div><div class="lv8820-actions"><button type="button" id="lv8820ArchiveCheck" class="primary">Auswahl auf Sicherheit prüfen</button><button type="button" id="lv8820Restore" class="secondary">Archivierte Artikel wiederherstellen</button></div><div id="lv8820ArchivePreview"></div>`;
   d.addEventListener('toggle',()=>{if(d.open&&!shell.archiveLoaded)loadArticles().catch(e=>archiveMessage(e.message,true))});
   $('master').insertBefore(d,$('master').children[1]||null);
   $('lv8820ArchiveLoad').onclick=()=>loadArticles().catch(e=>archiveMessage(e.message,true));
   $('lv8820ArchiveSearch').oninput=renderArchiveList;
   $('lv8820ArchiveSuspects').onchange=renderArchiveList;
+  $('lv8820ArchiveHideChecked').onchange=renderArchiveList;
+  $('lv8820MarkChecked').onclick=()=>markDuplicateReview('checked').catch(e=>archiveMessage(e.message,true));
+  $('lv8820MarkLater').onclick=()=>markDuplicateReview('later').catch(e=>archiveMessage(e.message,true));
   $('lv8820ArchiveAll').onclick=()=>{for(const a of shell.visible)shell.selected.add(Number(a.id));renderArchiveList()};
   $('lv8820ArchiveClear').onclick=()=>{shell.selected.clear();renderArchiveList()};
   $('lv8820ArchiveCheck').onclick=()=>archivePreview().catch(e=>archiveMessage(e.message,true));
+  $('lv8820Restore').onclick=()=>restoreArticle().catch(e=>archiveMessage(e.message,true));
+ }
+ async function restoreArticle(){const no=Core.compact(prompt('Welche archivierte Artikelnummer möchtest du wiederherstellen?')||'');if(!no)return;
+  const a=shell.articles.find(x=>Core.compact(x.article_no)===no&&Number(x.active)===0);
+  if(!a)throw Error('Diese Artikelnummer ist nicht archiviert oder nicht gefunden.');
+  if(!confirm(no+' – '+a.description+' wieder aktivieren? Es werden keine alten Zählungen automatisch verändert.'))return;
+  const result=await post('/api/articles/v88-20/archive-restore',{ids:[a.id],confirmation:'WIEDERHERSTELLEN'});
+  await loadArticles();archiveMessage(result.restored+' Artikel wiederhergestellt. Bitte eventuell offene Inventurpositionen prüfen.');
  }
  function archiveMessage(messageText,error=false){message(messageText,error,'lv8820ArchiveStatus')}
  async function loadArticles(){const result=await root.api('/api/articles');if(!Array.isArray(result))throw Error('Artikelstamm konnte nicht gelesen werden.');
-  shell.articles=result;shell.archiveLoaded=true;shell.preview=null;renderArchiveList();archiveMessage('Artikel geladen. Wähle Fehlartikel aus und starte die Sicherheitsprüfung.')}
+  shell.articles=result;const review=await root.api('/api/v88-20/duplicate-review');shell.duplicateReviews=new Map((review.pairs||[]).map(v=>[v.pair_key,v]));
+  shell.archiveLoaded=true;shell.preview=null;renderArchiveList();archiveMessage('Artikel geladen. Geprüft/Später ist unabhängig von einer technisch erlaubten Archivierung.')}
+ const duplicateKey=a=>{const no=Core.compact(a.article_no);return no.startsWith('1')?no+'|I'+no.slice(1):''};
+ async function markDuplicateReview(state){
+  const selected=shell.articles.filter(a=>shell.selected.has(Number(a.id))&&Number(a.active)!==0);
+  const byNo=new Set(shell.articles.map(a=>Core.compact(a.article_no)));
+  const items=selected.filter(a=>{const no=Core.compact(a.article_no);return no.startsWith('1')&&byNo.has('I'+no.slice(1))}).map(a=>{
+   const wrong=Core.compact(a.article_no),pairKey=duplicateKey(a);
+   return {wrong_no:wrong,correct_no:'I'+wrong.slice(1),state,
+    expected_reviewed_at:shell.duplicateReviews.get(pairKey)?.reviewed_at||'',notes:state==='checked'?'Manuell geprüft – ohne Stammdatenänderung':'Zur erneuten Prüfung zurückgestellt'};
+  });
+  if(!items.length)throw Error('Bitte mindestens ein I/1-Artikelpaar auswählen.');
+  if(items.length>200)throw Error('Maximal 200 Dubletten pro Sammelprüfung.');
+  const result=await post('/api/v88-20/duplicate-review',{items});
+  for(const row of result.pairs||[])shell.duplicateReviews.set(row.pair_key,row);
+  shell.selected.clear();renderArchiveList();archiveMessage(`${result.reviewed} Artikelpaare als ${state==='checked'?'geprüft':'zurückgestellt'} gespeichert. Keine Buchung oder Artikel geändert.`);
+ }
  function renderArchiveList(){if(!shell.archiveLoaded)return;const query=Core.compact($('lv8820ArchiveSearch').value),onlySuspects=$('lv8820ArchiveSuspects').checked;
   const allActive=shell.articles.filter(a=>Number(a.active)!==0),byCode=new Set(allActive.map(a=>Core.compact(a.article_no)));
+  const hideChecked=$('lv8820ArchiveHideChecked').checked;
   const filtered=allActive.filter(a=>(!query||Core.compact(a.article_no).includes(query)||String(a.description||'').toUpperCase().includes(query))&&
-   (!onlySuspects||Core.compact(a.article_no).startsWith('1')&&byCode.has('I'+Core.compact(a.article_no).slice(1))));
+   (!onlySuspects||Core.compact(a.article_no).startsWith('1')&&byCode.has('I'+Core.compact(a.article_no).slice(1)))&&
+   (!hideChecked||shell.duplicateReviews.get(duplicateKey(a))?.review_state!=='checked'));
   shell.visible=filtered.slice(0,100);archiveMessage(`${filtered.length} passende Artikel (max. 100 gleichzeitig angezeigt), ${shell.selected.size} ausgewählt.`);
   const list=$('lv8820ArchiveList');list.innerHTML='';
   for(const a of shell.visible){const wrap=make('div',undefined,{className:'lv8820-reviewrow'}),label=make('label'),check=make('input',undefined,{type:'checkbox',checked:shell.selected.has(Number(a.id))});
    check.setAttribute('aria-label','Artikel '+a.article_no+' auswählen');check.onchange=()=>{if(check.checked)shell.selected.add(Number(a.id));else shell.selected.delete(Number(a.id));archiveMessage(`${shell.selected.size} Artikel ausgewählt.`)};
-   label.append(make('b',a.article_no),document.createTextNode(' – '+String(a.description||'')+' · Bestand: '+fmt(a.stock)));
+   const review=shell.duplicateReviews.get(duplicateKey(a));
+   label.append(make('b',a.article_no),document.createTextNode(' – '+String(a.description||'')+' · Bestand: '+fmt(a.stock)+
+    (review?' · Prüfstatus: '+(review.review_state==='checked'?'geprüft':'zurückgestellt'):' · noch nicht geprüft')));
    wrap.append(check,label);list.append(wrap)}
   $('lv8820ArchivePreview').replaceChildren();shell.preview=null;
  }
@@ -159,7 +236,7 @@
   const result=await post('/api/articles/v88-20/archive-preview',{ids});shell.preview=result;
   const holder=$('lv8820ArchivePreview');holder.innerHTML=`<div class="lv8820-card"><h3>Sicherheitsprüfung</h3>
    <p><b>${(result.allowed||[]).length} sicher archivierbar</b> · ${(result.blocked||[]).length} gesperrt</p>
-   <p class="lv8820-small">Archivierung blendet die gewählten unbenutzten Fehlartikel aus, ohne eine einzige Buchung zu löschen. Bestand oder Zählungen bleiben unverändert.</p>
+   <p class="lv8820-small">Technische Nullbuchungen bleiben erhalten. Ausschließlich komplett ungefüllte Platzhalter einer laufenden Inventur werden entfernt, damit archivierte Fehlartikel keine offenen Pflichtzeilen hinterlassen. Gezählt und gebucht bleibt unverändert.</p>
    <div class="lv8820-list"><table class="lv8820-table"><thead><tr><th>Artikel</th><th>Ergebnis</th></tr></thead><tbody>${[...(result.allowed||[]).map(x=>`<tr><td>${html(x.article_no)}</td><td>Archivierung möglich</td></tr>`),...(result.blocked||[]).map(x=>`<tr><td>${html(x.article_no||x.id)}</td><td>${html((x.reasons||[]).join('; '))}</td></tr>`)].join('')}</tbody></table></div>
    <div class="lv8820-actions"><button type="button" id="lv8820ArchiveCommit" class="primary" ${(result.allowed||[]).length?'':'disabled'}>Nur freigegebene Artikel archivieren</button></div></div>`;
   $('lv8820ArchiveCommit').onclick=()=>archiveCommit().catch(e=>archiveMessage(e.message,true));
@@ -167,7 +244,7 @@
  async function archiveCommit(){const allowed=shell.preview?.allowed||[];if(!allowed.length)throw Error('Keine Artikel freigegeben.');
   if(!confirm(`Es werden ${allowed.length} unbenutzte Artikel archiviert. Keine Buchungen oder Zählungen werden gelöscht. Fortfahren?`))return;
   const typed=prompt('Zur zweiten Bestätigung bitte ARCHIVIEREN eingeben.');if(typed!=='ARCHIVIEREN')return;
-  const ids=allowed.map(x=>Number(x.id));const response=await post('/api/articles/v88-20/archive-commit',{ids,confirmation:'ARCHIVIEREN'});
+  const ids=allowed.map(x=>Number(x.id));const response=await post('/api/articles/v88-20/archive-commit',{ids,signature:shell.preview.signature,confirmation:'ARCHIVIEREN'});
   shell.selected.clear();shell.preview=null;await loadArticles();archiveMessage(`${response.archived} Artikel archiviert. Backup und Audit-Protokoll wurden erstellt.`);
  }
 
@@ -212,7 +289,7 @@
   const d=make('div',undefined,{id:'lv8820Inventory',className:'lv8820-card'});d.innerHTML=`<h3>V88.20 – Geführte RONDO-PDF-Sichtprüfung</h3>
   <p>Rote oder unsichere Artikel direkt im vergrößerten Original prüfen, Artikelnummern manuell korrigieren und Positionen als erledigt markieren – ohne Zählmengen zu ändern.</p>
   <div class="lv8820-actions"><button class="primary" type="button" id="lv8820Open">PDF-Prüfung starten / fortsetzen</button><button class="secondary" type="button" id="lv8820OldReview">Bisherige RONDO-PDF-Funktion</button></div>
-  <div class="lv8820-actions"><button class="secondary" id="lv8820CompanyReport" type="button">Gezählte Artikel ohne Firmen-PDF-Position als PDF/Word</button></div><p class="lv8820-small">PDF-Prüfdaten liegen zunächst in diesem Browser. Vor einem Gerätewechsel den JSON-Prüfstand sichern und Synchronisierung kontrollieren. Die Original-PDF muss vorher über die bestehende Importfunktion einmal eingelesen worden sein.</p>`;
+  <div class="lv8820-actions"><button class="secondary" id="lv8820CompanyReport" type="button">Gezählte Artikel ohne Firmen-PDF-Position als PDF/Word</button></div><p class="lv8820-small">Prüfentscheidungen werden in der lager.db gespeichert und über die bestehende Dateisynchronisierung übertragen. Der Original-PDF-Scan bleibt lokal und muss auf einem zweiten Gerät einmal importiert werden. JSON-Sicherung bleibt zusätzlich empfohlen.</p>`;
   section.insertBefore(d,section.children[1]||null);
   $('lv8820Open').onclick=()=>openReview().catch(e=>alert(e.message));
   $('lv8820OldReview').onclick=()=>root.LV87?.restorePdf?.();
@@ -224,9 +301,9 @@
   <p><b>1.</b> Original-RONDO-PDF mit der vorhandenen Importfunktion einlesen. <b>2.</b> Unter Inventur „PDF-Prüfung starten“ wählen.</p>
   <p><b>3.</b> Die hervorgehobene Originalzeile ansehen. Falls die Nummer falsch erkannt wurde, die richtige Artikelnummer eintippen und „Artikel prüfen und weiter“ wählen.</p>
   <p><b>4.</b> Bei Unsicherheit „Später prüfen“ wählen. Geprüfte Zeilen bleiben gespeichert. Mengen bleiben unverändert und ungezählte Artikel erhalten keine Null.</p>
-  <p><b>5.</b> Unter Stammdaten falsche Artikel mehrfach auswählen, „Auf Sicherheit prüfen“ wählen und nur freigegebene Artikel archivieren. Buchungen und Zählungen werden nicht gelöscht.</p>
+  <p><b>5.</b> Unter Stammdaten falsche Artikel mehrfach auswählen: unabhängig von einer technischen Sperre als geprüft markieren oder nur freigegebene Artikel archivieren. Gezählte Mengen bleiben erhalten.</p>
   <p><b>6.</b> Unter Inventur den Bericht „Gezählte Artikel ohne Firmen-PDF-Position“ bei Bedarf als PDF/Word herunterladen.</p>
-  <p><b>Gerätewechsel:</b> Den PDF-Prüfstand als JSON sichern und die vorhandene Dateisynchronisierung kontrollieren. Die lokale PDF-Datei und dieser Prüfdialog werden noch nicht automatisch über die Cloud mit einem anderen Gerät synchronisiert.</p>`;
+  <p><b>Gerätewechsel:</b> Die lager.db synchronisieren; Prüfentscheidungen werden darin gespeichert. Die gescannte Original-PDF bleibt lokal im jeweiligen Browser und muss auf einem zweiten Gerät einmal importiert werden. JSON-Prüfstand als zusätzliche Sicherung herunterladen.</p>`;
   section.insertBefore(d,section.children[1]||null);
  }
  function init(){if(installed)return;installed=true;inventoryPanel();archivePanel();helpPanel();root.LV8820={openReview,loadPDF,archivePreview,Core};}

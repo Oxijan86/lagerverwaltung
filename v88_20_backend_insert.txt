@@ -1,46 +1,69 @@
- 
- /* LV88_20_SAFE_BATCH_ARCHIVE: SELECT / PREVIEW / COMMIT - never force-delete history */
- if(p==='/api/articles/v88-20/archive-preview'||p==='/api/articles/v88-20/archive-commit'){
-  if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet. Bitte zuerst als Administrator anmelden.');
+ /* LV88_20_SAFE_BATCH_ARCHIVE: guarded selection + preview + archive + restore.
+    Never call /api/article/delete, never delete movements, stock bins or positive counts. */
+ if(p==='/api/articles/v88-20/archive-preview'||p==='/api/articles/v88-20/archive-commit'||p==='/api/articles/v88-20/archive-restore'){
+  if(!await adminAuthorized(d,opt))throw Error('Bitte zuerst die Stammdaten als Administrator freischalten.');
   const ids=[...new Set((Array.isArray(d.ids)?d.ids:[]).map(Number))];
-  if(!ids.length||ids.length>200||ids.some(x=>!Number.isInteger(x)||x<1))throw Error('Bitte 1 bis 200 gültige Artikel auswählen.');
-  const exists=(t)=>Number(scalar('SELECT COUNT(*) FROM sqlite_master WHERE type=\'table\' AND name=?',[t])||0)>0;
-  const refCount=(table,id)=>exists(table)?Number(scalar('SELECT COUNT(*) FROM '+table+' WHERE article_id=?',[id])||0):0;
-  function check(id){
-   const a=articles().find(x=>Number(x.id)===id);
-   if(!a)return {id,article_no:'?',reasons:['Artikel nicht gefunden'],allowed:false};
-   const reasons=[];
-   if(Number(a.active)!==1)reasons.push('Bereits archiviert oder inaktiv');
-   if(Math.abs(Number(a.stock||0))>0.0000001)reasons.push('Buchbestand ist nicht null');
-   if(Math.abs(Number(a.initial_stock||0))>0.0000001)reasons.push('Anfangsbestand ist nicht null');
-   const references=[
-    ['movements','Buchungshistorie vorhanden'],
-    ['inventory_counts','In einer Inventur verwendet'],
-    ['service_pdf_imports','Mit Servicebericht verknüpft'],
-    ['service_pdf_machine_usage','In Servicebericht-Auswertung verwendet'],
-    ['stock_bins_v86','Lagerplatz-Eintrag vorhanden'],
-    ['stock_bin_moves_v86','Umlagerungsprotokoll vorhanden'],
-    ['import_position_results','Importprotokoll vorhanden']
-   ];
-   for(const [table,label] of references){if(refCount(table,id)>0)reasons.push(label)}
-   return {id,article_no:String(a.article_no),description:String(a.description||''),allowed:reasons.length===0,reasons};
+  if(!ids.length||ids.length>200||ids.some(x=>!Number.isSafeInteger(x)||x<1))throw Error('Bitte 1 bis 200 gültige Artikel auswählen.');
+  const exists=t=>Number(scalar("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",[t])||0)>0;
+  const records=(t,id)=>exists(t)?rows('SELECT * FROM '+t+' WHERE article_id=?',[id]):[];
+  const isZero=n=>Number.isFinite(Number(n))&&Math.abs(Number(n))<0.0000001;
+  const pendingRows=id=>exists('inventory_counts')?rows("SELECT c.session_id,c.counted_stock,c.base_stock,c.bin_parts_json,s.status FROM inventory_counts c JOIN inventory_sessions s ON s.id=c.session_id WHERE c.article_id=?",[id]):[];
+  const guard=id=>{
+   const a=rows('SELECT * FROM articles WHERE id=?',[id])[0];
+   if(!a)return {id,article_no:'?',description:'',allowed:false,reasons:['Artikel existiert nicht'],discardDraftRows:0};
+   const reasons=[],movements=records('movements',id),counts=pendingRows(id),bins=records('stock_bins_v86',id),imports=records('import_position_results',id);
+   if(Number(a.active)!==1)reasons.push('Bereits archiviert');
+   if(!isZero(a.initial_stock))reasons.push('Anfangsbestand ist nicht null');
+   const currentStock=Number(articles().find(x=>Number(x.id)===id)?.stock??0);
+   if(!isZero(currentStock))reasons.push('Aktueller Buchbestand ist nicht null');
+   if(movements.some(m=>!isZero(m.quantity)||m.source!=='Materialanlage / CSV-SAP-Import'||m.movement_type!=='IN'||String(m.customer||'').trim()||String(m.ticket||'').trim()))reasons.push('Echte Buchung oder Buchungshistorie vorhanden');
+   if(counts.some(c=>c.counted_stock!==null&&c.counted_stock!==undefined))reasons.push('Inventur wurde bereits gezählt (auch Zählwert 0)');
+   if(counts.some(c=>!isZero(c.base_stock)||String(c.bin_parts_json||'').trim().replace(/^\[\]$/,'')!==''))reasons.push('Inventur enthält erfasste Anfangs- oder Lagerplatzdaten');
+   if(bins.length)reasons.push('Lagerplatzdatensätze vorhanden');
+   if(records('stock_bin_moves_v86',id).length)reasons.push('Umlagerungshistorie vorhanden');
+   if(records('service_pdf_imports',id).length||records('service_pdf_machine_usage',id).length)reasons.push('Servicebericht-Referenzen vorhanden');
+   if(imports.some(x=>x.source!=='csv'||!isZero(x.quantity)||x.status!=='created'))reasons.push('Import enthält eine Materialbuchung oder unbekannte Herkunft');
+   // Fail closed if newer modules introduce additional article relations.
+   const known=new Set(['articles','movements','inventory_counts','stock_bins_v86','stock_bin_moves_v86','service_pdf_imports','service_pdf_machine_usage','import_position_results','article_machines']);
+   for(const table of rows("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")){
+    if(known.has(table.name)||!/^[A-Za-z_][A-Za-z0-9_]*$/.test(table.name))continue;
+    const cols=rows('PRAGMA table_info('+table.name+')');
+    if(cols.some(c=>c.name==='article_id')&&records(table.name,id).length)reasons.push('Weitere verknüpfte Datensätze: '+table.name);
+   }
+   return {id,article_no:String(a.article_no),description:String(a.description||''),allowed:reasons.length===0,reasons,
+    technicalZeroBookings:movements.length,discardDraftRows:counts.filter(c=>c.status==='draft'&&c.counted_stock===null).length};
+  };
+  const candidates=ids.map(guard),allowed=candidates.filter(x=>x.allowed),blocked=candidates.filter(x=>!x.allowed);
+  const signature=JSON.stringify(allowed.map(x=>[x.id,x.article_no,x.technicalZeroBookings,x.discardDraftRows]));
+  if(p.endsWith('/archive-preview'))return response({ok:true,allowed,blocked,requested:ids.length,signature});
+  if(p.endsWith('/archive-restore')){
+   if(d.confirmation!=='WIEDERHERSTELLEN')throw Error('Wiederherstellung bitte ausdrücklich bestätigen.');
+   const all=ids.map(id=>rows('SELECT id,article_no,active FROM articles WHERE id=?',[id])[0]);
+   if(all.some(a=>!a||Number(a.active)!==0))throw Error('Mindestens ein Artikel ist nicht archiviert. Keine Änderungen.');
+   await createBackup('Sicherheitsbackup','V88.20 – vor Artikel-Wiederherstellung');
+   runTransaction(()=>{for(const a of all){run('UPDATE articles SET active=1 WHERE id=? AND active=0',[a.id]);
+    audit('Administrator','WIEDERHERSTELLUNG','Artikel',String(a.id),'V88.20 aus Archiv wiederhergestellt: '+a.article_no);}});
+   await persist();return response({ok:true,restored:all.length,ids});
   }
-  let candidates=ids.map(check),allowed=candidates.filter(x=>x.allowed),blocked=candidates.filter(x=>!x.allowed);
-  if(p.endsWith('/archive-preview'))return response({ok:true,allowed,blocked,requested:ids.length});
-  if(d.confirmation!=='ARCHIVIEREN')throw Error('Bitte die Archivierung ausdrücklich bestätigen.');
+  if(d.confirmation!=='ARCHIVIEREN')throw Error('Archivierung bitte ausdrücklich bestätigen.');
   if(!allowed.length)return response({ok:false,archived:0,blocked,reason:'Keine sicher archivierbaren Artikel'},409);
-  await createBackup('Sicherheitsbackup','V88.20 – sichere Sammelarchivierung von '+allowed.length+' Artikeln');
-  // Recheck in the same synchronous transaction before changing anything.
-  const completed=[];
+  if(blocked.length||signature!==String(d.signature||''))throw Error('Die geprüfte Auswahl hat sich verändert. Bitte die Sicherheitsvorschau erneut öffnen. Es wurde nichts archiviert.');
+  await assertInventoryWritable();
+  await createBackup('Sicherheitsbackup','V88.20 – vor sicherer Archivierung von '+allowed.length+' Artikeln');
+  const completed=[];let removedEmptyRows=0;
   runTransaction(()=>{
-   for(const proposal of allowed){
-    const current=check(proposal.id);
-    if(!current.allowed)throw Error('Artikel '+proposal.article_no+' wurde zwischenzeitlich verändert. Es wurde nichts archiviert.');
+   for(const proposal of allowed){const current=guard(proposal.id);
+    if(!current.allowed||current.article_no!==proposal.article_no||current.discardDraftRows!==proposal.discardDraftRows)throw Error('Artikel '+proposal.article_no+' hat sich verändert; keine Archivierung durchgeführt.');
+    // Only completely uncounted placeholders from OPEN sessions are removed.
+    // Real counts, historical sessions, movements and imports are NEVER deleted.
+    if(current.discardDraftRows){
+     run("DELETE FROM inventory_counts WHERE article_id=? AND counted_stock IS NULL AND session_id IN (SELECT id FROM inventory_sessions WHERE status='draft')",[proposal.id]);
+     removedEmptyRows+=current.discardDraftRows;
+    }
     run('UPDATE articles SET active=0 WHERE id=? AND active=1',[proposal.id]);
-    audit('Administrator','ARCHIVIERUNG','Artikel',String(proposal.id),'V88.20 sicher archiviert: '+proposal.article_no+' – '+proposal.description);
+    audit('Administrator','ARCHIVIERUNG','Artikel',String(proposal.id),'V88.20 sicher archiviert: '+proposal.article_no+'; technische Nullbuchungen unverändert; '+current.discardDraftRows+' ungefüllte Inventurplatzhalter entfernt');
     completed.push(proposal.id);
    }
   });
-  await persist();
-  return response({ok:true,archived:completed.length,ids:completed,blocked,backup:true});
+  await persist();return response({ok:true,archived:completed.length,ids:completed,removedEmptyRows,backup:true});
  }

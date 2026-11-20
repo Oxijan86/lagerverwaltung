@@ -1,90 +1,106 @@
-LAGERVERWALTUNG LOVRENCIC – V88.20 (TESTVERSION / GITHUB-UPLOAD-PAKET)
-===================================================================
+LAGERVERWALTUNG LOVRENCIC – V88.20 (REGULÄRE VERSION)
+=====================================================
+Repository: https://github.com/Oxijan86/lagerverwaltung
+Basis: zuletzt geprüfter GitHub-Stand V88.19 mit bereits hochgeladenen V88.20-Modulen.
+Stand: 20.11.2026
 
-BISHERIGE DATEN UNVERÄNDERT
----------------------------
-Diese Dateien verändern beim Einspielen KEINE lager.db, KEINE Inventur, KEINE
-Zählmenge, KEINE Buchung und KEINEN vorhandenen PDF-Prüfstand. Es werden nur
-Programmdateien aktualisiert. Bitte trotzdem vorher ein vollständiges
-Backup der lager.db und des PDF-Prüfstands (JSON) erstellen.
+DIE WICHTIGSTE INFORMATION
+-------------------------
+Dies ist ein GitHub-Update-Paket, KEINE ZIP-Datei mit einer neuen Datenbank.
+Das Paket enthält alle neuen V88.20-Module und erzeugt aus dem aktuellen
+GitHub-Quellcode die SIEBEN FERTIGEN Dateien, die bei GitHub hochgeladen werden.
+Die bestehende lager.db wird nicht angefasst, ausgetauscht oder gelöscht.
 
-WICHTIG: Die GitHub-Verbindung konnte den Branch nicht automatisch anlegen
-(403 – fehlende Schreibberechtigung). Deshalb enthält dieses Paket ein
-lokales Installationsprogramm für die sechs geänderten GitHub-Dateien.
+SO INSTALLIERST DU DIE REGULÄRE VERSION
+---------------------------------------
+1. ZUERST aktuelle lager.db als Sicherung herunterladen. Auch den PDF-Prüfstand
+   aus der Anwendung als JSON exportieren. Synchronisierung auf dem PC prüfen.
+2. Dieses Paket vollständig in einen Ordner entpacken.
+3. INSTALL_V88_20.bat doppelt anklicken.
+   Das Skript lädt das aktuelle Originalprojekt direkt von GitHub und ergänzt
+   die Änderungen. Kein Python, Node.js oder Git muss installiert sein.
+   Falls der Download durch GitHub-Berechtigungen scheitert: Öffne das Repo,
+   wähle Code > Download ZIP, entpacke es und ziehe den ausgepackten
+   Projektordner mit der Maus auf INSTALL_V88_20.bat.
+4. Nach Erfolg befindet sich daneben der Ordner GITHUB_UPLOAD_V88_20.
+5. Öffne GitHub > Oxijan86/lagerverwaltung > Add file > Upload files.
+   Lade ALLE sieben .js-Dateien aus GITHUB_UPLOAD_V88_20 hoch.
+   Es handelt sich teils um ERSATZDATEIEN – bestehende Dateien überschreiben.
+   GitHub: Commit changes bestätigen.
+6. Warte auf die bestehende GitHub-Pages-Veröffentlichung. Schließe alle offenen
+   Tabs der App und öffne sie erneut. Ggf. die App hart neu laden (Strg+F5).
+7. Im Info-Bereich muss die Version 88.20 angezeigt werden. Vor weiteren
+   Arbeiten den PDF-Prüfstand und die Buchungsdaten vergleichen.
 
-INSTALLATION AUF WINDOWS – SCHRITT FÜR SCHRITT
----------------------------------------------
-1. In deiner Lagerverwaltung zuerst ein Backup der lager.db machen sowie den
-   RONDO-PDF-Prüfstand als JSON herunterladen. Nichts abschließen.
-2. Im Browser dein GitHub-Repository Oxijan86/lagerverwaltung öffnen.
-   Über „Code“ -> „Download ZIP“ das ganze Repository herunterladen.
-3. Das heruntergeladene ZIP in einen Ordner entpacken (z. B.
-   „lagerverwaltung-main“). Nicht in der Cloud-App arbeiten.
-4. Dieses V88.20-Paket ebenfalls entpacken.
-5. Den entpackten Ordner „lagerverwaltung-main“ mit der Maus auf die Datei
-   INSTALLIEREN_V88_20.bat ziehen. Das Windows-Fenster zeigt Erfolg oder Fehler.
-   Dafür wird PowerShell verwendet, das bei Windows normalerweise vorhanden ist.
-   Eine Alternative für Entwickler ist: python v88_20_patch.py <Projektordner>.
-6. Im entpackten Projektordner sind jetzt diese SECHS Dateien aktualisiert:
-     local_backend.js
-     service-worker.js
-     v88_4_export.js
-     v88_20_core.js
-     v88_20_report.js
-     v88_20_assistant.js
-7. Diese sechs Dateien im GitHub-Hauptverzeichnis über „Add file“ ->
-   „Upload files“ hochladen und den Commit bestätigen. Keine alten
-   .v88_19_backup-Dateien hochladen.
-8. Anwendung nach dem GitHub-Update neu laden. PWA/Service-Worker braucht
-   ggf. einen Neustart der Seite, bis V88.20 angezeigt wird.
-9. ZUERST mit einer gesicherten TESTDATENBANK prüfen, dann erst echte
-   Archivierung durchführen. Die erste Inbetriebnahme auf Smartphone/PC
-   muss gesondert überprüft werden.
+DIE SIEBEN DATEIEN
+-----------------
+  local_backend.js       – sichere Archivierung, DB-gestützte PDF- und Dublettenprüfung, Versionsnummer
+  service-worker.js      – lädt V88.20 und erneuert Offline-App-Cache
+  v88_4_export.js        – RONDO-Einheit und vollständige JSON-Prüfstandsicherung
+  sync_merge_v82.js      – Konflikte der neuen Prüfdatenbanktabellen erkennen
+  v88_20_core.js         – Artikelnummern und Prüfschritte
+  v88_20_assistant.js    – geführte Sichtprüfung, Mehrfachauswahl, Prüfung, Wiederherstellung
+  v88_20_report.js       – Zusatzliste als PDF oder Word
 
-FUNKTIONSUMFANG
+NEUE FUNKTIONEN
 ---------------
-* Inventur: geführte PDF-Sichtprüfung mit echter Originalseite und automatisch
-  vergrößerter Materialzeile.
-* Erkanntes I/1 und O/0 wird mit Stammdaten verglichen; keine stille Korrektur.
-* Artikelnummer selbst eingeben, Vorschläge beim Tippen und nach der Prüfung
-  automatisch zur nächsten offenen Zeile wechseln.
-* Prüfstatus „geprüft“, „korrigiert“, „später prüfen“ bleibt im
-  PDF-Prüfstand des Browsers erhalten. Bereits früher manuell geprüfte
-  Positionen (checked_at) werden übernommen.
-* Stammdaten: Mehrfachauswahl per Checkbox, Filter für mögliche I/1-Fehlartikel,
-  Vorschau „sicher“/„gesperrt“ und Sammelarchivierung nach zwei Bestätigungen.
-* Server prüft jeden Artikel erneut vor der Archivierung und erstellt ein
-  Sicherheitsbackup. Bestände, Buchungen, Inventurzählungen, Import- und
-  Servicebericht-Verknüpfungen sperren die Archivierung.
-* Keine automatische oder erzwungene Löschung von Buchungshistorien über die
-  neue Sammelaktion. Die alte Einzel-Löschfunktion wurde nicht geändert.
-* PDF-Zählmengen: Der Firmen-PDF-Einheit wird bei der Druckformatierung
-  Vorrang gegeben. Fehlt ein Zählwert, bleibt das Feld leer. Eine echte 0
-  bleibt ausdrücklich 0. Der bestehende sichere Original-PDF-Export bleibt.
-* Zusätzlicher Firmenbericht: NUR tatsächlich gezählte Artikel ohne sichere
-  Original-PDF-Zuordnung, mit möglichen OCR-Fällen kenntlich gemacht.
-  Direkt aus der gewählten Inventur als PDF oder Word (.docx) herunterladbar.
-* Hilfe-Reiter erhält eine Schritt-für-Schritt-Anleitung.
+- Original-RONDO-PDF je Seite/Position automatisch als Bildausschnitt anzeigen;
+  ein Klick zeigt auf Wunsch die ganze Seite.
+- Artikelnummer manuell korrigieren oder mit vorhandenen Artikelnummern
+  abgleichen. I/1 und O/0 nur als VORSCHLÄGE, nicht als automatische Korrektur.
+- Position als geprüft / korrigiert / später prüfen speichern.
+- Neue PDF-Prüfentscheidungen liegen zusätzlich in lager.db und können mit
+  dieser über die bestehende Datei-Synchronisierung übertragen werden.
+  WICHTIG: die 72-seitige gescannte Original-PDF selbst bleibt auf jedem Gerät
+  lokal und muss auf einem anderen Gerät ggf. erneut importiert werden.
+- Dubletten können unabhängig von technischen Sperren als geprüft gespeichert
+  und anschließend ausgeblendet werden.
+- Stammdaten: bis zu 200 Artikel markieren, vorab auf Archivierung prüfen.
+  Echte Buchungen, gezählte Inventurwerte und Bestände verhindern Archivierung.
+  Reine technische Nullbuchungen des Imports bleiben erhalten. Vollständig
+  UNGEZÄHLTE Platzhalter von laufenden Inventuren werden bei einer ausdrücklich
+  bestätigten Archivierung der falschen Artikel entfernt; nie echte Zählungen.
+- Archivierte Artikel sind wiederherstellbar. Backup und Audit vor Änderungen.
+- PDF-Export: Einheit laut ORIGINAL-RONDO-Beleg, Zahlen nicht umrechnen.
+  Fehlende Mengen bleiben leer, ausdrücklich gezählte 0 wird gedruckt.
+- Bericht: gezählte Artikel ohne sichere Firmen-PDF-Zuordnung als PDF oder Word.
+- Sicherheitsregeln für den Cloud-Konfliktvergleich der neuen Prüfstände.
 
-WAS NOCH MANUELL ZU PRÜFEN IST
------------------------------
-* Browser/PWA auf Windows und Smartphone; korrekte Vergrößerung bei jeder
-  Papierposition. Die Erkennung ist scanbedingt nicht fehlerfrei.
-* Kompletten RONDO-PDF-Export gegen die Original-PDF einschließlich der 72
-  Seiten visuell prüfen.
-* Cloud-Synchronisierung: PDF-Bilder und V88.20-Prüfstände werden weiterhin
-  im Browser gespeichert, NICHT automatisch in der Cloud-lager.db.
-  Bei Gerätewechsel PDF-Prüfstand als JSON sichern und beide Datenstände
-  vergleichen. Ein systemweiter synchronisierter PDF-Prüfstatus ist noch nicht
-  implementiert; die bestehende Lagerdatenbank-Synchronisierung bleibt bestehen.
-* Archivierung ist reversibel; endgültiges Löschen beliebiger Stammdaten
-  wäre gefährlich und ist bewusst NICHT als Sammelaktion implementiert.
+WICHTIGE GRENZEN UND SCHUTZREGELN
+--------------------------------
+- Das Markieren oder Korrigieren einer PDF-Artikelnummer ÜBERTRÄGT KEINE
+  Inventurzählung automatisch zwischen zwei Lagerartikel-IDs.
+- Beispiel Getriebeöl: 32 L unter 11000329 bleiben geschützt. Damit die
+  Anwendung sie unter I1000329 druckt, muss die Zählung gesondert über die
+  bereits vorhandene kontrollierte PDF-/Inventur-Zuordnungsfunktion übertragen
+  werden. Die neue Sichtprüfung warnt ausdrücklich vor ähnlichen Zählungen.
+- Der Import und die PDF-Sichtprüfung schließen niemals eine Inventur ab.
+- Die bestehende 'Artikel löschen – auch Buchungen löschen'-Funktion wird
+  NICHT für die neue Sammelarchivierung verwendet.
+- Bei widersprüchlichem Cloud-Stand wird kein automatisches blindes
+  Zusammenführen der neuen Prüfstände vorgenommen; Vergleich erforderlich.
+- Keine App kann einen vollständig fehlerfreien Betrieb aller Geräte ohne
+  einen abschließenden Test auf dem produktiven GitHub-Pages-Host garantieren.
 
-AUTOMATISIERTE TESTS
---------------------
-Für die reine Logik: node test_v88_20_core.cjs
-Für die Dokumentausgabe: node test_v88_20_report.cjs
-Für die Updater-Integration: python test_v88_20_patch.py
+DURCHGEFÜHRTE AUTOMATISIERTE PRÜFUNGEN
+--------------------------------------
+- JavaScript-Syntaxprüfung von Modulen und vorbereiteten Quelldateien.
+- Wiederholbar identischer Patch (idempotente Quellcodeinstallation).
+- Prüfstandslogik: I/1, O/0, Zählung ungleich leer, PDF-Einheit.
+- Datenbank-Vertragstest auf einer KOPIE der erhaltenen lager.db:
+  46 OCR-Verdachtspaare, 45 ungezählte Kandidaten sicher archivierbar,
+  der gezählte Getriebeöl-Artikel mit 32 L gesperrt; positive Zählungen,
+  Bewegungsdatensätze und Importprotokolle unverändert.
+- Prüfdaten in DB speichern, laden, Konflikte erkennen und korrigieren.
+- Unabhängigen Dubletten-Prüfstatus speichern und erneut abrufen.
+- Chrome-Browser-Test mit simulierten API-Antworten: Sichtprüfung, manuelle
+  Nummernkorrektur, Warnung vorhandener Zählung, Sammelarchivierung,
+  Wiederherstellung, Prüffilter. Keine JavaScript-Laufzeitfehler.
+- Original-PDF-Ausschnitt mit einem realen Bildausschnitt der übermittelten
+  RONDO-PDF kontrolliert.
 
-Diese Tests ersetzen KEINEN vollständigen Browser-/PWA-/Datenbanktest mit
-realen Dateien. Freigabe für produktiven Einsatz erst nach Praxiskontrolle.
+NICHT VORWEGGENOMMEN: Der echte GitHub-Pages-Host und die Synchronisierung
+zwischen mehreren realen Geräten konnten aus dieser Umgebung nicht vollständig
+per End-to-End-Test durchgespielt werden. Deshalb bitte VOR der ersten
+produktiven Sammelarchivierung eine Datenbanksicherung erstellen und einmal
+mit wenigen Daten die Funktion prüfen.
