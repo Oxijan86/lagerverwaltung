@@ -1,0 +1,46 @@
+ 
+ /* LV88_20_SAFE_BATCH_ARCHIVE: SELECT / PREVIEW / COMMIT - never force-delete history */
+ if(p==='/api/articles/v88-20/archive-preview'||p==='/api/articles/v88-20/archive-commit'){
+  if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet. Bitte zuerst als Administrator anmelden.');
+  const ids=[...new Set((Array.isArray(d.ids)?d.ids:[]).map(Number))];
+  if(!ids.length||ids.length>200||ids.some(x=>!Number.isInteger(x)||x<1))throw Error('Bitte 1 bis 200 gültige Artikel auswählen.');
+  const exists=(t)=>Number(scalar('SELECT COUNT(*) FROM sqlite_master WHERE type=\'table\' AND name=?',[t])||0)>0;
+  const refCount=(table,id)=>exists(table)?Number(scalar('SELECT COUNT(*) FROM '+table+' WHERE article_id=?',[id])||0):0;
+  function check(id){
+   const a=articles().find(x=>Number(x.id)===id);
+   if(!a)return {id,article_no:'?',reasons:['Artikel nicht gefunden'],allowed:false};
+   const reasons=[];
+   if(Number(a.active)!==1)reasons.push('Bereits archiviert oder inaktiv');
+   if(Math.abs(Number(a.stock||0))>0.0000001)reasons.push('Buchbestand ist nicht null');
+   if(Math.abs(Number(a.initial_stock||0))>0.0000001)reasons.push('Anfangsbestand ist nicht null');
+   const references=[
+    ['movements','Buchungshistorie vorhanden'],
+    ['inventory_counts','In einer Inventur verwendet'],
+    ['service_pdf_imports','Mit Servicebericht verknüpft'],
+    ['service_pdf_machine_usage','In Servicebericht-Auswertung verwendet'],
+    ['stock_bins_v86','Lagerplatz-Eintrag vorhanden'],
+    ['stock_bin_moves_v86','Umlagerungsprotokoll vorhanden'],
+    ['import_position_results','Importprotokoll vorhanden']
+   ];
+   for(const [table,label] of references){if(refCount(table,id)>0)reasons.push(label)}
+   return {id,article_no:String(a.article_no),description:String(a.description||''),allowed:reasons.length===0,reasons};
+  }
+  let candidates=ids.map(check),allowed=candidates.filter(x=>x.allowed),blocked=candidates.filter(x=>!x.allowed);
+  if(p.endsWith('/archive-preview'))return response({ok:true,allowed,blocked,requested:ids.length});
+  if(d.confirmation!=='ARCHIVIEREN')throw Error('Bitte die Archivierung ausdrücklich bestätigen.');
+  if(!allowed.length)return response({ok:false,archived:0,blocked,reason:'Keine sicher archivierbaren Artikel'},409);
+  await createBackup('Sicherheitsbackup','V88.20 – sichere Sammelarchivierung von '+allowed.length+' Artikeln');
+  // Recheck in the same synchronous transaction before changing anything.
+  const completed=[];
+  runTransaction(()=>{
+   for(const proposal of allowed){
+    const current=check(proposal.id);
+    if(!current.allowed)throw Error('Artikel '+proposal.article_no+' wurde zwischenzeitlich verändert. Es wurde nichts archiviert.');
+    run('UPDATE articles SET active=0 WHERE id=? AND active=1',[proposal.id]);
+    audit('Administrator','ARCHIVIERUNG','Artikel',String(proposal.id),'V88.20 sicher archiviert: '+proposal.article_no+' – '+proposal.description);
+    completed.push(proposal.id);
+   }
+  });
+  await persist();
+  return response({ok:true,archived:completed.length,ids:completed,blocked,backup:true});
+ }

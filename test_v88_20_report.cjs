@@ -1,0 +1,3 @@
+const assert=require('node:assert/strict');const fs=require('node:fs');const R=require('./v88_20_report.js');
+const report={sessionName:'Inventur 12.11.2026',reportRows:[{article_no:'I1000329',description:'Getriebeöl',unit:'L',inventory_count:'32',location:'Fahrzeug',status:'NICHT IN RONDO-PDF',count_status:'In dieser Inventur gezählt'},{article_no:'10001',description:'Bolzen',unit:'Stk.',inventory_count:'',status:'NICHT IN RONDO-PDF',count_status:'Nicht gezählt – Buchbestand nicht inventurgeprüft'}]};
+assert.equal(R.makeRows(report).length,1);const p=R.pdf(report);fs.writeFileSync('/mnt/data/V88_20_Release/test_bericht.pdf',Buffer.from(p));assert.equal(Buffer.from(p.slice(0,8)).toString('latin1'),'%PDF-1.4');console.log('PASS counted-only report and PDF');
