@@ -52,8 +52,8 @@ test('Separater JSON-Prüfstand mit PDF-Hash und DB-ID, ohne Zählmengenübersch
 test('Startreihenfolge: Lagerortkern synchron vor Inventur-UI, PDF-Module danach',()=>{
  const baseHtml='<html><body><script src="inventory_v85_core.js"></script><script src="inventory_ui.js"></script></body></html>';
  const html=sw.injectHtml(baseHtml);
- assert.ok(html.indexOf('v88_11_location_core.js?v=88.18')<html.indexOf('<script src="inventory_ui.js"'));
- assert.ok(html.includes('v88_17_bulk_core.js?v=88.18'));
- assert.ok(html.includes('v88_17_bulk_ui.js?v=88.18'));
- assert.ok(html.includes('v88_4_export.js?v=88.18'));
+ assert.ok(html.indexOf('v88_11_location_core.js?v=88.19')<html.indexOf('<script src="inventory_ui.js"'));
+ assert.ok(html.includes('v88_17_bulk_core.js?v=88.19'));
+ assert.ok(html.includes('v88_17_bulk_ui.js?v=88.19'));
+ assert.ok(html.includes('v88_4_export.js?v=88.19'));
 });

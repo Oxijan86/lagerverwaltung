@@ -1,4 +1,4 @@
-/* Lagerverwaltung Lovrencic V88.18 – RONDO-OCR-Schutzschicht.
+/* Lagerverwaltung Lovrencic V88.19 – RONDO-OCR-Schutzschicht.
  * Keine Datenbankmigration, keine Bestandsbuchung durch OCR.
  * Ein fehlerhafter/unklarer Scan bleibt zwingend in der manuellen Prüfansicht.
  */
@@ -186,13 +186,13 @@
       const recognize=worker.recognize.bind(worker);
       worker.recognize=async function(image,options,outputs){
         const quality=qualityOfCanvas(image);
-        // V88.18: die verkleinerte Stichprobe ist NICHT beweiskräftig.
+        // V88.19: die verkleinerte Stichprobe ist NICHT beweiskräftig.
         // Auch eine fast weiße Vorschau muss zuerst der echten OCR übergeben werden.
         // Nur der bestehende Scanner darf nach beiden OCR-Läufen ohne erkannte
         // Materialposition abbrechen; eine bloße Helligkeitsheuristik niemals.
         if(!quality.ok){
           annotateStatus('Bildprüfung unsicher – Texterkennung wird trotzdem durchgeführt. '+quality.reason);
-          root.console?.warn?.('V88.18: Unklare PDF-Bildvorschau, OCR wird fortgesetzt:',quality.reason);
+          root.console?.warn?.('V88.19: Unklare PDF-Bildvorschau, OCR wird fortgesetzt:',quality.reason);
         }
         const cfg={...(outputs||{}),text:true,tsv:true,blocks:true};
         let first=await recognize(image,options||{},cfg),second=null,enhanced=null,secondDimensions=null;
@@ -224,16 +224,16 @@
     if(el){
       if(el._lv87Observer?.disconnect)el._lv87Observer.disconnect();
       el._lv87Observer={disconnect(){}};
-      el.textContent='88.18';
+      el.textContent='88.19';
       if(!el._lv88Observer && typeof root.MutationObserver==='function'){
-        const observer=new root.MutationObserver(()=>{if(el.textContent!=='88.18')el.textContent='88.18'});
+        const observer=new root.MutationObserver(()=>{if(el.textContent!=='88.19')el.textContent='88.19'});
         observer.observe(el,{childList:true,characterData:true,subtree:true});
         el._lv88Observer=observer;
       }
     }
-    root.document.title='Lagerverwaltung Lovrencic V88.18';
+    root.document.title='Lagerverwaltung Lovrencic V88.19';
     const description=root.document.querySelector('meta[name="description"]');
-    if(description)description.content='Lagerverwaltung Lovrencic V88.18 PWA';
+    if(description)description.content='Lagerverwaltung Lovrencic V88.19 PWA';
   }
   function install(){
     if(!root.document)return;

@@ -123,6 +123,7 @@
        <span id="lv8818PageInfo" class="lv87-hint"></span>
        <button type="button" id="lv8818Next" class="secondary">Weiter ▶</button>
       </div>
+       <div id="lv8819BackupStatus" role="status" aria-live="polite" class="lv87-hint" style="margin:7px 0">JSON-Sicherung funktioniert auch bei roten, noch offenen oder zurueckgestellten PDF-Positionen. Sie veraendert keine Daten.</div>
       <div id="lv8813MatchRows" style="max-height:46vh;overflow:auto"></div>
       <p class="lv87-hint">Du kannst jederzeit aufhören und später über „Letzte PDF öffnen“ fortsetzen. Bestaetigte PDF-Zuordnungen und zurueckgestellte Positionen bleiben gespeichert. Die Inventur bleibt offen.</p>
     </section>
@@ -355,15 +356,32 @@
    database_id:index.database_id,inventory_id:select.value,created_at:new Date().toISOString(),
    positions:lines.map(row=>({key:matchCore.positionKey(row),
     ...Object.fromEntries(progressFields.map(field=>[field,row[field]??null]))}))});
-  $('lv8818ExportProgress').onclick=async()=>{
+  /* LV8819_READ_ONLY_JSON_BACKUP: Keine Datenbank-Validierung vor dem Export.
+   * Gerade ein unvollstaendiger / konflikthafter PDF-Pruefstand MUSS unabhaengig
+   * von der IndexedDB-Speicherpruefung als Rettungskopie exportierbar bleiben.
+   * Alle bestaetigten und alle noch offenen Positionen werden unveraendert
+   * aus dem aktuellen Dialogzustand exportiert (keine DB-Schreibaktion).
+   * Download synchron im realen Click ausloesen: Chrome kann einen erst nach
+   * await gestarteten Download wegen verlorener User-Aktivierung blockieren.
+   */
+  $('lv8818ExportProgress').onclick=()=>{
+   const feedback=$('lv8819BackupStatus'),btn=$('lv8818ExportProgress');
+   if(btn.disabled)return;
+   btn.disabled=true;
    try{
-    await ctx.saveMappings(lines.map(x=>({...x})));
-    const json=JSON.stringify(progressData(),null,2),blob=new Blob([json],{type:'application/json;charset=utf-8'});
-    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;
-    a.download='RONDO_PDF_Pruefstand_'+new Date().toISOString().slice(0,10)+'.json';
-    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
-    txt(status,'PDF-Prüfstand gespeichert und JSON-Sicherung erstellt. Bitte außerhalb des Browserordners aufbewahren. Keine Inventur beendet.');
-   }catch(e){txt(status,'JSON-Prüfstand konnte nicht gesichert werden: '+e.message)}
+    const backup=progressData();
+    if(!Array.isArray(backup.positions)||!backup.positions.length)throw Error('Keine PDF-Positionen fuer die Sicherung vorhanden.');
+    const json=JSON.stringify(backup,null,2),blob=new Blob([json],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='RONDO_PDF_Pruefstand_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);
+    try{a.click()}finally{a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+    const note='JSON-Download angestossen: '+backup.positions.length+' PDF-Positionen, inklusive offener/roter Positionen. Bitte im Downloadordner kontrollieren. Lagerdaten und Inventur unveraendert.';
+    txt(feedback,note);txt(status,note);
+   }catch(e){
+    const note='JSON-Download fehlgeschlagen: '+(e?.message||String(e))+'. Bitte den Fehler melden; gespeicherter PDF-Pruefstand bleibt erhalten.';
+    txt(feedback,note);txt(status,note);
+   }finally{btn.disabled=false}
   };
   $('lv8818ImportProgress').onclick=()=>$('lv8818ProgressFile').click();
   $('lv8818ProgressFile').onchange=async event=>{
