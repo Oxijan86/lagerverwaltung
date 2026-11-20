@@ -1,3 +1,4 @@
+/* LV88_21_ORIGINAL_PREVIEW: unverkleinerter Originalausschnitt, 280 Prozent. */
 /* Lagerverwaltung Lovrencic V88.20 – geführte PDF-Sichtprüfung und sichere Sammelarchivierung.
  * Voraussetzung: v88_20_core.js, bestehende LV87-PDF-IndexedDB und lokale API.
  * Kein automatischer Inventurabschluss, keine Mengen- oder Buchungsänderung.
@@ -9,7 +10,7 @@
  const html=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const fmt=v=>Number(v||0).toLocaleString('de-DE',{maximumFractionDigits:4});
  const post=(path,body)=>root.api(path,{method:'POST',body:JSON.stringify(body)});
- const shell={snap:null,dbId:'',rows:[],articles:[],idx:0,filter:'pending',busy:false,full:false,scale:2.25,pdf:null,pdfHash:'',canvasKey:'',selected:new Set(),preview:null,visible:[],dataVersion:'',dbReviews:new Map(),duplicateReviews:new Map(),inventory:null};
+ const shell={snap:null,dbId:'',rows:[],articles:[],idx:0,filter:'pending',busy:false,full:false,scale:2.8,pdf:null,pdfHash:'',canvasKey:'',selected:new Set(),preview:null,visible:[],dataVersion:'',dbReviews:new Map(),duplicateReviews:new Map(),inventory:null};
  let installed=false;
  const css=document.createElement('style');css.textContent=`
  .lv8820-card{border:2px solid #86a8a0;border-radius:12px;background:#fff;color:#1b2723;padding:16px;margin:14px 0;box-sizing:border-box;max-width:100%}
@@ -18,7 +19,7 @@
  .lv8820-dialog{width:min(1040px,100%);background:#fff;color:#1b2723;border-radius:14px;padding:18px;box-sizing:border-box;margin:12px auto;box-shadow:0 9px 36px #2227}
  .lv8820-dialog h2{font-size:1.35rem;margin:0 0 10px}.lv8820-status{margin:8px 0;padding:9px;background:#eff5f4;border-left:4px solid #286553;border-radius:6px;line-height:1.5}
  .lv8820-error{background:#fff0ee;border-color:#b92b18}.lv8820-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.lv8820-columns>*{min-width:0}
- .lv8820-pdf{max-width:100%;overflow:auto;background:#e9edef;border:1px solid #abb9b7;border-radius:8px;padding:8px;min-height:100px}.lv8820-pdf canvas{display:block;max-width:100%;height:auto;margin:auto}
+ .lv8820-pdf{max-width:100%;overflow:auto;background:#e9edef;border:1px solid #abb9b7;border-radius:8px;padding:8px;min-height:100px}.lv8820-pdf canvas{display:block;max-width:none;height:auto;margin:0;image-rendering:auto}
  .lv8820-dialog label{display:block;margin:9px 0}.lv8820-dialog input[type=text],.lv8820-dialog input[type=search]{width:100%;max-width:100%;font-size:1.05rem;box-sizing:border-box;padding:10px;border:1px solid #6d8e88;border-radius:6px}
  .lv8820-reviewrow{display:flex;align-items:center;gap:8px;border:1px solid #dadfdf;border-radius:8px;padding:8px;margin:7px 0}.lv8820-reviewrow label{flex:1;min-width:0;margin:0}.lv8820-small{font-size:.89rem;color:#51625c}
  .lv8820-list{max-height:350px;overflow:auto}.lv8820-note{background:#f3f7f7;padding:9px;border-radius:7px}.lv8820-tag{font-size:.8rem;padding:3px 7px;background:#ddebe7;border-radius:10px}
@@ -95,7 +96,7 @@
   const position=Number(row.position),page=Number(row.page); const old=Core.compact(row.ocr_original_no||row.article_no),current=Core.compact(row.article_no);
   message(`${stats.reviewed} geprüft · ${stats.later} später prüfen · ${stats.open} offen. Die Prüfung verändert keine Zählmengen.`);
   area.innerHTML=`<div class="lv8820-actions"><b>Seite ${page}, Position ${position}</b><span class="lv8820-tag">${html(row.review_v8820==='confirmed'?'Geprüft':row.review_v8820==='corrected'?'Korrigiert':row.review_v8820==='later'?'Zurückgestellt':'Offen')}</span><button class="secondary" id="lv8820Prev">Zurück</button><button class="secondary" id="lv8820Next">Nächster offener Artikel</button></div>
-   <div class="lv8820-columns"><div><h3>Original-PDF</h3><div class="lv8820-actions"><button type="button" class="secondary" id="lv8820Zoom">${shell.full?'Nur Zeile anzeigen':'Ganze Seite anzeigen'}</button></div><div id="lv8820PdfImage" class="lv8820-pdf" aria-label="Original-PDF-Ausschnitt"><span class="lv8820-small">Original wird geladen …</span></div></div>
+   <div class="lv8820-columns"><div><h3>Original-RONDO-PDF · Seite ${page} · Position ${position}</h3><p class="lv8820-small"><b>Gedruckte Artikelzeile zum Gegenprüfen.</b> Der Ausschnitt bleibt originalgroß und kann bei schmalem Bildschirm seitlich gescrollt werden.</p><div class="lv8820-actions"><button type="button" class="secondary" id="lv8820Zoom">${shell.full?'Nur diese Originalzeile anzeigen':'Ganze Originalseite anzeigen'}</button></div><div id="lv8820PdfImage" class="lv8820-pdf" aria-label="Original-PDF-Ausschnitt"><span class="lv8820-small">Original wird geladen …</span></div></div>
    <div><h3>Artikel vergleichen</h3><p><b>OCR/ursprüngliche Nummer:</b> ${html(old)}</p><p><b>Aktuelle Nummer:</b> ${html(current)}</p><p class="lv8820-small">${html(row.description||'Keine Bezeichnung erkannt')} · Einheit aus RONDO-PDF: ${html(row.unit||'–')}</p>
    <label><b>Richtige Artikelnummer</b><input type="text" id="lv8820ManualNo" maxlength="48" autocomplete="off" spellcheck="false" value="${html(current)}" list="lv8820Suggest"><datalist id="lv8820Suggest"></datalist></label>
    <p class="lv8820-small">Bei unsicherer Erkennung die Nummer direkt aus dem Originalbild abtippen.</p><div id="lv8820Matches" class="lv8820-note"><b>Passende Stammdaten:</b><ul>${previewFor(row)}</ul></div>
@@ -166,7 +167,7 @@
   canvas.width=source.width;canvas.height=srcH;ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,srcY,source.width,srcH,0,0,canvas.width,canvas.height);
   // Rendering can finish after the user changed the selected row.
   if(el!==$('lv8820PdfImage')||shell.rows[shell.idx]!==row)return;
-  el.replaceChildren(canvas);
+  el.replaceChildren(canvas);el.scrollLeft=Math.round(45*shell.scale);
  }
  // Stammdaten: a separate safe path. In particular, NEVER call /api/article/delete with force.
  function archivePanel(){const d=make('details',undefined,{id:'lv8820Archive',className:'lv8820-card'});d.innerHTML=`<summary><b>V88.20 – Mehrfachauswahl fehlerhafter Artikel (sicher archivieren)</b></summary>

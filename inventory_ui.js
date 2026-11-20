@@ -90,7 +90,7 @@
     <div><button type="button" class="lv83-article-link" title="Artikel im Lagerbestand bearbeiten" onclick="LVInventory.openArticle(${x.article_id})">${esc(x.article_no)}</button><div>${esc(x.description)}</div><span class="small">${esc(x.unit)} · Bestand bei Beginn: ${esc(x.base_stock)}</span>${x.stock_bins?.length>1?`<p class="small"><b>Teilbestände:</b> ${esc(x.stock_bins.map(b=>`${b.location||'(ohne Lagerort)'}: ${Number(b.quantity).toLocaleString('de-DE')}`).join(' · '))}</p>`:''}${x.stale?`<div class="inv75-warning">Bestandsstand geändert${x.missing?' / Artikel nicht mehr aktiv':''}. Bitte erneut prüfen.</div>${!x.missing?`<button class="secondary" onclick="LVInventory.rebase(${x.article_id})">Bestandsstand aktualisieren und neu zählen</button>`:''}`:''}</div>
     <div><label>Gezählt (${esc(x.unit)})<input id="inv75-count-${x.article_id}" type="text" inputmode="decimal" autocomplete="off" value="${esc(x.counted_stock??'')}" ${disabled} oninput="LVInventory.edit(${x.article_id},'counted_stock',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();LVInventory.confirmCount(${x.article_id})}"><button type="button" class="secondary" onclick="LVInventory.confirmCount(${x.article_id})">✓ Bestätigen & weiter</button><span class="small">Leer = noch nicht gezählt · 0 = leerer Bestand</span></label><div class="inv84-add-row"><input id="inv84-add-${x.article_id}" aria-label="Weitere gefundene Menge für ${esc(x.article_no)}" placeholder="Weitere Menge" inputmode="decimal" autocomplete="off" ${disabled} onkeydown="if(event.key==='Enter'){event.preventDefault();LVInventory.addCount(${x.article_id})}"><button type="button" class="secondary" ${disabled} onclick="LVInventory.addCount(${x.article_id})">+ Hinzufügen</button></div><div id="inv84-result-${x.article_id}" class="small" aria-live="polite"></div><button type="button" class="secondary" ${disabled} onclick="LVInventory.addBinPart(${x.article_id})">+ Weitere Menge am aktuellen Lagerort zählen</button>${x.bin_parts_json?`<p class="small">Teilmengen: ${esc(x.bin_parts_json)}</p>`:''}</div>
     <label>Lager<select id="inv75-warehouse-${x.article_id}" ${disabled} onchange="LVInventory.warehouseChanged(${x.article_id},this.value)">${LVWarehouses.warehouses(shownWarehouse)}</select>${suggestion?'<span class="small">Zählbereich vorgewählt · erst nach Zählung gespeichert</span>':''}</label>
-    <label>Lagerort (optional)<input id="inv75-location-${x.article_id}" list="inv75-location-options-${x.article_id}" value="${esc(shownLocation||'')}" ${disabled} placeholder="Lagerort wählen oder neuen eingeben" onchange="LVInventory.locationChangedInline(${x.article_id},this.value)"><datalist id="inv75-location-options-${x.article_id}">${[...choices.keys()].map(name=>`<option value="${esc(name)}"></option>`).join('')}</datalist><span class="small">${suggestion?'Vorgewählt, noch nicht gespeichert. ':' '}Neuen Lagerort auch direkt eintippen.</span></label>
+    <label>Lagerort (optional)<input id="inv75-location-${x.article_id}" list="inv75-location-options-${x.article_id}" value="${esc(shownLocation||'')}" ${disabled} placeholder="Bestehenden Lagerort auswählen" onchange="LVInventory.locationChangedInline(${x.article_id},this.value)"><datalist id="inv75-location-options-${x.article_id}">${[...choices.keys()].map(name=>`<option value="${esc(name)}"></option>`).join('')}</datalist><span class="small">${suggestion?'Vorgewählt, noch nicht gespeichert. ':' '}Nur bestehende Lagerorte auswählen. Neue Orte im Bereich „Einräumen“ anlegen.</span></label>
     <button type="button" class="secondary" ${disabled} onclick="LVInventory.useContextFor(${x.article_id})">Aktuellen Lagerort für Artikel übernehmen</button><label>Notiz<input id="inv75-note-${x.article_id}" value="${esc(x.note)}" maxlength="2000" ${disabled} oninput="LVInventory.edit(${x.article_id},'note',this.value)"></label>
    </article>`;
   }).join('')||'<p>Keine passenden Artikel gefunden.</p>';
@@ -262,23 +262,15 @@
    if(field==='location'){const loc=data.locations.find(l=>l.name===value);if(loc?.warehouse_id){row.warehouse_id=loc.warehouse_id;pending.get(id).warehouse_id=loc.warehouse_id;const w=$('inv75-warehouse-'+id);if(w)w.value=loc.warehouse_id}}cache();status();clearTimeout(timer);timer=setTimeout(()=>flush(),750);
   },
   async locationChangedInline(id,value){
+   /* LV88_21_COUNT_LOCATION: no creation on a partially typed name. */
    if(!data||busy)return;
    const row=data.items.find(x=>Number(x.article_id)===Number(id));if(!row)return;
-   const name=String(value||'').trim();if(!name){this.edit(id,'location','');return}
+   const name=String(value||'').trim();
+   if(!name){manualPlaceOverrides.add(Number(id));this.edit(id,'location','');return}
    const known=data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===name.toLocaleLowerCase('de-DE'));
    if(known){manualPlaceOverrides.add(Number(id));this.edit(id,'location',known.name);return}
-   if(!confirm(`Neuen Lagerort „${name}“ direkt anlegen und bei diesem Artikel auswählen?`)){
-    const el=$('inv75-location-'+id);if(el)el.value=row.location||'';return;
-   }
-   try{
-    // Save current drafts first. Warehouse creation changes the shared masterdata.
-    if(!await flush())throw Error('Bitte zuerst die Inventur-Zwischenspeicherung abschließen.');
-    const result=await post('location',{name,warehouse_id:row.warehouse_id||data.default_warehouse_id||null,database_id:dbid});
-    data.locations=result.locations||data.locations;data.warehouses=result.warehouses||data.warehouses;
-    LVWarehouses.setRefs(result);
-    manualPlaceOverrides.add(Number(id));this.edit(id,'location',result.created.name);
-    refreshLocationFilterOptions();message(`Neuer Lagerort „${result.created.name}“ angelegt und beim Artikel ausgewählt.`);
-   }catch(e){message(e.message,false);const el=$('inv75-location-'+id);if(el)el.value=row.location||''}
+   const field=$('inv75-location-'+id);if(field)field.value=row.location||'';
+   message('Der Lagerort ist noch nicht angelegt. Beim Zählen bitte einen bestehenden Vorschlag wählen. Neue Lagerorte nur unter „Einräumen nach dem Zählen“ ausdrücklich anlegen.',false);
   },
   warehouseChanged(id,value){const row=data.items.find(x=>x.article_id===id);if(!row)return;manualPlaceOverrides.add(Number(id));const loc=data.locations.find(l=>l.name===row.location);this.edit(id,'warehouse_id',Number(value)||null);if(loc?.warehouse_id&&Number(loc.warehouse_id)!==Number(value))this.edit(id,'location','');render()},
   filterWarehouseChanged(){refreshLocationFilterOptions();this.filter()},

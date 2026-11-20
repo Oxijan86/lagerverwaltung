@@ -1,12 +1,13 @@
+/* LV88_21_PATCHED - Release 88.21. */
 /* LV88_20_PATCHED – release V88.20, safe migration from V88.19. */
 /* Lagerverwaltung Lovrencic V88.19 – sicherer Import, Prüf-Rückstellung und Original-PDF-Overlay und sichere Inventurfortsetzung des bestehenden V86/V87-Repos.
  * Das bisherige index.html wird beim Abruf um die bereits im Repo befindlichen
  * V87-Module und um die V88-OCR-Prüfung ergänzt. Die DB bleibt unverändert.
  */
 'use strict';
-const CACHE_NAME='lv88-20-2026-11-20-release-r2';
+const CACHE_NAME='lv88-21-2026-11-20-release-r1';
 const FILES=[
- './','index.html','manifest.webmanifest','v87_core.js','v87_pdf.js','v88_2_catalog.js','v88_3_setup.js','v88_3_review.js','v88_4_export.js','v88_16_export_guard.js','v88_17_bulk_core.js','v88_17_bulk_ui.js','v88_4_help.js','v88_5_import.js','v88_6_pdf.js','v88_7_inventory_guard.js','v88_8_technician.js','v88_9_count_core.js','v88_11_location_core.js','v88_12_save_guard.js','v88_13_pdf_match.js','v88_14_report.js','v88_10_inventory_focus.js','v87_ui.js','v88_ocr.js','v88_20_core.js','v88_20_report.js','v88_20_assistant.js',
+ './','index.html','manifest.webmanifest','v87_core.js','v87_pdf.js','v88_2_catalog.js','v88_3_setup.js','v88_3_review.js','v88_4_export.js','v88_16_export_guard.js','v88_17_bulk_core.js','v88_17_bulk_ui.js','v88_4_help.js','v88_5_import.js','v88_6_pdf.js','v88_7_inventory_guard.js','v88_8_technician.js','v88_9_count_core.js','v88_11_location_core.js','v88_12_save_guard.js','v88_13_pdf_match.js','v88_14_report.js','v88_10_inventory_focus.js','v87_ui.js','v88_ocr.js','v88_20_core.js','v88_20_report.js','v88_20_assistant.js','v88_21_core.js','v88_21_ui.js',
  'inventory_core.js','inventory_ui.js','inventory_v84_core.js','inventory_v85_core.js',
  'inventory_company_v86.js','service_pdf_core.js','service_pdf_reader.js','service_pdf_ui.js',
  'service_pdf_backend.js','local_backend.js','app_rules.js','auth_core.js','sync_core.js',
@@ -16,7 +17,7 @@ const FILES=[
  'stock_bins_v86_ui.js',
  'vendor/pdfjs/pdf.min.mjs','vendor/pdfjs/pdf.worker.min.mjs',
  'vendor/tesseract/tesseract.min.js','vendor/tesseract/worker.min.js',
- 'v88_16_export_guard.js?v=88.20','v88_17_bulk_core.js?v=88.20','v88_17_bulk_ui.js?v=88.20','v88_13_pdf_match.js?v=88.20','v88_5_import.js?v=88.20','v88_6_pdf.js?v=88.20','v88_7_inventory_guard.js?v=88.20','v88_8_technician.js?v=88.20','v88_4_export.js?v=88.20','v87_pdf.js?v=88.20','v87_ui.js?v=88.20','v88_2_catalog.js?v=88.20'
+ 'v88_16_export_guard.js?v=88.21','v88_17_bulk_core.js?v=88.21','v88_17_bulk_ui.js?v=88.21','v88_13_pdf_match.js?v=88.21','v88_5_import.js?v=88.21','v88_6_pdf.js?v=88.21','v88_7_inventory_guard.js?v=88.21','v88_8_technician.js?v=88.21','v88_4_export.js?v=88.21','v87_pdf.js?v=88.21','v87_ui.js?v=88.21','v88_2_catalog.js?v=88.21'
 ];
 const ADDONS=[
  ['vendor/tesseract/tesseract.min.js','Tesseract'],
@@ -43,6 +44,8 @@ const ADDONS=[
  ['v88_20_core.js','LV8820Core'],
  ['v88_20_report.js','LV8820Report'],
  ['v88_20_assistant.js','LV8820'],
+ ['v88_21_core.js','LV8821Core'],
+ ['v88_21_ui.js','LV8821'],
 ];
 function injectHtml(html){
  let out=String(html);
@@ -52,17 +55,20 @@ function injectHtml(html){
  // V88.19: a missing global syncStatus must not break other settings saves.
  out=out.replace(/await\s+syncStatus\s*\(\s*\)\s*;/g,"if(typeof window.syncStatus==='function')await window.syncStatus();");
  if(!/<\/body\s*>/i.test(out))return out;
- if(out.includes('Lagerverwaltung V88.20:')&&out.includes('data-lv88-boot='))return out;
+ if(out.includes('Lagerverwaltung V88.21:')&&out.includes('data-lv88-boot='))return out;
  // Eine alte Offline-Antwort kann bereits ein V88.1/V88.4-Scriptpaket enthalten.
  // Dieses vollständig ersetzen; sonst bliebe die neue PDF-Einleselogik unsichtbar.
  out=out.replace(/<!--\s*Lagerverwaltung V88[\s\S]*?-->\s*<span data-lv88-boot=\"1\" hidden><\/span>[\s\S]*?(?=<\/body\s*>)/i,'');
  if(out.includes('data-lv88-boot=')){
+  // Old V88.20 offline HTML must load the new modules as well.
+  if(!out.includes('v88_21_ui.js'))out=out.replace(/<\/body\s*>/i,
+   '<script src="v88_21_core.js?v=88.21" defer></script>\n<script src="v88_21_ui.js?v=88.21" defer></script>\n</body>');
   if(!out.includes('v88_20_assistant.js'))out=out.replace(/<\/body\s*>/i,
-   '<script src="v88_20_core.js?v=88.20" defer></script>\n<script src="v88_20_report.js?v=88.20" defer></script>\n<script src="v88_20_assistant.js?v=88.20" defer></script>\n</body>');
+   '<script src="v88_20_core.js?v=88.21" defer></script>\n<script src="v88_20_report.js?v=88.21" defer></script>\n<script src="v88_20_assistant.js?v=88.21" defer></script>\n</body>');
   // Eine alte bereits gepatchte Offline-Startseite darf nie wieder den
   // gefährlichen alten PDF-Export ohne Schutzschicht starten.
-  if(!out.includes('v88_16_export_guard.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_16_export_guard.js?v=88.20" defer></script>\n</body>');
-  if(!out.includes('v88_17_bulk_core.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_17_bulk_core.js?v=88.20" defer></script>\n<script src="v88_17_bulk_ui.js?v=88.20" defer></script>\n</body>');
+  if(!out.includes('v88_16_export_guard.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_16_export_guard.js?v=88.21" defer></script>\n</body>');
+  if(!out.includes('v88_17_bulk_core.js'))out=out.replace(/<\/body\s*>/i,'<script src="v88_17_bulk_core.js?v=88.21" defer></script>\n<script src="v88_17_bulk_ui.js?v=88.21" defer></script>\n</body>');
   return out;
  }
  // V88.19: inventory_ui.js is a synchronous script in the legacy index.html.
@@ -70,11 +76,11 @@ function injectHtml(html){
  // that dependency in deferred footer ADDONS is TOO LATE and leaves
  // window.LVInventory undefined, breaking inventory resume and startup.
  const inventoryScript=/<script\b[^>]*\bsrc=["']inventory_ui\.js(?:\?[^"']*)?["'][^>]*><\/script>/i;
- if(inventoryScript.test(out))out=out.replace(inventoryScript,match=>'<script src="v88_11_location_core.js?v=88.20"></script>\n<script src="v88_7_inventory_guard.js?v=88.20"></script>\n'+match);
+ if(inventoryScript.test(out))out=out.replace(inventoryScript,match=>'<script src="v88_11_location_core.js?v=88.21"></script>\n<script src="v88_7_inventory_guard.js?v=88.21"></script>\n'+match);
  const extra=ADDONS.filter(([src])=>!new RegExp('<script\\b[^>]*\\bsrc=["\\\']'+src.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'["\\\']','i').test(out))
-   .map(([src])=>'<script src="'+src+'?v=88.20" defer></script>').join('\n');
+   .map(([src])=>'<script src="'+src+'?v=88.21" defer></script>').join('\n');
  // Nicht direkt im head einhängen: Das vollständige V86-App-Gerüst muss vorliegen.
- return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.20: Datenbestand unverändert, verlustfreier PDF-Export und geprüfter PDF-Import -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
+ return out.replace(/<\/body\s*>/i,'\n<!-- Lagerverwaltung V88.21: Datenbestand unverändert, verlustfreier PDF-Export und geprüfter PDF-Import -->\n<span data-lv88-boot="1" hidden></span>\n'+extra+'\n</body>');
 }
 function patchV87Ui(source){
  const orig=String(source);
@@ -303,7 +309,7 @@ function patchV885Ui(source){
    // Fallback für ältere gecachte Startseiten: neuen Importer nachladen.
    await new Promise((resolve,reject)=>{
     const s=document.createElement('script');
-    s.src=new URL('v88_5_import.js?v=88.20',document.baseURI).href;
+    s.src=new URL('v88_5_import.js?v=88.21',document.baseURI).href;
     s.onload=()=>window.LV885Import?.scan?resolve():reject(Error('V88.5 Importer ist nicht aktiviert.'));
     s.onerror=()=>reject(Error('V88.5 Importer konnte nicht geladen werden. Bitte Online-Verbindung überprüfen und Anwendung erneut öffnen.'));
     document.head.appendChild(s);
