@@ -1311,8 +1311,75 @@ async function route(url,opt={}){
   }
   return response(await Inventory.handle(action,input,opt));
  }
+ /* LV88_20_DUPLICATE_REVIEW_API: independent approval of I/1 pairs.
+    This NEVER deletes or archives; red technical blocks may still be marked reviewed. */
+ if(p==='/api/v88-20/duplicate-review'){
+  const table='rondo_duplicate_review_v8820';
+  const exists=Number(scalar("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",[table])||0)>0;
+  if(opt.method!=='POST'){
+   const list=exists?rows('SELECT pair_key,review_state,reviewed_at,notes FROM rondo_duplicate_review_v8820 ORDER BY pair_key'):[];
+   return response({ok:true,pairs:list,database_id:currentDbState().database_id});
+  }
+  const list=Array.isArray(d.items)?d.items:[];
+  if(!list.length||list.length>200)throw Error('Bitte 1 bis 200 I/1-Dubletten auswählen.');
+  const proposal=list.map(item=>{
+   const wrong=String(item.wrong_no||'').trim().toUpperCase();
+   const correct=String(item.correct_no||'').trim().toUpperCase();
+   if(!/^1[A-Z0-9_\/-]{3,24}$/.test(wrong)||correct!=='I'+wrong.slice(1))throw Error('Die gewählte Kombination ist keine eindeutige I/1-Dublette.');
+   const state=String(item.state||'');if(!['checked','later'].includes(state))throw Error('Ungültiger Prüfstatus.');
+   const notes=String(item.notes||'').slice(0,500);
+   const found=rows('SELECT article_no FROM articles WHERE article_no IN (?,?)',[wrong,correct]);
+   if(found.length!==2)throw Error('Ein Artikel der Dublette wurde zwischenzeitlich geändert: '+wrong);
+   return {key:wrong+'|'+correct,state,notes,expected:String(item.expected_reviewed_at||'')};
+  });
+  if(new Set(proposal.map(v=>v.key)).size!==proposal.length)throw Error('Dieselbe Dublette ist mehrfach ausgewählt.');
+  await assertInventoryWritable();
+  run('CREATE TABLE IF NOT EXISTS rondo_duplicate_review_v8820(pair_key TEXT PRIMARY KEY,review_state TEXT NOT NULL,reviewed_at TEXT NOT NULL,notes TEXT NOT NULL DEFAULT \'\')');
+  const previous=rows('SELECT pair_key,reviewed_at FROM rondo_duplicate_review_v8820');
+  const previousMap=new Map(previous.map(x=>[x.pair_key,x.reviewed_at]));
+  for(const item of proposal){if(String(previousMap.get(item.key)||'')!==item.expected)
+    throw Error('Diese Dublette wurde auf einem anderen Gerät geprüft. Bitte zuerst die aktuelle Liste laden.');}
+  const at=stamp();runTransaction(()=>{
+   for(const item of proposal){
+    run('INSERT OR REPLACE INTO rondo_duplicate_review_v8820(pair_key,review_state,reviewed_at,notes) VALUES(?,?,?,?)',[item.key,item.state,at,item.notes]);
+    audit(d.technician||setting('primary_technician','Techniker'),'DUBLETTEN-PRÜFUNG','Artikel',item.key,
+     'V88.20 '+item.state+' – ausdrücklich geprüft. Keine Änderung an Bestand oder Stammdaten. '+item.notes);
+   }
+  });
+  await persist();return response({ok:true,reviewed:proposal.length,reviewed_at:at,pairs:proposal.map(x=>({pair_key:x.key,review_state:x.state,reviewed_at:at,notes:x.notes}))});
+ }
+
+ /* LV88_20_REVIEW_API: PDF checks are stored in lager.db, including on synced devices.
+    The scanned PDF bytes remain in the local browser, never in a booked stock table. */
+ if(p==='/api/v88-20/pdf-review'){
+  const input=opt.method==='POST'?d:q;
+  const pdfHash=String(input.hash||'').toLowerCase();
+  if(!/^[0-9a-f]{64}$/.test(pdfHash))throw Error('Die PDF-Prüfsumme fehlt oder ist ungültig.');
+  const table='rondo_pdf_review_v8820';
+  if(opt.method!=='POST'){
+   const found=Number(scalar("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",[table])||0);
+   const list=found?rows('SELECT position_key,article_no,review_state,reviewed_at,source_no FROM rondo_pdf_review_v8820 WHERE pdf_hash=? ORDER BY position_key',[pdfHash]):[];
+   return response({ok:true,hash:pdfHash,positions:list,database_id:currentDbState().database_id});
+  }
+  const key=String(input.key||''),number=String(input.article_no||'').trim().toUpperCase(),state=String(input.state||'');
+  if(!/^\d{1,3}:[1-9]\d?$/.test(key))throw Error('Ungültige PDF-Position.');
+  if(!['confirmed','corrected','later'].includes(state))throw Error('Ungültiger Prüfstatus.');
+  if(!/^(?=.*[0-9])[A-Z0-9][A-Z0-9_\/-]{3,24}$/.test(number))throw Error('Die Artikelnummer ist ungültig.');
+  await assertInventoryWritable();
+  run('CREATE TABLE IF NOT EXISTS rondo_pdf_review_v8820 (pdf_hash TEXT NOT NULL,position_key TEXT NOT NULL,article_no TEXT NOT NULL,review_state TEXT NOT NULL,reviewed_at TEXT NOT NULL,source_no TEXT NOT NULL,PRIMARY KEY(pdf_hash,position_key))');
+  const old=rows('SELECT * FROM rondo_pdf_review_v8820 WHERE pdf_hash=? AND position_key=?',[pdfHash,key])[0];
+  if(String(old?.reviewed_at||'')!==String(input.expected_reviewed_at||''))throw Error('Diese PDF-Position wurde auf einem anderen Gerät oder in einem zweiten Fenster bearbeitet. Bitte neu laden und die Unterschiede vergleichen.');
+  const reviewedAt=stamp();
+  run('INSERT OR REPLACE INTO rondo_pdf_review_v8820(pdf_hash,position_key,article_no,review_state,reviewed_at,source_no) VALUES(?,?,?,?,?,?)',[
+   pdfHash,key,number,state,reviewedAt,String(input.source_no||old?.source_no||number).slice(0,64)
+  ]);
+  audit(d.technician||setting('primary_technician','Techniker'),'PDF-PRÜFUNG','Artikel',key,
+   'V88.20 '+state+': '+String(old?.article_no||'—')+' → '+number+' (PDF '+pdfHash.slice(0,12)+')');
+  await persist();return response({ok:true,hash:pdfHash,key,article_no:number,state,reviewed_at:reviewedAt,database_id:currentDbState().database_id});
+ }
+
  if(opt.method!=='POST'){
-  if(p==='/api/info')return response({version:'86.0',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
+  if(p==='/api/info')return response({version:'88.20',articles:scalar('SELECT COUNT(*) FROM articles WHERE active=1'),movements:scalar('SELECT COUNT(*) FROM movements'),setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY')});
   if(p==='/api/setup/status')return response({setup_required:setupIsRequired(),date_format:setting('date_format','DD.MM.YYYY'),technician:setting('primary_technician','')});
   if(p==='/api/admin/password-status'){const has=!!setting('admin_password_hash');return response({setup_required:!has,password_setup_required:!has,has_password:has,can_unlock:has,database_setup_required:setupIsRequired()})};
   if(p==='/api/settings')return response({date_format:setting('date_format','DD.MM.YYYY'),date_formats:['DD.MM.YYYY','YYYY-MM-DD','MM/DD/YYYY']});
@@ -1838,6 +1905,76 @@ async function route(url,opt={}){
   await persist();return response({ok:true,updated,corrected})
  }
  
+ /* LV88_20_SAFE_BATCH_ARCHIVE: guarded selection + preview + archive + restore.
+    Never call /api/article/delete, never delete movements, stock bins or positive counts. */
+ if(p==='/api/articles/v88-20/archive-preview'||p==='/api/articles/v88-20/archive-commit'||p==='/api/articles/v88-20/archive-restore'){
+  if(!await adminAuthorized(d,opt))throw Error('Bitte zuerst die Stammdaten als Administrator freischalten.');
+  const ids=[...new Set((Array.isArray(d.ids)?d.ids:[]).map(Number))];
+  if(!ids.length||ids.length>200||ids.some(x=>!Number.isSafeInteger(x)||x<1))throw Error('Bitte 1 bis 200 gültige Artikel auswählen.');
+  const exists=t=>Number(scalar("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",[t])||0)>0;
+  const records=(t,id)=>exists(t)?rows('SELECT * FROM '+t+' WHERE article_id=?',[id]):[];
+  const isZero=n=>Number.isFinite(Number(n))&&Math.abs(Number(n))<0.0000001;
+  const pendingRows=id=>exists('inventory_counts')?rows("SELECT c.session_id,c.counted_stock,c.base_stock,c.bin_parts_json,s.status FROM inventory_counts c JOIN inventory_sessions s ON s.id=c.session_id WHERE c.article_id=?",[id]):[];
+  const guard=id=>{
+   const a=rows('SELECT * FROM articles WHERE id=?',[id])[0];
+   if(!a)return {id,article_no:'?',description:'',allowed:false,reasons:['Artikel existiert nicht'],discardDraftRows:0};
+   const reasons=[],movements=records('movements',id),counts=pendingRows(id),bins=records('stock_bins_v86',id),imports=records('import_position_results',id);
+   if(Number(a.active)!==1)reasons.push('Bereits archiviert');
+   if(!isZero(a.initial_stock))reasons.push('Anfangsbestand ist nicht null');
+   const currentStock=Number(articles().find(x=>Number(x.id)===id)?.stock??0);
+   if(!isZero(currentStock))reasons.push('Aktueller Buchbestand ist nicht null');
+   if(movements.some(m=>!isZero(m.quantity)||m.source!=='Materialanlage / CSV-SAP-Import'||m.movement_type!=='IN'||String(m.customer||'').trim()||String(m.ticket||'').trim()))reasons.push('Echte Buchung oder Buchungshistorie vorhanden');
+   if(counts.some(c=>c.counted_stock!==null&&c.counted_stock!==undefined))reasons.push('Inventur wurde bereits gezählt (auch Zählwert 0)');
+   if(counts.some(c=>!isZero(c.base_stock)||String(c.bin_parts_json||'').trim().replace(/^\[\]$/,'')!==''))reasons.push('Inventur enthält erfasste Anfangs- oder Lagerplatzdaten');
+   if(bins.length)reasons.push('Lagerplatzdatensätze vorhanden');
+   if(records('stock_bin_moves_v86',id).length)reasons.push('Umlagerungshistorie vorhanden');
+   if(records('service_pdf_imports',id).length||records('service_pdf_machine_usage',id).length)reasons.push('Servicebericht-Referenzen vorhanden');
+   if(imports.some(x=>x.source!=='csv'||!isZero(x.quantity)||x.status!=='created'))reasons.push('Import enthält eine Materialbuchung oder unbekannte Herkunft');
+   // Fail closed if newer modules introduce additional article relations.
+   const known=new Set(['articles','movements','inventory_counts','stock_bins_v86','stock_bin_moves_v86','service_pdf_imports','service_pdf_machine_usage','import_position_results','article_machines']);
+   for(const table of rows("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")){
+    if(known.has(table.name)||!/^[A-Za-z_][A-Za-z0-9_]*$/.test(table.name))continue;
+    const cols=rows('PRAGMA table_info('+table.name+')');
+    if(cols.some(c=>c.name==='article_id')&&records(table.name,id).length)reasons.push('Weitere verknüpfte Datensätze: '+table.name);
+   }
+   return {id,article_no:String(a.article_no),description:String(a.description||''),allowed:reasons.length===0,reasons,
+    technicalZeroBookings:movements.length,discardDraftRows:counts.filter(c=>c.status==='draft'&&c.counted_stock===null).length};
+  };
+  const candidates=ids.map(guard),allowed=candidates.filter(x=>x.allowed),blocked=candidates.filter(x=>!x.allowed);
+  const signature=JSON.stringify(allowed.map(x=>[x.id,x.article_no,x.technicalZeroBookings,x.discardDraftRows]));
+  if(p.endsWith('/archive-preview'))return response({ok:true,allowed,blocked,requested:ids.length,signature});
+  if(p.endsWith('/archive-restore')){
+   if(d.confirmation!=='WIEDERHERSTELLEN')throw Error('Wiederherstellung bitte ausdrücklich bestätigen.');
+   const all=ids.map(id=>rows('SELECT id,article_no,active FROM articles WHERE id=?',[id])[0]);
+   if(all.some(a=>!a||Number(a.active)!==0))throw Error('Mindestens ein Artikel ist nicht archiviert. Keine Änderungen.');
+   await createBackup('Sicherheitsbackup','V88.20 – vor Artikel-Wiederherstellung');
+   runTransaction(()=>{for(const a of all){run('UPDATE articles SET active=1 WHERE id=? AND active=0',[a.id]);
+    audit('Administrator','WIEDERHERSTELLUNG','Artikel',String(a.id),'V88.20 aus Archiv wiederhergestellt: '+a.article_no);}});
+   await persist();return response({ok:true,restored:all.length,ids});
+  }
+  if(d.confirmation!=='ARCHIVIEREN')throw Error('Archivierung bitte ausdrücklich bestätigen.');
+  if(!allowed.length)return response({ok:false,archived:0,blocked,reason:'Keine sicher archivierbaren Artikel'},409);
+  if(blocked.length||signature!==String(d.signature||''))throw Error('Die geprüfte Auswahl hat sich verändert. Bitte die Sicherheitsvorschau erneut öffnen. Es wurde nichts archiviert.');
+  await assertInventoryWritable();
+  await createBackup('Sicherheitsbackup','V88.20 – vor sicherer Archivierung von '+allowed.length+' Artikeln');
+  const completed=[];let removedEmptyRows=0;
+  runTransaction(()=>{
+   for(const proposal of allowed){const current=guard(proposal.id);
+    if(!current.allowed||current.article_no!==proposal.article_no||current.discardDraftRows!==proposal.discardDraftRows)throw Error('Artikel '+proposal.article_no+' hat sich verändert; keine Archivierung durchgeführt.');
+    // Only completely uncounted placeholders from OPEN sessions are removed.
+    // Real counts, historical sessions, movements and imports are NEVER deleted.
+    if(current.discardDraftRows){
+     run("DELETE FROM inventory_counts WHERE article_id=? AND counted_stock IS NULL AND session_id IN (SELECT id FROM inventory_sessions WHERE status='draft')",[proposal.id]);
+     removedEmptyRows+=current.discardDraftRows;
+    }
+    run('UPDATE articles SET active=0 WHERE id=? AND active=1',[proposal.id]);
+    audit('Administrator','ARCHIVIERUNG','Artikel',String(proposal.id),'V88.20 sicher archiviert: '+proposal.article_no+'; technische Nullbuchungen unverändert; '+current.discardDraftRows+' ungefüllte Inventurplatzhalter entfernt');
+    completed.push(proposal.id);
+   }
+  });
+  await persist();return response({ok:true,archived:completed.length,ids:completed,removedEmptyRows,backup:true});
+ }
+
  if(p==='/api/article/delete'){
   if(!await adminAuthorized(d,opt))throw Error('Stammdaten sind nicht freigeschaltet.');
   const id=Number(d.id);

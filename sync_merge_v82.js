@@ -9,7 +9,7 @@
  const MOVE_SKIP=new Set(['id','article_id','sync_uuid']);
  const DETAIL_FIELDS=['movement_date','movement_type','article_no','quantity','customer','ticket','machine','machine_code','technician','vehicle','delivery_note','note','source'];
  const AUDIT_SKIP=new Set(['id','sync_uuid']);
- const AUX_TABLES=['inventory_warehouses','locations','machines','machine_aliases','machine_merge_history','technicians','vehicles','consumables','inventory_sessions','inventory_counts','stock_bins_v86','stock_bin_moves_v86','inventory_company_v86','app_settings'];
+ const AUX_TABLES=['inventory_warehouses','locations','machines','machine_aliases','machine_merge_history','technicians','vehicles','consumables','inventory_sessions','inventory_counts','stock_bins_v86','stock_bin_moves_v86','inventory_company_v86','app_settings','rondo_pdf_review_v8820','rondo_duplicate_review_v8820'];
  function dbRows(db,table){
   try {const e=db.exec(`SELECT * FROM ${table}`)[0];return e?e.values.map(vals=>Object.fromEntries(e.columns.map((k,i)=>[k,vals[i]]))):[];}catch{return []}
  }

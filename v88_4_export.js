@@ -40,7 +40,7 @@
    const checker=typeof window!=='undefined'?window.LV8813PDFMatch:globalThis.LV8813PDFMatch;
    if(!row.manual_link&&inv&&checker&&String(row.description||'').trim()&&String(inv.description||'').trim()&&checker.textScore(row.description,inv.description)<0.32){uncertain.push({key,material:row.article_no||'',reason:'Bezeichnung passt nicht zu erkannter Artikelnummer. Bitte PDF-Schnellzuordnung pruefen.'});continue}
    if(!inv||!counted(inv.counted_stock)){missing.push({key,material:row.article_no||'',reason:'Noch nicht gezählt'});continue}
-   try{quantities[key]=normalizeCount(inv.counted_stock,inv.unit||row.unit||'Stk.')}catch(e){errors.push({key,material:row.article_no||'',reason:e.message})}
+   try{quantities[key]=normalizeCount(inv.counted_stock,row.unit||inv.unit||'Stk.')}catch(e){errors.push({key,material:row.article_no||'',reason:e.message})}
   }
   return {quantities,printed:Object.keys(quantities).length,total:lines.length,blank:lines.length-Object.keys(quantities).length,missing,uncertain,repeated,errors};
  }
@@ -351,7 +351,7 @@
   };
   // LV8818_REVIEW_BACKUP: Der PDF-Pruefstand lebt in IndexedDB und NICHT
   // in lager.db. Deshalb zusaetzlich eine manuell exportierbare JSON-Kopie.
-  const progressFields=['article_no','description','unit','verified','review_action','manual_link','ocr_original_no','ocr_original_description','linked_article_id','checked_at'];
+  const progressFields=['article_no','description','unit','verified','review_action','manual_link','ocr_original_no','ocr_original_description','linked_article_id','checked_at','review_v8820','reviewed_at'];
   const progressData=()=>({format:'RONDO-PDF-PRUEFSTAND',version:1,pdf_hash:stored.hash,
    database_id:index.database_id,inventory_id:select.value,created_at:new Date().toISOString(),
    positions:lines.map(row=>({key:matchCore.positionKey(row),
