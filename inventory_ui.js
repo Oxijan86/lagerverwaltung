@@ -22,10 +22,19 @@
  function contextMessage(){
   const out=$('inv84ContextInfo');if(!out||!data)return;
   const c=context(),known=c.location&&data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===c.location.toLocaleLowerCase('de-DE'));
-  out.textContent=c.location&&!known?`„${c.location}“ ist noch kein gespeicherter Lagerort. Bitte zuerst „Lagerort anlegen“ wählen.`:
-   c.apply?(c.location?`Neue Zählungen werden „${c.location}“ zugeordnet.`:c.warehouse_id?'Neue Zählungen übernehmen das gewählte Lager.':'Bitte einen Zählbereich auswählen.'):'Automatische Lagerortübernahme ausgeschaltet.';
-  out.className=c.location&&!known?'small inv75-warning':'small';
-  const btn=$('inv84AddLocation');if(btn)btn.hidden=!c.location||!!known;
+  if(c.location&&!known){
+   out.textContent='Bitte einen vorhandenen Lagerort aus der Vorschlagsliste auswählen. Hier wird kein neuer Lagerort angelegt.';
+   out.className='small inv75-warning';
+  }else if(c.apply){
+   out.textContent=c.location?`Zählbereich „${c.location}“ gewählt. Er wird bei neuen Zählungen automatisch übernommen.`:
+    c.warehouse_id?'Das gewählte Lager wird bei neuen Zählungen automatisch übernommen.':'Bitte Lager oder Lagerort auswählen.';
+   out.className='small';
+  }else{
+   out.textContent=c.location?`Zählbereich „${c.location}“ gewählt. Automatik ist aus; mit „Aktuellen Lagerort für Artikel übernehmen“ kannst du ihn einem einzelnen Artikel zuweisen.`:
+    'Automatische Übernahme aus. Du kannst trotzdem einen vorhandenen Zählbereich auswählen und ihn einem Artikel manuell zuordnen.';
+   out.className='small';
+  }
+  const btn=$('inv84AddLocation');if(btn)btn.hidden=true;
  }
  function cache(){if(!data)return;try{if(pending.size)localStorage.setItem(key(),JSON.stringify({version:data.session.version,items:[...pending.values()]}));else localStorage.removeItem(key())}catch{message('Lokale Wiederherstellungskopie konnte nicht gespeichert werden. Bitte jetzt zwischenspeichern.',false)}}
  function payload(extra={}){return {id:data.session.id,version:data.session.version,database_id:data.database_id,...extra}}
@@ -148,13 +157,18 @@
   },
   useContextFor(id){
    const row=data?.items.find(x=>Number(x.article_id)===Number(id));if(!row)return;
-   let place;try{place=V84.countContext(row,context(),data.locations)}catch(e){message(e.message,false);return}
-   if(!place)return message('Bitte zuerst einen gültigen Zählbereich auswählen.',false);
+   if(row.counted_stock!==null&&row.bin_parts_json){
+    message('Dieser Artikel hat bereits Lagerort-Teilmengen. Bitte die Zuordnung unter „Einräumen nach dem Zählen“ ändern, damit keine Teilmengen verloren gehen.',false);return;
+   }
+   // Manual action is independent of the automatic-counting checkbox.
+   let place;try{place=V84.countContext(row,{...context(),apply:true},data.locations)}catch(e){message(e.message,false);return}
+   if(!place||!place.location)return message('Bitte zuerst einen vorhandenen Lagerort auswählen.',false);
    if(row.location===place.location&&Number(row.warehouse_id||0)===Number(place.warehouse_id||0))return message('Lagerort bereits übernommen.');
-   if(!confirm(`Lagerortzuordnung für ${row.article_no} ausdrücklich ändern?\n\nBisher: ${row.location||'ohne Lagerort'}\nNeu: ${place.location||'ohne Lagerort'}\n\nDie Änderung wird zunächst nur in der Inventur vorgemerkt.`))return;
-   manualPlaceOverrides.add(Number(id));confirmedContextOverrides.add(Number(id));this.edit(id,'warehouse_id',place.warehouse_id||null);this.edit(id,'location',place.location||'');
+   if(!confirm(`Lagerortzuordnung für ${row.article_no} ausdrücklich ändern?\n\nBisher: ${row.location||'ohne Lagerort'}\nNeu: ${place.location}\n\nDie Änderung wird nur im Inventur-Zwischenstand gespeichert. Die Zählmenge bleibt unverändert.`))return;
+   manualPlaceOverrides.add(Number(id));confirmedContextOverrides.add(Number(id));
+   this.edit(id,'warehouse_id',place.warehouse_id||null);this.edit(id,'location',place.location);
    const l=$('inv75-location-'+id),w=$('inv75-warehouse-'+id);if(l)l.value=place.location;if(w)w.value=place.warehouse_id||'';
-   message('Neuer Lagerort vorgemerkt. Erst beim Inventurabschluss werden die Stammdaten geändert.');
+   message('Lagerort im Inventur-Zwischenstand vorgemerkt. Die gezählte Menge wurde nicht geändert.');
   },
   addBinPart(id){
    const row=data?.items.find(x=>Number(x.article_id)===Number(id)),el=$('inv84-add-'+id);if(!row||!el)return;
@@ -202,24 +216,31 @@
    if(location?.warehouse_id&&Number(location.warehouse_id)!==Number(value))$('inv84Location').value='';
    saveContext();contextMessage();referenceOptions();
   },
+  contextLocationTyping(){
+   if(!data)return;
+   const out=$('inv84ContextInfo');if(out){out.textContent='Vorhandenen Lagerort aus den Vorschlägen wählen. Das Tippen legt keinen neuen Lagerort an.';out.className='small';}
+  },
   contextLocationChanged(value){
-   if(!data)return;const location=data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===String(value||'').trim().toLocaleLowerCase('de-DE'));
-   if(location){$('inv84Location').value=location.name;if(location.warehouse_id)$('inv84Warehouse').value=String(location.warehouse_id)}
+   if(!data)return;
+   const field=$('inv84Location'),name=String(value||'').trim();
+   const found=name?data.locations.find(l=>String(l.name||'').trim().toLocaleLowerCase('de-DE')===name.toLocaleLowerCase('de-DE')):null;
+   if(name&&!found){
+    let previous='';try{previous=JSON.parse(localStorage.getItem(contextKey())||'{}')?.location||''}catch{}
+    const old=data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===String(previous).toLocaleLowerCase('de-DE'));
+    if(field)field.value=old?.name||'';
+    saveContext();contextMessage();
+    message('Dieser Lagerort ist nicht vorhanden. Bitte einen bereits angelegten Ort auswählen. Neue Orte ausschließlich unter „Einräumen nach dem Zählen“ anlegen.',false);
+    return;
+   }
+   if(field)field.value=found?.name||'';
+   if(found?.warehouse_id)$('inv84Warehouse').value=String(found.warehouse_id);
    saveContext();contextMessage();
   },
   contextToggle(){saveContext();contextMessage()},
-  async addContextLocation(){return guarded(async()=>{
-   if(!data||!await flush())return;
-   const c=context(),name=c.location;if(!name)return message('Bitte zuerst einen Lagerort eingeben.',false);
-   if(!c.warehouse_id&&!data.default_warehouse_id)return message('Bitte zuerst das zugehörige Lager (z. B. Fahrzeug) auswählen.',false);
-   const known=data.locations.find(l=>l.name.toLocaleLowerCase('de-DE')===name.toLocaleLowerCase('de-DE'));
-   if(known){this.contextLocationChanged(known.name);$('inv84Apply').checked=true;saveContext();contextMessage();message(`Lagerort „${known.name}“ ist vorgewählt.`);return}
-   if(!confirm(`Lagerort „${name}“ neu anlegen und für die nächsten Zählungen verwenden?`))return;
-   const result=await post('location',{name,warehouse_id:c.warehouse_id||data.default_warehouse_id||null,database_id:dbid});
-   data.locations=result.locations||data.locations;data.warehouses=result.warehouses||data.warehouses;
-   LVWarehouses.setRefs(result);referenceOptions();if(result.created?.warehouse_id)$('inv84Warehouse').value=String(result.created.warehouse_id);
-   $('inv84Location').value=result.created.name;$('inv84Apply').checked=true;saveContext();contextMessage();refreshLocationFilterOptions();render();message(`Lagerort „${result.created.name}“ angelegt und vorgewählt. Auch Artikel ohne bisherigen Lagerort übernehmen ihn beim Zählen.`);
-  })},
+  async addContextLocation(){
+   // Compatibility guard for an older open browser window: no creation in the counting area.
+   message('Im Zählbereich können keine neuen Lagerorte angelegt werden. Bitte den gesonderten Bereich „Einräumen nach dem Zählen“ verwenden.',false);
+  },
   addCount(id){
    if(data?.items.find(x=>Number(x.article_id)===Number(id))?.bin_parts_json)return this.addBinPart(id);
    if(!data||data.session.status!=='draft'||busy)return;
